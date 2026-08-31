@@ -4229,15 +4229,20 @@
       onLangChange(() => { updateTranscriptionUploadState(); syncTranscriptionInlineLabels(); updateOfflineModelSummary(); renderTranscriptionModels(); updateFfmpegRuntimeSummary(); renderFfmpegRuntime(); renderDependencyGate(); });
 
       const helpBtn = document.getElementById('helpBtn');
+      function openSettingsOverlay() {
+        if (!settingsOverlay) return;
+        document.getElementById('helpOverlay')?.classList.remove('visible');
+        if (settingsContent) settingsContent.scrollTop = 0;
+        settingsOverlay.style.zIndex = '50000';
+        settingsOverlay.classList.add('visible');
+        syncCustomBackgroundPreviewPlayback?.();
+      }
+
       if (settingsBtns.length && settingsOverlay) {
         settingsBtns.forEach(settingsBtn => settingsBtn.addEventListener('click', (event) => {
           event.preventDefault();
           event.stopPropagation();
-          document.getElementById('helpOverlay')?.classList.remove('visible');
-          if (settingsContent) settingsContent.scrollTop = 0;
-          settingsOverlay.style.zIndex = '50000';
-          settingsOverlay.classList.add('visible');
-          syncCustomBackgroundPreviewPlayback?.();
+          openSettingsOverlay();
         }));
       }
       if (helpBtn) {
@@ -32231,6 +32236,7 @@ March 18, 2026|Launch Day
       }
 
       function openMattingModelManager() {
+        openSettingsOverlay();
         const overlayEl = document.getElementById('mattingModelOverlay');
         overlayEl?.classList.add('visible');
         overlayEl?.setAttribute('aria-hidden', 'false');
@@ -32518,15 +32524,7 @@ March 18, 2026|Launch Day
                   disposeStandardToolPlasma,
                   getOutputDir,
                   ensureLibreOfficeAvailable: ensurePptRuntimeAvailable,
-                   openSettings: () => {
-                    document.getElementById('helpOverlay')?.classList.remove('visible');
-                    if (settingsContent) settingsContent.scrollTop = 0;
-                    if (settingsOverlay) {
-                      settingsOverlay.style.zIndex = '50000';
-                      settingsOverlay.classList.add('visible');
-                      syncCustomBackgroundPreviewPlayback?.();
-                     }
-                   },
+                  openSettings: openSettingsOverlay,
                   openMattingModelManager,
                    openSupport: openDonationOverlay,
                   openExternalUrl,

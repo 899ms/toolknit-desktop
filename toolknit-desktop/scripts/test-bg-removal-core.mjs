@@ -76,6 +76,8 @@ assert.doesNotMatch(ui, /data-bgr-toast|showInlineToast/, 'background removal mu
 assert.doesNotMatch(ui, /data-bgr-result-path/, 'the workspace must not duplicate the saved output path');
 assert.match(ui, /invoke\('open_path', \{ path: savedPath \}\)/, 'open folder must use the exported file path returned by Rust');
 assert.doesNotMatch(ui, /invoke\('open_path', \{ path: outputDir \}\)/, 'open folder must not use a predicted output directory');
+assert.match(ui, /enhanceToolSelects\(\[modelSelect\]\)/, 'model selection must use the shared white custom dropdown');
+assert.match(ui, /modelSelectControl\?\.dispose\(\)/, 'the model dropdown must release its detached menu on disposal');
 assert.match(css, /\.bg-removal-zoom-value\s*\{[^}]*font-size:\s*15px/s);
 
 const modelCatalog = native.match(/pub const MATTING_MODELS:[\s\S]*?=\s*\[([\s\S]*?)\];/)?.[1] || '';
@@ -84,6 +86,7 @@ assert.doesNotMatch(modelCatalog, /id:\s*"(?:isnet|u2net)"/, 'models without com
 assert.doesNotMatch(native, /matting:no-official-source|matting:download-busy/, 'download coordination must not leak internal busy/source errors');
 assert.match(main, /let mattingDownloadPromise = null;/, 'matting downloads must share one frontend promise');
 assert.match(main, /await installMattingModel\(mattingDownloadSource\)/, 'the dependency gate must reuse the shared matting download and source setting');
+assert.match(main, /function openMattingModelManager\(\)\s*\{\s*openSettingsOverlay\(\);/, 'model management must reveal its parent settings page before opening the dialog');
 assert.doesNotMatch(main, /console\.info\('\[BgRemoval\] matting model (?:present|missing)/, 'normal model-gate flow must not pollute the console');
 
 console.log('background removal core tests passed');

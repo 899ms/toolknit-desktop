@@ -1,6 +1,7 @@
 import { createIcons, icons } from 'lucide';
 import * as tauriCore from '@tauri-apps/api/core';
 import { onLangChange, t } from './i18n.js';
+import { enhanceToolSelects } from './tool-custom-select.js';
 import {
   commitEditStroke,
   createEditHistory,
@@ -267,6 +268,7 @@ export function initBgRemovalTool({
   const statusEl = query('[data-bgr-status]');
   const statusText = statusEl?.querySelector('span');
   const modelSelect = query('[data-bgr-model]');
+  const modelSelectControl = enhanceToolSelects([modelSelect])[0] || null;
   const featherInput = query('[data-bgr-feather]');
   const featherValue = query('[data-bgr-feather-value]');
   const brushSizeInput = query('[data-bgr-brush-size]');
@@ -433,6 +435,7 @@ export function initBgRemovalTool({
       option.textContent = copy('noInstalledModels');
       modelSelect.append(option);
       modelSelect.value = '';
+      modelSelectControl?.refresh();
       return;
     }
     for (const model of installedModels) {
@@ -444,6 +447,7 @@ export function initBgRemovalTool({
     modelSelect.value = selection.preferred?.id || installedModels[0].id;
     preferences.modelId = modelSelect.value;
     persistPreferences();
+    modelSelectControl?.refresh();
   }
 
   async function refreshModels() {
@@ -490,6 +494,7 @@ export function initBgRemovalTool({
     zoombar.hidden = !hasImage || state === 'processing';
     processButton.disabled = !hasImage || busy || !installedModels.length || !isTauri;
     modelSelect.disabled = busy || !installedModels.length;
+    modelSelectControl?.refresh();
     featherInput.disabled = busy || !hasImage;
     saveButton.hidden = !processed;
     saveButton.disabled = busy || !outputDir || (!dirty && state === 'saved');
@@ -1132,6 +1137,7 @@ export function initBgRemovalTool({
     setCompareHeld(false);
     setParamsOpen(false);
     setSuccessState(false, { restoreFocus: false });
+    modelSelectControl?.close();
     removeBrushCursor();
     if (state === 'processing') {
       state = stableState;
@@ -1152,6 +1158,7 @@ export function initBgRemovalTool({
     disposed = true;
     listeners.abort();
     resizeObserver?.disconnect();
+    modelSelectControl?.dispose();
     window.cancelAnimationFrame(featherRenderFrame);
     try { languageUnsubscribe(); } catch {}
     overlay.replaceChildren();

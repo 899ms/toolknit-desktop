@@ -1,4 +1,4 @@
-import { readResponseTextLimited } from './bounded-response.js';
+import { readResponseTextLimited } from './core/bounded-response.js';
 
 const GITHUB_REPOSITORY = 'ZihangDong/toolknit-desktop';
 

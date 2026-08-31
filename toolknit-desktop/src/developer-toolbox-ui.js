@@ -1,6 +1,6 @@
 import { createIcons, icons } from 'lucide';
 import { decodeBase64Utf8, decodeJwt, decodeUrlComponent, describeDeveloperToolError, encodeBase64Utf8, encodeUrlComponent, formatJsonText, generateUuidV4 } from './developer-toolbox-core.js';
-import { bindToolPageChrome, mountToolPageBackground, toolTopbarMarkup } from './tool-page-shell.js';
+import { bindToolPageChrome, mountToolPageBackground, toolTopbarMarkup } from './shared/tool-page-shell.js';
 
 const MODES = [
   { id: 'json-tools', label: 'JSON 格式化', icon: 'braces' },

@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [html, main, ui, core, styles, finalStyles] = await Promise.all([
+const [html, main, lazyTools, lazyRegistry, ui, core, styles, finalStyles] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/app/lazy-tool-registry.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/developer-toolbox-ui.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/developer-toolbox-core.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
@@ -12,8 +14,9 @@ const [html, main, ui, core, styles, finalStyles] = await Promise.all([
 
 for (const id of ['json-tools', 'base64', 'url-codec', 'uuid', 'jwt']) assert.match(html, new RegExp(`data-tool="${id}"`));
 assert.match(html, /id="developerToolboxOverlay"/);
-assert.match(main, /instanceKey: 'developer-toolbox'/);
-assert.match(main, /instance.open\?\.\(toolId\)/);
+assert.match(lazyTools, /instanceKey: 'developer-toolbox'/);
+assert.match(lazyRegistry, /await instance\.open\(toolId\)/);
+assert.match(main, /createLazyToolRegistry\([\s\S]*specs:\s*LAZY_TOOL_SPECS/);
 assert.match(ui, /clearTimeout\(timer\)/);
 assert.doesNotMatch(ui, /localStorage|sessionStorage/);
 assert.doesNotMatch(ui, /data-dev-run/);

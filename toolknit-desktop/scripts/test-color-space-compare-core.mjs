@@ -387,9 +387,9 @@ for (const space of editableSpaces) {
 // The desktop integration must remain discoverable, localizable, and wired
 // through the 2.1 lazy tool shell rather than an isolated iframe.
 const projectRoot = new URL('..', import.meta.url);
-const [html, main, styles, ui, zh, en] = await Promise.all([
+const [html, lazyTools, styles, ui, zh, en] = await Promise.all([
   readFile(new URL('index.html', projectRoot), 'utf8'),
-  readFile(new URL('src/main.js', projectRoot), 'utf8'),
+  readFile(new URL('src/features/lazy-tools.js', projectRoot), 'utf8'),
   readFile(new URL('src/color-space-compare.css', projectRoot), 'utf8'),
   readFile(new URL('src/color-space-compare-ui.js', projectRoot), 'utf8'),
   readFile(new URL('src/locales/zh.json', projectRoot), 'utf8').then(JSON.parse),
@@ -400,8 +400,8 @@ assert.match(html, /data-tool="color-space-compare"/, 'Creative tools must list 
 assert.match(html, /id="colorSpaceCompareOverlay"[^>]*aria-hidden="true"/, 'The lazy overlay host is required.');
 assert.doesNotMatch(html, /id="colorSpaceCompareWorkspace"/, 'The content must not use the global Workspace modal convention.');
 assert.doesNotMatch(html, /<iframe[^>]+color-space-compare/i, 'The tool must not regress to an isolated iframe.');
-assert.match(main, /'color-space-compare':[\s\S]*?import\('\.\/color-space-compare-ui\.js'\)/, 'The tool must use the 2.1 lazy loader.');
-assert.match(main, /overlayId:\s*'colorSpaceCompareOverlay'/, 'The lazy tool must target its overlay host.');
+assert.match(lazyTools, /'color-space-compare':[\s\S]*?import\('\.\.\/color-space-compare-ui\.js'\)/, 'The tool must use the V3 lazy registry.');
+assert.match(lazyTools, /'color-space-compare':[\s\S]*?overlayId:\s*'colorSpaceCompareOverlay'[\s\S]*?init:\s*'initColorSpaceCompareTool'/, 'The lazy tool must target its overlay host and initializer.');
 assert.match(ui, /toolTopbarMarkup/, 'The shared 2.1 top bar is required.');
 assert.match(ui, /mountToolPageBackground/, 'The shared custom-background bridge is required.');
 assert.match(ui, /lostpointercapture/, 'Pointer capture loss must clear slider drag state.');

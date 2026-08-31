@@ -12,7 +12,7 @@ import {
   DEFAULT_MARKDOWN, MARKDOWN_DRAFT_KEY, applyMarkdownAction, buildStandaloneMarkdownHtml, createMarkdownRenderer,
   extractMarkdownHeadings, extractMarkdownHeadingsFromTokens, rewriteMarkdownImages, sanitizeExportBaseName
 } from './markdown-editor-core.js';
-import { bindToolPageChrome, mountToolPageBackground, toolTopbarMarkup } from './tool-page-shell.js';
+import { bindToolPageChrome, mountToolPageBackground, toolTopbarMarkup } from './shared/tool-page-shell.js';
 
 const ASSET_KEY = 'toolknit.markdown.assets.v1';
 const encoder = new TextEncoder();
@@ -94,7 +94,7 @@ export function initMarkdownEditorTool({ overlay, notify = message => window.sho
         <div class="tool-page-v2-rail-kicker">MARKDOWN STUDIO</div><h1>Markdown<br>文档编辑器</h1><p>实时编辑、预览和导出 Markdown 文档，支持 GFM、Mermaid 与数学公式。</p>
         <div class="tool-page-v2-rail-note"><span>LOCAL ONLY</span><strong>文档和图片只在本机处理，关闭页面后清除编辑器实例。</strong></div>
         <div class="tool-page-v2-steps"><div class="is-active"><b>01</b><span><strong>编辑文档</strong><small>使用右侧工具栏快速插入语法。</small></span></div><div><b>02</b><span><strong>实时预览</strong><small>分屏查看渲染结果和目录。</small></span></div><div><b>03</b><span><strong>导出文件</strong><small>导出 Markdown 或离线 HTML。</small></span></div></div>
-        <div class="md-outline-block"><div class="md-panel-label"><span>DOCUMENT MAP</span><strong>文档目录</strong></div><nav class="md-outline" data-md-outline></nav><div class="md-draft-state"><i data-lucide="cloud-check"></i><span data-md-draft-state>草稿已保存在本机</span></div></div>
+        <div class="md-outline-block"><div class="md-panel-label"><span>DOCUMENT MAP</span><strong>文档目录</strong></div><nav class="md-outline" data-md-outline></nav><div class="md-draft-state"><i data-lucide="save"></i><span data-md-draft-state>草稿已保存在本机</span></div></div>
       </aside>
       <section class="md-workbench">
         <div class="md-toolbar" role="toolbar" aria-label="Markdown 编辑工具栏">

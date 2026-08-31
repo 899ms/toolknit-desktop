@@ -2,7 +2,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { createIcons, icons } from 'lucide';
 import { COLOR_REPLACE_LIMITS, hexToRgb, rgbToHex, sampleRgbaPixel } from './image-color-replace-core.js';
-import { bindToolPageChrome, mountToolPageBackground, toolTopbarMarkup } from './tool-page-shell.js';
+import { bindToolPageChrome, mountToolPageBackground, toolTopbarMarkup } from './shared/tool-page-shell.js';
 
 export function initImageColorReplaceTool({ overlay, notify = (message, options) => window.showToast?.(message, options) }) {
   if (!overlay) throw new Error('color-replace:missing-overlay');

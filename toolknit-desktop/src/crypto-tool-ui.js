@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { createIcons, icons } from 'lucide';
 import { CRYPTO_MAX_TEXT_CHARS, CRYPTO_PREFERENCES_KEY, LEGACY_ALGORITHMS, exportRsaLegacyKeyComponents, randomHex } from './crypto-tool-core.js';
-import { bindToolPageChrome, mountToolPageBackground, toolTopbarMarkup } from './tool-page-shell.js';
+import { bindToolPageChrome, mountToolPageBackground, toolTopbarMarkup } from './shared/tool-page-shell.js';
 
 const TOOLS=[
   {id:'md2',label:'MD2',group:'哈希',legacy:true},{id:'md4',label:'MD4',group:'哈希',legacy:true},{id:'md5',label:'MD5',group:'哈希',legacy:true},

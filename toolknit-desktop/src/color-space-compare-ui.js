@@ -21,7 +21,7 @@ import {
 } from './color-space-compare-controls.js';
 import { onLangChange, t } from './i18n.js';
 import { createIcons, icons } from 'lucide';
-import { bindToolPageChrome, mountToolPageBackground, toolTopbarMarkup } from './tool-page-shell.js';
+import { bindToolPageChrome, mountToolPageBackground, toolTopbarMarkup } from './shared/tool-page-shell.js';
 import './color-space-compare.css';
 
 const INITIAL_RGB = Object.freeze({ r: 128, g: 128, b: 128 });

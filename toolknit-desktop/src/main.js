@@ -6,7 +6,10 @@
       import { getLang, setLang, applyTranslations, onLangChange, t } from './i18n.js';
       import { initUpdatePreview } from './update-preview.js';
       import { compareVersions, createUpdateService, UPDATE_RELEASES_PAGE } from './update-service.js';
-      import { readResponseTextLimited } from './bounded-response.js';
+      import { readResponseTextLimited } from './core/bounded-response.js';
+      import { createLazyToolRegistry } from './app/lazy-tool-registry.js';
+      import { LAZY_TOOL_SPECS } from './features/lazy-tools.js';
+      import { tauriCorePromise, tauriEventPromise } from './platform/tauri-runtime.js';
       import typingWordsData from './data/typing-words.json';
       import { HELP_CONTENT, getHelpContent } from './help-data.js';
       import { SUPPORT_JOURNAL_ENTRIES } from './support-journal-data.js';
@@ -194,12 +197,6 @@
       import { initPdfEditorTool } from './pdf-editor-ui.js';
       import JSZip from 'jszip';
       import { TaskRunner } from '../shared/task-runtime.mjs';
-      import * as tauriCore from '@tauri-apps/api/core';
-      import * as tauriEvent from '@tauri-apps/api/event';
-
-      const tauriCorePromise = Promise.resolve(tauriCore);
-      const tauriEventPromise = Promise.resolve(tauriEvent);
-
       // Keep custom tool menus, but preserve native editing menus in text fields.
       document.addEventListener('contextmenu', (e) => {
         if (e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
@@ -32417,153 +32414,45 @@ March 18, 2026|Launch Day
         return false;
       }
 
-      const lazyFeatureTools = {
-        'excel-to-pdf': {
-          overlayId: 'excelToPdfOverlay',
-          load: () => import('./excel-to-pdf-ui.js'),
-          init: 'initExcelToPdfTool'
-        },
-        'teleprompter': {
-          overlayId: 'teleprompterOverlay',
-          load: () => import('./teleprompter-ui.js'),
-          init: 'initTeleprompterTool'
-        },
-      'bg-removal': {
-          overlayId: 'bgRemovalOverlay',
-          load: () => import('./bg-removal-ui.js'),
-          init: 'initBgRemovalTool'
-        },
-        'markdown-editor': {
-          overlayId: 'markdownEditorOverlay',
-          load: () => import('./markdown-editor-ui.js'),
-          init: 'initMarkdownEditorTool'
-        },
-        'image-color-replace': {
-          overlayId: 'imageColorReplaceOverlay',
-          load: () => import('./image-color-replace-ui.js'),
-          init: 'initImageColorReplaceTool'
-        },
-        'color-space-compare': {
-          overlayId: 'colorSpaceCompareOverlay',
-          load: () => import('./color-space-compare-ui.js'),
-          init: 'initColorSpaceCompareTool'
-        },
-        'hash-crypto': {
-          overlayId: 'cryptoToolOverlay',
-          load: () => import('./crypto-tool-ui.js'),
-          init: 'initCryptoTool'
-        },
-        'json-tools': {
-          instanceKey: 'developer-toolbox',
-          overlayId: 'developerToolboxOverlay',
-          load: () => import('./developer-toolbox-ui.js'),
-          init: 'initDeveloperToolbox'
-        },
-        'base64': {
-          instanceKey: 'developer-toolbox',
-          overlayId: 'developerToolboxOverlay',
-          load: () => import('./developer-toolbox-ui.js'),
-          init: 'initDeveloperToolbox'
-        },
-        'url-codec': {
-          instanceKey: 'developer-toolbox',
-          overlayId: 'developerToolboxOverlay',
-          load: () => import('./developer-toolbox-ui.js'),
-          init: 'initDeveloperToolbox'
-        },
-        'uuid': {
-          instanceKey: 'developer-toolbox',
-          overlayId: 'developerToolboxOverlay',
-          load: () => import('./developer-toolbox-ui.js'),
-          init: 'initDeveloperToolbox'
-        },
-        'jwt': {
-          instanceKey: 'developer-toolbox',
-          overlayId: 'developerToolboxOverlay',
-          load: () => import('./developer-toolbox-ui.js'),
-          init: 'initDeveloperToolbox'
-        }
-      };
-      const lazyFeatureInstances = new Map();
-      const lazyFeaturePromises = new Map();
-      let activeLazyFeature = null;
-      let lazyFeatureOpenRequest = 0;
-
-      async function openLazyFeatureTool(toolId) {
+      const lazyFeatureRegistry = createLazyToolRegistry({
+        specs: LAZY_TOOL_SPECS,
+        root: document,
+        beforeOpen: async (toolId, retryOpen) => {
         if ((toolId === 'teleprompter' || toolId === 'bg-removal') && isTauri) {
           // AI tools that depend on on-demand models gate at the home card:
           // no model, no tool page (dependencies install, then entry resumes).
           const ready = toolId === 'teleprompter'
             ? await requestTeleprompterOfflineModel(() => {
-                void openLazyFeatureTool(toolId);
+                void retryOpen();
               })
             : await requestMattingModelGate(() => {
-                void openLazyFeatureTool(toolId);
+                void retryOpen();
               });
-          if (!ready) return;
-        }
-        const spec = lazyFeatureTools[toolId];
-        if (!spec) return;
-        const requestId = ++lazyFeatureOpenRequest;
-        try {
-          const instanceKey = spec.instanceKey || toolId;
-          let instance = lazyFeatureInstances.get(instanceKey);
-          if (!instance) {
-            let pending = lazyFeaturePromises.get(instanceKey);
-            if (!pending) {
-              pending = spec.load().then(module => {
-                const initializer = module[spec.init];
-                if (typeof initializer !== 'function') throw new Error(`Missing ${spec.init}`);
-                const created = initializer({
-                  overlay: document.getElementById(spec.overlayId),
-                  notify: (message, options) => window.showToast?.(message, options),
-                  isTauri,
-                  readTextDocument: readTextStatsDocument,
-                  requestOfflineModel: requestTeleprompterOfflineModel,
-                  initStandardToolPlasma,
-                  disposeStandardToolPlasma,
-                  getOutputDir,
-                  ensureLibreOfficeAvailable: ensurePptRuntimeAvailable,
-                  openSettings: openSettingsOverlay,
-                  openMattingModelManager,
-                   openSupport: openDonationOverlay,
-                  openExternalUrl,
-                  handleWindowAction: handleWindowControlAction
-                });
-                lazyFeatureInstances.set(instanceKey, created);
-                return created;
-              }).finally(() => lazyFeaturePromises.delete(instanceKey));
-              lazyFeaturePromises.set(instanceKey, pending);
-            }
-            instance = await pending;
+            return ready;
           }
-          if (requestId !== lazyFeatureOpenRequest) return;
-          if (activeLazyFeature && activeLazyFeature !== instance) activeLazyFeature.close?.();
-          activeLazyFeature = instance;
-          instance.open?.(toolId);
-        } catch (error) {
+          return true;
+        },
+        createContext: () => ({
+          notify: (message, options) => window.showToast?.(message, options),
+          isTauri,
+          readTextDocument: readTextStatsDocument,
+          requestOfflineModel: requestTeleprompterOfflineModel,
+          initStandardToolPlasma,
+          disposeStandardToolPlasma,
+          getOutputDir,
+          ensureLibreOfficeAvailable: ensurePptRuntimeAvailable,
+          openSettings: openSettingsOverlay,
+          openMattingModelManager,
+          openSupport: openDonationOverlay,
+          openExternalUrl,
+          handleWindowAction: handleWindowControlAction
+        }),
+        onError: (error, toolId) => {
           console.error(`Cannot open ${toolId}:`, error);
           window.showToast?.(getLang() === 'zh' ? `工具加载失败：${String(error?.message || error)}` : `Failed to load tool: ${String(error?.message || error)}`);
         }
-      }
-
-      Object.keys(lazyFeatureTools).forEach(toolId => {
-        document.querySelectorAll(`.audio-list-item[data-tool="${toolId}"]`).forEach(item => {
-          item.addEventListener('click', () => void openLazyFeatureTool(toolId));
-          item.addEventListener('keydown', event => {
-            if (event.key !== 'Enter' && event.key !== ' ') return;
-            event.preventDefault();
-            void openLazyFeatureTool(toolId);
-          });
-        });
       });
-
-      document.addEventListener('keydown', event => {
-        if (event.key !== 'Escape' || !activeLazyFeature) return;
-        lazyFeatureOpenRequest += 1;
-        activeLazyFeature.close?.();
-        activeLazyFeature = null;
-      });
+      lazyFeatureRegistry.bind();
 
       updatePreviewController = initUpdatePreview({
         openExternalUrl,

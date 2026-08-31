@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [html, main, ui, css, rust, zh, en] = await Promise.all([
+const [html, main, lazyTools, ui, css, rust, zh, en] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/excel-to-pdf-ui.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/excel-to-pdf.css', import.meta.url), 'utf8'),
   readFile(new URL('../src-tauri/src/lib.rs', import.meta.url), 'utf8'),
@@ -14,7 +15,8 @@ const [html, main, ui, css, rust, zh, en] = await Promise.all([
 assert.match(html, /data-tool="excel-to-pdf"/);
 assert.match(html, /data-category="pdf"[\s\S]*data-tool="excel-to-pdf"/);
 assert.match(html, /id="excelToPdfOverlay"/);
-assert.match(main, /'excel-to-pdf':[\s\S]*import\('\.\/excel-to-pdf-ui\.js'\)[\s\S]*initExcelToPdfTool/);
+assert.match(lazyTools, /'excel-to-pdf':[\s\S]*import\('\.\.\/excel-to-pdf-ui\.js'\)[\s\S]*initExcelToPdfTool/);
+assert.match(main, /createLazyToolRegistry\([\s\S]*specs:\s*LAZY_TOOL_SPECS/);
 assert.match(main, /currentPhase === 'installing'[\s\S]*home\.dependencies\.installingDetail/);
 assert.match(main, /currentPhase === 'verifying'[\s\S]*home\.dependencies\.verifyingDetail/);
 assert.match(main, /dataset\.indeterminate = isPostDownload/);

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { startMcpServer } from '../cli/lib/mcp-server.mjs';
-import { readResponseTextLimited, ResponseSizeLimitError } from '../src/bounded-response.js';
+import { readResponseTextLimited, ResponseSizeLimitError } from '../src/core/bounded-response.js';
 
 const root = resolve(import.meta.dirname, '..');
 const repositoryRoot = resolve(root, '..');
@@ -173,7 +173,7 @@ const updateServiceSource = read('toolknit-desktop/src/update-service.js');
 check(updateServiceSource.includes('readResponseTextLimited(response, MAX_UPDATE_API_BYTES)'), 'Update API responses must have a streaming size limit');
 check(updateServiceSource.includes('readResponseTextLimited(response, MAX_UPDATE_NOTES_BYTES)'), 'Update note responses must have a streaming size limit');
 check(mainSource.includes('readResponseTextLimited(response, GITHUB_RESPONSE_MAX_BYTES)'), 'Homepage GitHub responses must have a streaming size limit');
-const boundedResponseSource = read('toolknit-desktop/src/bounded-response.js');
+const boundedResponseSource = read('toolknit-desktop/src/core/bounded-response.js');
 check(boundedResponseSource.includes('await reader.cancel()'), 'Oversized remote JSON streams must be cancelled immediately');
 
 const smallBoundedResponse = await readResponseTextLimited(new Response('ToolKnit'), 16);

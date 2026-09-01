@@ -9,6 +9,7 @@ const releaseTests = [
   'test:system-cleanup',
   'test:excel-to-pdf',
   'test:pdf-merge',
+  'test:pdf-merge-tool-contract',
   'test:pdf-split',
   'test:pdf-split-tool-contract',
   'test:pdf-to-image',

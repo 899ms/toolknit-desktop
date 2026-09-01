@@ -1,0 +1,3 @@
+.pdf-merge-v2:not(.pdf-split-v2) .pdf-merge-v2-poster::after {
+  content: 'PDF';
+}

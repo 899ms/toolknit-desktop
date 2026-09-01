@@ -9,6 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:pdf-merge": "node scripts/test-pdf-merge-core.mjs",
+    "test:pdf-merge-tool-contract": "node scripts/test-pdf-merge-tool-contract.mjs",
     "test:pdf-split": "node scripts/test-pdf-split-core.mjs",
     "test:pdf-split-tool-contract": "node scripts/test-pdf-split-tool-contract.mjs",
     "test:pdf-to-image": "node scripts/test-pdf-to-image-core.mjs",

@@ -23,6 +23,7 @@
     "test:ai-doc": "npm run stage:cli-resources && node scripts/test-ai-doc-core.mjs && node scripts/test-ai-doc-pdf-layout.mjs && node scripts/test-ai-doc-project-core.mjs && node scripts/test-ai-document-runtime.mjs",
     "test:ai-document-tool-contract": "node scripts/test-ai-document-tool-contract.mjs",
     "test:ai-table": "npm run stage:cli-resources && node scripts/test-ai-table-core.mjs && node scripts/test-ai-table-project-core.mjs && node scripts/test-ai-table-runtime.mjs && node scripts/test-ai-table-chart-scenarios.mjs",
+    "test:ai-table-tool-contract": "node scripts/test-ai-table-tool-contract.mjs",
     "test:ai-provider": "node scripts/test-ai-provider-core.mjs",
     "test:ai-translate": "node scripts/test-ai-translate-core.mjs",
     "test:ai-polish": "node scripts/test-ai-polish-core.mjs",

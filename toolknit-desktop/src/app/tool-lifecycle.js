@@ -9,7 +9,7 @@ function reportDisposalError(onError, error) {
 }
 
 export function createLifecycleScope({ onError } = {}) {
-  const disposers = [];
+  const disposers = new Set();
   let disposed = false;
   let revision = 0;
 
@@ -23,9 +23,10 @@ export function createLifecycleScope({ onError } = {}) {
     const release = () => {
       if (!active) return;
       active = false;
+      disposers.delete(release);
       try { disposer(); } catch (error) { reportDisposalError(onError, error); }
     };
-    disposers.push(release);
+    disposers.add(release);
     return release;
   }
 
@@ -72,8 +73,9 @@ export function createLifecycleScope({ onError } = {}) {
     if (disposed) return;
     disposed = true;
     revision += 1;
-    for (let index = disposers.length - 1; index >= 0; index -= 1) disposers[index]();
-    disposers.length = 0;
+    const pending = [...disposers].reverse();
+    disposers.clear();
+    for (const release of pending) release();
   }
 
   return {

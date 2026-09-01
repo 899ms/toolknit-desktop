@@ -97,6 +97,14 @@ scope.dispose();
 assert.deepEqual(disposalOrder, ['event', 'last', 'first']);
 assert.equal(target.listeners.get('ping').size, 0);
 
+const released = [];
+const releaseScope = createLifecycleScope();
+const releaseEarly = releaseScope.use(() => released.push('released'));
+releaseEarly();
+releaseEarly();
+releaseScope.dispose();
+assert.deepEqual(released, ['released'], 'manual lifecycle release must unregister itself');
+
 let normalizedClosed = 0;
 let normalizedDestroyed = 0;
 const normalized = normalizeToolInstance({

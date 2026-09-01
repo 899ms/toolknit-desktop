@@ -2,15 +2,19 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createAiDocumentRequestSession } from '../src/features/ai-document/request-session.js';
 
-const [html, main, specs, tool, editor, preview, exporter, prompts] = await Promise.all([
+const [html, main, styles, specs, tool, editor, preview, exporter, prompts, sharedCss, featureCss, editorCss] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-document/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-document/editor.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-document/preview.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-document/exporter.js', import.meta.url), 'utf8'),
-  readFile(new URL('../src/features/ai-document/prompts.js', import.meta.url), 'utf8')
+  readFile(new URL('../src/features/ai-document/prompts.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/ai-workbench/ai-workbench-shared.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/ai-document/ai-document.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/ai-document/ai-document-editor.css', import.meta.url), 'utf8')
 ]);
 
 for (const id of [
@@ -22,7 +26,7 @@ for (const id of [
 }
 
 assert.match(specs, /'ai-doc':\s*Object\.freeze\(\{[\s\S]*?import\('\.\/ai-document\/tool\.js'\)/);
-assert.match(main, /toolId === 'ai-polish' \|\| toolId === 'ai-translate' \|\| toolId === 'ai-doc'/);
+assert.match(main, /toolId === 'ai-polish'[\s\S]{0,180}toolId === 'ai-doc'/);
 assert.match(main, /isAiDocEditorDemoEntry[\s\S]*lazyFeatureRegistry\.open\('ai-doc'\)/);
 assert.doesNotMatch(main, /AI Document Tool|aiDocOverlay|openAiDocOverlay|AI_DOC_LIMITS|buildAiDocPdf/);
 
@@ -32,7 +36,12 @@ assert.match(tool, /createAiDocumentExporter/);
 assert.match(tool, /AI_DOC_SYSTEM_PROMPT/);
 assert.match(tool, /createLifecycleScope/);
 assert.match(tool, /createAiDocumentRequestSession/);
+assert.match(tool, /import '\.\.\/ai-workbench\/ai-workbench-shared\.css'/);
+assert.match(tool, /import '\.\/ai-document\.css'/);
+assert.match(tool, /import '\.\/ai-document-editor\.css'/);
 assert.match(tool, /requests\.cancel\(\)/);
+assert.match(tool, /owner\.use\(\(\) => requests\.cancel\(request\.id\)\)/);
+assert.match(tool, /releaseRequest\(\)/);
 assert.match(tool, /session\?\.dispose\(\)/);
 assert.match(tool, /isCurrent\(owner, id\)/);
 assert.match(tool, /messageScope\.event\(bubble, 'click'/);
@@ -55,6 +64,17 @@ assert.match(exporter, /current\(owner, id\)/);
 assert.doesNotMatch(preview, /\.innerHTML\s*=/);
 assert.match(prompts, /AI_DOC_EDITOR_DEMO_LAYOUT/);
 assert.match(prompts, /坐标系：x 范围 0-794, y 范围 0-1123/);
+assert.match(sharedCss, /\.ai-doc-chat-messages/);
+assert.match(sharedCss, /\.ai-doc-chat-input/);
+assert.match(sharedCss, /\.ai-doc-pill-btn/);
+assert.match(featureCss, /\.ai-doc-v2/);
+assert.doesNotMatch(featureCss, /\.ai-doc-edit-v2/);
+assert.doesNotMatch(featureCss, /\.ai-table-v2/);
+assert.match(editorCss, /\.ai-doc-edit-v2/);
+assert.doesNotMatch(editorCss, /\.ai-table-v2/);
+assert.ok(featureCss.split(/\r?\n/).length <= 1200, 'AI Document tool CSS must remain below the oversized-module limit');
+assert.ok(editorCss.split(/\r?\n/).length <= 1200, 'AI Document editor CSS must remain below the oversized-module limit');
+assert.doesNotMatch(styles, /AI Document · Tool Page 2\.0|AI Table Tool/);
 
 const timers = new Map();
 let timerSeed = 0;
@@ -82,5 +102,9 @@ assert.equal(second.signal.aborted, true);
 assert.equal(second.timedOut(), true);
 assert.equal(requests.finish(second.id), true);
 assert.equal(requests.busy, false);
+const third = requests.begin();
+assert.equal(requests.cancel(second.id), false, 'stale cleanup must not cancel a newer request');
+assert.equal(requests.isCurrent(third.id), true);
+assert.equal(requests.cancel(third.id), true);
 
 console.log('AI Document lazy-loading, module ownership, lifecycle and injection contracts passed');

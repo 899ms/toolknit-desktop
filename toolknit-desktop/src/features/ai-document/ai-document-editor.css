@@ -1,0 +1,977 @@
+/* AI Document editor overlay styles */
+/* Full-screen edit overlay */
+.ai-doc-edit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1005;
+  display: none;
+  flex-direction: column;
+  background: #0a0a0f;
+}
+
+.ai-doc-edit-overlay.visible {
+  display: flex;
+}
+
+.ai-doc-edit-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 1;
+}
+
+.ai-doc-edit-overlay .audio-convert-header {
+  position: relative;
+  z-index: 2;
+  padding: 10px 28px;
+  height: 72px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  -webkit-app-region: drag;
+}
+
+.ai-doc-edit-overlay .ai-doc-edit-topbar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  background:
+    linear-gradient(180deg, rgba(8, 8, 10, 0.82), rgba(8, 8, 10, 0.54)),
+    rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.ai-doc-edit-overlay .settings-back {
+  margin: 0;
+  -webkit-app-region: no-drag;
+}
+
+.ai-doc-edit-overlay .pdf-merge-v2-back {
+  height: 38px;
+  min-width: 96px;
+  border-radius: 12px;
+}
+
+.ai-doc-edit-top-tag {
+  flex: 0 0 auto;
+  max-width: 250px;
+}
+
+.ai-doc-edit-export-btn {
+  white-space: nowrap;
+  margin: 0;
+  -webkit-app-region: no-drag;
+}
+
+.ai-doc-edit-header-spacer {
+  flex: 1 1 24px;
+}
+
+.ai-doc-edit-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(12, 12, 18, 0.72);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+  -webkit-app-region: no-drag;
+}
+
+.ai-doc-edit-tool-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ai-doc-edit-style-group,
+.ai-doc-global-style-group,
+.ai-doc-style-align-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.ai-doc-style-number,
+.ai-doc-color-control {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.ai-doc-style-number > span {
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), sans-serif;
+  font-size: 16px;
+}
+
+.ai-doc-style-number input {
+  width: 38px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+}
+
+.ai-doc-style-number input:disabled { color: rgba(255, 255, 255, 0.3); }
+.ai-doc-style-number input::-webkit-inner-spin-button { opacity: 0.45; }
+
+.ai-doc-color-control > span {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ai-doc-color-control-text > span {
+  border: 0;
+  color: #fff;
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), sans-serif;
+  font-size: 17px;
+  line-height: 15px;
+}
+
+.ai-doc-color-control-background > span { border-radius: 2px; }
+.ai-doc-color-control-border > span { border-width: 3px; border-radius: 2px; }
+.ai-doc-color-control input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.ai-doc-color-control input:disabled { cursor: default; }
+.ai-doc-color-control input:not(:disabled) + span { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08); }
+
+.ai-doc-edit-icon-btn.active,
+.ai-doc-global-style-apply:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.ai-doc-global-style-group select,
+.ai-doc-global-style-apply {
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.ai-doc-global-style-group select { max-width: 92px; padding: 0 4px; }
+.ai-doc-global-style-group select option { color: #111; }
+.ai-doc-global-style-apply { padding: 0 8px; }
+
+.ai-doc-edit-icon-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ai-doc-edit-icon-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.ai-doc-edit-icon-btn:disabled {
+  color: rgba(255, 255, 255, 0.22);
+  cursor: default;
+}
+
+.ai-doc-edit-icon-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.ai-doc-edit-delete-btn:hover:not(:disabled) {
+  color: #ff8c8c;
+}
+
+.ai-doc-edit-tool-divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.ai-doc-edit-selection-status {
+  width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  text-align: center;
+}
+
+.ai-doc-edit-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  overflow-y: auto;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+.ai-doc-style-inspector {
+  position: absolute;
+  z-index: 5;
+  top: 82px;
+  right: 128px;
+  display: none;
+  width: 238px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(16, 16, 24, 0.94);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(14px);
+}
+
+.ai-doc-style-inspector.visible { display: grid; gap: 12px; }
+.ai-doc-style-inspector-title { display: flex; align-items: center; justify-content: space-between; color: #fff; font-size: 13px; font-weight: 600; }
+.ai-doc-style-inspector-title button { display: grid; width: 26px; height: 26px; padding: 0; place-items: center; border: 0; background: transparent; color: rgba(255, 255, 255, 0.72); cursor: pointer; }
+.ai-doc-style-inspector-title svg { width: 16px; height: 16px; }
+.ai-doc-style-inspector label { display: grid; grid-template-columns: 1fr auto; gap: 5px 10px; color: rgba(255, 255, 255, 0.7); font-size: 12px; }
+.ai-doc-style-inspector output { color: #fff; font-variant-numeric: tabular-nums; }
+.ai-doc-style-inspector input { grid-column: 1 / -1; width: 100%; accent-color: #ffffff; }
+.ai-doc-style-inspector input:disabled { opacity: 0.3; }
+
+.ai-doc-edit-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ai-doc-edit-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+
+@media (max-width: 980px) {
+  .ai-doc-edit-selection-status {
+    display: none;
+  }
+  .ai-doc-edit-toolbar {
+    gap: 5px;
+  }
+  .ai-doc-edit-toolbar > .ai-doc-edit-tool-divider {
+    display: none;
+  }
+  .ai-doc-global-style-group { display: none; }
+}
+
+@media (max-width: 760px) {
+  .ai-doc-edit-overlay .audio-convert-header {
+    height: 64px;
+    gap: 6px;
+    padding: 8px 14px;
+  }
+
+  .ai-doc-edit-toolbar {
+    gap: 2px;
+    padding: 4px;
+  }
+
+  .ai-doc-edit-style-group { display: none; }
+  .ai-doc-style-inspector { top: 72px; right: 14px; }
+
+  .ai-doc-edit-icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ai-doc-edit-export-btn {
+    width: 40px;
+    min-width: 40px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .ai-doc-edit-export-btn span {
+    display: none;
+  }
+}
+
+/* ===== AI Document Editor · Workbench 2.0 ===== */
+.ai-doc-edit-overlay.ai-doc-edit-v2 {
+  display: none;
+  grid-template-rows: 68px minmax(0, 1fr);
+  background: #050506;
+  color: var(--ink);
+  overflow: hidden;
+}
+
+.ai-doc-edit-overlay.ai-doc-edit-v2.visible {
+  display: grid;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-bg {
+  opacity: 0.72;
+}
+
+.ai-doc-edit-v2-topbar {
+  height: 68px;
+}
+
+.ai-doc-edit-v2-topbar-left {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ai-doc-edit-v2 .pdf-merge-v2-back {
+  flex: 0 0 auto;
+  margin: 0;
+  -webkit-app-region: no-drag;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-top-tag {
+  max-width: none;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-export-btn {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 1px solid #fff;
+  border-radius: 13px;
+  background: #fff;
+  color: #050506;
+  font-weight: 900;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.36);
+  -webkit-app-region: no-drag;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-export-btn,
+.ai-doc-edit-v2 .ai-doc-edit-export-btn span,
+.ai-doc-edit-v2 .ai-doc-edit-export-btn svg {
+  color: #050506;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-export-btn:hover {
+  transform: translateY(-1px);
+  background: #fff;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.42);
+}
+
+.ai-doc-edit-workbench {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(336px, 380px);
+  gap: 18px;
+  padding: 22px 28px 28px;
+  overflow: hidden;
+}
+
+.ai-doc-edit-preview-pane,
+.ai-doc-edit-side-panel {
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+    rgba(0, 0, 0, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.ai-doc-edit-preview-pane {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.ai-doc-edit-preview-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ai-doc-edit-preview-head span,
+.ai-doc-edit-side-card-head > span {
+  display: block;
+  color: rgba(245, 245, 243, 0.34);
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.ai-doc-edit-preview-head h2,
+.ai-doc-edit-side-card-head h3 {
+  margin: 4px 0 0;
+  color: rgba(245, 245, 243, 0.92);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+.ai-doc-edit-preview-head h2 {
+  font-size: clamp(24px, 2vw, 34px);
+}
+
+.ai-doc-edit-preview-head p {
+  max-width: 420px;
+  margin: 0;
+  color: rgba(245, 245, 243, 0.48);
+  font-size: 12px;
+  line-height: 1.65;
+  text-align: right;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-scroll {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 34px 34px 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 46px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.045), transparent 28%),
+    radial-gradient(circle at 82% 76%, rgba(255, 255, 255, 0.03), transparent 28%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(rgba(255, 255, 255, 0.016) 1px, transparent 1px) 0 0 / 40px 40px,
+    rgba(255, 255, 255, 0.018);
+  scrollbar-color: rgba(255, 255, 255, 0.5) transparent;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.34);
+  border-radius: 999px;
+}
+
+.ai-doc-edit-v2 .ai-doc-page {
+  border-radius: 3px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 26px 76px rgba(0, 0, 0, 0.5);
+}
+
+.ai-doc-edit-v2 .ai-doc-page-num {
+  bottom: -28px;
+  color: rgba(245, 245, 243, 0.42);
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  letter-spacing: 0.08em;
+}
+
+.ai-doc-edit-v2 .ai-doc-region:hover {
+  outline: 1px dashed rgba(0, 0, 0, 0.42);
+}
+
+.ai-doc-edit-v2 .ai-doc-region.selected {
+  outline: 2px solid #111;
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.88),
+    0 0 0 6px rgba(0, 0, 0, 0.16),
+    0 14px 30px rgba(0, 0, 0, 0.18);
+}
+
+.ai-doc-edit-v2 .ai-doc-resize-handle {
+  background: #111;
+  border-color: #fff;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+.ai-doc-edit-side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  scrollbar-color: rgba(255, 255, 255, 0.34) transparent;
+}
+
+.ai-doc-edit-side-panel::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.ai-doc-edit-side-panel::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+.ai-doc-edit-side-card {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.032);
+}
+
+.ai-doc-edit-side-card-head {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ai-doc-edit-side-card-head > div {
+  min-width: 0;
+}
+
+.ai-doc-edit-side-card-head h3 {
+  font-size: 15px;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-selection-status {
+  width: auto;
+  min-height: 44px;
+  padding: 12px 13px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.18);
+  color: rgba(245, 245, 243, 0.68);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+  overflow: visible;
+}
+
+.ai-doc-edit-tool-row,
+.ai-doc-edit-style-group,
+.ai-doc-style-align-group,
+.ai-doc-global-style-group,
+.ai-doc-edit-color-grid {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.ai-doc-edit-tool-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ai-doc-edit-arrange-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ai-doc-edit-style-group {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.ai-doc-style-align-group {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ai-doc-edit-color-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-icon-btn,
+.ai-doc-edit-v2 .ai-doc-style-number,
+.ai-doc-edit-v2 .ai-doc-color-control,
+.ai-doc-edit-v2 .ai-doc-global-style-apply,
+.ai-doc-edit-v2 .ai-doc-global-style-group select {
+  min-width: 0;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.105);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.055);
+  color: rgba(245, 245, 243, 0.82);
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-icon-btn {
+  width: auto;
+  padding: 0 10px;
+  gap: 7px;
+  font-size: 12px;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-icon-btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-icon-btn:hover:not(:disabled),
+.ai-doc-edit-v2 .ai-doc-style-number:hover,
+.ai-doc-edit-v2 .ai-doc-color-control:hover,
+.ai-doc-edit-v2 .ai-doc-global-style-apply:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-icon-btn.active {
+  border-color: rgba(255, 255, 255, 0.72);
+  background: #fff;
+  color: #050506;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-icon-btn.active svg,
+.ai-doc-edit-v2 .ai-doc-edit-icon-btn.active span {
+  color: #050506;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-icon-btn:disabled,
+.ai-doc-edit-v2 .ai-doc-style-number:has(input:disabled),
+.ai-doc-edit-v2 .ai-doc-color-control:has(input:disabled) {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+
+.ai-doc-edit-v2 .ai-doc-edit-delete-btn:hover:not(:disabled) {
+  border-color: rgba(255, 105, 105, 0.36);
+  background: rgba(255, 78, 78, 0.12);
+  color: #ffb0b0;
+}
+
+.ai-doc-edit-v2 .ai-doc-style-number {
+  width: auto;
+  padding: 0 10px;
+  justify-content: space-between;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.ai-doc-edit-v2 .ai-doc-style-number > span {
+  color: rgba(245, 245, 243, 0.52);
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.ai-doc-edit-v2 .ai-doc-style-number input {
+  width: 60px;
+  height: 28px;
+  border: 0;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.22);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ai-doc-edit-v2 .ai-doc-color-control {
+  width: auto;
+  flex-direction: column;
+  gap: 5px;
+  padding: 7px 8px;
+  height: 58px;
+  cursor: pointer;
+}
+
+.ai-doc-edit-v2 .ai-doc-color-control > span {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-color: rgba(255, 255, 255, 0.52);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ai-doc-edit-v2 .ai-doc-color-control-text > span {
+  width: 18px;
+  height: 18px;
+  color: #fff;
+  font-size: 16px;
+}
+
+.ai-doc-edit-v2 .ai-doc-color-control em {
+  color: rgba(245, 245, 243, 0.58);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.ai-doc-edit-v2 .ai-doc-color-control input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.ai-doc-edit-v2 .ai-doc-global-style-group {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.ai-doc-edit-v2 .ai-doc-global-style-group select {
+  width: 100%;
+  max-width: none;
+  padding: 0 12px;
+  outline: 0;
+}
+
+.ai-doc-edit-v2 .ai-doc-global-style-group select option {
+  color: #111;
+}
+
+.ai-doc-edit-v2 .ai-doc-global-style-apply {
+  padding: 0 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.ai-doc-edit-side-card-detail .ai-doc-edit-side-card-head {
+  align-items: flex-start;
+}
+
+.ai-doc-edit-v2 .ai-doc-more-style-btn {
+  width: auto;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 11px;
+}
+
+.ai-doc-edit-v2 .ai-doc-style-inspector {
+  position: static;
+  z-index: auto;
+  top: auto;
+  right: auto;
+  width: 100%;
+  display: none;
+  padding: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  background: rgba(0, 0, 0, 0.16);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.ai-doc-edit-v2 .ai-doc-style-inspector.visible {
+  display: grid;
+  gap: 12px;
+  animation: aiDocSidePanelIn 180ms ease both;
+}
+
+@keyframes aiDocSidePanelIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ai-doc-edit-v2 .ai-doc-style-inspector-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: rgba(245, 245, 243, 0.82);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ai-doc-edit-v2 .ai-doc-style-inspector-title button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ai-doc-edit-v2 .ai-doc-style-inspector label {
+  color: rgba(245, 245, 243, 0.62);
+  font-size: 12px;
+}
+
+.ai-doc-edit-v2 .ai-doc-style-inspector output {
+  color: #fff;
+}
+
+.ai-doc-edit-v2 .ai-doc-style-inspector input {
+  accent-color: #ffffff;
+}
+
+@media (max-width: 1240px) {
+  .ai-doc-edit-workbench {
+    grid-template-columns: minmax(0, 1fr) minmax(318px, 344px);
+    gap: 14px;
+    padding: 18px 20px 22px;
+  }
+
+  .ai-doc-edit-v2 .ai-doc-edit-scroll {
+    padding: 26px 22px 50px;
+  }
+}
+
+@media (max-width: 1060px) {
+  .ai-doc-edit-workbench {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(230px, 34vh);
+  }
+
+  .ai-doc-edit-side-panel {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(300px, 360px);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}
+
+@media (max-height: 760px) {
+  .ai-doc-edit-v2-topbar {
+    height: 68px;
+  }
+
+  .ai-doc-edit-workbench {
+    padding-block: 14px 18px;
+  }
+
+  .ai-doc-edit-preview-head {
+    padding: 15px 18px 12px;
+  }
+
+  .ai-doc-edit-preview-head p {
+    display: none;
+  }
+
+  .ai-doc-edit-side-card {
+    padding: 12px;
+    gap: 9px;
+  }
+}
+.ai-doc-v2 .ai-doc-v2-workspace {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(390px, 0.92fr) minmax(510px, 1.08fr);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 16px;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.ai-doc-v2 .ai-doc-v2-chat-card,
+.ai-doc-v2 .ai-doc-v2-preview-card {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  flex: initial;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.026);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  overflow: hidden;
+  padding: 18px;
+}
+
+.ai-doc-v2 .ai-doc-v2-chat-card {
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  flex-direction: initial;
+  gap: 14px;
+}
+
+.ai-doc-v2 .ai-doc-v2-preview-card {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  flex-direction: initial;
+  gap: 16px;
+}
+
+.ai-doc-v2 .ai-doc-chat-messages {
+  flex: initial;
+  min-height: 0;
+  padding: 2px 4px 2px 0;
+  gap: 12px;
+}
+
+.ai-doc-v2 .ai-doc-chat-input-area {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 10px;
+  padding: 0;
+  border-top: 0;
+}
+
+.ai-doc-v2 .ai-doc-chat-input,
+.ai-doc-v2 .ai-doc-chat-send {
+  min-height: 88px;
+}
+
+.ai-doc-v2 .ai-doc-canvas-empty {
+  flex: initial;
+  min-height: 0;
+  border: 1px dashed rgba(255, 255, 255, 0.13);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.08), transparent 32%),
+    rgba(255, 255, 255, 0.02);
+}
+
+.ai-doc-v2 .ai-doc-canvas-toolbar {
+  flex: initial;
+  padding: 0;
+  border-top: 0;
+}
+
+@media (max-width: 1280px) {
+  .ai-doc-v2 .ai-doc-v2-workspace {
+    grid-template-columns: minmax(360px, 0.94fr) minmax(430px, 1.06fr);
+    padding: 20px;
+  }
+}
+
+@media (max-width: 1080px) {
+  .ai-doc-v2 .ai-doc-v2-workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(430px, 1fr) minmax(360px, 1fr);
+  }
+}
+
+@media (max-height: 760px) {
+  .ai-doc-v2 .ai-doc-v2-workspace {
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .ai-doc-v2 .ai-doc-v2-chat-card,
+  .ai-doc-v2 .ai-doc-v2-preview-card {
+    padding: 15px;
+    gap: 12px;
+  }
+
+  .ai-doc-v2 .ai-doc-chat-input,
+  .ai-doc-v2 .ai-doc-chat-send {
+    min-height: 74px;
+  }
+}
+
+/* ===== End AI Document Tool ===== */

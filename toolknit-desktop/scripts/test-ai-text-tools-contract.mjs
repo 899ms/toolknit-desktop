@@ -1,7 +1,18 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [html, main, globalStyles, lazySpecs, polish, polishStyles, translate, translateStyles, sharedStyles] = await Promise.all([
+const [
+  html,
+  main,
+  globalStyles,
+  lazySpecs,
+  polish,
+  polishStyles,
+  translate,
+  translateStyles,
+  sharedStyles,
+  workbenchStyles
+] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
@@ -10,7 +21,8 @@ const [html, main, globalStyles, lazySpecs, polish, polishStyles, translate, tra
   readFile(new URL('../src/features/ai-polish/ai-polish.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-translate/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-translate/ai-translate.css', import.meta.url), 'utf8'),
-  readFile(new URL('../src/features/ai-text/ai-text-shared.css', import.meta.url), 'utf8')
+  readFile(new URL('../src/features/ai-text/ai-text-shared.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/ai-workbench/ai-workbench-shared.css', import.meta.url), 'utf8')
 ]);
 
 for (const id of [
@@ -28,9 +40,10 @@ assert.match(main, /toolId === 'ai-polish' \|\| toolId === 'ai-translate'[\s\S]*
 assert.match(main, /requestAi:\s*callDeepSeek/);
 assert.match(main, /extractJson,/);
 assert.doesNotMatch(globalStyles, /\.ai-polish|\.ai-translate|#aiPolish|#aiTranslate/);
-assert.match(globalStyles, /\.ai-doc-chat-msg\s*\{[\s\S]*?animation:\s*fadeInUp/);
-assert.match(globalStyles, /@keyframes\s+fadeInUp\s*\{/,
-  'AI Document must not depend on lazy AI text styles for its message animation');
+assert.doesNotMatch(globalStyles, /\.ai-doc-chat-msg\s*\{/);
+assert.match(workbenchStyles, /\.ai-doc-chat-msg\s*\{[\s\S]*?animation:\s*fadeInUp/);
+assert.match(workbenchStyles, /@keyframes\s+fadeInUp\s*\{/,
+  'AI workbench tools must not depend on lazy AI text styles for message animation');
 
 for (const [name, source] of [['polish', polish], ['translate', translate]]) {
   assert.match(source, /createLifecycleScope/);

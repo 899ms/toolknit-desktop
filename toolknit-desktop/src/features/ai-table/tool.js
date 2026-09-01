@@ -1,23 +1,22 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
 import {
-  AI_DOC_LIMITS,
-  AiDocLayoutError,
-  compactAiDocHistoryMessage,
-  normalizeAiDocLayout
-} from '../../ai-doc-core.js';
+  AI_TABLE_LIMITS,
+  AiTableDataError,
+  compactAiTableHistoryMessage,
+  isAiTableResponseReady,
+  normalizeAiTableData
+} from '../../ai-table-core.js';
+import { createSerializedRequestSession } from '../../core/serialized-request-session.js';
 import { t } from '../../i18n.js';
-import { createAiDocumentEditor } from './editor.js';
-import { createAiDocumentExporter } from './exporter.js';
-import { createAiDocumentPreview } from './preview.js';
+import { createAiTableEditor } from './editor.js';
+import { createAiTableExporter } from './exporter.js';
 import {
-  AI_DOC_EDITOR_DEMO_LAYOUT,
-  AI_DOC_PRESET_PROMPTS,
-  AI_DOC_SYSTEM_PROMPT
+  AI_TABLE_DEMO_DATA,
+  AI_TABLE_PRESET_PROMPTS,
+  AI_TABLE_SYSTEM_PROMPT
 } from './prompts.js';
-import { createAiDocumentRequestSession } from './request-session.js';
 import '../ai-workbench/ai-workbench-shared.css';
-import './ai-document.css';
-import './ai-document-editor.css';
+import './ai-table.css';
 
 const REQUEST_TIMEOUT_MS = 90_000;
 
@@ -29,50 +28,49 @@ function appendToolKnitAvatar(container, alt) {
   container.replaceChildren(image);
 }
 
-export function initAiDocumentTool({
+export function initAiTableTool({
   overlay,
   isTauri = false,
   requestAi,
   extractJson,
   getOutputDir,
   displayFilesystemPath,
+  fillUserAvatar = container => appendToolKnitAvatar(container, 'ToolKnit'),
+  openHelp = () => {},
   refreshIcons = () => {},
   initStandardToolPlasma = () => null,
   disposeStandardToolPlasma = instance => instance
 } = {}) {
-  if (!overlay) throw new Error('ai-document:missing-overlay');
-  if (typeof requestAi !== 'function') throw new Error('ai-document:missing-ai-request');
-  if (typeof extractJson !== 'function') throw new Error('ai-document:missing-json-extractor');
-  if (typeof getOutputDir !== 'function') throw new Error('ai-document:missing-output-directory');
+  if (!overlay) throw new Error('ai-table:missing-overlay');
+  if (typeof requestAi !== 'function') throw new Error('ai-table:missing-ai-request');
+  if (typeof extractJson !== 'function') throw new Error('ai-table:missing-json-extractor');
+  if (typeof getOutputDir !== 'function') throw new Error('ai-table:missing-output-directory');
 
   const lifecycle = createLifecycleScope();
   const byId = id => document.getElementById(id);
-  const back = byId('aiDocBack');
-  const background = byId('aiDocBg');
-  const messages = byId('aiDocChatMessages');
-  const input = byId('aiDocChatInput');
-  const sendButton = byId('aiDocChatSend');
-  const empty = byId('aiDocCanvasEmpty');
-  const thumbScroll = byId('aiDocThumbScroll');
-  const canvasToolbar = byId('aiDocCanvasToolbar');
-  const exportButton = byId('aiDocExportBtn');
-  const openEditorButton = byId('aiDocOpenEditorBtn');
-  const resetButton = byId('aiDocResetBtn');
-  const previewMeta = byId('aiDocPreviewMeta');
-  const inputCounter = byId('aiDocInputCounter');
-  const mask = byId('aiDocMask');
-  const maskText = byId('aiDocMaskText');
-  const isEditorDemo = import.meta.env.DEV
-    && new URLSearchParams(window.location.search).get('ai-doc-editor-demo') === '1';
-
+  const back = byId('aiTableBack');
+  const background = byId('aiTableBg');
+  const messages = byId('aiTableChatMessages');
+  const input = byId('aiTableChatInput');
+  const sendButton = byId('aiTableChatSend');
+  const empty = byId('aiTableCanvasEmpty');
+  const previewScroll = byId('aiTablePreviewScroll');
+  const toolbar = byId('aiTableCanvasToolbar');
+  const undoButton = byId('aiTableUndoBtn');
+  const resetButton = byId('aiTableResetBtn');
+  const mask = byId('aiTableMask');
+  const maskText = byId('aiTableMaskText');
+  const isDemo = import.meta.env.DEV
+    && new URLSearchParams(window.location.search).get('ai-table-demo') === '1';
+  const requests = createSerializedRequestSession({ timeoutMs: REQUEST_TIMEOUT_MS });
   let session = null;
-  let plasma = null;
-  let history = [];
-  let exporter = null;
   let messageScope = null;
-  const requests = createAiDocumentRequestSession({ timeoutMs: REQUEST_TIMEOUT_MS });
+  let history = [];
+  let plasma = null;
+  let exporter = null;
 
-  const bind = (target, type, listener, options) => target && lifecycle.event(target, type, listener, options);
+  const bind = (target, type, listener, options) => target
+    && lifecycle.event(target, type, listener, options);
   const isOpenSession = owner => owner && owner === session && !owner.disposed
     && overlay.classList.contains('visible');
   const isCurrent = (owner, id) => isOpenSession(owner) && requests.isCurrent(id);
@@ -87,15 +85,13 @@ export function initAiDocumentTool({
   }
 
   function updateInputState() {
-    const length = input?.value?.length || 0;
-    if (inputCounter) inputCounter.textContent = `${length} / ${AI_DOC_LIMITS.maxPromptChars}`;
     if (sendButton) sendButton.disabled = !input?.value?.trim() || requests.busy;
   }
 
   function appendHistory(role, content) {
-    const compact = compactAiDocHistoryMessage(content);
+    const compact = compactAiTableHistoryMessage(content);
     if (!compact) return;
-    history = [...history, { role, content: compact }].slice(-AI_DOC_LIMITS.maxHistoryMessages);
+    history = [...history, { role, content: compact }].slice(-AI_TABLE_LIMITS.maxHistoryMessages);
   }
 
   function addChatMessage(role, text, link = false) {
@@ -104,7 +100,8 @@ export function initAiDocumentTool({
     message.className = `ai-doc-chat-msg ai-doc-chat-msg-${role}`;
     const avatar = document.createElement('div');
     avatar.className = 'ai-doc-chat-avatar';
-    appendToolKnitAvatar(avatar, role === 'ai' ? 'AI' : 'ToolKnit');
+    if (role === 'ai') appendToolKnitAvatar(avatar, 'AI');
+    else fillUserAvatar(avatar);
     const bubble = document.createElement('div');
     bubble.className = 'ai-doc-chat-bubble';
     if (link) bubble.classList.add('ai-doc-gen-link');
@@ -130,7 +127,7 @@ export function initAiDocumentTool({
     title.textContent = t('home.aiDoc.chipTitle');
     const chips = document.createElement('div');
     chips.className = 'ai-doc-prompt-chips';
-    for (const preset of AI_DOC_PRESET_PROMPTS) {
+    for (const preset of AI_TABLE_PRESET_PROMPTS) {
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'ai-doc-prompt-chip';
@@ -144,30 +141,22 @@ export function initAiDocumentTool({
     messages.scrollTop = messages.scrollHeight;
   }
 
-  const preview = createAiDocumentPreview({
+  const editor = createAiTableEditor({
     empty,
-    scroll: thumbScroll,
-    toolbar: canvasToolbar,
-    meta: previewMeta,
-    t,
-    openEditor: () => editor.open(),
+    scroll: previewScroll,
+    toolbar,
+    undoButton,
+    addChatMessage,
+    openHelp,
     refreshIcons
   });
 
-  const editor = createAiDocumentEditor({
+  exporter = createAiTableExporter({
     isTauri,
-    addChatMessage,
-    refreshIcons,
-    initStandardToolPlasma,
-    disposeStandardToolPlasma,
-    onExport: () => exporter?.exportPdf(),
-    onClose: layout => preview.render(layout)
-  });
-
-  exporter = createAiDocumentExporter({
-    isTauri,
-    isEditorDemo,
-    getLayout: editor.getLayout,
+    isDemo,
+    getData: editor.getData,
+    getChartEntries: editor.getChartEntries,
+    waitForCharts: editor.waitForCharts,
     getOutputDir,
     displayFilesystemPath,
     showMask,
@@ -180,11 +169,6 @@ export function initAiDocumentTool({
     updateInputState();
   }
 
-  function finishRequest(owner, id) {
-    if (!isCurrent(owner, id)) return false;
-    return requests.finish(id);
-  }
-
   function resetState() {
     cancelRequest();
     hideMask();
@@ -192,30 +176,18 @@ export function initAiDocumentTool({
     messageScope?.dispose();
     messageScope = createLifecycleScope();
     editor.reset();
-    preview.clear();
     messages?.replaceChildren();
-    addChatMessage('ai', t('home.aiDoc.welcome'));
+    addChatMessage('ai', t('home.aiTable.welcome'));
     addPromptChips();
     if (input) input.value = '';
     updateInputState();
   }
 
-  function layoutErrorKey(error) {
-    return {
-      response_too_large: 'home.aiDoc.responseTooLarge',
-      too_many_pages: 'home.aiDoc.tooManyPages',
-      too_many_regions: 'home.aiDoc.tooManyRegions',
-      region_text_too_large: 'home.aiDoc.regionTextTooLarge',
-      field_text_too_large: 'home.aiDoc.regionTextTooLarge',
-      document_text_too_large: 'home.aiDoc.documentTextTooLarge'
-    }[error.code] || 'home.aiDoc.parseError';
-  }
-
   async function send() {
     const prompt = input?.value?.trim();
     if (!prompt || requests.busy) return;
-    if (prompt.length > AI_DOC_LIMITS.maxPromptChars) {
-      addChatMessage('ai', t('home.aiDoc.promptTooLong', { max: AI_DOC_LIMITS.maxPromptChars }));
+    if (prompt.length > AI_TABLE_LIMITS.maxPromptChars) {
+      addChatMessage('ai', t('home.aiTable.promptTooLong', { max: AI_TABLE_LIMITS.maxPromptChars }));
       return;
     }
     const owner = session;
@@ -227,11 +199,11 @@ export function initAiDocumentTool({
     input.value = '';
     appendHistory('user', prompt);
     updateInputState();
-    showMask(t('home.aiDoc.thinking'));
+    showMask(t('home.aiTable.thinking'));
 
     try {
       const content = await requestAi([
-        { role: 'system', content: AI_DOC_SYSTEM_PROMPT },
+        { role: 'system', content: AI_TABLE_SYSTEM_PROMPT },
         ...history.map(message => ({
           role: message.role === 'user' ? 'user' : 'assistant',
           content: message.content
@@ -239,62 +211,69 @@ export function initAiDocumentTool({
       ], request.signal, 8192);
       if (!isCurrent(owner, request.id)) return;
       if (typeof content !== 'string' || !content.trim()) {
-        throw new AiDocLayoutError('invalid_layout', 'AI returned an empty response.');
+        throw new AiTableDataError('invalid_table', 'AI returned an empty response.');
       }
-      if (content.length > AI_DOC_LIMITS.maxResponseChars) {
-        throw new AiDocLayoutError('response_too_large', 'AI response exceeds the supported size.');
+      if (content.length > AI_TABLE_LIMITS.maxResponseChars) {
+        throw new AiTableDataError('table_too_large', 'AI response exceeds the supported size.');
       }
       const json = extractJson(content);
       if (!json) {
-        const response = compactAiDocHistoryMessage(content);
+        const response = compactAiTableHistoryMessage(content);
         addChatMessage('ai', response);
         appendHistory('assistant', response);
         return;
       }
+
       let parsed;
       try {
         parsed = JSON.parse(json);
       } catch (error) {
-        console.error('[AI Doc] JSON parse failed:', error?.name || 'SyntaxError');
+        console.error('[AI Table] JSON parse failed:', error?.name || 'SyntaxError');
         try {
           parsed = JSON.parse(json.replace(/[\u0000-\u001F\uFEFF\uFFFD]/g, ' ').replace(/\n/g, '\\n'));
         } catch {
-          addChatMessage('ai', t('home.aiDoc.parseError'));
+          addChatMessage('ai', t('home.aiTable.parseError'));
           return;
         }
       }
+
       if (parsed.ready === false && parsed.question) {
-        const question = compactAiDocHistoryMessage(parsed.question);
-        if (!question) throw new AiDocLayoutError('invalid_layout', 'AI question is empty.');
+        const question = compactAiTableHistoryMessage(parsed.question);
+        if (!question) throw new AiTableDataError('invalid_table', 'AI question is empty.');
         addChatMessage('ai', question);
         appendHistory('assistant', question);
         return;
       }
-      if (parsed.ready !== true
-        && !(parsed.ready === undefined && Array.isArray(parsed.columns) && Array.isArray(parsed.rows))) {
-        console.warn('[AI Doc] response schema is missing ready/pages.');
-        addChatMessage('ai', t('home.aiDoc.parseError'));
+      if (!isAiTableResponseReady(parsed)) {
+        console.warn('[AI Table] response schema is missing required fields.');
+        addChatMessage('ai', t('home.aiTable.parseError'));
         return;
       }
-      const normalized = normalizeAiDocLayout(parsed);
-      const summary = normalized.summary || t('home.aiDoc.docReady');
-      const bubble = addChatMessage('ai', summary, true);
-      const prepared = editor.setLayout(normalized);
-      appendHistory('assistant', `文档已生成：${summary}。后续如需修改，请说明要调整的内容。`);
-      if (bubble) messageScope.event(bubble, 'click', () => editor.open());
-      preview.render(prepared);
+
+      const normalized = normalizeAiTableData(parsed);
+      const summary = normalized.summary || t('home.aiTable.summaryFallback');
+      const bubble = addChatMessage(
+        'ai',
+        `${summary}\n\n${t('home.aiTable.afterGenerateGuide')}`,
+        true
+      );
+      appendHistory('assistant', `${summary} ${t('home.aiTable.afterGenerateGuide')}`);
+      if (bubble) messageScope.event(bubble, 'click', () => editor.scrollIntoView());
+      editor.setData(normalized);
     } catch (error) {
       if (!isCurrent(owner, request.id)) return;
-      console.error('[AI Doc] Error:', error);
+      console.error('[AI Table] Error:', error);
       if (request.signal.aborted) {
-        if (request.timedOut()) addChatMessage('ai', t('home.aiDoc.requestTimeout'));
-      } else if (error instanceof AiDocLayoutError) {
-        addChatMessage('ai', t(layoutErrorKey(error)));
+        if (request.timedOut()) addChatMessage('ai', t('home.aiTable.requestTimeout'));
+      } else if (error instanceof AiTableDataError) {
+        addChatMessage('ai', error.code === 'table_too_large'
+          ? t('home.aiTable.tableTooLarge')
+          : t('home.aiTable.parseError'));
       } else {
-        addChatMessage('ai', t('home.aiDoc.networkError'));
+        addChatMessage('ai', t('home.aiTable.errNetwork'));
       }
     } finally {
-      if (finishRequest(owner, request.id)) {
+      if (isCurrent(owner, request.id) && requests.finish(request.id)) {
         hideMask();
         updateInputState();
       }
@@ -303,7 +282,15 @@ export function initAiDocumentTool({
   }
 
   bind(back, 'click', () => api.close());
+  bind(undoButton, 'click', editor.undo);
+  bind(resetButton, 'click', resetState);
   bind(sendButton, 'click', () => { void send(); });
+  bind(input, 'keydown', event => {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    void send();
+  });
+  bind(input, 'input', updateInputState);
   bind(messages, 'click', event => {
     const chip = event.target.closest('.ai-doc-prompt-chip');
     if (!chip || !input) return;
@@ -311,15 +298,6 @@ export function initAiDocumentTool({
     input.focus();
     updateInputState();
   });
-  bind(input, 'keydown', event => {
-    if (event.key !== 'Enter' || event.shiftKey) return;
-    event.preventDefault();
-    void send();
-  });
-  bind(input, 'input', updateInputState);
-  bind(exportButton, 'click', () => { void exporter.exportPdf(); });
-  bind(openEditorButton, 'click', () => editor.open());
-  bind(resetButton, 'click', resetState);
 
   const api = {
     open() {
@@ -327,17 +305,11 @@ export function initAiDocumentTool({
       session = createLifecycleScope();
       overlay.classList.add('visible');
       overlay.setAttribute('aria-hidden', 'false');
+      editor.open();
       exporter.open();
       resetState();
       if (background && !plasma) plasma = initStandardToolPlasma(background);
-      if (isEditorDemo) {
-        const prepared = editor.setLayout(normalizeAiDocLayout(AI_DOC_EDITOR_DEMO_LAYOUT));
-        preview.render(prepared);
-        const frame = requestAnimationFrame(() => {
-          if (isOpenSession(session)) editor.open();
-        });
-        session.use(() => cancelAnimationFrame(frame));
-      }
+      if (isDemo) editor.setData(normalizeAiTableData(AI_TABLE_DEMO_DATA));
     },
     close() {
       cancelRequest();
@@ -345,14 +317,13 @@ export function initAiDocumentTool({
       session = null;
       messageScope?.dispose();
       messageScope = null;
-      editor.reset();
+      editor.close();
       exporter.close();
-      preview.clear();
-      hideMask();
       history = [];
       messages?.replaceChildren();
       if (input) input.value = '';
       updateInputState();
+      hideMask();
       overlay.classList.remove('visible');
       overlay.setAttribute('aria-hidden', 'true');
       plasma = disposeStandardToolPlasma(plasma);

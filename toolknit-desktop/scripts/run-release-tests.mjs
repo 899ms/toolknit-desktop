@@ -27,6 +27,7 @@ const releaseTests = [
   'test:ai-polish',
   'test:text-format',
   'test:text-stats',
+  'test:text-tools-contract',
   'test:teleprompter',
   'test:bg-removal',
   'test:password',

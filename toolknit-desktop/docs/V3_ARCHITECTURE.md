@@ -94,6 +94,13 @@ tool entry so it becomes a separate production chunk.
   terminate at that session boundary. Operation identity prevents a closed or
   superseded session from restoring loading state, publishing files or writing
   progress and success UI into a newer session.
+- PDF Crop, split into orchestration, document ownership, page workspace,
+  PDF/ZIP export and modal/focus view state. Each open owns native drag/drop and
+  resize resources, while document and render owners release PDF.js loading
+  tasks, page proxies, thumbnail/preview tasks, observers, canvases and source
+  bytes. Operation identity prevents closed sessions from publishing output or
+  writing progress and success state, and browser object URLs terminate at the
+  exporter boundary.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

@@ -23,6 +23,7 @@ Last updated: 2026-09-02
 | `c4796fe` | Preserved feature-owned Escape handling ahead of the lazy registry fallback |
 | `5fd1d12` | Migrated PDF To Image preview, page selection, export and cancellation lifecycle |
 | `33287cf` | Migrated PDF Page Number workspace, PDF/ZIP export and responsive lifecycle |
+| `85d87f9` | Migrated PDF Crop workspace, document, PDF/ZIP export and responsive lifecycle |
 
 ## Current verified counts
 
@@ -34,12 +35,12 @@ Last updated: 2026-09-02
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
@@ -70,6 +71,13 @@ refresh and four close/reopen cycles at desktop and narrow sizes. The complete
 gate now passes 76 npm scripts, 545 security checks, `cargo check`, and 92 Rust
 tests with the same external LibreOffice QA ignored. Production output contains
 no PDF Page Number fixture marker.
+PDF Crop now emits an approximately 30.76 kB lazy JavaScript chunk and 20.18 kB
+feature CSS chunk. Its four-page fixture covers rotated previews, all/current
+page scopes, margin editing, undo/redo, PDF and ZIP export, language refresh and
+four close/reopen cycles at desktop and compact window sizes. The complete gate
+now passes 77 npm scripts and 544 security checks; `cargo check` passes and 92
+Rust tests pass with the external LibreOffice QA test ignored by design.
+Production output contains no PDF Crop fixture query or fixture filename.
 
 ## Hidden issues fixed during migration
 
@@ -211,11 +219,27 @@ no PDF Page Number fixture marker.
   scroll area to zero and cover the PDF/ZIP controls. The feature stylesheet now
   gives the narrow settings workspace bounded rows, outer scrolling and a 480px
   minimum height; its contract and browser checks protect that layout.
+- PDF Crop previously combined application-lifetime listeners, native WebView
+  drag/drop, PDF.js loading/rendering, generated thumbnails, page state and
+  export publication in one module. Feature, open-session, document, thumbnail
+  and exporter owners now release each resource at the matching boundary.
+- Closing PDF Crop during load or export could allow an old asynchronous path
+  to restore progress or success UI after a later open. Operations now carry
+  owner identity, cancel or destroy active PDF.js work, and detach before the
+  workspace is reset.
+- PDF Crop thumbnail and preview work now cancel render tasks, disconnect
+  observers, destroy document handles, clear canvases and release source bytes.
+  Generated labels use text nodes, and browser object URLs are revoked by the
+  exporter owner.
+- At a 480 by 360 window the legacy crop grid left almost no usable preview
+  height. Compact-height rows and filmstrip sizing now preserve a scrollable
+  preview, with a contract assertion and browser verification protecting the
+  layout.
 
 ## Next batches
 
-1. Inspect PDF Crop as the next coherent legacy PDF candidate and migrate it if
-   its ownership audit confirms the expected lifecycle and compatibility scope.
+1. Audit the remaining PDF workspaces and select the next coherent legacy
+   candidate by lifecycle risk, dependency weight and compatibility scope.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed

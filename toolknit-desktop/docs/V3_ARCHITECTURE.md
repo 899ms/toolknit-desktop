@@ -80,6 +80,13 @@ tool entry so it becomes a separate production chunk.
   queue rows, native drag listeners, browser pickers, loading/render tasks,
   document handles, preview canvases, delayed completion, object URLs and stale
   export writes now terminate at explicit feature or open-session boundaries.
+- PDF To Image, split into orchestration, PDF.js preview ownership, export
+  ownership and modal/focus view state. Document revisions prevent stale loads
+  from replacing or releasing a newer session; observers, render tasks,
+  canvases, generated selection controls, native drag/progress listeners,
+  native export sessions and browser object URLs all terminate at explicit
+  boundaries. PPT To Image retains its existing restricted entry through the
+  lazy instance's `openWithFile` contract.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as
@@ -92,6 +99,11 @@ The registry supplies existing shared callbacks to feature initializers. Native
 invoke names, event names, storage keys and CLI/MCP registries remain unchanged.
 Removing any compatibility path requires a repository-wide consumer audit and
 a contract test in the same batch.
+
+Escape is a two-level contract. A feature may consume Escape for a nested
+dialog, cancellation or workspace close. The lazy registry schedules its
+whole-tool close fallback after event propagation and only runs when the event
+was not prevented by the active feature.
 
 The existing AI provider request and JSON extraction helpers remain owned by
 the legacy composition layer and are injected into migrated AI features. They

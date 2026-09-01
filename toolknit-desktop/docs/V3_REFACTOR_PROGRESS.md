@@ -20,6 +20,8 @@ Last updated: 2026-09-02
 | `048f09e` | Migrated PDF Rotate preview, export and native drag/drop lifecycle |
 | `2a5ab48` | Migrated PDF Split preview, page selection, export and sortable queue lifecycle |
 | `99e66e6` | Migrated PDF Merge preview, page selection, pointer sorting and export lifecycle |
+| `c4796fe` | Preserved feature-owned Escape handling ahead of the lazy registry fallback |
+| `5fd1d12` | Migrated PDF To Image preview, page selection, export and cancellation lifecycle |
 
 ## Current verified counts
 
@@ -31,12 +33,12 @@ Last updated: 2026-09-02
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
@@ -52,7 +54,13 @@ selected-page export, all-page export, language refresh and repeated lifecycle
 browser checks passed without console errors. The complete gate now passes 74
 npm scripts, 530 security checks, `cargo check`, and 92 Rust tests with the one
 external LibreOffice QA test ignored by design. Production output contains no
-PDF Merge development fixture marker.
+PDF Merge development fixture marker. PDF To Image now emits a 36.37 kB lazy
+JavaScript chunk and a 6.49 kB feature CSS chunk. Its four-page fixture covers
+lazy previews, selection, browser export cancellation, feature-owned Escape
+handling and close/reopen cleanup. The complete gate now passes 75 npm scripts,
+541 security checks, `cargo check`, and 92 Rust tests with the same external
+LibreOffice QA ignored. Production output contains neither PDF To Image fixture
+query nor fixture filename.
 
 ## Hidden issues fixed during migration
 
@@ -161,11 +169,32 @@ PDF Merge development fixture marker.
 - A deterministic two-file, three-page PDF Merge fixture covers multi-page
   notice, picker selection, all-page export, language switching and four
   open/close cycles. Production chunks contain no fixture query or filename.
+- The lazy registry previously closed an active feature immediately on Escape,
+  before a feature-level progress or success dialog could consume the key. Its
+  fallback now runs after event propagation and respects `defaultPrevented`, so
+  PDF To Image cancels the active operation without closing the tool.
+- A completed stale PDF.js loading task could assign its document after the
+  tool had closed, then release a newer session's document from the old error
+  path. PDF To Image now uses a document revision guard, destroys stale results
+  before assignment and lets only the current operation clear shared preview
+  state.
+- PDF To Image previously mixed PDF.js tasks, preview observers, canvases,
+  generated selection listeners, native progress listeners, browser object
+  URLs and native export sessions in one application-lifetime module. Preview,
+  exporter and view owners now release each resource at its matching boundary,
+  including native drag registration that resolves after close.
+- Closing PDF To Image during work now marks the old operation silent, invokes
+  the dedicated `cancel_pdf_to_image` contract, discards partial native sessions
+  and prevents stale progress, success dialogs and preview restarts.
+- The PPT To Image bridge now opens the lazy PDF To Image instance and preserves
+  its existing `allowLongExport: false` contract. The old static initializer and
+  duplicated tool-card listener are removed.
 
 ## Next batches
 
-1. Select the next coherent frontend tool family from the remaining ownership
-   inventory and migrate it through the same lifecycle and browser gate.
+1. Select the next coherent legacy PDF or adjacent document tool from the
+   remaining ownership inventory and migrate it through the same lifecycle and
+   browser gate.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed

@@ -10,7 +10,7 @@ import {
   pdfCropMarginsToRect,
   pdfCropRectToMargins,
   splitCroppedPdfPages
-} from '../src/pdf-crop-core.js';
+} from '../src/features/pdf-crop/core.js';
 
 const closeTo = (actual, expected, epsilon = 0.001) => assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
 const assertBox = (actual, expected) => Object.keys(expected).forEach(key => closeTo(actual[key], expected[key]));

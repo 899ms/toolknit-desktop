@@ -29,6 +29,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./pdf-page-number/tool.js'),
     init: 'initPdfPageNumberTool'
   }),
+  'pdf-crop': Object.freeze({
+    overlayId: 'pdfCropOverlay',
+    load: () => import('./pdf-crop/tool.js'),
+    init: 'initPdfCropTool'
+  }),
   teleprompter: Object.freeze({
     overlayId: 'teleprompterOverlay',
     load: () => import('../teleprompter-ui.js'),

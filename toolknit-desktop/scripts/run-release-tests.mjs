@@ -24,6 +24,7 @@ const releaseTests = [
   'test:pdf-page-number',
   'test:pdf-page-number-tool-contract',
   'test:pdf-crop',
+  'test:pdf-crop-tool-contract',
   'test:font-metadata',
   'test:ai-doc',
   'test:ai-document-tool-contract',

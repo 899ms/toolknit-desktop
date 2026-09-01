@@ -504,6 +504,25 @@
 }
 
 @media (max-height: 520px) {
+  .pdf-crop-workspace { grid-template-rows: 48px minmax(64px, 1fr) 36px 86px; }
+  .pdf-crop-preview-toolbar { min-height: 48px; padding-inline: 10px; }
+  .pdf-crop-current-bar { min-height: 36px; padding-inline: 10px; }
+  .pdf-crop-filmstrip-shell { grid-template-rows: 22px minmax(0, 1fr); }
+  .pdf-crop-filmstrip-head { padding-inline: 10px; }
+  .pdf-crop-filmstrip-head > span:last-child { display: none; }
+  .pdf-crop-filmstrip { gap: 6px; padding: 0 8px 6px; }
+  .pdf-crop-page-thumb {
+    min-width: 88px;
+    height: 58px;
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 6px;
+    padding: 5px;
+  }
+  .pdf-crop-page-thumb-visual { width: 40px; height: 46px; }
+  .pdf-crop-page-thumb canvas { max-width: 38px; max-height: 44px; }
+  .pdf-crop-page-thumb-copy { min-width: 36px; gap: 3px; }
+  .pdf-crop-page-thumb-copy b { font-size: 12px; }
+  .pdf-crop-page-thumb-copy small { font-size: 9px; }
   .pdf-crop-canvas-stage { padding: 10px; }
   .pdf-crop-empty-icon { width: 44px; height: 44px; margin-bottom: 8px; }
   .pdf-crop-empty-icon svg { width: 21px; height: 21px; }

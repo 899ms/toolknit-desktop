@@ -1,5 +1,5 @@
 import { PDFDocument } from 'pdf-lib';
-import { flattenPdfFormForPageCopy } from './pdf-document-structure.js';
+import { flattenPdfFormForPageCopy } from '../../pdf-document-structure.js';
 
 export const PDF_CROP_LIMITS = Object.freeze({
   maxInputBytes: 150 * 1024 * 1024,

@@ -19308,53 +19308,6 @@ March 18, 2026|Launch Day
         initStandardToolPlasma,
         disposeStandardToolPlasma
       });
-      // ===== PDF Crop (lazy-loaded) =====
-      let pdfCropTool = null;
-      let pdfCropToolPromise = null;
-
-      async function ensurePdfCropTool() {
-        if (pdfCropTool) return pdfCropTool;
-        if (!pdfCropToolPromise) {
-          pdfCropToolPromise = import('./pdf-crop-ui.js')
-            .then(({ initPdfCropTool }) => {
-              pdfCropTool = initPdfCropTool({
-                isTauri,
-                t,
-                onLangChange,
-                pdfWorkerUrl,
-                getOutputDir,
-                displayFilesystemPath,
-                initStandardToolPlasma,
-                disposeStandardToolPlasma
-              });
-              return pdfCropTool;
-            })
-            .catch(error => {
-              pdfCropToolPromise = null;
-              throw error;
-            });
-        }
-        return await pdfCropToolPromise;
-      }
-
-      async function openPdfCropTool() {
-        try {
-          const tool = await ensurePdfCropTool();
-          tool.open();
-        } catch (error) {
-          console.error('[PDF Crop] tool load failed:', error);
-          window.showToast?.(t('home.pdfCrop.toolLoadFailed'));
-        }
-      }
-
-      document.querySelectorAll('.audio-list-item[data-tool="pdf-crop"]').forEach(item => {
-        item.addEventListener('click', () => void openPdfCropTool());
-        item.addEventListener('keydown', event => {
-          if (event.key !== 'Enter' && event.key !== ' ') return;
-          event.preventDefault();
-          void openPdfCropTool();
-        });
-      });
       // ===== PDF Encrypt Overlay Open/Close =====
       const pdfEncryptOverlay = document.getElementById('pdfEncryptOverlay');
       const pdfEncryptPlasmaBg = document.getElementById('pdfEncryptPlasmaBg');

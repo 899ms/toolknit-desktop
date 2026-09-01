@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { PASSWORD_LIMITS, buildPasswordCharsets, generatePassword, secureRandomInt } from '../src/password-core.js';
+import { PASSWORD_LIMITS, buildPasswordCharsets, countPasswordComposition, generatePassword, secureRandomInt } from '../src/features/password-generator/core.js';
 
 let attempts = 0;
 const rejectionSampler = array => { array[0] = attempts++ === 0 ? 0xffff_ffff : 5; };
@@ -30,5 +30,6 @@ assert.match(shortestComplete.password, /[2-9]/);
 assert.match(shortestComplete.password, /[!@#$%^&*()_+\-=[\]{}|;:,.<>?~]/);
 assert.throws(() => secureRandomInt(0, deterministic), RangeError);
 assert.throws(() => secureRandomInt(10, null), /Secure random generation is unavailable/);
+assert.deepEqual(countPasswordComposition('Ab3!'), { total: 4, letters: 2, numbers: 1, symbols: 1 });
 
 console.log('Password core regression checks passed');

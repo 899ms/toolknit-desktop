@@ -34,6 +34,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('../crypto-tool-ui.js'),
     init: 'initCryptoTool'
   }),
+  'password-gen': Object.freeze({
+    overlayId: 'passwordGenOverlay',
+    load: () => import('./password-generator/tool.js'),
+    init: 'initPasswordGeneratorTool'
+  }),
   'json-tools': Object.freeze({
     instanceKey: 'developer-toolbox',
     overlayId: 'developerToolboxOverlay',

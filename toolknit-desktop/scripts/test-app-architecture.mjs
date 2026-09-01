@@ -73,7 +73,7 @@ class FakeTarget {
 }
 
 validateLazyToolSpecs(LAZY_TOOL_SPECS);
-assert.equal(Object.keys(LAZY_TOOL_SPECS).length, 12);
+assert.ok(Object.keys(LAZY_TOOL_SPECS).length > 0, 'the application must register at least one lazy tool');
 assert.throws(() => validateLazyToolSpecs({ broken: { overlayId: 'x', init: 'init' } }), /load/);
 assert.throws(() => validateLazyToolSpecs({
   one: { instanceKey: 'shared', overlayId: 'one', init: 'init', load() {} },

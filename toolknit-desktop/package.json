@@ -25,6 +25,7 @@
     "test:ai-provider": "node scripts/test-ai-provider-core.mjs",
     "test:ai-translate": "node scripts/test-ai-translate-core.mjs",
     "test:ai-polish": "node scripts/test-ai-polish-core.mjs",
+    "test:ai-text-tools-contract": "node scripts/test-ai-text-tools-contract.mjs",
     "test:text-format": "node scripts/test-text-format-core.mjs",
     "test:text-stats": "node scripts/test-text-stats-core.mjs && node scripts/test-text-stats-runtime.mjs",
     "test:text-tools-contract": "node scripts/test-text-tools-contract.mjs",

@@ -25,6 +25,7 @@ const releaseTests = [
   'test:ai-provider',
   'test:ai-translate',
   'test:ai-polish',
+  'test:ai-text-tools-contract',
   'test:text-format',
   'test:text-stats',
   'test:text-tools-contract',

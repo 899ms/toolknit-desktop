@@ -4,6 +4,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('../excel-to-pdf-ui.js'),
     init: 'initExcelToPdfTool'
   }),
+  'pdf-rotate': Object.freeze({
+    overlayId: 'pdfRotateOverlay',
+    load: () => import('./pdf-rotate/tool.js'),
+    init: 'initPdfRotateTool'
+  }),
   teleprompter: Object.freeze({
     overlayId: 'teleprompterOverlay',
     load: () => import('../teleprompter-ui.js'),

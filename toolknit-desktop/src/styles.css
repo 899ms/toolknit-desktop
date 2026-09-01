@@ -12993,14 +12993,6 @@
         background: rgba(255, 255, 255, 0.08);
       }
 
-      .pdf-rotate-v2 .pdf-merge-v2-poster::after {
-        content: 'ROT';
-      }
-
-      .pdf-rotate-v2 .pdf-merge-v2-workspace {
-        grid-template-rows: auto minmax(210px, 1fr) auto auto;
-      }
-
       .pdf-compress-v2 .pdf-merge-v2-poster::after {
         content: 'ZIP';
       }

@@ -10912,30 +10912,6 @@
         background: #ffffff;
       }
 
-      .pdf-split-workspace-tile .pdf-page-workspace-frame {
-        display: flex;
-        height: 330px;
-        min-height: 0;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .pdf-split-workspace-tile .pdf-page-workspace-frame > canvas {
-        width: auto;
-        height: auto;
-        max-width: 100%;
-        max-height: 100%;
-      }
-
-      .pdf-split-workspace-tile:not(.is-selected) .pdf-page-workspace-frame {
-        opacity: 0.46;
-      }
-
-      .pdf-split-workspace-tile.is-selected .pdf-page-workspace-frame {
-        border-color: rgba(255, 255, 255, 0.92);
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22), 0 14px 38px rgba(0, 0, 0, 0.32);
-      }
-
       .pdf-page-workspace-index {
         position: absolute;
         bottom: 10px;
@@ -10975,16 +10951,6 @@
         transform: scale(0.45);
       }
 
-      .pdf-split-workspace-tile.is-selected .pdf-page-workspace-check svg {
-        opacity: 1;
-        animation: pdfMergeCheckIn 0.28s cubic-bezier(0.2, 0.9, 0.2, 1.25) both;
-      }
-
-      .pdf-split-workspace-tile:not(.is-selected) .pdf-page-workspace-check {
-        border-color: rgba(255, 255, 255, 0.5);
-        background: rgba(255, 255, 255, 0.88);
-      }
-
       .pdf-page-workspace-page-select:hover .pdf-page-workspace-check {
         transform: translateX(-50%) scale(1.08);
       }
@@ -10996,14 +10962,6 @@
         justify-content: center;
         gap: 8px;
         margin-top: 10px;
-      }
-
-      .pdf-split-workspace-tile .pdf-page-workspace-tile-actions {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 1;
-        margin: 0;
       }
 
       .pdf-page-workspace-icon-button {

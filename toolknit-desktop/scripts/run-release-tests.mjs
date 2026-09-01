@@ -10,6 +10,7 @@ const releaseTests = [
   'test:excel-to-pdf',
   'test:pdf-merge',
   'test:pdf-split',
+  'test:pdf-split-tool-contract',
   'test:pdf-to-image',
   'test:pdf-rotate',
   'test:pdf-rotate-tool-contract',

@@ -9,6 +9,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./pdf-rotate/tool.js'),
     init: 'initPdfRotateTool'
   }),
+  'pdf-split': Object.freeze({
+    overlayId: 'pdfSplitOverlay',
+    load: () => import('./pdf-split/tool.js'),
+    init: 'initPdfSplitTool'
+  }),
   teleprompter: Object.freeze({
     overlayId: 'teleprompterOverlay',
     load: () => import('../teleprompter-ui.js'),

@@ -1,6 +1,6 @@
 # ToolKnit Desktop V3 Refactor Progress
 
-Last updated: 2026-09-01
+Last updated: 2026-09-02
 
 ## Local checkpoints
 
@@ -16,6 +16,7 @@ Last updated: 2026-09-01
 | `3fbbffa` | Migrated text statistics, text formatting and shared document reading |
 | `e141ee2` | Migrated AI polish and AI translation with shared lifecycle ownership |
 | `0b795c7` | Migrated AI Document orchestration, editor, preview and PDF export |
+| `c048232` | Migrated AI Table, shared AI request lifecycle and AI workbench CSS ownership |
 
 ## Current verified counts
 
@@ -27,21 +28,22 @@ Last updated: 2026-09-01
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
 chunk. AI polish and translation now emit separate 10.73 kB and 12.27 kB
-JavaScript chunks plus a shared 7.13 kB CSS chunk. AI Document now emits a
-60.70 kB JavaScript chunk. Its CSS remains global temporarily because AI Table
-still consumes the shared `.ai-doc-*` rules. The complete release gate passed
-70 npm scripts after AI Document editor browser regression and final diff
-review.
+JavaScript chunks plus a shared 7.13 kB CSS chunk. AI Document now emits an
+approximately 60.17 kB JavaScript chunk and 31.37 kB feature CSS chunk. AI
+Table emits an approximately 41.16 kB JavaScript chunk and 16.65 kB feature
+CSS chunk; the two features share a 3.50 kB AI workbench CSS chunk. The complete
+release gate passed 71 npm scripts after AI Table and AI Document browser
+regression, full Rust tests and final diff review.
 
 ## Hidden issues fixed during migration
 
@@ -76,12 +78,29 @@ review.
 - Closing AI Document now removes transient chat, input, preview, editor and
   mask state. Repeated development-fixture reloads retain one editor page, one
   preview page and two initial chat messages without accumulating bindings.
+- AI Table PDF export referenced an AI Document font byte variable that did not
+  belong to the table feature. The exporter now loads and supplies its own
+  bounded font resource to a pure PDF builder.
+- AI Table attempted to call a nonexistent global user-avatar helper. Its
+  initializer now has an injected hook with a safe module-local default.
+- CSV export unnecessarily waited for chart rendering. Data-only export is now
+  independent of chart lifecycle, while image exports retain explicit waits.
+- AI Table editor and exporter disposal previously depended on method `this`
+  binding. Their returned lifecycle functions are now safe when passed by
+  reference.
+- Shared AI animations and their keyframes had split ownership. The shared
+  chat rules, animation contract and keyframes now load from one lazy CSS owner.
+- AI request cleanup could let a stale request disposer cancel a newer request
+  after reset. Shared serialized sessions now support request-specific cancel,
+  and completed lifecycle registrations release themselves immediately.
+- The first AI Document CSS extraction was still 1,895 lines. It is now split
+  into a 919-line generation shell and a 978-line editor overlay while
+  preserving production cascade order.
 
 ## Next batches
 
-1. Migrate AI Table while preserving provider, chart, workbook export and
-   project persistence contracts, then resolve shared AI Document/Table CSS
-   ownership.
+1. Select the next coherent frontend tool family from the remaining ownership
+   inventory and migrate it through the same lifecycle and browser gate.
 2. Audit the remaining text-document consumers before deciding whether the
    compatibility reader can be removed.
 3. Continue through remaining frontend families and reduce legacy entry files.

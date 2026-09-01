@@ -18,6 +18,10 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
   and registers the native `unlisten` callback with the feature lifecycle.
 - `src/features/lazy-tools.js` is the declarative feature loading catalog.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
+- `src/core/serialized-request-session.js` owns one-at-a-time async requests,
+  timeout state, request-specific cancellation and stale-result identity.
+- `src/features/ai-workbench/ai-workbench-shared.css` owns the chat, prompt and
+  action primitives shared by AI Document and AI Table.
 
 ## Feature contract
 
@@ -53,6 +57,11 @@ tool entry so it becomes a separate production chunk.
   editor and exporter modules. Generated bindings, editor render resources,
   file/image reads, request cancellation and browser object URLs now have
   explicit feature or open-session ownership.
+- AI Table, split into orchestration, editor, chart lifecycle, exporter, pure
+  PDF builder, prompts and feature CSS. Chart instances, render bindings,
+  object URLs, request cancellation and export sessions now have explicit
+  owners. AI Document and AI Table share only the workbench primitives and the
+  serialized request-session core.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as
@@ -68,6 +77,7 @@ a contract test in the same batch.
 
 The existing AI provider request and JSON extraction helpers remain owned by
 the legacy composition layer and are injected into migrated AI features. They
-must move only after AI Table and the remaining legacy AI callers share a
-tested provider boundary. AI Document CSS also remains global until AI Table is
-migrated because the legacy table editor consumes `.ai-doc-*` selectors.
+must move only after the remaining legacy AI callers share a tested provider
+boundary. AI Document and AI Table CSS no longer live in `styles.css`: shared
+workbench rules have one explicit owner and feature-specific rules load with
+their lazy entries.

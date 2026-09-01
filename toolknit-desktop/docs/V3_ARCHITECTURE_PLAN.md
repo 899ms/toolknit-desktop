@@ -43,9 +43,11 @@ through the lifecycle scope and returns `open`, `close` and `dispose` methods.
 
 The foundation and the first reversible frontend batches are complete:
 developer toolbox, password generator, timestamp, calculator family, typing
-test, text statistics and text formatting. The next text batch should migrate
-the remaining consumers of the compatibility document reader before that
-wrapper is removed; native and CLI/MCP restructuring remains later-phase work.
+test, text statistics, text formatting, AI polish and AI translation. The next
+higher-risk frontend batch should migrate AI Document and AI Table while
+preserving provider, project, editor, chart and export behavior. The shared
+document reader remains a compatibility boundary until all consumers are
+audited; native and CLI/MCP restructuring remains later-phase work.
 
 ## Batch gate
 

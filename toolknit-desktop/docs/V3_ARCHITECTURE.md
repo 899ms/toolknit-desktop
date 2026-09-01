@@ -46,6 +46,9 @@ tool entry so it becomes a separate production chunk.
 - Typing test, including its word data, audio graph, timers and input state.
 - Text statistics and text formatting, including bounded document reads,
   cancellable stale-result guards, copy feedback and drag/drop resources.
+- AI polish and AI translation, including API-key gating before lazy import,
+  shared document input, request cancellation, stale-result guards, dynamic
+  result bindings and language-aware transient feedback.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as
@@ -58,3 +61,8 @@ The registry supplies existing shared callbacks to feature initializers. Native
 invoke names, event names, storage keys and CLI/MCP registries remain unchanged.
 Removing any compatibility path requires a repository-wide consumer audit and
 a contract test in the same batch.
+
+The existing AI provider request and JSON extraction helpers remain owned by
+the legacy composition layer and are injected into migrated AI features. They
+must move only after AI Document, AI Table and the remaining legacy AI callers
+share a tested provider boundary.

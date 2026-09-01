@@ -49,6 +49,10 @@ tool entry so it becomes a separate production chunk.
 - AI polish and AI translation, including API-key gating before lazy import,
   shared document input, request cancellation, stale-result guards, dynamic
   result bindings and language-aware transient feedback.
+- AI Document, split into orchestration, request session, prompts, preview,
+  editor and exporter modules. Generated bindings, editor render resources,
+  file/image reads, request cancellation and browser object URLs now have
+  explicit feature or open-session ownership.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as
@@ -64,5 +68,6 @@ a contract test in the same batch.
 
 The existing AI provider request and JSON extraction helpers remain owned by
 the legacy composition layer and are injected into migrated AI features. They
-must move only after AI Document, AI Table and the remaining legacy AI callers
-share a tested provider boundary.
+must move only after AI Table and the remaining legacy AI callers share a
+tested provider boundary. AI Document CSS also remains global until AI Table is
+migrated because the legacy table editor consumes `.ai-doc-*` selectors.

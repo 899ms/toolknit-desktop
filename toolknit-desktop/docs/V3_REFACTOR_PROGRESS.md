@@ -15,6 +15,7 @@ Last updated: 2026-09-01
 | `f20233c` | Migrated typing test and removed its stale global audio disposer |
 | `3fbbffa` | Migrated text statistics, text formatting and shared document reading |
 | `e141ee2` | Migrated AI polish and AI translation with shared lifecycle ownership |
+| `0b795c7` | Migrated AI Document orchestration, editor, preview and PDF export |
 
 ## Current verified counts
 
@@ -26,18 +27,20 @@ Last updated: 2026-09-01
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
 chunk. AI polish and translation now emit separate 10.73 kB and 12.27 kB
-JavaScript chunks plus a shared 7.13 kB CSS chunk. The complete release gate
-passed 69 npm scripts after mocked-provider browser regression and final diff
+JavaScript chunks plus a shared 7.13 kB CSS chunk. AI Document now emits a
+60.70 kB JavaScript chunk. Its CSS remains global temporarily because AI Table
+still consumes the shared `.ai-doc-*` rules. The complete release gate passed
+70 npm scripts after AI Document editor browser regression and final diff
 review.
 
 ## Hidden issues fixed during migration
@@ -63,11 +66,22 @@ review.
 - AI Document used `fadeInUp` from the former global AI text block. Its own
   global animation contract is now retained so opening AI Document first does
   not depend on another lazy tool's CSS.
+- AI Document generated click targets, editor document listeners, drag/resize
+  listeners, image readers and image callbacks previously had mixed global and
+  transient ownership. Feature, open-session and render scopes now dispose
+  each resource at the matching boundary.
+- AI Document requests could retain busy state or deliver stale output after a
+  close, reset or timeout. A deterministic request session now serializes work,
+  aborts invalidated requests and makes timeout state testable.
+- Closing AI Document now removes transient chat, input, preview, editor and
+  mask state. Repeated development-fixture reloads retain one editor page, one
+  preview page and two initial chat messages without accumulating bindings.
 
 ## Next batches
 
-1. Migrate the higher-risk AI Document and AI Table family while preserving
-   provider, editor, chart, export and project persistence contracts.
+1. Migrate AI Table while preserving provider, chart, workbook export and
+   project persistence contracts, then resolve shared AI Document/Table CSS
+   ownership.
 2. Audit the remaining text-document consumers before deciding whether the
    compatibility reader can be removed.
 3. Continue through remaining frontend families and reduce legacy entry files.

@@ -43,9 +43,10 @@ through the lifecycle scope and returns `open`, `close` and `dispose` methods.
 
 The foundation and the first reversible frontend batches are complete:
 developer toolbox, password generator, timestamp, calculator family, typing
-test, text statistics, text formatting, AI polish and AI translation. The next
-higher-risk frontend batch should migrate AI Document and AI Table while
-preserving provider, project, editor, chart and export behavior. The shared
+test, text statistics, text formatting, AI polish, AI translation and AI
+Document. The next higher-risk frontend batch should migrate AI Table while
+preserving provider, project, editor, chart and export behavior, then move the
+currently shared AI Document/Table CSS to an explicit owner. The shared
 document reader remains a compatibility boundary until all consumers are
 audited; native and CLI/MCP restructuring remains later-phase work.
 

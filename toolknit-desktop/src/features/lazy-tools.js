@@ -44,6 +44,21 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./timestamp-calculator/tool.js'),
     init: 'initTimestampCalculatorTool'
   }),
+  'bmi-calc': Object.freeze({
+    overlayId: 'bmiCalcOverlay',
+    load: () => import('./bmi-calculator/tool.js'),
+    init: 'initBmiCalculatorTool'
+  }),
+  'mortgage-calc': Object.freeze({
+    overlayId: 'mortgageCalcOverlay',
+    load: () => import('./mortgage-calculator/tool.js'),
+    init: 'initMortgageCalculatorTool'
+  }),
+  'interest-calc': Object.freeze({
+    overlayId: 'interestCalcOverlay',
+    load: () => import('./interest-calculator/tool.js'),
+    init: 'initInterestCalculatorTool'
+  }),
   'json-tools': Object.freeze({
     instanceKey: 'developer-toolbox',
     overlayId: 'developerToolboxOverlay',

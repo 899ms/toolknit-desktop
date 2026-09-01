@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+
+const [html, main, lazy, tool, styles] = await Promise.all([
+  readFile(new URL('../index.html', import.meta.url), 'utf8'),
+  readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/mortgage-calculator/tool.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/styles.css', import.meta.url), 'utf8')
+]);
+
+for (const id of ['mortgageCalcOverlay', 'mortgageCalcBack', 'mortgageCalcMethodTabs', 'mortgageCalcBtn', 'mortgageCalcScheduleBody']) {
+  assert.match(html, new RegExp(`id="${id}"`));
+}
+assert.match(lazy, /'mortgage-calc':[\s\S]*import\('\.\/mortgage-calculator\/tool\.js'\)/);
+assert.doesNotMatch(main, /mortgageCalcOverlay|openMortgageCalcOverlay|calcMortgage/);
+assert.match(tool, /createLifecycleScope/);
+assert.match(tool, /lifecycle\.event\(back, 'click'/);
+assert.match(tool, /replaceChildren\(fragment\)/);
+assert.match(tool, /lifecycle\.use\(onLangChange/);
+assert.match(tool, /dispose\(\)[\s\S]*lifecycle\.dispose\(\)/);
+assert.doesNotMatch(styles, /#mortgageCalcOverlay|\.mortgage-calc-v2/);
+console.log('Mortgage calculator feature contract passed');

@@ -1,0 +1,750 @@
+      /* ===== Mortgage Calculator ===== */
+      .mortgage-calc-input-panel {
+        flex: 0 0 400px;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.04);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        overflow: hidden;
+      }
+
+      .mortgage-calc-form {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .mortgage-calc-form::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .mortgage-calc-form::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 9999px;
+      }
+
+      .mortgage-calc-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .mortgage-calc-field label {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 500;
+      }
+
+      .mortgage-calc-input-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .mortgage-calc-input-row input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 15px;
+        padding: 10px 14px;
+        outline: none;
+        transition: border-color 0.2s ease;
+        -webkit-app-region: no-drag;
+      }
+
+      .mortgage-calc-input-row input:focus {
+        border-color: rgba(255, 255, 255, 0.6);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .mortgage-calc-input-row input::-webkit-outer-spin-button,
+      .mortgage-calc-input-row input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      .mortgage-calc-unit {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.4);
+        flex-shrink: 0;
+        min-width: 28px;
+      }
+
+      .mortgage-calc-method-tabs {
+        display: flex;
+        gap: 8px;
+      }
+
+      .mortgage-calc-method-tab {
+        flex: 1;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 14px;
+        font-weight: 600;
+        padding: 10px 0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        -webkit-app-region: no-drag;
+      }
+
+      .mortgage-calc-method-tab.active {
+        background: #ffffff;
+        border-color: #ffffff;
+        color: #111111;
+      }
+
+      .mortgage-calc-method-tab:hover:not(.active) {
+        color: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .mortgage-calc-calc-btn {
+        margin-top: 8px;
+        border: none;
+        background: #ffffff;
+        color: #111111;
+        font-size: 15px;
+        font-weight: 700;
+        padding: 12px 24px;
+        border-radius: 9999px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        -webkit-app-region: no-drag;
+      }
+
+      .mortgage-calc-calc-btn:hover {
+        opacity: 0.85;
+        transform: translateY(-1px);
+      }
+
+      .mortgage-calc-calc-btn:active {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      /* Result panel */
+      .mortgage-calc-result-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.04);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .mortgage-calc-result-empty {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+      }
+
+      .mortgage-calc-result-empty p {
+        color: rgba(255, 255, 255, 0.4);
+        font-size: 14px;
+      }
+
+      .mortgage-calc-result-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .mortgage-calc-result-content::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .mortgage-calc-result-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 9999px;
+      }
+
+      .mortgage-calc-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .mortgage-calc-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        transition: all 0.2s ease;
+      }
+
+      .mortgage-calc-card:hover {
+        background: rgba(255, 255, 255, 0.07);
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+
+      .mortgage-calc-card-label {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 500;
+      }
+
+      .mortgage-calc-card-value {
+        font-size: 26px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.95);
+        line-height: 1.2;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .mortgage-calc-card-tag {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      /* Schedule table */
+      .mortgage-calc-schedule-section {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .mortgage-calc-schedule-title {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 600;
+      }
+
+      .mortgage-calc-schedule-table {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .mortgage-calc-schedule-header {
+        display: grid;
+        grid-template-columns: 50px 1fr 1fr 1fr;
+        padding: 10px 12px;
+        background: rgba(255, 255, 255, 0.06);
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .mortgage-calc-schedule-header span {
+        text-align: right;
+      }
+
+      .mortgage-calc-schedule-header span:first-child {
+        text-align: center;
+      }
+
+      .mortgage-calc-schedule-body {
+        overflow-y: auto;
+      }
+
+      .mortgage-calc-schedule-body::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .mortgage-calc-schedule-body::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 9999px;
+      }
+
+      .mortgage-calc-schedule-row {
+        display: grid;
+        grid-template-columns: 50px 1fr 1fr 1fr;
+        padding: 8px 12px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.8);
+        font-variant-numeric: tabular-nums;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      }
+
+      .mortgage-calc-schedule-row:last-child {
+        border-bottom: none;
+      }
+
+      .mortgage-calc-schedule-row span {
+        text-align: right;
+      }
+
+      .mortgage-calc-schedule-row span:first-child {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      /* ===== Mortgage Calculator · Tool Page 2.0 ===== */
+      .mortgage-calc-v2 .pdf-merge-v2-bg {
+        opacity: 0.32;
+        filter: grayscale(1) contrast(1.14) brightness(0.66);
+      }
+
+      .mortgage-calc-v2 .pdf-merge-v2-poster::after {
+        content: 'LOAN';
+      }
+
+      .mortgage-calc-v2-body {
+        grid-template-columns: minmax(286px, 356px) minmax(0, 1fr);
+      }
+
+      .mortgage-calc-v2-workspace {
+        grid-template-rows: minmax(0, 1fr);
+        gap: 16px;
+        padding: 24px;
+      }
+
+      .mortgage-calc-v2-workspace {
+        grid-template-columns: minmax(330px, 0.72fr) minmax(560px, 1.28fr);
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-input-panel,
+      .mortgage-calc-v2 .mortgage-calc-result-panel {
+        min-width: 0;
+        min-height: 0;
+        flex: initial;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.044), rgba(255, 255, 255, 0.018)),
+          rgba(255, 255, 255, 0.018);
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        overflow: hidden;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-result-panel {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-input-panel {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      .mortgage-calc-panel-head {
+        min-width: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 22px 22px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .mortgage-calc-panel-head h2 {
+        margin: 8px 0 0;
+        color: var(--ink);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 27px;
+        font-weight: 900;
+        line-height: 1.04;
+        letter-spacing: -0.045em;
+      }
+
+      .mortgage-calc-panel-head p {
+        flex: 0 1 190px;
+        margin: 4px 0 0;
+        color: rgba(255, 255, 255, 0.44);
+        font-size: 12px;
+        line-height: 1.55;
+        text-align: right;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-unit {
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-method-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-method-tab {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.026);
+        color: rgba(255, 255, 255, 0.58);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        transition: transform 150ms ease, background 150ms ease, border-color 150ms ease, color 150ms ease;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-method-tab {
+        min-height: 42px;
+        padding: 0 12px;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-method-tab.active {
+        border-color: #fff;
+        background: #fff;
+        color: #050506;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-method-tab:hover:not(.active) {
+        transform: translateY(-1px);
+        border-color: rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.055);
+        color: rgba(255, 255, 255, 0.84);
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-field {
+        min-width: 0;
+        gap: 8px;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-field label {
+        color: rgba(255, 255, 255, 0.52);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-input-row input {
+        width: 100%;
+        min-height: 44px;
+        border: 1px solid rgba(255, 255, 255, 0.115);
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.032);
+        color: rgba(255, 255, 255, 0.92);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+        padding: 0 14px;
+        transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-input-row input:focus {
+        border-color: rgba(255, 255, 255, 0.48);
+        background: rgba(255, 255, 255, 0.055);
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.07);
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-result-empty {
+        min-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 28px;
+        text-align: center;
+      }
+
+      .mortgage-calc-empty-icon-wrap {
+        width: 74px;
+        height: 74px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background:
+          radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.16), transparent 34%),
+          rgba(255, 255, 255, 0.04);
+      }
+
+      .mortgage-calc-empty-icon-wrap svg {
+        width: 30px;
+        height: 30px;
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-result-empty p {
+        max-width: 260px;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.44);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-form {
+        min-height: 0;
+        overflow-y: auto;
+        padding: 18px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-content: start;
+        gap: 14px;
+        scrollbar-color: rgba(255, 255, 255, 0.68) transparent;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-field-wide,
+      .mortgage-calc-v2 .mortgage-calc-calc-btn {
+        grid-column: 1 / -1;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-input-row {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-calc-btn {
+        min-height: 48px;
+        margin: 6px 0 0;
+        border: 0;
+        border-radius: 13px;
+        background: #fff;
+        color: #050506;
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 15px;
+        font-weight: 900;
+        box-shadow: none;
+        transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-calc-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        opacity: 1;
+        box-shadow: 0 12px 34px rgba(255, 255, 255, 0.08);
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-calc-btn:disabled {
+        opacity: 0.62;
+        cursor: wait;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-result-content {
+        min-height: 0;
+        overflow-y: auto;
+        padding: 18px;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 16px;
+        scrollbar-color: rgba(255, 255, 255, 0.68) transparent;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-cards {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-card {
+        min-width: 0;
+        min-height: 132px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 18px;
+        background:
+          radial-gradient(circle at 82% 16%, rgba(255, 255, 255, 0.08), transparent 34%),
+          rgba(255, 255, 255, 0.032);
+        transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-card:first-child {
+        grid-column: span 2;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-card:hover {
+        transform: translateY(-1px);
+        border-color: rgba(255, 255, 255, 0.18);
+        background:
+          radial-gradient(circle at 82% 16%, rgba(255, 255, 255, 0.1), transparent 34%),
+          rgba(255, 255, 255, 0.045);
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-card-label {
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-card-value {
+        color: rgba(255, 255, 255, 0.94);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+        font-size: clamp(22px, 2.7vw, 34px);
+        font-weight: 900;
+        line-height: 1.02;
+        letter-spacing: -0.02em;
+        word-break: break-word;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-card:first-child .mortgage-calc-card-value {
+        font-size: clamp(28px, 4vw, 48px);
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-card-tag {
+        max-width: 100%;
+        width: fit-content;
+        min-height: 26px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-schedule-section {
+        min-height: 0;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 12px;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-schedule-title {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-schedule-table {
+        min-height: 0;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.026);
+        overflow: hidden;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-schedule-header,
+      .mortgage-calc-v2 .mortgage-calc-schedule-row {
+        display: grid;
+        grid-template-columns: 58px repeat(3, minmax(112px, 1fr));
+        align-items: center;
+        gap: 10px;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-schedule-header {
+        min-height: 44px;
+        padding: 0 14px;
+        background: rgba(255, 255, 255, 0.055);
+        color: rgba(255, 255, 255, 0.58);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-schedule-body {
+        min-height: 0;
+        overflow: auto;
+        scrollbar-color: rgba(255, 255, 255, 0.68) transparent;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-schedule-row {
+        min-height: 38px;
+        padding: 0 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+        color: rgba(255, 255, 255, 0.78);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), sans-serif;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-schedule-row:last-child {
+        border-bottom: 0;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-form::-webkit-scrollbar,
+      .mortgage-calc-v2 .mortgage-calc-result-content::-webkit-scrollbar,
+      .mortgage-calc-v2 .mortgage-calc-schedule-body::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+
+      .mortgage-calc-v2 .mortgage-calc-form::-webkit-scrollbar-thumb,
+      .mortgage-calc-v2 .mortgage-calc-result-content::-webkit-scrollbar-thumb,
+      .mortgage-calc-v2 .mortgage-calc-schedule-body::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.66);
+        border-radius: 999px;
+      }
+
+      /* ===== End Mortgage Calculator ===== */
+
+@media (max-width: 1260px) {
+        .mortgage-calc-v2-workspace {
+          grid-template-columns: minmax(310px, 0.78fr) minmax(480px, 1.22fr);
+        }
+
+        .mortgage-calc-v2 .mortgage-calc-cards {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .mortgage-calc-v2 .mortgage-calc-card:first-child {
+          grid-column: span 1;
+        }
+      }
+
+      @media (max-width: 1080px) {
+        .mortgage-calc-v2-workspace {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto minmax(440px, 1fr);
+          overflow-y: auto;
+        }
+
+        .mortgage-calc-v2-body {
+          grid-template-columns: 1fr;
+          overflow-y: auto;
+        }
+
+        .mortgage-calc-v2 .pdf-merge-v2-poster {
+          min-height: 360px;
+        }
+      }
+
+      @media (max-height: 820px) {
+        .mortgage-calc-v2-workspace {
+          padding: 18px;
+          gap: 14px;
+        }
+
+        .mortgage-calc-panel-head {
+          padding: 18px 18px 14px;
+        }
+
+        .mortgage-calc-panel-head h2 {
+          font-size: 24px;
+        }
+
+        .mortgage-calc-v2 .mortgage-calc-form,
+      .mortgage-calc-v2 .mortgage-calc-result-content {
+          padding: 16px;
+        }
+
+        .mortgage-calc-v2 .mortgage-calc-card {
+          min-height: 118px;
+          padding: 14px;
+        }
+      }
+      /* ===== End Shared Calculator Responsive Styles ===== */

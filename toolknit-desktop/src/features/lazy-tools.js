@@ -39,6 +39,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./password-generator/tool.js'),
     init: 'initPasswordGeneratorTool'
   }),
+  'timestamp-calc': Object.freeze({
+    overlayId: 'tsCalcOverlay',
+    load: () => import('./timestamp-calculator/tool.js'),
+    init: 'initTimestampCalculatorTool'
+  }),
   'json-tools': Object.freeze({
     instanceKey: 'developer-toolbox',
     overlayId: 'developerToolboxOverlay',

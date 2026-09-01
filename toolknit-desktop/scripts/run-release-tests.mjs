@@ -30,6 +30,7 @@ const releaseTests = [
   'test:teleprompter',
   'test:bg-removal',
   'test:password',
+  'test:timestamp',
   'test:color-extractor',
   'test:color-space-compare',
   'test:image-batch',

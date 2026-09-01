@@ -143,7 +143,6 @@
         placeholderSvg,
         sanitizePptDraftBaseName
       } from './ppt-draft-core.js';
-      import { initPdfToImageTool } from './pdf-to-image-ui.js';
       import { initPdfEditorTool } from './pdf-editor-ui.js';
       import JSZip from 'jszip';
       import { TaskRunner } from '../shared/task-runtime.mjs';
@@ -6323,7 +6322,8 @@
             busy = false;
             updateControls();
             closeOverlay();
-            await pdfToImageTool.openWithFile(pdfFile, { allowLongExport: false });
+            const pdfToImageInstance = await lazyFeatureRegistry.open('pdf-to-image');
+            await pdfToImageInstance?.raw?.openWithFile(pdfFile, { allowLongExport: false });
           } catch (error) {
             console.error('PPT to image preparation failed:', error);
             if (error?.message !== 'ppt-render:runtime-missing') showToast(error?.message === 'ppt-render:desktop-only' ? text('desktopOnly') : pptRenderErrorMessage(error, text));
@@ -19297,17 +19297,6 @@ March 18, 2026|Launch Day
       renderHomeTools();
       onLangChange(renderHomeTools);
 
-      // ===== PDF To Image =====
-      const pdfToImageTool = initPdfToImageTool({
-        isTauri,
-        t,
-        onLangChange,
-        pdfWorkerUrl,
-        getOutputDir,
-        displayFilesystemPath,
-        initStandardToolPlasma,
-        disposeStandardToolPlasma
-      });
       // ===== PDF Editor =====
       const pdfEditorTool = initPdfEditorTool({
         isTauri,

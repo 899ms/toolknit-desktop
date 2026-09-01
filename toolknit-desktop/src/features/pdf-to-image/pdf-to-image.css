@@ -1,0 +1,394 @@
+/* PDF-to-image keeps the shared page picker and adds lazy previews plus a compact export bar. */
+.pdf-to-image-workspace .pdf-merge-page-stage {
+  padding-top: 16px;
+  padding-bottom: 18px;
+}
+
+.pdf-to-image-workspace .pdf-merge-page-strip {
+  gap: 42px;
+}
+
+.pdf-to-image-preview-frame {
+  position: relative;
+  contain: layout paint style;
+  background: #f5f5f2;
+}
+
+.pdf-to-image-preview-frame > canvas,
+.pdf-to-image-preview-canvas {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  background: #ffffff;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.pdf-to-image-preview-frame.is-ready > canvas,
+.pdf-to-image-preview-frame.is-ready .pdf-to-image-preview-canvas {
+  opacity: 1;
+}
+
+.pdf-to-image-preview-skeleton {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: 13px;
+  padding: 26px 22px;
+  background: #f5f5f2;
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  animation: pdfToImageSkeletonPulse 1.1s ease-in-out infinite alternate;
+}
+
+.pdf-to-image-preview-skeleton span {
+  display: block;
+  height: 5px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  background: rgba(22, 22, 26, 0.15);
+}
+
+.pdf-to-image-preview-skeleton span:nth-child(1) {
+  width: 42%;
+}
+
+.pdf-to-image-preview-skeleton span:nth-child(2) {
+  width: 72%;
+  height: 12px;
+  margin-top: 2px;
+  background: rgba(22, 22, 26, 0.52);
+}
+
+.pdf-to-image-preview-skeleton span:nth-child(3) {
+  width: 100%;
+  height: 92px;
+  margin: 4px 0 2px;
+  border: 1px solid rgba(22, 22, 26, 0.1);
+  background: rgba(22, 22, 26, 0.07);
+}
+
+.pdf-to-image-preview-skeleton span:last-child {
+  width: 64%;
+}
+
+.pdf-to-image-preview-frame.is-ready .pdf-to-image-preview-skeleton,
+.pdf-to-image-preview-frame.has-error .pdf-to-image-preview-skeleton {
+  opacity: 0;
+  animation: none;
+}
+
+.pdf-to-image-preview-frame.is-released > canvas,
+.pdf-to-image-preview-frame.is-released .pdf-to-image-preview-canvas {
+  display: none;
+}
+
+.pdf-to-image-preview-frame.is-released .pdf-to-image-preview-skeleton {
+  opacity: 0.7;
+  animation: none;
+}
+
+.pdf-to-image-preview-error {
+  position: absolute;
+  inset: 0;
+  display: none;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #f5f5f2;
+  color: rgba(22, 22, 26, 0.58);
+  font-size: 12px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.pdf-to-image-preview-frame.has-error .pdf-to-image-preview-error {
+  display: flex;
+}
+
+@keyframes pdfToImageSkeletonPulse {
+  from { opacity: 0.58; }
+  to { opacity: 1; }
+}
+
+.pdf-to-image-workspace-footer {
+  min-height: 126px;
+  align-items: stretch;
+  flex-direction: column;
+  justify-content: center;
+  gap: 11px;
+  padding: 12px 56px 14px;
+}
+
+.pdf-to-image-footer-options,
+.pdf-to-image-footer-actions-row,
+.pdf-to-image-option-group,
+.pdf-to-image-limit-note,
+.pdf-to-image-export-button {
+  display: flex;
+  align-items: center;
+}
+
+.pdf-to-image-limit-note[hidden] {
+  display: none !important;
+}
+
+.pdf-to-image-footer-options {
+  min-height: 34px;
+  gap: 26px;
+}
+
+.pdf-to-image-option-group {
+  gap: 10px;
+}
+
+.pdf-to-image-option-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pdf-to-image-segmented {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.pdf-to-image-segmented button {
+  min-width: 58px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.68);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+  -webkit-app-region: no-drag;
+}
+
+.pdf-to-image-segmented button:last-child {
+  border-right: 0;
+}
+
+.pdf-to-image-segmented button:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.pdf-to-image-segmented button.active {
+  background: #ffffff;
+  color: #0a0a0f;
+}
+
+.pdf-to-image-segmented button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid #ffffff;
+  outline-offset: -3px;
+}
+
+.pdf-to-image-limit-note {
+  min-width: 0;
+  gap: 7px;
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.pdf-to-image-limit-note svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.pdf-to-image-footer-actions-row {
+  min-height: 44px;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.pdf-to-image-export-button {
+  justify-content: center;
+  gap: 8px;
+}
+
+.pdf-to-image-export-button[hidden] {
+  display: none !important;
+}
+
+.pdf-to-image-export-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pdf-to-image-process-mask {
+  gap: 18px;
+}
+
+.pdf-to-image-process-status {
+  display: flex;
+  width: 280px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.pdf-to-image-process-status .audio-convert-process-text {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.68);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdf-to-image-process-status strong {
+  flex-shrink: 0;
+  color: #ffffff;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pdf-to-image-cancel-btn {
+  display: inline-flex;
+  min-width: 112px;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.pdf-to-image-cancel-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.pdf-to-image-cancel-btn:disabled {
+  cursor: wait;
+  opacity: 0.48;
+}
+
+#pdfToImageSuccessPath {
+  max-width: 260px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdf-to-image-preview-skeleton {
+    animation: none;
+  }
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-poster::after {
+  content: 'IMG';
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-workspace {
+  grid-template-rows: auto minmax(200px, 1fr) auto;
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-queue {
+  padding-top: 18px;
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-files {
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  min-height: 0;
+  opacity: 1;
+  transform: none;
+  padding: 0;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.026);
+  scrollbar-color: rgba(255, 255, 255, 0.72) transparent;
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-files:empty {
+  display: grid;
+  place-items: center;
+  min-height: 192px;
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-files:empty::before {
+  content: '暂无 PDF 文件 · 点击上传或拖入文件后会显示在这里';
+  max-width: 320px;
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 13px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-files.has-files {
+  display: flex;
+  padding: 12px;
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-files::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-files::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.68);
+  border-radius: 999px;
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-files .audio-convert-file-item {
+  min-height: 52px;
+  padding: 12px 12px 12px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-files .audio-convert-file-item:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-files .audio-convert-file-index {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-files .audio-convert-file-name {
+  max-width: none;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 14px;
+  text-align: left;
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-files .audio-convert-file-remove {
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+}
+
+.pdf-to-image-v2 .pdf-merge-v2-files .audio-convert-file-remove:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+}

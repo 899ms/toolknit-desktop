@@ -13,6 +13,7 @@
     "test:pdf-split": "node scripts/test-pdf-split-core.mjs",
     "test:pdf-split-tool-contract": "node scripts/test-pdf-split-tool-contract.mjs",
     "test:pdf-to-image": "node scripts/test-pdf-to-image-core.mjs",
+    "test:pdf-to-image-tool-contract": "node scripts/test-pdf-to-image-tool-contract.mjs",
     "test:pdf-rotate": "node scripts/test-pdf-rotate-core.mjs",
     "test:pdf-rotate-tool-contract": "node scripts/test-pdf-rotate-tool-contract.mjs",
     "test:pdf-encrypt": "node scripts/test-pdf-encrypt-core.mjs && node scripts/test-pdf-encrypt-native.mjs",

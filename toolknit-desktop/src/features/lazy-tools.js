@@ -19,6 +19,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./pdf-merge/tool.js'),
     init: 'initPdfMergeTool'
   }),
+  'pdf-to-image': Object.freeze({
+    overlayId: 'pdfToImageOverlay',
+    load: () => import('./pdf-to-image/tool.js'),
+    init: 'initPdfToImageTool'
+  }),
   teleprompter: Object.freeze({
     overlayId: 'teleprompterOverlay',
     load: () => import('../teleprompter-ui.js'),

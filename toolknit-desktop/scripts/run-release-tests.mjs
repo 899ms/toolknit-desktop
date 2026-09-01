@@ -13,6 +13,7 @@ const releaseTests = [
   'test:pdf-split',
   'test:pdf-split-tool-contract',
   'test:pdf-to-image',
+  'test:pdf-to-image-tool-contract',
   'test:pdf-rotate',
   'test:pdf-rotate-tool-contract',
   'test:pdf-encrypt',

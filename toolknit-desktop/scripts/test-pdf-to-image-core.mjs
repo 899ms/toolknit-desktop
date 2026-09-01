@@ -204,7 +204,10 @@ assert.throws(
   expectCode('invalid_page_metrics')
 );
 
-const pdfToImageUiSource = readFileSync(new URL('../src/pdf-to-image-ui.js', import.meta.url), 'utf8');
+const pdfToImageUiSource = [
+  readFileSync(new URL('../src/features/pdf-to-image/tool.js', import.meta.url), 'utf8'),
+  readFileSync(new URL('../src/features/pdf-to-image/exporter.js', import.meta.url), 'utf8')
+].join('\n');
 assert.match(pdfToImageUiSource, /invoke\('cancel_pdf_to_image', \{ jobId: operation\.jobId \}\)/);
 assert.doesNotMatch(pdfToImageUiSource, /invoke\('cancel_convert'\)/);
 assert.match(pdfToImageUiSource, /isTauri && operation\.type === 'export'/);

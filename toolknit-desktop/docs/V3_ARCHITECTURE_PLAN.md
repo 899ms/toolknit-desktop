@@ -39,6 +39,14 @@ through the lifecycle scope and returns `open`, `close` and `dispose` methods.
 6. Validate CLI/MCP resource staging from a clean temporary Git worktree.
 7. Run release, Rust, security, browser, unsigned bundle and metric gates.
 
+## Current execution checkpoint
+
+The foundation and the first reversible frontend batches are complete:
+developer toolbox, password generator, timestamp, calculator family, typing
+test, text statistics and text formatting. The next text batch should migrate
+the remaining consumers of the compatibility document reader before that
+wrapper is removed; native and CLI/MCP restructuring remains later-phase work.
+
 ## Batch gate
 
 Each batch requires focused core and contract tests, architecture checks, a

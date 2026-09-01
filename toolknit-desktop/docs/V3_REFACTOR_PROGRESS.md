@@ -13,6 +13,7 @@ Last updated: 2026-09-01
 | `74feba3` | Migrated timestamp calculator |
 | `20b7751` | Migrated BMI, mortgage and interest calculator family |
 | `f20233c` | Migrated typing test and removed its stale global audio disposer |
+| `3fbbffa` | Migrated text statistics, text formatting and shared document reading |
 
 ## Current verified counts
 
@@ -24,15 +25,17 @@ Last updated: 2026-09-01
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | Typing batch candidate |
-| --- | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools |
+| --- | ---: | ---: | ---: | ---: |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB |
 
-The typing candidate emits a 12.91 kB JavaScript chunk and a 13.14 kB CSS
-chunk. Its complete release gate passed 67 npm scripts before final diff review.
+The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
+CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
+chunk. The complete release gate passed 68 npm scripts after browser regression
+and final diff review.
 
 ## Hidden issues fixed during migration
 
@@ -42,10 +45,17 @@ chunk. Its complete release gate passed 67 npm scripts before final diff review.
   now load with the owning mortgage feature.
 - The old global unload handler retained a call to the migrated typing audio
   disposer. The typing feature now exclusively owns and closes its AudioContext.
+- The former text-tool Tauri drag registrations never retained their native
+  `unlisten` callbacks. Shared document drop ownership now releases them.
+- Document reads could finish after a tool closed and update stale UI. Each
+  migrated text feature now invalidates pending reads on close.
+- A copy-feedback timer could restore a pre-switch language label after global
+  translation completed. Language changes now cancel that stale timer.
 
 ## Next batches
 
-1. Migrate the text statistics and text formatting family.
+1. Migrate the remaining text-document consumers and remove the compatibility
+   reader only after AI polish, AI translation and teleprompter no longer use it.
 2. Continue through remaining frontend families and reduce legacy entry files.
 3. Split Rust ownership, then validate CLI/MCP packaging and final Windows
    behavior as defined in `V3_ARCHITECTURE_PLAN.md`.

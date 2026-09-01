@@ -12,6 +12,10 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
   promises and provides the compatibility open path used by `main.js`.
 - `src/platform/tauri-runtime.js` isolates optional Tauri APIs from browser QA.
 - `src/shared/tool-page-shell.js` centralizes the standard tool-page shell.
+- `src/shared/text-document-reader.js` owns bounded TXT, Markdown, CSV, JSON,
+  HTML, DOCX and PDF text extraction for every migrated text consumer.
+- `src/shared/text-document-drop.js` owns browser/Tauri document drop wiring
+  and registers the native `unlisten` callback with the feature lifecycle.
 - `src/features/lazy-tools.js` is the declarative feature loading catalog.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 
@@ -40,6 +44,8 @@ tool entry so it becomes a separate production chunk.
 - Timestamp calculator.
 - BMI/body-fat, mortgage and interest calculator family.
 - Typing test, including its word data, audio graph, timers and input state.
+- Text statistics and text formatting, including bounded document reads,
+  cancellable stale-result guards, copy feedback and drag/drop resources.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

@@ -14,7 +14,6 @@
 .md-workbench,
 .color-replace-stage-section,
 .color-replace-controls,
-.developer-toolbox-workspace,
 .crypto-sidebar,
 .crypto-workspace {
   background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.018)), rgba(10,10,11,.56);
@@ -153,103 +152,9 @@
 
 /* Developer toolbox and crypto fill the workspace instead of ending at the
    intrinsic textarea height. */
-.developer-toolbox-workspace { display: grid !important; grid-template-rows: auto minmax(0,1fr); gap: 16px; min-height: 0; padding: 24px !important; overflow: hidden !important; }
-.developer-toolbox-panel { min-height: 0; height: 100%; max-width: none; padding: 20px; border-radius: 16px; overflow: auto; background: rgba(8,10,10,.38); }
-.developer-toolbox-editor,
-.developer-toolbox-single { min-height: 0; height: 100%; grid-template-rows: auto minmax(0,1fr) auto; }
-.developer-toolbox-field { min-height: 0; grid-template-rows: auto minmax(0,1fr); }
-.developer-toolbox-field textarea { min-height: 0; height: 100%; resize: none; }
-.developer-toolbox-jwt-grid { min-height: 0; height: 100%; }
-.developer-toolbox-jwt-grid pre { min-height: 0; height: 100%; }
 
 /* Developer tools use the same neutral white accent as the rest of ToolKnit.
    A fixed label row keeps input and output editors on one horizontal line. */
-.developer-toolbox-shell .developer-toolbox-heading span:first-child,
-.developer-toolbox-shell .developer-toolbox-nav-label,
-.developer-toolbox-shell .developer-toolbox-mode-label,
-.developer-toolbox-shell .developer-toolbox-privacy { color: rgba(255,255,255,.88); }
-.developer-toolbox-shell .developer-toolbox-nav button.is-active,
-.developer-toolbox-shell .developer-toolbox-control-row button.is-primary,
-.developer-toolbox-shell .developer-toolbox-actions button.is-primary,
-.developer-toolbox-shell .developer-toolbox-segment button.is-active {
-  border-color: #fff;
-  background: #fff;
-  color: #111;
-}
-.developer-toolbox-shell .developer-toolbox-status {
-  border-color: rgba(255,255,255,.5);
-  color: #fff;
-}
-.developer-toolbox-shell .developer-toolbox-status.is-error {
-  border-color: #ff5757;
-  background: rgba(153,20,20,.18);
-  color: #fff;
-}
-.developer-toolbox-shell .developer-toolbox-field {
-  grid-template-rows: 28px minmax(0,1fr);
-  color: rgba(255,255,255,.9);
-  font-size: 13px;
-}
-.developer-toolbox-shell .developer-toolbox-field > span { min-height: 28px; }
-.developer-toolbox-shell .developer-toolbox-field textarea {
-  box-sizing: border-box;
-  border-color: rgba(255,255,255,.22);
-  color: #fff;
-  font-size: 14px;
-}
-.developer-toolbox-shell .developer-toolbox-field textarea:focus {
-  outline: none;
-  border-color: #fff;
-  box-shadow: inset 0 0 0 1px #fff;
-}
-.developer-toolbox-shell .developer-toolbox-control-row label,
-.developer-toolbox-shell .developer-toolbox-jwt-grid article > span { color: rgba(255,255,255,.9); font-size: 13px; }
-.developer-toolbox-shell .developer-toolbox-jwt-grid pre { color: #fff; font-size: 14px; }
-.developer-toolbox-shell [data-dev-clear] { border-radius: 999px; }
-.developer-toolbox-select-field { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.9); font-size: 13px; }
-.developer-toolbox-select { position: relative; }
-.developer-toolbox-shell .developer-toolbox-select-trigger {
-  min-width: 108px;
-  min-height: 34px;
-  justify-content: space-between;
-  padding: 0 11px 0 13px;
-  border-color: #fff;
-  border-radius: 10px;
-  background: #fff;
-  color: #111;
-  font-weight: 750;
-}
-.developer-toolbox-select-trigger svg { width: 15px; height: 15px; transition: transform .16s ease; }
-.developer-toolbox-select-trigger[aria-expanded="true"] svg { transform: rotate(180deg); }
-.developer-toolbox-select-menu {
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 6px);
-  right: 0;
-  display: grid;
-  gap: 5px;
-  min-width: 138px;
-  padding: 7px;
-  border: 1px solid rgba(0,0,0,.1);
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 16px 36px rgba(0,0,0,.34);
-}
-.developer-toolbox-select-menu[hidden] { display: none; }
-.developer-toolbox-shell .developer-toolbox-select-menu button {
-  width: 100%;
-  min-height: 34px;
-  justify-content: flex-start;
-  padding: 0 11px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #111;
-  font-weight: 700;
-}
-.developer-toolbox-shell .developer-toolbox-select-menu button:hover,
-.developer-toolbox-shell .developer-toolbox-select-menu button:focus-visible,
-.developer-toolbox-shell .developer-toolbox-select-menu button.is-selected { background: #e9eaec; color: #111; outline: none; }
 
 /* Hash & Crypto follows the same monochrome control language. Risk banners
    are state-driven, so the legacy base display rule must never override the
@@ -432,11 +337,13 @@
 .crypto-io textarea { min-height: 0; height: 100%; resize: none; }
 
 @media (min-width:1560px) {
-  .md-tool-main, .developer-toolbox-main, .crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
+  .md-tool-main,
+.crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
   .color-replace-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) minmax(320px,360px) !important; }
 }
 @media (max-width:1180px) {
-  .md-tool-main, .developer-toolbox-main, .crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
+  .md-tool-main,
+.crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
   .color-replace-main { grid-template-columns: 250px minmax(0,1fr) !important; grid-template-rows: minmax(470px,auto) auto !important; align-content: start; }
   .color-replace-stage-section { grid-column: 2; grid-row: 1; }
   .color-replace-controls { grid-column: 2; grid-row: 2; min-height: 800px !important; }
@@ -453,10 +360,6 @@
   .md-editor-view[data-view="preview"] .md-input-pane { display: none; }
   .md-editor-view[data-view="editor"] .md-input-pane { display: grid; }
   .md-editor-view[data-view="editor"] .md-preview-pane { display: none; }
-  .developer-toolbox-workspace { min-height: 700px !important; padding: 18px !important; overflow: visible !important; }
-  .developer-toolbox-panel { height: auto; min-height: 560px; }
-  .developer-toolbox-editor, .developer-toolbox-single { height: auto; min-height: 520px; }
-  .developer-toolbox-field textarea { min-height: 260px; height: 260px; }
   .crypto-workspace { min-height: 760px !important; overflow: visible !important; }
   .crypto-panel { height: auto; min-height: 560px; }
   .crypto-io textarea { min-height: 220px; height: 220px; }

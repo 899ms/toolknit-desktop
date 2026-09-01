@@ -37,31 +37,31 @@ export const LAZY_TOOL_SPECS = Object.freeze({
   'json-tools': Object.freeze({
     instanceKey: 'developer-toolbox',
     overlayId: 'developerToolboxOverlay',
-    load: () => import('../developer-toolbox-ui.js'),
+    load: () => import('./developer-toolbox/tool.js'),
     init: 'initDeveloperToolbox'
   }),
   base64: Object.freeze({
     instanceKey: 'developer-toolbox',
     overlayId: 'developerToolboxOverlay',
-    load: () => import('../developer-toolbox-ui.js'),
+    load: () => import('./developer-toolbox/tool.js'),
     init: 'initDeveloperToolbox'
   }),
   'url-codec': Object.freeze({
     instanceKey: 'developer-toolbox',
     overlayId: 'developerToolboxOverlay',
-    load: () => import('../developer-toolbox-ui.js'),
+    load: () => import('./developer-toolbox/tool.js'),
     init: 'initDeveloperToolbox'
   }),
   uuid: Object.freeze({
     instanceKey: 'developer-toolbox',
     overlayId: 'developerToolboxOverlay',
-    load: () => import('../developer-toolbox-ui.js'),
+    load: () => import('./developer-toolbox/tool.js'),
     init: 'initDeveloperToolbox'
   }),
   jwt: Object.freeze({
     instanceKey: 'developer-toolbox',
     overlayId: 'developerToolboxOverlay',
-    load: () => import('../developer-toolbox-ui.js'),
+    load: () => import('./developer-toolbox/tool.js'),
     init: 'initDeveloperToolbox'
   })
 });

@@ -36255,14 +36255,12 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
    The lazy 2.1 workspaces use the same chrome as the approved v2 pages. Keep
    the background as a separate composited layer so a custom wallpaper is
    visible through every glass panel without competing with controls. */
-.feature-tool-overlay,
-.developer-toolbox-overlay {
+.feature-tool-overlay {
   background: transparent !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-.feature-tool-overlay.visible,
-.developer-toolbox-overlay.visible { display: block; }
+.feature-tool-overlay.visible { display: block; }
 .tool-page-v2-shell {
   position: relative;
   isolation: isolate;
@@ -36387,7 +36385,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .md-workbench,
 .color-replace-stage-section,
 .color-replace-controls,
-.developer-toolbox-workspace,
 .crypto-sidebar,
 .crypto-workspace {
   min-width: 0;
@@ -36451,17 +36448,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .color-replace-stage-footer { min-height: 42px; }
 
 /* Developer toolbox and Hash & Crypto */
-.developer-toolbox-main { grid-template-columns: minmax(286px, 330px) minmax(0,1fr); }
-.developer-toolbox-nav { gap: 0; }
-.developer-toolbox-nav { overflow-y: auto; scrollbar-gutter: stable; }
-.developer-toolbox-nav-index { min-height: 0; margin-top: auto; padding-top: 20px; }
-.developer-toolbox-nav-index { padding-top: 8px; }
-.developer-toolbox-nav-label { padding: 14px 0 8px; }
-.developer-toolbox-nav nav { max-height: none; overflow: visible; padding-right: 4px; }
-.developer-toolbox-nav button { min-height: 30px; padding: 0 8px; }
-.developer-toolbox-workspace { display: block; overflow: auto; padding: 28px; }
-.developer-toolbox-heading { margin-bottom: 20px; }
-.developer-toolbox-panel { max-width: none; background: rgba(0,0,0,.16); }
 .crypto-main { grid-template-columns: minmax(286px, 330px) minmax(0,1fr); }
 .crypto-sidebar { gap: 0; }
 .crypto-sidebar-index { min-height: 0; margin-top: auto; padding-top: 18px; }
@@ -36498,29 +36484,18 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
   .md-editor-view { grid-template-columns: 1fr; }
   .md-preview-pane { display: none; }
   .color-replace-stage-section, .color-replace-controls { min-height: 520px; }
-  .developer-toolbox-workspace { min-height: 620px; padding: 18px; }
-  .developer-toolbox-io-grid, .developer-toolbox-jwt-grid, .crypto-io-grid, .crypto-secret-grid, .crypto-key-grid { grid-template-columns: 1fr; }
+  .crypto-io-grid,
+.crypto-secret-grid,
+.crypto-key-grid { grid-template-columns: 1fr; }
   .crypto-workspace { min-height: 700px; }
 }
 
 /* The legacy toolbox rules live below the first shared block; keep these
    final selectors last so the five-tool workbench cannot fall back to its old
    two-column modal geometry. */
-.developer-toolbox-overlay { background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-.developer-toolbox-shell { background: transparent !important; }
-.developer-toolbox-main { grid-template-columns: minmax(286px, 330px) minmax(0,1fr) !important; }
-.developer-toolbox-nav { gap: 0; padding: 28px; overflow-y: auto; scrollbar-gutter: stable; }
-.developer-toolbox-nav-index { min-height: 0; margin-top: auto; padding-top: 8px; }
-.developer-toolbox-nav nav { max-height: none; overflow: visible; padding-right: 4px; }
-.developer-toolbox-nav button { min-height: 30px; padding: 0 8px; }
-.developer-toolbox-workspace { display: block; overflow: auto; padding: 28px; }
-.developer-toolbox-panel { max-width: none; }
-@media (max-width: 1180px) { .developer-toolbox-main { grid-template-columns: 250px minmax(0,1fr) !important; } }
-@media (max-width: 760px) { .developer-toolbox-main { grid-template-columns: 1fr !important; } .developer-toolbox-nav { padding: 22px; } }
 
 /* EOF layout precedence for Tool Page 2.1. */
 .md-tool-main,
-.developer-toolbox-main,
 .crypto-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) !important; }
 .color-replace-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) minmax(300px,324px) !important; }
 .md-workbench { display:grid !important; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:16px; overflow:visible !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
@@ -36539,21 +36514,13 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .color-replace-stage { min-height:0; }
 .color-replace-stage-footer { min-width:0; flex-wrap:wrap; row-gap:8px; }
 .color-replace-stage-footer label { min-width:min(220px,100%); }
-.developer-toolbox-workspace { display:grid !important; grid-template-rows:auto minmax(0,1fr); gap:16px; min-height:0; padding:24px !important; overflow:hidden !important; }
-.developer-toolbox-heading { margin-bottom:0; }
-.developer-toolbox-panel { min-height:0; height:100%; max-width:none; padding:20px; border-radius:20px; overflow:auto; background:rgba(10,11,12,.48); }
-.developer-toolbox-editor,.developer-toolbox-single { min-height:100%; height:100%; }
-.developer-toolbox-editor { grid-template-rows:auto minmax(0,1fr) auto; }
-.developer-toolbox-single { grid-template-rows:auto minmax(0,1fr) auto; }
-.developer-toolbox-field { min-height:0; grid-template-rows:auto minmax(0,1fr); }
-.developer-toolbox-field textarea { min-height:0; height:100%; resize:none; }
-.developer-toolbox-jwt-grid { min-height:0; height:100%; }
-.developer-toolbox-jwt-grid pre { min-height:0; height:100%; }
 .crypto-workspace { grid-template-rows:auto auto minmax(0,1fr) auto; min-height:0; overflow:hidden !important; }
 .crypto-panel { min-height:0; height:100%; overflow:auto; padding:22px 28px 28px; }
 .crypto-io textarea { min-height:0; height:100%; resize:none; }
-@media (min-width:1560px) { .md-tool-main,.developer-toolbox-main,.crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } .color-replace-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) minmax(320px,360px) !important; } }
-@media (max-width:1180px) { .md-tool-main,.developer-toolbox-main,.crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } .color-replace-main { grid-template-columns:250px minmax(0,1fr) !important; } .color-replace-stage-actions { justify-content:flex-start; } }
+@media (min-width:1560px) { .md-tool-main,
+.crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } .color-replace-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) minmax(320px,360px) !important; } }
+@media (max-width:1180px) { .md-tool-main,
+.crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } .color-replace-main { grid-template-columns:250px minmax(0,1fr) !important; } .color-replace-stage-actions { justify-content:flex-start; } }
 @media (max-width:760px) {
   .md-workbench { display:flex !important; flex-direction:column; gap:12px; min-height:620px !important; flex:0 0 620px; }
   .md-toolbar { flex:0 0 auto; border-radius:14px; }
@@ -36565,10 +36532,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
   .md-editor-view[data-view="preview"] .md-preview-pane { display:grid; }
   .md-editor-view[data-view="editor"] .md-preview-pane { display:none; }
   .md-editor-view[data-view="editor"] .md-input-pane { display:grid; }
-  .developer-toolbox-workspace { min-height:700px !important; padding:18px !important; overflow:visible !important; }
-  .developer-toolbox-panel { height:auto; min-height:560px; }
-  .developer-toolbox-editor,.developer-toolbox-single { height:auto; min-height:520px; }
-  .developer-toolbox-field textarea { min-height:260px; height:260px; }
   .crypto-workspace { min-height:760px !important; overflow:visible !important; }
   .crypto-panel { height:auto; min-height:560px; }
   .crypto-io textarea { min-height:220px; height:220px; }
@@ -36594,7 +36557,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .md-workbench,
 .color-replace-stage-section,
 .color-replace-controls,
-.developer-toolbox-workspace,
 .crypto-sidebar,
 .crypto-workspace {
   background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.018)), rgba(10,10,11,.56);
@@ -36664,14 +36626,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 
 /* Developer toolbox and crypto keep a framed workspace and let the active
    editor consume the remaining height instead of leaving a dead lower strip. */
-.developer-toolbox-workspace { display: grid !important; grid-template-rows: auto minmax(0,1fr); gap: 16px; min-height: 0; padding: 24px !important; overflow: hidden !important; }
-.developer-toolbox-panel { min-height: 0; height: 100%; max-width: none; padding: 20px; border-radius: 16px; overflow: auto; background: rgba(8,10,10,.38); }
-.developer-toolbox-editor,
-.developer-toolbox-single { min-height: 0; height: 100%; grid-template-rows: auto minmax(0,1fr) auto; }
-.developer-toolbox-field { min-height: 0; grid-template-rows: auto minmax(0,1fr); }
-.developer-toolbox-field textarea { min-height: 0; height: 100%; resize: none; }
-.developer-toolbox-jwt-grid { min-height: 0; height: 100%; }
-.developer-toolbox-jwt-grid pre { min-height: 0; height: 100%; }
 .crypto-workspace { grid-template-rows: auto auto minmax(0,1fr) auto; min-height: 0; overflow: hidden !important; }
 .crypto-panel { min-height: 0; height: 100%; overflow: auto; padding: 22px 28px 28px; }
 .crypto-panel > .crypto-editor,
@@ -36683,14 +36637,12 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 
 @media (min-width: 1560px) {
   .md-tool-main,
-  .developer-toolbox-main,
-  .crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
+.crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
   .color-replace-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) minmax(320px,360px) !important; }
 }
 @media (max-width: 1180px) {
   .md-tool-main,
-  .developer-toolbox-main,
-  .crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
+.crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
   .color-replace-main { grid-template-columns: 250px minmax(0,1fr) !important; grid-template-rows: minmax(470px,auto) auto !important; align-content: start; }
   .color-replace-stage-section { grid-column: 2; grid-row: 1; }
   .color-replace-controls { grid-column: 2; grid-row: 2; min-height: 800px !important; }
@@ -36707,10 +36659,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
   .md-editor-view[data-view="preview"] .md-input-pane { display: none; }
   .md-editor-view[data-view="editor"] .md-input-pane { display: grid; }
   .md-editor-view[data-view="editor"] .md-preview-pane { display: none; }
-  .developer-toolbox-workspace { min-height: 700px !important; padding: 18px !important; overflow: visible !important; }
-  .developer-toolbox-panel { height: auto; min-height: 560px; }
-  .developer-toolbox-editor, .developer-toolbox-single { height: auto; min-height: 520px; }
-  .developer-toolbox-field textarea { min-height: 260px; height: 260px; }
   .crypto-workspace { min-height: 760px !important; overflow: visible !important; }
   .crypto-panel { height: auto; min-height: 560px; }
   .crypto-io textarea { min-height: 220px; height: 220px; }
@@ -36722,7 +36670,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 /* Last cascade layer: these selectors intentionally come after the legacy
    toolbox stylesheet so all 2.1 pages use the shared shell geometry. */
 .md-tool-main,
-.developer-toolbox-main,
 .crypto-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) !important; }
 .color-replace-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) minmax(300px,324px) !important; }
 .md-workbench { display:grid !important; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:16px; overflow:visible !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
@@ -36741,21 +36688,13 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .color-replace-stage { min-height:0; }
 .color-replace-stage-footer { min-width:0; flex-wrap:wrap; row-gap:8px; }
 .color-replace-stage-footer label { min-width:min(220px,100%); }
-.developer-toolbox-workspace { display:grid !important; grid-template-rows:auto minmax(0,1fr); gap:16px; min-height:0; padding:24px !important; overflow:hidden !important; }
-.developer-toolbox-heading { margin-bottom:0; }
-.developer-toolbox-panel { min-height:0; height:100%; max-width:none; padding:20px; border-radius:20px; overflow:auto; background:rgba(10,11,12,.48); }
-.developer-toolbox-editor,.developer-toolbox-single { min-height:100%; height:100%; }
-.developer-toolbox-editor { grid-template-rows:auto minmax(0,1fr) auto; }
-.developer-toolbox-single { grid-template-rows:auto minmax(0,1fr) auto; }
-.developer-toolbox-field { min-height:0; grid-template-rows:auto minmax(0,1fr); }
-.developer-toolbox-field textarea { min-height:0; height:100%; resize:none; }
-.developer-toolbox-jwt-grid { min-height:0; height:100%; }
-.developer-toolbox-jwt-grid pre { min-height:0; height:100%; }
 .crypto-workspace { grid-template-rows:auto auto minmax(0,1fr) auto; min-height:0; overflow:hidden !important; }
 .crypto-panel { min-height:0; height:100%; overflow:auto; padding:22px 28px 28px; }
 .crypto-io textarea { min-height:0; height:100%; resize:none; }
-@media (min-width:1560px) { .md-tool-main,.developer-toolbox-main,.crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } .color-replace-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) minmax(320px,360px) !important; } }
-@media (max-width:1180px) { .md-tool-main,.developer-toolbox-main,.crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } .color-replace-main { grid-template-columns:250px minmax(0,1fr) !important; } .color-replace-stage-actions { justify-content:flex-start; } }
+@media (min-width:1560px) { .md-tool-main,
+.crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } .color-replace-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) minmax(320px,360px) !important; } }
+@media (max-width:1180px) { .md-tool-main,
+.crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } .color-replace-main { grid-template-columns:250px minmax(0,1fr) !important; } .color-replace-stage-actions { justify-content:flex-start; } }
 @media (max-width:760px) {
   .md-workbench { display:flex !important; flex-direction:column; gap:12px; min-height:620px !important; flex:0 0 620px; }
   .md-toolbar { flex:0 0 auto; border-radius:14px; }
@@ -36767,10 +36706,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
   .md-editor-view[data-view="preview"] .md-preview-pane { display:grid; }
   .md-editor-view[data-view="editor"] .md-preview-pane { display:none; }
   .md-editor-view[data-view="editor"] .md-input-pane { display:grid; }
-  .developer-toolbox-workspace { min-height:700px !important; padding:18px !important; overflow:visible !important; }
-  .developer-toolbox-panel { height:auto; min-height:560px; }
-  .developer-toolbox-editor,.developer-toolbox-single { height:auto; min-height:520px; }
-  .developer-toolbox-field textarea { min-height:260px; height:260px; }
   .crypto-workspace { min-height:760px !important; overflow:visible !important; }
   .crypto-panel { height:auto; min-height:560px; }
   .crypto-io textarea { min-height:220px; height:220px; }
@@ -36781,7 +36716,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 /* Final precedence for the 2.1 workbench layout. Keep this after the legacy
    feature rules above so the shared shell always wins. */
 .md-tool-main,
-.developer-toolbox-main,
 .crypto-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) !important; }
 .color-replace-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) minmax(300px,324px) !important; }
 .md-workbench {
@@ -36813,32 +36747,18 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .color-replace-stage { min-height: 0; }
 .color-replace-stage-footer { min-width: 0; flex-wrap: wrap; row-gap: 8px; }
 .color-replace-stage-footer label { min-width: min(220px,100%); }
-.developer-toolbox-workspace { display: grid !important; grid-template-rows: auto minmax(0,1fr); gap: 16px; min-height: 0; padding: 24px !important; overflow: hidden !important; }
-.developer-toolbox-heading { margin-bottom: 0; }
-.developer-toolbox-panel { min-height: 0; height: 100%; max-width: none; padding: 20px; border-radius: 20px; overflow: auto; background: rgba(10,11,12,.48); }
-.developer-toolbox-editor,
-.developer-toolbox-single { min-height: 100%; height: 100%; }
-.developer-toolbox-editor { grid-template-rows: auto minmax(0,1fr) auto; }
-.developer-toolbox-single { grid-template-rows: auto minmax(0,1fr) auto; }
-.developer-toolbox-field { min-height: 0; grid-template-rows: auto minmax(0,1fr); }
-.developer-toolbox-field textarea { min-height: 0; height: 100%; resize: none; }
-.developer-toolbox-jwt-grid { min-height: 0; height: 100%; }
-.developer-toolbox-jwt-grid pre { min-height: 0; height: 100%; }
-.developer-toolbox-actions { min-height: 36px; }
 .crypto-workspace { grid-template-rows: auto auto minmax(0,1fr) auto; min-height: 0; overflow: hidden !important; }
 .crypto-panel { min-height: 0; height: 100%; overflow: auto; padding: 22px 28px 28px; }
 .crypto-io textarea { min-height: 0; height: 100%; resize: none; }
 .crypto-io-grid { min-height: 0; }
 @media (min-width:1560px) {
   .md-tool-main,
-  .developer-toolbox-main,
-  .crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
+.crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
   .color-replace-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) minmax(320px,360px) !important; }
 }
 @media (max-width:1180px) {
   .md-tool-main,
-  .developer-toolbox-main,
-  .crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
+.crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
   .color-replace-main { grid-template-columns: 250px minmax(0,1fr) !important; }
   .color-replace-stage-actions { justify-content: flex-start; }
 }
@@ -36855,11 +36775,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
   .md-editor-view[data-view="preview"] .md-preview-pane { display: grid; }
   .md-editor-view[data-view="editor"] .md-preview-pane { display: none; }
   .md-editor-view[data-view="editor"] .md-input-pane { display: grid; }
-  .developer-toolbox-workspace { min-height: 700px !important; padding: 18px !important; overflow: visible !important; }
-  .developer-toolbox-panel { height: auto; min-height: 560px; }
-  .developer-toolbox-editor,
-  .developer-toolbox-single { height: auto; min-height: 520px; }
-  .developer-toolbox-field textarea { min-height: 260px; height: 260px; }
   .crypto-workspace { min-height: 760px !important; overflow: visible !important; }
   .crypto-panel { height: auto; min-height: 560px; }
   .crypto-io textarea { min-height: 220px; height: 220px; }
@@ -36874,7 +36789,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
    glass work surfaces, and controls that consume the available height.
    ------------------------------------------------------------------------- */
 .md-tool-main,
-.developer-toolbox-main,
 .crypto-main {
   grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) !important;
 }
@@ -36961,33 +36875,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 
 /* Developer tools: the panel and its fields stretch with the reference
    workspace instead of ending after their intrinsic textarea height. */
-.developer-toolbox-workspace {
-  display: grid !important;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 16px;
-  min-height: 0;
-  padding: 24px !important;
-  overflow: hidden !important;
-}
-.developer-toolbox-heading { margin-bottom: 0; }
-.developer-toolbox-panel {
-  min-height: 0;
-  height: 100%;
-  max-width: none;
-  padding: 20px;
-  border-radius: 20px;
-  overflow: auto;
-  background: rgba(10,11,12,.48);
-}
-.developer-toolbox-editor,
-.developer-toolbox-single { min-height: 100%; height: 100%; }
-.developer-toolbox-editor { grid-template-rows: auto minmax(0,1fr) auto; }
-.developer-toolbox-single { grid-template-rows: auto minmax(0,1fr) auto; }
-.developer-toolbox-field { min-height: 0; grid-template-rows: auto minmax(0,1fr); }
-.developer-toolbox-field textarea { min-height: 0; height: 100%; resize: none; }
-.developer-toolbox-jwt-grid { min-height: 0; height: 100%; }
-.developer-toolbox-jwt-grid pre { min-height: 0; height: 100%; }
-.developer-toolbox-actions { min-height: 36px; }
 
 /* Crypto uses the same fill rule, while retaining its persistent session log. */
 .crypto-workspace {
@@ -37005,14 +36892,12 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 
 @media (min-width: 1560px) {
   .md-tool-main,
-  .developer-toolbox-main,
-  .crypto-main { grid-template-columns: minmax(320px, 356px) minmax(0,1fr) !important; }
+.crypto-main { grid-template-columns: minmax(320px, 356px) minmax(0,1fr) !important; }
   .color-replace-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) minmax(320px,360px) !important; }
 }
 @media (max-width: 1180px) {
   .md-tool-main,
-  .developer-toolbox-main,
-  .crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
+.crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
   .color-replace-main { grid-template-columns: 250px minmax(0,1fr) !important; }
   .md-workbench { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
   .color-replace-stage-actions { justify-content: flex-start; }
@@ -37031,11 +36916,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
   .md-editor-view[data-view="editor"] .md-preview-pane { display: none; }
   .md-editor-view[data-view="editor"] .md-input-pane { display: grid; }
   .md-help-page { flex: 1 1 auto; }
-  .developer-toolbox-workspace { min-height: 700px !important; padding: 18px !important; overflow: visible !important; }
-  .developer-toolbox-panel { height: auto; min-height: 560px; }
-  .developer-toolbox-editor,
-  .developer-toolbox-single { height: auto; min-height: 520px; }
-  .developer-toolbox-field textarea { min-height: 260px; height: 260px; }
   .crypto-workspace { min-height: 760px !important; overflow: visible !important; }
   .crypto-panel { height: auto; min-height: 560px; }
   .crypto-io textarea { min-height: 220px; height: 220px; }
@@ -37051,8 +36931,7 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .tool-page-v2-body,
 .md-tool-main,
 .color-replace-main,
-.crypto-main,
-.developer-toolbox-main {
+.crypto-main {
   height: auto !important;
   min-height: 0 !important;
 }
@@ -37060,11 +36939,9 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .md-workbench,
 .color-replace-stage-section,
 .color-replace-controls,
-.developer-toolbox-workspace,
 .crypto-sidebar,
 .crypto-workspace { min-height: 0; }
 .md-workbench,
-.developer-toolbox-workspace,
 .crypto-workspace { overflow: hidden; }
 .color-replace-controls,
 .crypto-sidebar,
@@ -37107,42 +36984,15 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
     overflow: visible !important;
   }
   .md-workbench { min-height: 620px !important; flex: 0 0 620px; }
-  .developer-toolbox-workspace { min-height: 620px !important; flex: 0 0 auto; }
   .crypto-workspace { min-height: 700px !important; flex: 0 0 auto; }
   .md-workbench,
-  .developer-toolbox-workspace,
-  .crypto-workspace { overflow: visible; }
+.crypto-workspace { overflow: visible; }
 }
-
-.developer-toolbox-overlay { position: fixed; inset: 0; z-index: 90; display: none; background: rgba(8, 15, 14, .72); backdrop-filter: blur(18px); }
 .developer-tool-quicklist { margin: 0 auto 26px; max-width: 1180px; }
-.developer-toolbox-overlay.visible { display: block; }
-.developer-toolbox-shell { height: 100%; color: #eef8f4; background: linear-gradient(135deg, rgba(18, 37, 32, .96), rgba(10, 21, 20, .98)); }
-.developer-toolbox-topbar { height: 68px; display: grid; grid-template-columns: 180px minmax(0,1fr) auto; align-items: center; gap: 18px; padding: 0 28px; border-bottom: 1px solid rgba(255,255,255,.1); }
-.developer-toolbox-topbar button,.developer-toolbox-actions button,.developer-toolbox-control-row button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 34px; padding: 0 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 4px; color: inherit; background: rgba(255,255,255,.04); cursor: pointer; }
-.developer-toolbox-topbar button:hover,.developer-toolbox-actions button:hover { background: rgba(255,255,255,.1); }
-.developer-toolbox-topbar>div:nth-child(2) { display: grid; gap: 3px; }.developer-toolbox-topbar>div:nth-child(2)>span,.developer-toolbox-nav-label { color: rgba(207,238,226,.48); font-size: 9px; letter-spacing: .16em; }.developer-toolbox-topbar strong { font-size: 16px; }.developer-toolbox-privacy { display: flex; align-items: center; gap: 7px; color: #9ed8c7; font-size: 11px; }
-.developer-toolbox-main { height: calc(100% - 68px); display: grid; grid-template-columns: 210px minmax(0,1fr); }.developer-toolbox-nav { padding: 24px 12px; border-right: 1px solid rgba(255,255,255,.09); }.developer-toolbox-nav-label { padding: 0 10px 12px; }.developer-toolbox-nav nav { display: grid; gap: 4px; }.developer-toolbox-nav button { min-height: 42px; display: flex; align-items: center; gap: 10px; padding: 0 11px; border: 1px solid transparent; border-radius: 4px; color: rgba(238,248,244,.62); background: transparent; text-align: left; cursor: pointer; }.developer-toolbox-nav button:hover { color: #fff; background: rgba(255,255,255,.06); }.developer-toolbox-nav button.is-active { color: #10211c; background: #d9fff4; border-color: #d9fff4; font-weight: 700; }
-.developer-toolbox-workspace { min-width: 0; overflow: auto; padding: clamp(22px,4vw,54px); }.developer-toolbox-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px; }.developer-toolbox-heading>div { display: grid; gap: 7px; }.developer-toolbox-heading span:first-child { color: #8bcbb8; font-size: 10px; letter-spacing: .16em; }.developer-toolbox-heading h1 { margin: 0; font-size: clamp(23px,3vw,38px); }.developer-toolbox-heading p { margin: 0; color: rgba(238,248,244,.55); }.developer-toolbox-status { padding: 6px 10px; border: 1px solid rgba(139,203,184,.3); border-radius: 4px; color: #9ed8c7; font-size: 11px; white-space: nowrap; }.developer-toolbox-status.is-error { color: #ffb0a5; border-color: rgba(255,176,165,.45); }
-.developer-toolbox-panel { max-width: 1100px; padding: 20px; border: 1px solid rgba(255,255,255,.12); border-radius: 6px; background: rgba(255,255,255,.035); box-shadow: 0 18px 60px rgba(0,0,0,.18); }.developer-toolbox-editor,.developer-toolbox-single { display: grid; gap: 14px; }.developer-toolbox-control-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }.developer-toolbox-mode-label { color: rgba(207,238,226,.48); font-size: 10px; letter-spacing: .12em; }.developer-toolbox-control-row label { display: flex; align-items: center; gap: 8px; color: rgba(238,248,244,.65); font-size: 12px; }.developer-toolbox-control-row input,.developer-toolbox-control-row select { min-height: 32px; padding: 0 8px; border: 1px solid rgba(255,255,255,.16); border-radius: 4px; color: inherit; background: rgba(0,0,0,.18); }.developer-toolbox-control-row button.is-primary,.developer-toolbox-actions button.is-primary { color: #10211c; background: #d9fff4; border-color: #d9fff4; font-weight: 700; }.developer-toolbox-segment { display: flex; gap: 4px; }.developer-toolbox-segment button { min-height: 30px; padding: 0 11px; border: 1px solid rgba(255,255,255,.14); border-radius: 3px; color: rgba(238,248,244,.65); background: rgba(255,255,255,.04); cursor: pointer; }.developer-toolbox-segment button.is-active { color: #10211c; background: #d9fff4; }
-.developer-toolbox-io-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 14px; }.developer-toolbox-field { display: grid; grid-template-rows: auto minmax(220px,1fr); gap: 7px; min-width: 0; color: rgba(238,248,244,.6); font-size: 11px; }.developer-toolbox-field textarea { min-height: 220px; width: 100%; padding: 13px; resize: vertical; border: 1px solid rgba(255,255,255,.14); border-radius: 4px; color: #eaf8f3; background: rgba(0,0,0,.2); font: 12px/1.55 Consolas,"Cascadia Code",monospace; }.developer-toolbox-field textarea:focus { outline: 1px solid rgba(158,216,199,.7); }.developer-toolbox-field>span { display: flex; align-items: center; justify-content: space-between; }.developer-toolbox-field>span button { width: 27px; height: 26px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.12); border-radius: 3px; color: inherit; background: transparent; cursor: pointer; }.developer-toolbox-actions { display: flex; justify-content: flex-end; gap: 8px; }.developer-toolbox-jwt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }.developer-toolbox-jwt-grid article { min-width: 0; }.developer-toolbox-jwt-grid article>span { display: block; margin-bottom: 7px; color: rgba(238,248,244,.6); font-size: 11px; }.developer-toolbox-jwt-grid pre { min-height: 180px; max-height: 340px; overflow: auto; margin: 0; padding: 13px; border: 1px solid rgba(255,255,255,.14); border-radius: 4px; color: #cde9e0; background: rgba(0,0,0,.2); font: 12px/1.55 Consolas,"Cascadia Code",monospace; white-space: pre-wrap; word-break: break-word; }
-@media (max-width: 760px) { .developer-toolbox-topbar { height: 60px; grid-template-columns: auto minmax(0,1fr); padding: 0 12px; }.developer-toolbox-privacy { display: none; }.developer-toolbox-main { height: calc(100% - 60px); grid-template-columns: 1fr; }.developer-toolbox-nav { padding: 8px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.09); }.developer-toolbox-nav-label { display: none; }.developer-toolbox-nav nav { display: flex; overflow-x: auto; }.developer-toolbox-nav button { min-width: 130px; }.developer-toolbox-workspace { padding: 20px 14px; }.developer-toolbox-io-grid,.developer-toolbox-jwt-grid { grid-template-columns: 1fr; }.developer-toolbox-heading h1 { font-size: 24px; } }
 
 /* Final shared-shell precedence for the legacy toolbox block above. */
-.developer-toolbox-overlay { background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-.developer-toolbox-shell { background: transparent !important; }
-.developer-toolbox-main { grid-template-columns: minmax(286px, 330px) minmax(0,1fr) !important; }
-.developer-toolbox-nav { gap: 0; padding: 28px; overflow-y: auto; scrollbar-gutter: stable; }
-.developer-toolbox-nav-index { min-height: 0; margin-top: auto; padding-top: 8px; }
-.developer-toolbox-nav nav { max-height: none; overflow: visible; padding-right: 4px; }
-.developer-toolbox-nav button { min-height: 30px; padding: 0 8px; }
-.developer-toolbox-workspace { display: block; overflow: auto; padding: 28px; }
-.developer-toolbox-panel { max-width: none; }
-@media (max-width: 1180px) { .developer-toolbox-main { grid-template-columns: 250px minmax(0,1fr) !important; } }
-@media (max-width: 760px) { .developer-toolbox-main { grid-template-columns: 1fr !important; } .developer-toolbox-nav { padding: 22px; } }
 /* EOF layout precedence for Tool Page 2.1. */
 .md-tool-main,
-.developer-toolbox-main,
 .crypto-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) !important; }
 .color-replace-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) minmax(300px,324px) !important; }
 .md-workbench { display:grid !important; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:16px; overflow:visible !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
@@ -37161,21 +37011,13 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .color-replace-stage { min-height:0; }
 .color-replace-stage-footer { min-width:0; flex-wrap:wrap; row-gap:8px; }
 .color-replace-stage-footer label { min-width:min(220px,100%); }
-.developer-toolbox-workspace { display:grid !important; grid-template-rows:auto minmax(0,1fr); gap:16px; min-height:0; padding:24px !important; overflow:hidden !important; }
-.developer-toolbox-heading { margin-bottom:0; }
-.developer-toolbox-panel { min-height:0; height:100%; max-width:none; padding:20px; border-radius:20px; overflow:auto; background:rgba(10,11,12,.48); }
-.developer-toolbox-editor,.developer-toolbox-single { min-height:100%; height:100%; }
-.developer-toolbox-editor { grid-template-rows:auto minmax(0,1fr) auto; }
-.developer-toolbox-single { grid-template-rows:auto minmax(0,1fr) auto; }
-.developer-toolbox-field { min-height:0; grid-template-rows:auto minmax(0,1fr); }
-.developer-toolbox-field textarea { min-height:0; height:100%; resize:none; }
-.developer-toolbox-jwt-grid { min-height:0; height:100%; }
-.developer-toolbox-jwt-grid pre { min-height:0; height:100%; }
 .crypto-workspace { grid-template-rows:auto auto minmax(0,1fr) auto; min-height:0; overflow:hidden !important; }
 .crypto-panel { min-height:0; height:100%; overflow:auto; padding:22px 28px 28px; }
 .crypto-io textarea { min-height:0; height:100%; resize:none; }
-@media (min-width:1560px) { .md-tool-main,.developer-toolbox-main,.crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } .color-replace-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) minmax(320px,360px) !important; } }
-@media (max-width:1180px) { .md-tool-main,.developer-toolbox-main,.crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } .color-replace-main { grid-template-columns:250px minmax(0,1fr) !important; } .color-replace-stage-actions { justify-content:flex-start; } }
+@media (min-width:1560px) { .md-tool-main,
+.crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } .color-replace-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) minmax(320px,360px) !important; } }
+@media (max-width:1180px) { .md-tool-main,
+.crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } .color-replace-main { grid-template-columns:250px minmax(0,1fr) !important; } .color-replace-stage-actions { justify-content:flex-start; } }
 @media (max-width:760px) {
   .md-workbench { display:flex !important; flex-direction:column; gap:12px; min-height:620px !important; flex:0 0 620px; }
   .md-toolbar { flex:0 0 auto; border-radius:14px; }
@@ -37187,10 +37029,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
   .md-editor-view[data-view="preview"] .md-preview-pane { display:grid; }
   .md-editor-view[data-view="editor"] .md-preview-pane { display:none; }
   .md-editor-view[data-view="editor"] .md-input-pane { display:grid; }
-  .developer-toolbox-workspace { min-height:700px !important; padding:18px !important; overflow:visible !important; }
-  .developer-toolbox-panel { height:auto; min-height:560px; }
-  .developer-toolbox-editor,.developer-toolbox-single { height:auto; min-height:520px; }
-  .developer-toolbox-field textarea { min-height:260px; height:260px; }
   .crypto-workspace { min-height:760px !important; overflow:visible !important; }
   .crypto-panel { height:auto; min-height:560px; }
   .crypto-io textarea { min-height:220px; height:220px; }

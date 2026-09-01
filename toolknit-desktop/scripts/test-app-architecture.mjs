@@ -4,6 +4,8 @@ import { createLazyToolRegistry, validateLazyToolSpecs } from '../src/app/lazy-t
 import { createLifecycleScope, normalizeToolInstance } from '../src/app/tool-lifecycle.js';
 import { readResponseTextLimited as readCoreResponse } from '../src/core/bounded-response.js';
 import { readResponseTextLimited as readCompatibleResponse } from '../src/bounded-response.js';
+import { formatJsonText as formatFeatureJson } from '../src/features/developer-toolbox/core.js';
+import { formatJsonText as formatCompatibleJson } from '../src/developer-toolbox-core.js';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
 import { toolTopbarMarkup as sharedToolTopbarMarkup } from '../src/shared/tool-page-shell.js';
 import { toolTopbarMarkup as compatibleToolTopbarMarkup } from '../src/tool-page-shell.js';
@@ -15,6 +17,7 @@ const [
   selectCompatibilityStyles,
   selectComponentStyles,
   markdownEditorSource,
+  developerToolboxSource,
   ...sharedShellConsumers
 ] = await Promise.all([
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
@@ -23,22 +26,24 @@ const [
   readFile(new URL('../src/tool-custom-select.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/styles/components/tool-custom-select.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/markdown-editor-ui.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/developer-toolbox/tool.js', import.meta.url), 'utf8'),
   ...[
     'color-space-compare-ui.js',
     'crypto-tool-ui.js',
-    'developer-toolbox-ui.js',
     'image-color-replace-ui.js',
     'markdown-editor-ui.js'
   ].map(file => readFile(new URL(`../src/${file}`, import.meta.url), 'utf8'))
 ]);
 
 assert.equal(readCompatibleResponse, readCoreResponse, 'the legacy bounded-response path must re-export the core implementation');
+assert.equal(formatCompatibleJson, formatFeatureJson, 'the legacy developer toolbox core path must re-export the feature implementation');
 assert.equal(compatibleToolTopbarMarkup, sharedToolTopbarMarkup, 'the legacy tool shell path must re-export the shared implementation');
 assert.doesNotMatch(mainSource, /from ['"]@tauri-apps\/api\/(?:core|event)['"]/, 'main.js must use the platform boundary');
 assert.match(mainSource, /from ['"]\.\/platform\/tauri-runtime\.js['"]/, 'main.js must import the Tauri platform boundary');
 assert.match(platformSource, /from ['"]@tauri-apps\/api\/core['"]/, 'the platform boundary must own the Tauri core import');
 assert.match(platformSource, /from ['"]@tauri-apps\/api\/event['"]/, 'the platform boundary must own the Tauri event import');
 assert.ok(sharedShellConsumers.every(source => source.includes("from './shared/tool-page-shell.js'")), 'migrated feature tools must consume the shared tool shell');
+assert.match(developerToolboxSource, /from ['"]\.\.\/\.\.\/shared\/tool-page-shell\.js['"]/, 'the developer toolbox feature must consume the shared tool shell');
 assert.match(indexSource, /href="\.\/src\/tool-custom-select\.css"/, 'the existing stylesheet position must remain stable');
 assert.equal(selectCompatibilityStyles.trim(), "@import url('./styles/components/tool-custom-select.css');", 'the legacy stylesheet must forward to the component stylesheet');
 assert.match(selectComponentStyles, /\.tool-custom-select-trigger\s*\{/, 'the component stylesheet must own custom select visuals');

@@ -84,6 +84,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./ai-translate/tool.js'),
     init: 'initAiTranslateTool'
   }),
+  'ai-doc': Object.freeze({
+    overlayId: 'aiDocOverlay',
+    load: () => import('./ai-document/tool.js'),
+    init: 'initAiDocumentTool'
+  }),
   'json-tools': Object.freeze({
     instanceKey: 'developer-toolbox',
     overlayId: 'developerToolboxOverlay',

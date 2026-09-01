@@ -21,6 +21,7 @@ const releaseTests = [
   'test:pdf-crop',
   'test:font-metadata',
   'test:ai-doc',
+  'test:ai-document-tool-contract',
   'test:ai-table',
   'test:ai-provider',
   'test:ai-translate',

@@ -62,6 +62,10 @@ tool entry so it becomes a separate production chunk.
   object URLs, request cancellation and export sessions now have explicit
   owners. AI Document and AI Table share only the workbench primitives and the
   serialized request-session core.
+- PDF Rotate, split into file/session orchestration, PDF.js preview ownership
+  and export ownership. WebView drag listeners, loading/render tasks, PDF
+  document handles, canvases, generated controls, object URLs and stale export
+  writes now terminate at explicit feature or open-session boundaries.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

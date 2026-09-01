@@ -22,6 +22,7 @@ const releaseTests = [
   'test:pdf-enhance',
   'test:pdf-editor',
   'test:pdf-page-number',
+  'test:pdf-page-number-tool-contract',
   'test:pdf-crop',
   'test:font-metadata',
   'test:ai-doc',

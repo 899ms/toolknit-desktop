@@ -19308,53 +19308,6 @@ March 18, 2026|Launch Day
         initStandardToolPlasma,
         disposeStandardToolPlasma
       });
-      // ===== PDF Page Number (lazy-loaded) =====
-      let pdfPageNumberTool = null;
-      let pdfPageNumberToolPromise = null;
-
-      async function ensurePdfPageNumberTool() {
-        if (pdfPageNumberTool) return pdfPageNumberTool;
-        if (!pdfPageNumberToolPromise) {
-          pdfPageNumberToolPromise = import('./pdf-page-number-ui.js')
-            .then(({ initPdfPageNumberTool }) => {
-              pdfPageNumberTool = initPdfPageNumberTool({
-                isTauri,
-                t,
-                onLangChange,
-                pdfWorkerUrl,
-                getOutputDir,
-                displayFilesystemPath,
-                initStandardToolPlasma,
-                disposeStandardToolPlasma
-              });
-              return pdfPageNumberTool;
-            })
-            .catch(error => {
-              pdfPageNumberToolPromise = null;
-              throw error;
-            });
-        }
-        return await pdfPageNumberToolPromise;
-      }
-
-      async function openPdfPageNumberTool() {
-        try {
-          const tool = await ensurePdfPageNumberTool();
-          tool.open();
-        } catch (error) {
-          console.error('[PDF Page Number] tool load failed:', error);
-          window.showToast?.(t('home.pdfPageNumber.toolLoadFailed'));
-        }
-      }
-
-      document.querySelectorAll('.audio-list-item[data-tool="pdf-page-number"]').forEach(item => {
-        item.addEventListener('click', () => void openPdfPageNumberTool());
-        item.addEventListener('keydown', event => {
-          if (event.key !== 'Enter' && event.key !== ' ') return;
-          event.preventDefault();
-          void openPdfPageNumberTool();
-        });
-      });
       // ===== PDF Crop (lazy-loaded) =====
       let pdfCropTool = null;
       let pdfCropToolPromise = null;

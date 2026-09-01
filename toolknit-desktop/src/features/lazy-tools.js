@@ -24,6 +24,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./pdf-to-image/tool.js'),
     init: 'initPdfToImageTool'
   }),
+  'pdf-page-number': Object.freeze({
+    overlayId: 'pdfPageNumberOverlay',
+    load: () => import('./pdf-page-number/tool.js'),
+    init: 'initPdfPageNumberTool'
+  }),
   teleprompter: Object.freeze({
     overlayId: 'teleprompterOverlay',
     load: () => import('../teleprompter-ui.js'),

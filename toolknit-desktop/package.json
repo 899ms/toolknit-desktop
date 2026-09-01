@@ -22,6 +22,7 @@
     "test:pdf-enhance": "node scripts/test-pdf-enhance-core.mjs",
     "test:pdf-editor": "node scripts/test-pdf-editor-core.mjs && node scripts/test-pdf-editor-geometry.mjs && node scripts/test-pdf-editor-state.mjs",
     "test:pdf-page-number": "node scripts/test-pdf-page-number-core.mjs",
+    "test:pdf-page-number-tool-contract": "node scripts/test-pdf-page-number-tool-contract.mjs",
     "test:pdf-crop": "node scripts/test-pdf-crop-core.mjs",
     "test:font-metadata": "node scripts/test-font-metadata.mjs",
     "test:ai-doc": "npm run stage:cli-resources && node scripts/test-ai-doc-core.mjs && node scripts/test-ai-doc-pdf-layout.mjs && node scripts/test-ai-doc-project-core.mjs && node scripts/test-ai-document-runtime.mjs",

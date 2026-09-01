@@ -1138,8 +1138,9 @@
     min-width: 0;
     width: 100%;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(360px, 1fr) auto;
-    block-size: auto;
+    grid-template-rows: minmax(360px, auto) minmax(360px, auto) minmax(480px, auto);
+    block-size: 100%;
+    max-block-size: 100%;
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
@@ -1149,5 +1150,9 @@
   .pdf-page-number-preview,
   .pdf-page-number-settings {
     min-width: 0;
+  }
+
+  .pdf-page-number-settings {
+    min-height: 480px;
   }
 }

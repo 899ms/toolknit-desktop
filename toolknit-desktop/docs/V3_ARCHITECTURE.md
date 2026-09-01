@@ -87,6 +87,13 @@ tool entry so it becomes a separate production chunk.
   native export sessions and browser object URLs all terminate at explicit
   boundaries. PPT To Image retains its existing restricted entry through the
   lazy instance's `openWithFile` contract.
+- PDF Page Number, split into orchestration, page workspace, PDF/ZIP export and
+  modal/focus view state. Every open creates an independent lifecycle session;
+  native drag listeners, PDF.js loading/render tasks, document handles,
+  observers, canvases, generated bindings, byte buffers and object URLs all
+  terminate at that session boundary. Operation identity prevents a closed or
+  superseded session from restoring loading state, publishing files or writing
+  progress and success UI into a newer session.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

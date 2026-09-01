@@ -22,6 +22,7 @@ Last updated: 2026-09-02
 | `99e66e6` | Migrated PDF Merge preview, page selection, pointer sorting and export lifecycle |
 | `c4796fe` | Preserved feature-owned Escape handling ahead of the lazy registry fallback |
 | `5fd1d12` | Migrated PDF To Image preview, page selection, export and cancellation lifecycle |
+| `33287cf` | Migrated PDF Page Number workspace, PDF/ZIP export and responsive lifecycle |
 
 ## Current verified counts
 
@@ -33,12 +34,12 @@ Last updated: 2026-09-02
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
@@ -61,6 +62,14 @@ handling and close/reopen cleanup. The complete gate now passes 75 npm scripts,
 541 security checks, `cargo check`, and 92 Rust tests with the same external
 LibreOffice QA ignored. Production output contains neither PDF To Image fixture
 query nor fixture filename.
+PDF Page Number now emits a 20.23 kB feature CSS chunk and independently owns
+page loading, preview rendering, sorting, deletion/undo, PDF export, ZIP export,
+focus and cancellation state. Its four-page fixture covers selection, custom
+ranges, PDF and ZIP output, cancellation, two-level Escape handling, language
+refresh and four close/reopen cycles at desktop and narrow sizes. The complete
+gate now passes 76 npm scripts, 545 security checks, `cargo check`, and 92 Rust
+tests with the same external LibreOffice QA ignored. Production output contains
+no PDF Page Number fixture marker.
 
 ## Hidden issues fixed during migration
 
@@ -189,12 +198,24 @@ query nor fixture filename.
 - The PPT To Image bridge now opens the lazy PDF To Image instance and preserves
   its existing `allowLongExport: false` contract. The old static initializer and
   duplicated tool-card listener are removed.
+- PDF Page Number previously mixed application-lifetime initialization with
+  page workspace, PDF.js tasks, native drag/drop, generated controls and export
+  state. Each open now owns an independent session, and operation identity
+  prevents a closed session from restoring snapshots or writing progress and
+  results into a later open.
+- PDF Page Number page loading and rendering now release loading tasks, render
+  tasks, document handles, observers, canvases and byte buffers. File names are
+  inserted with text nodes, and generated controls are released with their
+  render scope.
+- At widths below 780px the legacy settings layout could collapse its internal
+  scroll area to zero and cover the PDF/ZIP controls. The feature stylesheet now
+  gives the narrow settings workspace bounded rows, outer scrolling and a 480px
+  minimum height; its contract and browser checks protect that layout.
 
 ## Next batches
 
-1. Select the next coherent legacy PDF or adjacent document tool from the
-   remaining ownership inventory and migrate it through the same lifecycle and
-   browser gate.
+1. Inspect PDF Crop as the next coherent legacy PDF candidate and migrate it if
+   its ownership audit confirms the expected lifecycle and compatibility scope.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed

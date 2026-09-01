@@ -68,7 +68,13 @@ class FakeTarget {
     this.listeners.get(type)?.delete(listener);
   }
   dispatch(type, event = {}) {
-    for (const listener of this.listeners.get(type) || []) listener({ type, preventDefault() {}, ...event });
+    const dispatched = { type, defaultPrevented: false, ...event };
+    const originalPreventDefault = dispatched.preventDefault;
+    dispatched.preventDefault = () => {
+      dispatched.defaultPrevented = true;
+      originalPreventDefault?.();
+    };
+    for (const listener of this.listeners.get(type) || []) listener(dispatched);
   }
 }
 
@@ -159,7 +165,14 @@ assert.equal(registry.loadedInstanceCount, 3, 'tools with one instanceKey must i
 assert.deepEqual(opened.slice(-2), ['shared:sharedOne:shared-overlay', 'shared:sharedTwo:shared-overlay']);
 assert.equal(closed.filter(name => name === 'shared').length, 0, 'switching modes in one shared instance must not close it');
 registry.bind();
+const preventToolEscape = event => event.preventDefault();
+root.addEventListener('keydown', preventToolEscape);
 root.dispatch('keydown', { key: 'Escape' });
+await Promise.resolve();
+assert.equal(registry.activeToolId, 'sharedTwo', 'a tool-owned Escape action must not close the active tool');
+root.removeEventListener('keydown', preventToolEscape);
+root.dispatch('keydown', { key: 'Escape' });
+await Promise.resolve();
 assert.equal(registry.activeToolId, '');
 await registry.dispose();
 await registry.dispose();

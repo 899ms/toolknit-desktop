@@ -123,7 +123,12 @@ export function createLazyToolRegistry({
       }
     }
     bindings.event(root, 'keydown', event => {
-      if (event.key === 'Escape' && activeInstance) void closeActive();
+      if (event.key !== 'Escape' || !activeInstance) return;
+      const instance = activeInstance;
+      queueMicrotask(() => {
+        if (event.defaultPrevented || disposed || activeInstance !== instance) return;
+        void closeActive();
+      });
     });
     if (view?.addEventListener && view?.removeEventListener) {
       bindings.event(view, 'pagehide', () => { void dispose(); }, { once: true });

@@ -46,14 +46,14 @@ developer toolbox, password generator, timestamp, calculator family, typing
 test, text statistics, text formatting, AI polish, AI translation and AI
 Document. AI Table is now migrated with isolated editor, chart, export, PDF,
 request and CSS ownership; shared AI workbench rules and serialized requests
-have explicit reusable owners. PDF Rotate is the first legacy PDF workspace to
-complete the same vertical migration, including PDF.js task cleanup, generated
-control ownership, native drag/drop release and stale export guards. The next
-frontend family must be selected from the remaining ownership inventory by
-cohesion and risk, then pass the same contract, lifecycle, browser and release
-gates. The shared document reader and PDF worker URL remain compatibility
-boundaries until all consumers are audited; native and CLI/MCP restructuring
-remains later-phase work.
+have explicit reusable owners. PDF Rotate and PDF Split now complete the first
+two legacy PDF workspace migrations, including PDF.js task cleanup, generated
+control ownership, native drag/drop release, sortable queue ownership and
+stale export guards. The next frontend family must be selected from the
+remaining ownership inventory by cohesion and risk, then pass the same
+contract, lifecycle, browser and release gates. The shared document reader and
+main-entry PDF worker URL remain compatibility boundaries until all consumers
+are audited; native and CLI/MCP restructuring remains later-phase work.
 
 ## Batch gate
 

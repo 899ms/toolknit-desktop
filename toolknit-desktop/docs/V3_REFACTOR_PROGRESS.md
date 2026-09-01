@@ -18,6 +18,7 @@ Last updated: 2026-09-02
 | `0b795c7` | Migrated AI Document orchestration, editor, preview and PDF export |
 | `c048232` | Migrated AI Table, shared AI request lifecycle and AI workbench CSS ownership |
 | `048f09e` | Migrated PDF Rotate preview, export and native drag/drop lifecycle |
+| `2a5ab48` | Migrated PDF Split preview, page selection, export and sortable queue lifecycle |
 
 ## Current verified counts
 
@@ -29,12 +30,12 @@ Last updated: 2026-09-02
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
@@ -43,9 +44,10 @@ JavaScript chunks plus a shared 7.13 kB CSS chunk. AI Document now emits an
 approximately 60.17 kB JavaScript chunk and 31.37 kB feature CSS chunk. AI
 Table emits an approximately 41.16 kB JavaScript chunk and 16.65 kB feature
 CSS chunk; the two features share a 3.50 kB AI workbench CSS chunk. The complete
-release gate passed 72 npm scripts after PDF Rotate emitted a 16.29 kB lazy
-JavaScript chunk and 0.14 kB feature CSS chunk. PDF Rotate browser regression,
-full Rust tests, production demo-hook scanning and final diff review passed.
+release gate passed 73 npm scripts after PDF Split emitted a 17.89 kB lazy
+JavaScript chunk and 0.84 kB feature CSS chunk. PDF Split browser regression,
+524 security checks, full Rust tests, production demo-hook scanning and final
+diff review passed.
 
 ## Hidden issues fixed during migration
 
@@ -117,6 +119,26 @@ full Rust tests, production demo-hook scanning and final diff review passed.
 - A deterministic three-page development fixture now covers PDF Rotate without
   a system file picker. Production output was scanned to confirm the fixture
   query and filename are eliminated from release chunks.
+- PDF Split registered native WebView drag/drop for the application lifetime
+  without retaining `unlisten`. Its open session now releases the callback,
+  including the registration race where the tool closes before registration
+  resolves.
+- PDF Split preview loading and rendering did not retain the active PDF.js
+  render task, and generated selection/download controls had unmanaged event
+  bindings. The preview owner now cancels loading and render work, destroys all
+  document handles, clears canvases and disposes every render binding.
+- PDF Split export could continue writing progress or showing success after the
+  tool closed. Export sessions now guard every publication and UI write with
+  owner and operation IDs while retaining the existing partial-save behavior.
+- The file queue used HTML interpolation and recreated sortable listeners
+  without an explicit owner. Filenames now use text nodes, and a reusable
+  sortable-file-list helper binds every row listener to its render scope.
+- Browser file pickers and generated object URLs now have explicit disposal,
+  while processing-state guards prevent queue mutation during active work.
+- A deterministic two-file, three-page development fixture exercises page
+  selection, single export, selected-page export, language refresh and repeated
+  open/process/close cycles. Production chunks contain no fixture query or
+  filename.
 
 ## Next batches
 

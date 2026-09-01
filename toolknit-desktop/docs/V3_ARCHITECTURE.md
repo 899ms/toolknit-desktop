@@ -16,6 +16,8 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
   HTML, DOCX and PDF text extraction for every migrated text consumer.
 - `src/shared/text-document-drop.js` owns browser/Tauri document drop wiring
   and registers the native `unlisten` callback with the feature lifecycle.
+- `src/shared/sortable-file-list.js` binds reorder interactions to a render
+  scope so generated queue rows release every drag listener together.
 - `src/features/lazy-tools.js` is the declarative feature loading catalog.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 - `src/core/serialized-request-session.js` owns one-at-a-time async requests,
@@ -66,6 +68,11 @@ tool entry so it becomes a separate production chunk.
   and export ownership. WebView drag listeners, loading/render tasks, PDF
   document handles, canvases, generated controls, object URLs and stale export
   writes now terminate at explicit feature or open-session boundaries.
+- PDF Split, split into file/session orchestration, multi-document PDF.js
+  preview and page-selection ownership, and single/batch export ownership.
+  Native drag listeners, sortable rows, browser pickers, loading/render tasks,
+  document handles, canvases, object URLs and stale export writes all have
+  explicit owners while partial-save reporting remains compatible.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

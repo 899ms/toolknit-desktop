@@ -19,6 +19,7 @@ Last updated: 2026-09-02
 | `c048232` | Migrated AI Table, shared AI request lifecycle and AI workbench CSS ownership |
 | `048f09e` | Migrated PDF Rotate preview, export and native drag/drop lifecycle |
 | `2a5ab48` | Migrated PDF Split preview, page selection, export and sortable queue lifecycle |
+| `99e66e6` | Migrated PDF Merge preview, page selection, pointer sorting and export lifecycle |
 
 ## Current verified counts
 
@@ -30,12 +31,12 @@ Last updated: 2026-09-02
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
@@ -45,9 +46,13 @@ approximately 60.17 kB JavaScript chunk and 31.37 kB feature CSS chunk. AI
 Table emits an approximately 41.16 kB JavaScript chunk and 16.65 kB feature
 CSS chunk; the two features share a 3.50 kB AI workbench CSS chunk. The complete
 release gate passed 73 npm scripts after PDF Split emitted a 17.89 kB lazy
-JavaScript chunk and 0.84 kB feature CSS chunk. PDF Split browser regression,
-524 security checks, full Rust tests, production demo-hook scanning and final
-diff review passed.
+JavaScript chunk and 0.84 kB feature CSS chunk. PDF Merge now emits an 18.33 kB
+lazy JavaScript chunk and 0.07 kB feature CSS chunk. Its notice, page picker,
+selected-page export, all-page export, language refresh and repeated lifecycle
+browser checks passed without console errors. The complete gate now passes 74
+npm scripts, 530 security checks, `cargo check`, and 92 Rust tests with the one
+external LibreOffice QA test ignored by design. Production output contains no
+PDF Merge development fixture marker.
 
 ## Hidden issues fixed during migration
 
@@ -139,15 +144,36 @@ diff review passed.
   selection, single export, selected-page export, language refresh and repeated
   open/process/close cycles. Production chunks contain no fixture query or
   filename.
+- PDF Merge previously kept its WebView drag listener for the application
+  lifetime and mixed native file drops with pointer queue sorting. The open
+  session now releases the native listener, while a shared pointer-sort owner
+  guards the short post-sort interval from being interpreted as a file drop.
+- PDF Merge loading tasks, PDF.js documents, page render tasks, canvases and
+  generated page listeners previously had mixed ownership. The preview owner
+  now cancels or destroys them when the selection flow or tool closes.
+- Merge completion used an unmanaged delay and could publish stale progress or
+  success UI after the tool closed. Export sessions now guard every write with
+  owner and operation IDs; browser object URLs are retained briefly for the
+  download and revoked by the same owner.
+- PDF Merge queue rows previously interpolated filenames into HTML and rebound
+  unmanaged pointer listeners. Rows now use text nodes and a disposable render
+  scope without changing the existing queue DOM contract.
+- A deterministic two-file, three-page PDF Merge fixture covers multi-page
+  notice, picker selection, all-page export, language switching and four
+  open/close cycles. Production chunks contain no fixture query or filename.
 
 ## Next batches
 
 1. Select the next coherent frontend tool family from the remaining ownership
    inventory and migrate it through the same lifecycle and browser gate.
-2. Audit the remaining text-document consumers before deciding whether the
+2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
+   Windows WebView build; browser pointer automation did not reproduce a queue
+   move, so this remains an explicit manual parity check rather than a claimed
+   browser result.
+3. Audit the remaining text-document consumers before deciding whether the
    compatibility reader can be removed.
-3. Continue through remaining frontend families and reduce legacy entry files.
-4. Split Rust ownership, then validate CLI/MCP packaging and final Windows
+4. Continue through remaining frontend families and reduce legacy entry files.
+5. Split Rust ownership, then validate CLI/MCP packaging and final Windows
    behavior as defined in `V3_ARCHITECTURE_PLAN.md`.
 
 Known non-blocking warnings remain the ineffective `pdf-lib` and

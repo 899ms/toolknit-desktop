@@ -59,6 +59,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./interest-calculator/tool.js'),
     init: 'initInterestCalculatorTool'
   }),
+  'typing-test': Object.freeze({
+    overlayId: 'typingTestOverlay',
+    load: () => import('./typing-test/tool.js'),
+    init: 'initTypingTestTool'
+  }),
   'json-tools': Object.freeze({
     instanceKey: 'developer-toolbox',
     overlayId: 'developerToolboxOverlay',

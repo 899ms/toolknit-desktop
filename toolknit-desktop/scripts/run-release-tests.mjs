@@ -34,6 +34,7 @@ const releaseTests = [
   'test:bmi',
   'test:mortgage',
   'test:interest',
+  'test:typing',
   'test:color-extractor',
   'test:color-space-compare',
   'test:image-batch',

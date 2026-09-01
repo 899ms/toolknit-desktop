@@ -1,0 +1,733 @@
+      /* ===== Typing Test ===== */
+      .typing-test-main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 24px 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 0;
+      }
+
+      .typing-test-settings,
+      .typing-test-area,
+      .typing-test-result {
+        width: 100%;
+        max-width: 720px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 28px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      .typing-test-setting-group {
+        margin-bottom: 24px;
+      }
+      .typing-test-setting-group:last-of-type {
+        margin-bottom: 28px;
+      }
+      .typing-test-setting-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.55);
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .typing-test-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .typing-test-option {
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.03);
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 14px;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .typing-test-option:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.9);
+      }
+      .typing-test-option.active {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.4);
+        color: #ffffff;
+      }
+
+      .typing-test-start-btn,
+      .typing-test-reset-btn {
+        padding: 12px 28px;
+        border-radius: 999px;
+        font-size: 15px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+      }
+      .typing-test-start-btn {
+        background: rgba(255, 255, 255, 0.92);
+        color: #1a1a1a;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      }
+      .typing-test-start-btn:hover {
+        transform: translateY(-2px);
+        background: #ffffff;
+        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.2);
+      }
+      .typing-test-reset-btn {
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+      .typing-test-reset-btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+      }
+
+      .typing-test-area {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .typing-test-stats {
+        display: flex;
+        justify-content: space-around;
+        gap: 16px;
+      }
+      .typing-test-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+      .typing-test-stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #ffffff;
+        font-family: 'SF Mono', 'Segoe UI', monospace;
+        line-height: 1;
+      }
+      .typing-test-stat-value.warning {
+        color: #ff7a7a;
+      }
+      .typing-test-stat-label {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .typing-test-text-wrap {
+        position: relative;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+        min-height: 160px;
+        cursor: text;
+        transition: box-shadow 0.2s ease;
+      }
+      .typing-test-text-wrap:focus-within {
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+      }
+      .typing-test-hint {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.35);
+        pointer-events: none;
+        opacity: 1;
+        transition: opacity 0.2s ease;
+      }
+      .typing-test-text-wrap:focus-within .typing-test-hint {
+        opacity: 0;
+      }
+      .typing-test-text {
+        font-size: 22px;
+        line-height: 1.8;
+        color: rgba(255, 255, 255, 0.35);
+        font-family: 'SF Mono', 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+        letter-spacing: 0.5px;
+        word-break: break-all;
+        user-select: none;
+      }
+      .typing-test-text.segmented-mode {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 12px 16px;
+        line-height: 1.5;
+        word-break: normal;
+      }
+      .typing-test-segment {
+        display: inline-flex;
+        align-items: center;
+        padding: 0 4px 2px;
+        border-radius: 10px;
+        min-height: 1.4em;
+      }
+      .typing-test-text.segmented-mode .typing-test-char {
+        margin: 0 1px;
+      }
+      .typing-test-text.segmented-mode .typing-test-char.current {
+        border-bottom-width: 2px;
+      }
+      .typing-test-char {
+        display: inline-block;
+        position: relative;
+        transition: color 0.15s ease, transform 0.15s ease;
+        border-radius: 4px;
+        padding: 0 1px;
+        margin: 0 1px;
+      }
+      .typing-test-char.current {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.15);
+        border-bottom: 3px solid rgba(255, 255, 255, 0.6);
+      }
+      .typing-test-text.segmented-mode .typing-test-char.current {
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+      }
+      .typing-test-char.correct {
+        color: #ffffff;
+        animation: charPulse 0.25s ease;
+      }
+      .typing-test-char.wrong {
+        color: #ff6b6b;
+        animation: charShake 0.3s ease;
+      }
+      .typing-test-char.extra {
+        color: #ff6b6b;
+        opacity: 0.7;
+      }
+
+      .typing-test-extra-segment {
+        opacity: 0.85;
+      }
+
+      @keyframes charPulse {
+        0% { transform: scale(1); text-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+        50% { transform: scale(1.25); text-shadow: 0 0 12px rgba(255, 255, 255, 0.4); }
+        100% { transform: scale(1); text-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+      }
+      @keyframes charShake {
+        0%, 100% { transform: translateX(0); }
+        20% { transform: translateX(-4px); }
+        40% { transform: translateX(4px); }
+        60% { transform: translateX(-2px); }
+        80% { transform: translateX(2px); }
+      }
+
+      .typing-test-input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+        width: 1px;
+        height: 1px;
+        left: -9999px;
+      }
+
+      .typing-test-result {
+        text-align: center;
+      }
+      .typing-test-result-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 24px;
+      }
+      .typing-test-result-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+      .typing-test-result-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 16px;
+        background: rgba(0, 0, 0, 0.18);
+        border-radius: 14px;
+      }
+      .typing-test-result-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #ffffff;
+        font-family: 'SF Mono', 'Segoe UI', monospace;
+      }
+      .typing-test-result-label {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .typing-test-result-actions {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 600px) {
+        .typing-test-main {
+          padding: 0 16px 24px;
+        }
+        .typing-test-settings,
+        .typing-test-area,
+        .typing-test-result {
+          padding: 20px;
+        }
+        .typing-test-text {
+          font-size: 18px;
+        }
+        .typing-test-result-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      /* ===== Typing Test · Tool Page 2.0 final overrides ===== */
+      .typing-test-v2 .pdf-merge-v2-bg {
+        opacity: 0.34;
+        filter: grayscale(1) contrast(1.12) brightness(0.7);
+      }
+
+      .typing-test-v2 .pdf-merge-v2-poster::after {
+        content: 'TYPE';
+      }
+
+      .typing-test-v2-body {
+        grid-template-columns: minmax(286px, 356px) minmax(0, 1fr);
+      }
+
+      .typing-test-v2-workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr);
+        padding: 24px;
+        overflow: hidden;
+      }
+
+      .typing-test-v2 .typing-test-main {
+        width: 100%;
+        max-width: none;
+        min-height: 0;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        align-items: stretch;
+      }
+
+      .typing-test-v2 .typing-test-settings,
+      .typing-test-v2 .typing-test-area,
+      .typing-test-v2 .typing-test-result {
+        width: 100%;
+        max-width: none;
+        min-height: 0;
+        height: 100%;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background:
+          radial-gradient(circle at 86% 12%, rgba(255, 255, 255, 0.07), transparent 32%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.044), rgba(255, 255, 255, 0.018)),
+          rgba(255, 255, 255, 0.018);
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        overflow: hidden;
+      }
+
+      .typing-test-v2 .typing-test-settings {
+        display: grid;
+        grid-template-columns: minmax(136px, 0.42fr) minmax(0, 1fr);
+        grid-template-rows: repeat(3, minmax(94px, 1fr)) auto;
+        align-items: stretch;
+        column-gap: 28px;
+        row-gap: 0;
+        padding: 26px 32px 30px;
+      }
+
+      .typing-test-v2 .typing-test-setting-group {
+        display: contents;
+      }
+
+      .typing-test-v2 .typing-test-setting-label {
+        align-self: center;
+        display: inline-flex;
+        align-items: center;
+        gap: 11px;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.48);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .typing-test-v2 .typing-test-setting-label :is(i, svg) {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        padding: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 11px;
+        background: rgba(255, 255, 255, 0.045);
+        color: rgba(255, 255, 255, 0.82);
+        stroke-width: 1.9;
+      }
+
+      .typing-test-v2 .typing-test-options {
+        display: grid;
+        align-self: center;
+        gap: 9px;
+      }
+
+      .typing-test-v2 #typingTestLangOptions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .typing-test-v2 #typingTestDifficultyOptions,
+      .typing-test-v2 #typingTestDurationOptions {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .typing-test-v2 .typing-test-option {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 12px;
+        border: 1px solid rgba(255, 255, 255, 0.105);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.03);
+        color: rgba(255, 255, 255, 0.62);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .typing-test-v2 .typing-test-option:hover:not(.active) {
+        transform: translateY(-1px);
+        border-color: rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.055);
+        color: rgba(255, 255, 255, 0.88);
+      }
+
+      .typing-test-v2 .typing-test-option.active {
+        border-color: #fff;
+        background: #fff;
+        color: #050506;
+      }
+
+      .typing-test-v2 .typing-test-start-btn,
+      .typing-test-v2 .typing-test-reset-btn {
+        min-height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 15px;
+        font-weight: 900;
+        -webkit-app-region: no-drag;
+      }
+
+      .typing-test-v2 .typing-test-settings > .typing-test-start-btn {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-height: 54px;
+        justify-self: stretch;
+        margin-top: 14px;
+      }
+
+      .typing-test-v2 .typing-test-settings > .typing-test-start-btn :is(i, svg) {
+        width: 17px;
+        height: 17px;
+        stroke-width: 2.4;
+      }
+
+      .typing-test-v2 .typing-test-start-btn {
+        border: 0;
+        background: #fff;
+        color: #050506;
+        box-shadow: none;
+      }
+
+      .typing-test-v2 .typing-test-start-btn:hover {
+        transform: translateY(-1px);
+        background: #fff;
+        box-shadow: 0 12px 34px rgba(255, 255, 255, 0.08);
+      }
+
+      .typing-test-v2 .typing-test-reset-btn {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.035);
+        color: rgba(255, 255, 255, 0.82);
+      }
+
+      .typing-test-v2 .typing-test-reset-btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.065);
+        color: #fff;
+      }
+
+      .typing-test-v2 .typing-test-area {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto auto;
+        gap: 18px;
+        padding: 24px;
+      }
+
+      .typing-test-v2 .typing-test-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .typing-test-v2 .typing-test-stat {
+        min-width: 0;
+        min-height: 92px;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 18px;
+        background:
+          radial-gradient(circle at 82% 16%, rgba(255, 255, 255, 0.08), transparent 34%),
+          rgba(255, 255, 255, 0.032);
+      }
+
+      .typing-test-v2 .typing-test-stat-value {
+        color: rgba(255, 255, 255, 0.96);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+        font-size: clamp(34px, 4vw, 52px);
+        font-weight: 900;
+        letter-spacing: 0.01em;
+      }
+
+      .typing-test-v2 .typing-test-stat-value.warning {
+        color: #ff7777;
+        text-shadow: 0 0 22px rgba(255, 88, 88, 0.28);
+      }
+
+      .typing-test-v2 .typing-test-stat-label {
+        color: rgba(255, 255, 255, 0.48);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), sans-serif;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+      }
+
+      .typing-test-v2 .typing-test-text-wrap {
+        min-height: 0;
+        padding: 62px 26px 26px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 22px;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent 45%),
+          rgba(0, 0, 0, 0.22);
+        overflow: auto;
+        scrollbar-color: rgba(255, 255, 255, 0.62) transparent;
+      }
+
+      .typing-test-v2 .typing-test-text-wrap:focus-within {
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.24) inset;
+      }
+
+      .typing-test-v2 .typing-test-text-wrap::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+
+      .typing-test-v2 .typing-test-text-wrap::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.66);
+        border-radius: 999px;
+      }
+
+      .typing-test-v2 .typing-test-hint {
+        top: 18px;
+        right: 20px;
+        bottom: auto;
+        left: auto;
+        transform: none;
+        padding: 7px 11px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.26);
+        color: rgba(255, 255, 255, 0.42);
+        font-size: 12px;
+      }
+
+      .typing-test-v2 .typing-test-text {
+        color: rgba(255, 255, 255, 0.32);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: clamp(22px, 2.4vw, 34px);
+        font-weight: 900;
+        line-height: 1.62;
+        letter-spacing: 0.01em;
+      }
+
+      .typing-test-v2 .typing-test-text.segmented-mode {
+        gap: 14px 18px;
+        align-content: flex-start;
+      }
+
+      .typing-test-v2 .typing-test-segment {
+        min-height: 1.55em;
+        padding: 4px 8px 5px;
+        border: 1px solid rgba(255, 255, 255, 0.055);
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.022);
+      }
+
+      .typing-test-v2 .typing-test-char {
+        border-radius: 6px;
+        padding: 0 2px;
+        margin: 0 1px;
+      }
+
+      .typing-test-v2 .typing-test-char.current {
+        color: #050506;
+        background: #fff;
+        border-bottom: 0;
+        box-shadow: 0 10px 28px rgba(255, 255, 255, 0.08);
+      }
+
+      .typing-test-v2 .typing-test-text.segmented-mode .typing-test-char.current {
+        box-shadow: 0 0 0 1px #fff inset, 0 10px 28px rgba(255, 255, 255, 0.08);
+      }
+
+      .typing-test-v2 .typing-test-char.correct {
+        color: rgba(255, 255, 255, 0.96);
+      }
+
+      .typing-test-v2 .typing-test-char.wrong,
+      .typing-test-v2 .typing-test-char.extra {
+        color: #ff7979;
+        text-shadow: 0 0 18px rgba(255, 74, 74, 0.22);
+      }
+
+      .typing-test-v2 .typing-test-area > .typing-test-reset-btn {
+        width: min(240px, 100%);
+        justify-self: center;
+      }
+
+      .typing-test-v2 .typing-test-result {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        gap: 22px;
+        padding: 28px;
+        text-align: left;
+      }
+
+      .typing-test-v2 .typing-test-result-title {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.96);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: clamp(34px, 4vw, 52px);
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.055em;
+      }
+
+      .typing-test-v2 .typing-test-result-grid {
+        min-height: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        align-content: center;
+      }
+
+      .typing-test-v2 .typing-test-result-item {
+        min-width: 0;
+        min-height: 136px;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 20px;
+        background:
+          radial-gradient(circle at 82% 16%, rgba(255, 255, 255, 0.08), transparent 34%),
+          rgba(255, 255, 255, 0.032);
+      }
+
+      .typing-test-v2 .typing-test-result-value {
+        color: rgba(255, 255, 255, 0.96);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+        font-size: clamp(34px, 4vw, 56px);
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .typing-test-v2 .typing-test-result-label {
+        color: rgba(255, 255, 255, 0.46);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), sans-serif;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+      }
+
+      .typing-test-v2 .typing-test-result-actions {
+        justify-content: flex-end;
+        gap: 12px;
+      }
+
+      .typing-test-v2 .typing-test-result-actions .typing-test-start-btn,
+      .typing-test-v2 .typing-test-result-actions .typing-test-reset-btn {
+        min-width: 132px;
+      }
+
+      @media (max-width: 1260px) {
+        .typing-test-v2 .typing-test-settings {
+          grid-template-columns: 1fr;
+          align-content: start;
+        }
+
+        .typing-test-v2 .typing-test-result-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 1080px) {
+        .typing-test-v2-body {
+          grid-template-columns: 1fr;
+          overflow-y: auto;
+        }
+
+        .typing-test-v2-workspace {
+          min-height: 640px;
+        }
+
+        .typing-test-v2 .typing-test-stats,
+        .typing-test-v2 .typing-test-result-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* ===== End Typing Test ===== */

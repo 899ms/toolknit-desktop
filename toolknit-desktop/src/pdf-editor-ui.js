@@ -31,6 +31,7 @@ import { createPdfEditorFileSession } from './features/pdf-editor/file-session.j
 import { createPdfEditorPageOperations } from './features/pdf-editor/page-operations.js';
 import { createPdfEditorPageSelection } from './features/pdf-editor/page-selection.js';
 import { createPdfEditorPreview } from './features/pdf-editor/preview.js';
+import { createPdfEditorView } from './features/pdf-editor/view.js';
 import {
   buildTextLine,
   editedTextVisualBox,
@@ -175,7 +176,6 @@ export function initPdfEditorTool({
 
   const listenerController = new AbortController();
   const listenerOptions = { signal: listenerController.signal };
-  let plasmaInstance = null;
   let sources = [];
   // Keep immutable source objects available while undo/redo switches the
   // active page list. History stores only ids, so large PDF byte arrays are
@@ -192,12 +192,8 @@ export function initPdfEditorTool({
   let activeOperation = null;
   let operationSequence = 0;
   let idCounter = 0;
-  let lastOutputFolder = '';
-  let lastSuccess = null;
   let nativeDragUnlisten = null;
   let disposed = false;
-  let overlayReturnFocus = null;
-  let successReturnFocus = null;
   let unsubscribeLangChange = () => {};
   let canvasWrap = null;
   let textLayerEl = null;
@@ -228,6 +224,7 @@ export function initPdfEditorTool({
   let modalMode = null;
   let baselineSnapshot = null;
   let savedSnapshot = null;
+  let pdfEditorView = null;
   const showToast = (message, duration = 7000) => {
     if (!disposed) window.showToast?.(message, { duration, dismissible: true });
   };
@@ -725,73 +722,31 @@ export function initPdfEditorTool({
   }
 
   function openOverlay() {
-    if (disposed) return;
-    if (!overlay.classList.contains('visible')) overlayReturnFocus = focusedElement();
-    overlay.classList.add('visible');
-    if (plasmaBg && !plasmaInstance) plasmaInstance = initStandardToolPlasma(plasmaBg);
-    syncInteractiveLayers();
-    syncStageVisibility();
-    restoreFocus(hasDocument() ? exportBtn : cta || back);
+    return pdfEditorView?.openOverlay();
   }
 
   function closeOverlay() {
-    if (disposed) return;
-    if (activeOperation) {
-      showToast(t('home.pdfEditor.busy'));
-      return;
-    }
-    if (!confirmDiscardChanges('close')) return;
-    closeSuccess(false);
-    overlay.classList.remove('visible', 'drag-over');
-    dropZone?.classList.remove('visible');
-    plasmaInstance = disposeStandardToolPlasma(plasmaInstance);
-    if (fileInput) fileInput.value = '';
-    if (appendInput) appendInput.value = '';
-    void resetDocument();
-    syncInteractiveLayers();
-    const returnFocus = overlayReturnFocus;
-    overlayReturnFocus = null;
-    restoreFocus(returnFocus);
+    return pdfEditorView?.closeOverlay();
   }
 
   function showDropZone() {
-    if (activeOperation) return;
-    overlay.classList.add('drag-over');
-    dropZone?.classList.add('visible');
+    return pdfEditorView?.showDropZone();
   }
 
   function hideDropZone() {
-    overlay.classList.remove('drag-over');
-    dropZone?.classList.remove('visible');
+    return pdfEditorView?.hideDropZone();
   }
 
   function closeSuccess(restore = true) {
-    if (!successOverlay?.classList.contains('visible')) return;
-    successOverlay?.classList.remove('visible');
-    syncInteractiveLayers();
-    const returnFocus = successReturnFocus;
-    successReturnFocus = null;
-    if (restore) restoreFocus(returnFocus);
+    return pdfEditorView?.closeSuccess(restore);
   }
 
   function renderSuccess() {
-    if (!lastSuccess) return;
-    const { outputDir, mode, count } = lastSuccess;
-    successMeta.textContent = mode === 'extract'
-      ? t('home.pdfEditor.successExtractMeta', { count })
-      : t('home.pdfEditor.successExportMeta');
-    successPath.textContent = displayFilesystemPath(outputDir || '~/Downloads');
-    if (successOpenFolder) successOpenFolder.style.display = isTauri ? '' : 'none';
+    return pdfEditorView?.renderSuccess();
   }
 
   function showSuccess(result, returnFocus) {
-    lastOutputFolder = result.outputDir || '';
-    lastSuccess = result;
-    successReturnFocus = returnFocus || focusedElement();
-    renderSuccess();
-    successOverlay?.classList.add('visible');
-    syncInteractiveLayers();
-    restoreFocus(successOk || successOpenFolder);
+    return pdfEditorView?.showSuccess(result, returnFocus);
   }
 
   async function resetDocument() {
@@ -860,32 +815,15 @@ export function initPdfEditorTool({
   }
 
   function updateFileCard() {
-    if (!fileNameEl || !fileStatsEl) return;
-    if (!hasDocument()) {
-      fileNameEl.textContent = t('home.pdfEditor.fileNameEmpty');
-      fileStatsEl.textContent = '';
-      return;
-    }
-    const totalSize = sources.reduce((sum, source) => sum + (Number(source.size) || 0), 0);
-    fileNameEl.textContent = mainSourceName();
-    fileStatsEl.textContent = t('home.pdfEditor.pageCount', { count: pages.length })
-      + ' · ' + formatSize(totalSize);
+    return pdfEditorView?.updateFileCard();
   }
 
   function syncStageVisibility() {
-    const has = hasDocument();
-    if (emptyState) {
-      emptyState.style.display = has ? 'none' : '';
-    }
-    if (canvasWrap) canvasWrap.style.display = has ? '' : 'none';
+    return pdfEditorView?.syncStageVisibility();
   }
 
   function updateZoomLabel() {
-    if (!zoomValueBtn) return;
-    const zoomState = zoom.getState();
-    zoomValueBtn.textContent = zoomState.viewMode === 'fit'
-      ? t('home.pdfEditor.fitShort')
-      : `${Math.round(zoomState.zoomPercent * 100)}%`;
+    return pdfEditorView?.updateZoomLabel();
   }
 
   function updateControls() {
@@ -1738,6 +1676,45 @@ export function initPdfEditorTool({
     savedSnapshot = cloneState(editorHistory.firstSnapshot());
   }
 
+  pdfEditorView = createPdfEditorView({
+    overlay,
+    plasmaBg,
+    dropZone,
+    fileNameEl,
+    fileStatsEl,
+    emptyState,
+    successOverlay,
+    successMeta,
+    successPath,
+    successOpenFolder,
+    successOk,
+    zoomValueBtn,
+    fileInput,
+    appendInput,
+    t,
+    isTauri,
+    isDisposed: () => disposed,
+    initStandardToolPlasma,
+    disposeStandardToolPlasma,
+    displayFilesystemPath,
+    getSources: () => sources,
+    getPages: () => pages,
+    getMainSourceName: mainSourceName,
+    formatSize,
+    getCanvasWrap: () => canvasWrap,
+    getOpenFocusTarget: () => hasDocument() ? exportBtn : cta || back,
+    getZoomState: () => zoom.getState(),
+    getActiveOperation: () => activeOperation,
+    hasDocument,
+    confirmDiscardChanges,
+    resetDocument,
+    focusedElement,
+    restoreFocus,
+    canReceiveFocus,
+    syncInteractiveLayers,
+    showToast
+  });
+
   const exporter = createPdfEditorExporter({
     isTauri,
     getInvoke,
@@ -1822,10 +1799,11 @@ export function initPdfEditorTool({
   processCancel?.addEventListener('click', () => { void cancelActiveOperation(); }, listenerOptions);
   successOk?.addEventListener('click', () => closeSuccess(), listenerOptions);
   successOpenFolder?.addEventListener('click', async () => {
-    if (!isTauri || !lastOutputFolder) return;
+    const outputFolder = pdfEditorView?.getLastOutputFolder();
+    if (!isTauri || !outputFolder) return;
     try {
       const invoke = await getInvoke();
-      await invoke('open_path', { path: lastOutputFolder });
+      await invoke('open_path', { path: outputFolder });
     } catch (_) {
       showToast(t('home.pdfEditor.openFolderFailed'));
     }
@@ -1948,7 +1926,7 @@ export function initPdfEditorTool({
     if (activeOperation?.progressKey && processMask?.classList.contains('visible')) {
       setLocalizedProgress(Number(processValue?.textContent?.replace('%', '') || 0), activeOperation.progressKey, activeOperation.progressParams);
     }
-    if (lastSuccess && successOverlay?.classList.contains('visible')) renderSuccess();
+    if (pdfEditorView?.getLastSuccess() && successOverlay?.classList.contains('visible')) renderSuccess();
   }) || (() => {});
 
   updateControls();
@@ -1975,17 +1953,10 @@ export function initPdfEditorTool({
       unsubscribeLangChange = () => {};
       try { nativeDragUnlisten?.(); } catch (_) {}
       nativeDragUnlisten = null;
-      plasmaInstance = disposeStandardToolPlasma(plasmaInstance);
-      successOverlay?.classList.remove('visible');
+      pdfEditorView?.dispose();
       processMask?.classList.remove('visible');
-      overlay.classList.remove('visible', 'drag-over');
-      dropZone?.classList.remove('visible');
       if (fileInput) fileInput.value = '';
       if (appendInput) appendInput.value = '';
-      successReturnFocus = null;
-      overlayReturnFocus = null;
-      lastSuccess = null;
-      lastOutputFolder = '';
       stopFitPreviewObserver();
       zoom.dispose();
       stopComponentRotate();

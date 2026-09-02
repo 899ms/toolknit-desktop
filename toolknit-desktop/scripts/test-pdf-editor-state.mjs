@@ -101,6 +101,10 @@ const fileSessionSource = await readFile(
   new URL('../src/features/pdf-editor/file-session.js', import.meta.url),
   'utf8'
 );
+const viewSource = await readFile(
+  new URL('../src/features/pdf-editor/view.js', import.meta.url),
+  'utf8'
+);
 
 const snapshotStart = uiSource.indexOf('function captureEditorSnapshot()');
 const snapshotEnd = uiSource.indexOf('function applyEditorSnapshot(', snapshotStart);
@@ -132,7 +136,8 @@ assert.ok(stagedLoadIndex >= 0, 'replacement PDF must be opened before it is com
 assert.ok(stagedDocumentIndex > stagedLoadIndex, 'replacement loading must yield a validated staged document');
 assert.ok(resetDocumentIndex > stagedDocumentIndex, 'the current document must survive replacement validation failures');
 assert.match(loadSource, /if \(documentCommitted\) await resetDocument\(\)/);
-assert.match(uiSource, /confirmDiscardChanges\('close'\)/);
+assert.match(viewSource, /confirmDiscardChanges\('close'\)/);
+assert.match(uiSource, /return pdfEditorView\?\.closeOverlay\(\)/);
 assert.match(fileSessionSource, /confirmDiscardChanges\('replace'\)/);
 assert.match(uiSource, /confirmDiscardChanges\('reset'\)/);
 assert.match(uiSource, /savedSnapshot = captureEditorSnapshot\(\)/);

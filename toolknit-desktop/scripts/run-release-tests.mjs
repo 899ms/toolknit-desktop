@@ -21,6 +21,7 @@ const releaseTests = [
   'test:pdf-security-tool-contract',
   'test:pdf-compress',
   'test:pdf-enhance',
+  'test:pdf-enhance-tool-contract',
   'test:pdf-editor',
   'test:pdf-page-number',
   'test:pdf-page-number-tool-contract',

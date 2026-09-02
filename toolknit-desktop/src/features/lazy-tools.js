@@ -44,6 +44,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./pdf-security/decrypt-tool.js'),
     init: 'initPdfDecryptTool'
   }),
+  'pdf-enhance': Object.freeze({
+    overlayId: 'pdfEnhanceOverlay',
+    load: () => import('./pdf-enhance/tool.js'),
+    init: 'initPdfEnhanceTool'
+  }),
   teleprompter: Object.freeze({
     overlayId: 'teleprompterOverlay',
     load: () => import('../teleprompter-ui.js'),

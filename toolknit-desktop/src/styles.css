@@ -12560,13 +12560,7 @@
         content: 'ZIP';
       }
 
-      .pdf-enhance-v2 .pdf-merge-v2-poster::after {
-        content: 'SCAN';
-        font-size: 96px;
-      }
-
-      .pdf-compress-v2 .pdf-merge-v2-workspace,
-      .pdf-enhance-v2 .pdf-merge-v2-workspace {
+      .pdf-compress-v2 .pdf-merge-v2-workspace {
         grid-template-rows: auto auto minmax(150px, 1fr) auto auto;
       }
 
@@ -12628,17 +12622,12 @@
         text-align: right;
       }
 
-      .pdf-compress-v2 .pdf-merge-v2-files,
-      .pdf-enhance-v2 .pdf-merge-v2-files {
+      .pdf-compress-v2 .pdf-merge-v2-files {
         max-height: 220px;
       }
 
       .pdf-compress-v2 #pdfCompressFiles:empty::before {
         content: '暂无待压缩 PDF · 点击上传或拖入文件后会显示在这里';
-      }
-
-      .pdf-enhance-v2 #pdfEnhanceFiles:empty::before {
-        content: '暂无待增强 PDF · 点击上传或拖入一个扫描件 PDF';
       }
 
       /* ===== Audio Convert · Tool Page 2.0 ===== */
@@ -15561,12 +15550,6 @@
 
       .pdf-compress-result-download:active {
         transform: scale(0.92);
-      }
-
-      .pdf-enhance-strength-hint {
-        font-size: 13px;
-        color: rgba(255, 255, 255, 0.7);
-        line-height: 1.5;
       }
 
 /* ===== Color Extractor ===== */

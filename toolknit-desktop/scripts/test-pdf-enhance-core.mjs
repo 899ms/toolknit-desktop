@@ -9,7 +9,7 @@ import {
   createPdfEnhanceRenderPlan,
   getPdfEnhanceErrorCode
 } from '../src/pdf-enhance-core.js';
-import { sharpenRgbaImage } from '../src/pdf-enhance-engine.js';
+import { enhanceRgbaImage, sharpenRgbaImage } from '../src/pdf-enhance-engine.js';
 
 assert.doesNotThrow(() => assertPdfEnhanceSelection([{ name: 'scan.pdf', size: 1024 }]));
 assert.throws(() => assertPdfEnhanceSelection([]), /single-file-required/);
@@ -70,20 +70,23 @@ for (let index = 0; index < grayCard.length; index += 4) {
 const originalGrayCard = grayCard.slice();
 sharpenRgbaImage(grayCard, 9, 9, 0.5, 2);
 assert.deepEqual(grayCard, originalGrayCard);
+assert.doesNotThrow(() => enhanceRgbaImage(grayCard.slice(), 9, 9, 'light'));
 
-const mainSource = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+const engineSource = readFileSync(new URL('../src/pdf-enhance-engine.js', import.meta.url), 'utf8');
 assert.match(
-  mainSource,
-  /function sharpen5x5\(data, w, h, amount\) \{[\s\S]*?const center = 1 \+ 6 \* amount;/,
-  'main.js must keep the 5x5 sharpening kernel at unit DC gain'
+  engineSource,
+  /const center = radius === 1 \? 1 \+ 4 \* amount : 1 \+ 6 \* amount;/,
+  'the shared enhancement engine must keep the 5x5 sharpening kernel at unit DC gain'
 );
-assert.doesNotMatch(mainSource, /const center = 1 \+ 8 \* amount;/);
-assert.match(mainSource, /begin_pdf_enhance_write/);
-assert.match(mainSource, /append_pdf_enhance_chunk/);
-assert.match(mainSource, /finalize_pdf_enhance_write/);
-assert.match(mainSource, /discard_pdf_enhance_write/);
+assert.doesNotMatch(engineSource, /const center = 1 \+ 8 \* amount;/);
+const processorSource = readFileSync(new URL('../src/features/pdf-enhance/processor.js', import.meta.url), 'utf8');
+assert.match(processorSource, /enhanceRgbaImage/);
+assert.match(processorSource, /begin_pdf_enhance_write/);
+assert.match(processorSource, /append_pdf_enhance_chunk/);
+assert.match(processorSource, /finalize_pdf_enhance_write/);
+assert.match(processorSource, /discard_pdf_enhance_write/);
 assert.doesNotMatch(
-  mainSource,
+  processorSource,
   /\[PDF Enhance\][\s\S]{0,12000}invoke\('write_file_chunk'/,
   'PDF enhance must not stream directly into the final output path'
 );

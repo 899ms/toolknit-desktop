@@ -33,6 +33,7 @@ Last updated: 2026-09-02
 | `a55ae27` | Isolated PDF Editor assembly, font loading and output publication |
 | `4bcb075` | Isolated PDF Editor document loading, caching and PDF.js cleanup ownership |
 | `1540ef2` | Isolated PDF Editor text grouping and visual-box calculations |
+| `6b02cd6` | Isolated PDF Editor zoom state, anchor scrolling and scheduling lifecycle |
 
 ## Current verified counts
 
@@ -136,8 +137,16 @@ PDF Editor text-item grouping, line construction, source/replacement/inserted
 visual boxes and PDF-to-viewport rectangle conversion now live in a 163-line
 UI-independent layout module. Its executable regression test covers ordering,
 line separation, style inference, coordinate inversion, box precedence and
-inserted-text width fallback. The legacy UI orchestrator is now 3,813 lines and
-no longer owns or duplicates those calculations.
+inserted-text width fallback. After the subsequent zoom extraction, the legacy
+UI orchestrator is now 3,591 lines and no longer owns or duplicates those
+calculations.
+
+PDF Editor zoom mode, manual scale, wheel normalization, button repeat timers,
+preview transforms, anchor-preserving scroll offsets and scheduled render
+requests now live in a dedicated lifecycle controller. It invalidates stale
+zoom requests on reset/dispose and is covered by an executable contract test
+for fit/manual transitions, frame commits, scroll anchoring, cancellation and
+button cleanup.
 
 ## Hidden issues fixed during migration
 

@@ -33,6 +33,7 @@ import { createPdfEditorPreview } from './features/pdf-editor/preview.js';
 import { createPdfEditorView } from './features/pdf-editor/view.js';
 import { createPdfEditorOperationRuntime } from './features/pdf-editor/operation.js';
 import { createPdfEditorEvents } from './features/pdf-editor/events.js';
+import { createPdfEditorControls } from './features/pdf-editor/controls.js';
 import {
   buildTextLine,
   editedTextVisualBox,
@@ -209,6 +210,7 @@ export function initPdfEditorTool({
   let pdfEditorView = null;
   let operationRuntime = null;
   let pdfEditorEvents = null;
+  let pdfEditorControls = null;
   const showToast = (message, duration = 7000) => {
     if (!disposed) window.showToast?.(message, { duration, dismissible: true });
   };
@@ -744,69 +746,7 @@ export function initPdfEditorTool({
   }
 
   function updateControls() {
-    const busy = Boolean(currentOperation());
-    const has = hasDocument();
-    const selectedCount = selectedIds.size;
-    const page = currentPage();
-    const currentIndex = page ? pages.indexOf(page) : -1;
-    const hasSelectedComponent = Boolean(selectedComponent);
-
-    if (appendBtn) appendBtn.disabled = busy || !has;
-    if (rotateCcwBtn) rotateCcwBtn.disabled = busy || !has;
-    if (rotateCwBtn) rotateCwBtn.disabled = busy || !has;
-    if (moveUpBtn) moveUpBtn.disabled = busy || !has || currentIndex <= 0;
-    if (moveDownBtn) moveDownBtn.disabled = busy || !has || currentIndex < 0 || currentIndex >= pages.length - 1;
-    if (duplicateBtn) duplicateBtn.disabled = busy || !has || pages.length + Math.max(1, selectedCount) > PDF_EDITOR_LIMITS.maxPages;
-    if (blankPageBtn) blankPageBtn.disabled = busy || !has || pages.length >= PDF_EDITOR_LIMITS.maxPages;
-    if (selectAllBtn) selectAllBtn.disabled = busy || !has || selectedCount === pages.length;
-    if (invertSelectionBtn) invertSelectionBtn.disabled = busy || !has;
-    if (deleteBtn) deleteBtn.disabled = busy || !has || (!hasSelectedComponent && pages.length <= 1);
-    if (extractBtn) extractBtn.disabled = busy || !has;
-    if (replaceBtn) replaceBtn.disabled = busy;
-    if (exportBtn) exportBtn.disabled = busy || !has;
-    const sourceRotationKnown = !page || Number.isFinite(Number(page.sourceRotation));
-    const contentEditingAllowed = has && sourceRotationKnown && pageSupportsContentEditing(page);
-    if (editTextBtn) editTextBtn.disabled = busy || !contentEditingAllowed;
-    if (editTextSidebarBtn) editTextSidebarBtn.disabled = busy || !contentEditingAllowed;
-    if (insertTextBtn) insertTextBtn.disabled = busy || !contentEditingAllowed;
-    if (insertImageBtn) insertImageBtn.disabled = busy || !contentEditingAllowed;
-    for (const button of [insertRectBtn, insertEllipseBtn, insertLineBtn]) {
-      if (button) button.disabled = busy || !contentEditingAllowed;
-    }
-    if (selectComponentBtn) {
-      selectComponentBtn.disabled = busy || !has;
-      selectComponentBtn.classList.toggle('is-active', componentMode);
-      selectComponentBtn.setAttribute('aria-pressed', String(componentMode));
-    }
-    if (resetBtn) resetBtn.disabled = busy || !has || !baselineSnapshot;
-    if (undoBtn) undoBtn.disabled = busy || !has || !canUndo();
-    if (redoBtn) redoBtn.disabled = busy || !has || !canRedo();
-
-    if (selectedCountEl) {
-      selectedCountEl.textContent = selectedCount > 0
-        ? t('home.pdfEditor.selectedCount', { count: selectedCount })
-        : '';
-    }
-    if (pageIndicator) {
-      pageIndicator.textContent = has
-        ? t('home.pdfEditor.pageIndicator', { current: currentIndex + 1, total: pages.length })
-        : '';
-    }
-    if (footerHint) {
-      footerHint.textContent = has
-        ? t('home.pdfEditor.footerHint', { name: mainSourceName() })
-        : t('home.pdfEditor.footerEmptyHint');
-    }
-    for (const pageState of thumbnails.getPageStates().values()) {
-      pageState.tile.classList.toggle('is-selected', selectedIds.has(pageState.id));
-      pageState.selectButton.setAttribute('aria-pressed', String(selectedIds.has(pageState.id)));
-    }
-    updateZoomLabel();
-    const inserting = Boolean(insertMode);
-    for (const button of [insertTextBtn, insertImageBtn, insertRectBtn, insertEllipseBtn, insertLineBtn]) {
-      if (button) button.classList.toggle('is-active', inserting && button.dataset.insertMode === insertMode);
-    }
-    if (editTextSidebarBtn) editTextSidebarBtn.classList.toggle('is-active', editMode);
+    return pdfEditorControls?.updateControls();
   }
 
   function selectOnly(pageState) {
@@ -883,6 +823,55 @@ export function initPdfEditorTool({
     clearSelectedComponent,
     updateControls,
     renderMainPreview
+  });
+
+  pdfEditorControls = createPdfEditorControls({
+    appendBtn,
+    rotateCcwBtn,
+    rotateCwBtn,
+    moveUpBtn,
+    moveDownBtn,
+    duplicateBtn,
+    blankPageBtn,
+    deleteBtn,
+    extractBtn,
+    replaceBtn,
+    exportBtn,
+    editTextBtn,
+    editTextSidebarBtn,
+    insertTextBtn,
+    insertImageBtn,
+    insertRectBtn,
+    insertEllipseBtn,
+    insertLineBtn,
+    selectComponentBtn,
+    resetBtn,
+    undoBtn,
+    redoBtn,
+    selectedCountEl,
+    pageIndicator,
+    footerHint,
+    selectAllBtn,
+    invertSelectionBtn,
+    t,
+    getActiveOperation: currentOperation,
+    hasDocument,
+    getPages: () => pages,
+    getSelectedIds: () => selectedIds,
+    getCurrentPage: currentPage,
+    pageSupportsContentEditing,
+    getSelectedComponent: () => selectedComponent,
+    getComponentMode: () => componentMode,
+    getEditMode: () => editMode,
+    getInsertMode: () => insertMode,
+    getMainSourceName: mainSourceName,
+    getPageStates: () => thumbnails.getPageStates(),
+    updateZoomLabel
+  });
+  pdfEditorControls.setHistoryState({
+    getBaseline: () => baselineSnapshot,
+    canUndo,
+    canRedo
   });
 
   fileSession = createPdfEditorFileSession({

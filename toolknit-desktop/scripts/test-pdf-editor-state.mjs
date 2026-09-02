@@ -113,6 +113,10 @@ const eventsSource = await readFile(
   new URL('../src/features/pdf-editor/events.js', import.meta.url),
   'utf8'
 );
+const controlsSource = await readFile(
+  new URL('../src/features/pdf-editor/controls.js', import.meta.url),
+  'utf8'
+);
 
 const snapshotStart = uiSource.indexOf('function captureEditorSnapshot()');
 const snapshotEnd = uiSource.indexOf('function applyEditorSnapshot(', snapshotStart);
@@ -152,6 +156,8 @@ assert.doesNotMatch(uiSource, /let activeOperation = null/);
 assert.match(eventsSource, /onDragDropEvent/);
 assert.match(eventsSource, /function createPdfEditorEvents/);
 assert.match(uiSource, /pdfEditorEvents = createPdfEditorEvents\(/);
+assert.match(controlsSource, /function updateControls\(\)/);
+assert.match(uiSource, /pdfEditorControls = createPdfEditorControls\(/);
 assert.match(fileSessionSource, /confirmDiscardChanges\('replace'\)/);
 assert.match(uiSource, /confirmDiscardChanges\('reset'\)/);
 assert.match(uiSource, /savedSnapshot = captureEditorSnapshot\(\)/);

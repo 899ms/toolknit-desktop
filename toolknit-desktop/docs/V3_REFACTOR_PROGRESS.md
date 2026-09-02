@@ -75,11 +75,11 @@ Last updated: 2026-09-03
 ## Current source and bundle trend
 
 | Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security | After PDF Enhance | After PDF Compress | After PDF Editor | After PPT workflows | After PPT render | After PPT images |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 | 21,708 | 21,250 | 21,241 | 16,184 | 15,709 | 15,019 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 | 27,059 | 24,975 | 24,644 | 24,093 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 | 27,059 | 24,975 | 24,644 | 24,644 | 24,093 |
 | Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB | 2,288.63 kB | 1,839.13 kB | 1,603.72 kB | 1,591.36 kB | 1,531.34 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB | 597.52 kB | 525.34 kB | 520.27 kB | 499.11 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB | 597.52 kB | 525.34 kB | 520.27 kB | 520.27 kB | 499.11 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS

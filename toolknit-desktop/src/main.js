@@ -143,7 +143,6 @@
         placeholderSvg,
         sanitizePptDraftBaseName
       } from './ppt-draft-core.js';
-      import { initPdfEditorTool } from './pdf-editor-ui.js';
       import JSZip from 'jszip';
       import { TaskRunner } from '../shared/task-runtime.mjs';
       // Keep custom tool menus, but preserve native editing menus in text fields.
@@ -19295,17 +19294,6 @@ March 18, 2026|Launch Day
       renderHomeTools();
       onLangChange(renderHomeTools);
 
-      // ===== PDF Editor =====
-      const pdfEditorTool = initPdfEditorTool({
-        isTauri,
-        t,
-        onLangChange,
-        pdfWorkerUrl,
-        getOutputDir,
-        displayFilesystemPath,
-        initStandardToolPlasma,
-        disposeStandardToolPlasma
-      });
       // ===== PDF Tool Template Overlay Background =====
       const pdfToolTemplateOverlay = document.getElementById('pdfToolTemplateOverlay');
       const pdfToolTemplatePlasmaBg = document.getElementById('pdfToolTemplatePlasmaBg');
@@ -21183,6 +21171,9 @@ March 18, 2026|Launch Day
         createContext: () => ({
           notify: (message, options) => window.showToast?.(message, options),
           isTauri,
+          t,
+          onLangChange,
+          pdfWorkerUrl,
           readTextDocument: readTextStatsDocument,
           formatFileSize,
           displayFilesystemPath,

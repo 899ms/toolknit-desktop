@@ -80,6 +80,10 @@ class FakeTarget {
 
 validateLazyToolSpecs(LAZY_TOOL_SPECS);
 assert.ok(Object.keys(LAZY_TOOL_SPECS).length > 0, 'the application must register at least one lazy tool');
+assert.equal(LAZY_TOOL_SPECS['pdf-editor']?.overlayId, 'pdfEditorOverlay', 'PDF Editor must be lazy-registered');
+assert.match(mainSource, /LAZY_TOOL_SPECS/, 'main must use the shared lazy registry');
+assert.doesNotMatch(mainSource, /from ['"]\.\/pdf-editor-ui\.js['"]/, 'PDF Editor must not be statically imported by main');
+assert.match(mainSource, /pdfWorkerUrl,/, 'lazy features must receive the PDF worker URL through context');
 assert.throws(() => validateLazyToolSpecs({ broken: { overlayId: 'x', init: 'init' } }), /load/);
 assert.throws(() => validateLazyToolSpecs({
   one: { instanceKey: 'shared', overlayId: 'one', init: 'init', load() {} },

@@ -23,24 +23,16 @@ import {
   pdfEditorSnapshotsEqual
 } from './pdf-editor-state.js';
 import { createPdfEditorHistory } from './features/pdf-editor/history.js';
+import { createPdfEditorFocusManager } from './features/pdf-editor/focus.js';
+import {
+  isPdfEditorRenderCancellation as isRenderCancellation,
+  releasePdfEditorCanvas as releaseCanvas
+} from './features/pdf-editor/render-utils.js';
 import { IMAGE_BATCH_LIMITS } from './image-batch-core.js';
 
-const THUMB_CSS_WIDTH = 132;
-const THUMB_CSS_HEIGHT = 176;
-const THUMB_CONCURRENCY = 2;
-const THUMB_RELEASE_DELAY = 1500;
 const ZOOM_MIN = 0.08;
 const ZOOM_MAX = 8;
 const ZOOM_RENDER_DEBOUNCE_MS = 130;
-
-const FOCUSABLE_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled]):not([type="hidden"])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])'
-].join(',');
 
 class PdfEditorCancelledError extends Error {
   constructor() {
@@ -85,18 +77,6 @@ function rgb01ToHex(color) {
 function rgb01ToCss(color, fallback = '#111111') {
   if (!Array.isArray(color) || color.length < 3) return fallback;
   return rgb01ToHex(color);
-}
-
-function releaseCanvas(canvas) {
-  if (!canvas) return;
-  canvas.width = 0;
-  canvas.height = 0;
-  canvas.remove();
-}
-
-function isRenderCancellation(error) {
-  return error?.name === 'RenderingCancelledException'
-    || /cancelled|canceled/i.test(String(error?.message || error || ''));
 }
 
 function isPasswordError(error) {
@@ -215,11 +195,6 @@ export function initPdfEditorTool({
   let currentId = null;
   let selectionAnchorId = null;
   let pdfDocs = new Map();
-  let pageStates = new Map();
-  let tileObserver = null;
-  let tileQueue = [];
-  let tileActive = 0;
-  let tileEpoch = 0;
   let mainCanvas = null;
   let mainRenderTask = null;
   let mainEpoch = 0;
@@ -236,7 +211,6 @@ export function initPdfEditorTool({
   let overlayReturnFocus = null;
   let successReturnFocus = null;
   let unsubscribeLangChange = () => {};
-  let dragState = null;
   let canvasWrap = null;
   let textLayerEl = null;
   let editMode = false;
@@ -279,74 +253,24 @@ export function initPdfEditorTool({
     if (!disposed) window.showToast?.(message, { duration, dismissible: true });
   };
 
+  const {
+    activeFocusRoots,
+    canReceiveFocus,
+    focusedElement,
+    restoreFocus,
+    trapFocus
+  } = createPdfEditorFocusManager({
+    overlay,
+    processMask,
+    successOverlay,
+    editModal,
+    isDisposed: () => disposed
+  });
+
   const getInvoke = async () => {
     const { invoke } = await tauriCorePromise;
     return invoke;
   };
-
-  function focusedElement() {
-    return document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  }
-
-  function canReceiveFocus(target) {
-    return Boolean(target?.isConnected
-      && !target.disabled
-      && !target.closest('[inert], [aria-hidden="true"]'));
-  }
-
-  function restoreFocus(target) {
-    if (disposed || !canReceiveFocus(target)) return;
-    requestAnimationFrame(() => {
-      if (disposed || !canReceiveFocus(target)) return;
-      try { target.focus({ preventScroll: true }); } catch (_) {}
-    });
-  }
-
-  function focusableElements(roots) {
-    const elements = [];
-    const seen = new Set();
-    for (const root of roots.filter(Boolean)) {
-      for (const element of root.querySelectorAll(FOCUSABLE_SELECTOR)) {
-        if (!(element instanceof HTMLElement) || seen.has(element)) continue;
-        if (element.hidden || element.closest('[inert], [aria-hidden="true"]')) continue;
-        const style = window.getComputedStyle(element);
-        if (style.display === 'none' || style.visibility === 'hidden') continue;
-        seen.add(element);
-        elements.push(element);
-      }
-    }
-    return elements;
-  }
-
-  function trapFocus(event, roots) {
-    if (event.key !== 'Tab') return;
-    const elements = focusableElements(roots);
-    if (!elements.length) {
-      event.preventDefault();
-      return;
-    }
-    const first = elements[0];
-    const last = elements[elements.length - 1];
-    const active = focusedElement();
-    if (!elements.includes(active)) {
-      event.preventDefault();
-      first.focus();
-    } else if (event.shiftKey && active === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
-
-  function activeFocusRoots() {
-    if (successOverlay?.classList.contains('visible')) return [successOverlay];
-    if (processMask?.classList.contains('visible')) return [processMask];
-    if (editModal?.classList.contains('visible')) return [editModal];
-    if (overlay.classList.contains('visible')) return [overlay];
-    return [];
-  }
 
   function cloneState(value) {
     return typeof structuredClone === 'function'
@@ -689,7 +613,7 @@ export function initPdfEditorTool({
   }
 
   function pageStateFor(id) {
-    return pageStates.get(id);
+    return thumbnails.getPageState(id);
   }
 
   function targetIds() {
@@ -965,8 +889,7 @@ export function initPdfEditorTool({
     selectedIds = new Set();
     currentId = null;
     selectionAnchorId = null;
-    pageStates = new Map();
-    pageStrip.replaceChildren();
+    thumbnails.clear();
     selectedComponent = null;
     componentDragState = null;
     componentRotateState = null;
@@ -1060,7 +983,7 @@ export function initPdfEditorTool({
         ? t('home.pdfEditor.footerHint', { name: mainSourceName() })
         : t('home.pdfEditor.footerEmptyHint');
     }
-    for (const pageState of pageStates.values()) {
+    for (const pageState of thumbnails.getPageStates().values()) {
       pageState.tile.classList.toggle('is-selected', selectedIds.has(pageState.id));
       pageState.selectButton.setAttribute('aria-pressed', String(selectedIds.has(pageState.id)));
     }
@@ -1130,315 +1053,6 @@ export function initPdfEditorTool({
   }
 
   // ----- Thumbnail rendering -----
-  function buildTiles(shouldRender = true) {
-    stopTileObserver(true);
-    pageStates = new Map();
-    const fragment = document.createDocumentFragment();
-    pages.forEach((pageModel, index) => {
-      const tile = document.createElement('article');
-      tile.className = 'pdf-editor-tile';
-      tile.dataset.id = pageModel.id;
-      tile.draggable = true;
-
-      const frame = document.createElement('span');
-      frame.className = 'pdf-editor-tile-frame';
-
-      const skeleton = document.createElement('span');
-      skeleton.className = 'pdf-editor-tile-skeleton';
-      skeleton.setAttribute('aria-hidden', 'true');
-      skeleton.innerHTML = '<span></span><span></span><span></span><span></span><span></span>';
-
-      const errorEl = document.createElement('span');
-      errorEl.className = 'pdf-editor-tile-error';
-      errorEl.textContent = t('home.pdfEditor.thumbnailError');
-
-      const indexEl = document.createElement('span');
-      indexEl.className = 'pdf-editor-tile-index';
-      indexEl.textContent = String(index + 1);
-
-      const dragHandle = document.createElement('span');
-      dragHandle.className = 'pdf-editor-tile-drag';
-      dragHandle.setAttribute('aria-hidden', 'true');
-      dragHandle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>';
-
-      const selectButton = document.createElement('button');
-      selectButton.type = 'button';
-      selectButton.className = 'pdf-editor-tile-select';
-      selectButton.setAttribute('aria-pressed', String(selectedIds.has(pageModel.id)));
-      selectButton.setAttribute('aria-label', t('home.pdfEditor.pageLabel', { page: index + 1 }));
-      selectButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.2 4.2L19 6.8"></path></svg>';
-
-      frame.append(skeleton, errorEl);
-      tile.append(dragHandle, indexEl, frame, selectButton);
-      fragment.appendChild(tile);
-
-      const pageState = {
-        id: pageModel.id,
-        model: pageModel,
-        tile,
-        frame,
-        indexEl,
-        errorEl,
-        selectButton,
-        canvas: null,
-        renderTask: null,
-        releaseTimer: null,
-        nearby: false,
-        queued: false,
-        error: false
-      };
-      pageStates.set(pageModel.id, pageState);
-
-      tile.addEventListener('click', event => {
-        if (activeOperation) return;
-        if (event.metaKey || event.ctrlKey) {
-          toggleSelect(pageState);
-        } else if (event.shiftKey) {
-          selectRange(pageState);
-        } else {
-          selectOnly(pageState);
-          setCurrent(pageState);
-        }
-      }, listenerOptions);
-
-      selectButton.addEventListener('click', event => {
-        if (activeOperation) return;
-        event.stopPropagation();
-        toggleSelect(pageState);
-      }, listenerOptions);
-
-      tile.addEventListener('dragstart', event => onTileDragStart(event, pageState), listenerOptions);
-      tile.addEventListener('dragover', event => onTileDragOver(event, pageState), listenerOptions);
-      tile.addEventListener('dragend', onTileDragEnd, listenerOptions);
-      tile.addEventListener('drop', onTileDrop, listenerOptions);
-    });
-    pageStrip.replaceChildren(fragment);
-    if (currentId && !pageStates.has(currentId)) currentId = pages[0]?.id || null;
-    if (!currentId) currentId = pages[0]?.id || null;
-    updateControls();
-    startTileObserver();
-    if (shouldRender) renderMainPreview();
-  }
-
-  function onTileDragStart(event, pageState) {
-    if (activeOperation) return;
-    dragState = { pageState };
-    event.dataTransfer.effectAllowed = 'move';
-    try { event.dataTransfer.setData('text/plain', String(pageState.id)); } catch (_) {}
-    pageState.tile.classList.add('is-dragging');
-    requestAnimationFrame(() => pageState.tile.classList.add('is-drag-ghost'));
-  }
-
-  function onTileDragOver(event, pageState) {
-    if (!dragState || dragState.pageState === pageState) return;
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-    const rect = pageState.tile.getBoundingClientRect();
-    const after = (event.clientY - rect.top) > rect.height / 2;
-    const dragged = dragState.pageState.tile;
-    if (after) {
-      if (pageState.tile.nextSibling !== dragged) pageStrip.insertBefore(dragged, pageState.tile.nextSibling);
-    } else if (pageState.tile !== dragged) {
-      pageStrip.insertBefore(dragged, pageState.tile);
-    }
-  }
-
-  function onTileDrop(event) {
-    event.preventDefault();
-    finalizeTileDrag();
-  }
-
-  function onTileDragEnd() {
-    finalizeTileDrag();
-  }
-
-  function finalizeTileDrag() {
-    if (!dragState) return;
-    const previousOrder = pages.map(page => page.id);
-    const dragged = dragState.pageState;
-    dragState = null;
-    dragged.tile.classList.remove('is-dragging', 'is-drag-ghost');
-    const orderedIds = Array.from(pageStrip.children)
-      .map(tile => tile.dataset.id)
-      .filter(Boolean);
-    const byId = new Map(pages.map(page => [page.id, page]));
-    pages = orderedIds.map(id => byId.get(id)).filter(Boolean);
-    for (let index = 0; index < pages.length; index++) {
-      const pageState = pageStates.get(pages[index].id);
-      if (pageState) pageState.indexEl.textContent = String(index + 1);
-    }
-    updateControls();
-    if (previousOrder.some((id, index) => id !== pages[index]?.id)) {
-      commitEditorHistory();
-    }
-  }
-
-  function releasePreview(pageState, markReleased = true) {
-    if (!pageState) return;
-    clearTimeout(pageState.releaseTimer);
-    pageState.releaseTimer = null;
-    if (pageState.renderTask) {
-      try { pageState.renderTask.cancel(); } catch (_) {}
-      pageState.renderTask = null;
-    }
-    if (pageState.canvas) {
-      releaseCanvas(pageState.canvas);
-      pageState.canvas = null;
-    }
-    pageState.queued = false;
-    pageState.frame?.classList.remove('is-ready');
-    pageState.frame?.classList.toggle('is-released', markReleased);
-  }
-
-  function stopTileObserver(releaseAll = false) {
-    tileObserver?.disconnect();
-    tileObserver = null;
-    tileQueue = [];
-    tileEpoch++;
-    for (const pageState of pageStates.values()) {
-      clearTimeout(pageState.releaseTimer);
-      pageState.releaseTimer = null;
-      pageState.nearby = false;
-      if (pageState.renderTask) {
-        try { pageState.renderTask.cancel(); } catch (_) {}
-      }
-      if (releaseAll) releasePreview(pageState, false);
-    }
-  }
-
-  function queuePreview(pageState) {
-    if (!pageState || pageState.error || pageState.canvas || pageState.renderTask || pageState.queued) return;
-    pageState.queued = true;
-    pageState.frame?.classList.remove('is-released');
-    tileQueue.push(pageState);
-    drainTileQueue();
-  }
-
-  async function renderPreview(pageState, epoch) {
-    let page = null;
-    let canvas = null;
-    let renderTask = null;
-    try {
-      if (epoch !== tileEpoch || !pageState.nearby || disposed) return;
-      const doc = await getSourceDoc(pageState.model.sourceId);
-      if (epoch !== tileEpoch || !pageState.nearby || disposed) return;
-      page = await doc.getPage(pageState.model.pageIndex + 1);
-      if (epoch !== tileEpoch || !pageState.nearby || disposed) return;
-      cacheSourceRotation(pageState.model, page);
-      const displayRotation = effectivePageRotation(pageState.model);
-      const baseViewport = page.getViewport({ scale: 1, rotation: displayRotation });
-      const cssScale = Math.min(
-        THUMB_CSS_WIDTH / baseViewport.width,
-        THUMB_CSS_HEIGHT / baseViewport.height
-      );
-      const outputScale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
-      const viewport = page.getViewport({
-        scale: cssScale * outputScale,
-        rotation: displayRotation
-      });
-      canvas = document.createElement('canvas');
-      canvas.className = 'pdf-editor-tile-canvas';
-      canvas.width = Math.max(1, Math.round(viewport.width));
-      canvas.height = Math.max(1, Math.round(viewport.height));
-      canvas.style.width = Math.max(1, Math.round(viewport.width / outputScale)) + 'px';
-      canvas.style.height = Math.max(1, Math.round(viewport.height / outputScale)) + 'px';
-      const context = canvas.getContext('2d', { alpha: false });
-      if (!context) throw new Error('Cannot create thumbnail canvas');
-      context.fillStyle = '#ffffff';
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      renderTask = page.render({ canvasContext: context, viewport, background: '#ffffff' });
-      pageState.renderTask = renderTask;
-      await renderTask.promise;
-      if (pageState.renderTask === renderTask) pageState.renderTask = null;
-      if (epoch !== tileEpoch || !pageState.nearby || disposed) {
-        releaseCanvas(canvas);
-        canvas = null;
-        return;
-      }
-      pageState.canvas = canvas;
-      pageState.frame?.prepend(canvas);
-      pageState.frame?.classList.remove('is-released', 'has-error');
-      pageState.frame?.classList.add('is-ready');
-      canvas = null;
-    } catch (error) {
-      if (pageState.renderTask === renderTask) pageState.renderTask = null;
-      if (!isRenderCancellation(error) && epoch === tileEpoch && !disposed) {
-        pageState.error = true;
-        pageState.frame?.classList.add('has-error');
-        pageState.errorEl.textContent = t('home.pdfEditor.thumbnailError');
-      }
-    } finally {
-      if (pageState.renderTask === renderTask) pageState.renderTask = null;
-      if (canvas) releaseCanvas(canvas);
-      try { page?.cleanup(); } catch (_) {}
-      if (epoch === tileEpoch && !disposed && pageState.nearby && !pageState.canvas && !pageState.error) {
-        queueMicrotask(() => {
-          if (!disposed && epoch === tileEpoch && pageState.nearby) queuePreview(pageState);
-        });
-      }
-    }
-  }
-
-  function drainTileQueue() {
-    while (tileActive < THUMB_CONCURRENCY && tileQueue.length) {
-      const pageState = tileQueue.shift();
-      if (!pageState) continue;
-      tileActive++;
-      renderPreview(pageState, tileEpoch).finally(() => {
-        tileActive = Math.max(0, tileActive - 1);
-        drainTileQueue();
-      });
-    }
-  }
-
-  function startTileObserver() {
-    if (!hasDocument()) return;
-    stopTileObserver(false);
-    const epoch = tileEpoch;
-    if (typeof IntersectionObserver !== 'function') {
-      pages.slice(0, 12).forEach(page => {
-        const pageState = pageStateFor(page.id);
-        if (pageState) {
-          pageState.nearby = true;
-          queuePreview(pageState);
-        }
-      });
-      return;
-    }
-    tileObserver = new IntersectionObserver(entries => {
-      if (epoch !== tileEpoch) return;
-      for (const entry of entries) {
-        const pageState = pageStateFor(entry.target.dataset.id);
-        if (!pageState) continue;
-        if (entry.isIntersecting) {
-          clearTimeout(pageState.releaseTimer);
-          pageState.releaseTimer = null;
-          pageState.nearby = true;
-          queuePreview(pageState);
-        } else {
-          pageState.nearby = false;
-          clearTimeout(pageState.releaseTimer);
-          pageState.releaseTimer = setTimeout(() => {
-            if (!pageState.nearby) releasePreview(pageState);
-          }, THUMB_RELEASE_DELAY);
-        }
-      }
-    }, {
-      root: pageStrip,
-      rootMargin: '120px 0px',
-      threshold: 0.01
-    });
-    pageStates.forEach(pageState => tileObserver.observe(pageState.tile));
-  }
-
-  function refreshTile(pageState) {
-    if (!pageState) return;
-    pageState.error = false;
-    pageState.frame?.classList.remove('has-error');
-    releasePreview(pageState);
-    if (pageState.nearby) queuePreview(pageState);
-  }
-
   async function getSourceDoc(sourceId) {
     if (pdfDocs.has(sourceId)) return pdfDocs.get(sourceId);
     const source = sources.find(item => item.id === sourceId);
@@ -1456,6 +1070,41 @@ export function initPdfEditorTool({
     return doc;
   }
 
+  const thumbnails = createPdfEditorThumbnails({
+    pageStrip,
+    t,
+    listenerOptions,
+    getPages: () => pages,
+    setPages: nextPages => { pages = nextPages; },
+    getSelectedIds: () => selectedIds,
+    getCurrentId: () => currentId,
+    setCurrentId: nextId => { currentId = nextId; },
+    getActiveOperation: () => activeOperation,
+    isDisposed: () => disposed,
+    hasDocument,
+    cacheSourceRotation,
+    effectivePageRotation,
+    getSourceDoc,
+    toggleSelect,
+    selectRange,
+    selectOnly,
+    setCurrent,
+    updateControls,
+    renderMainPreview,
+    commitEditorHistory
+  });
+
+  function buildTiles(shouldRender = true) {
+    return thumbnails.build(shouldRender);
+  }
+
+  function stopTileObserver(releaseAll = false) {
+    return thumbnails.stop(releaseAll);
+  }
+
+  function refreshTile(pageState) {
+    return thumbnails.refresh(pageState);
+  }
   // ----- Main preview -----
   function cancelMainRender() {
     mainEpoch++;

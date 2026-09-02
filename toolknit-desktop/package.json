@@ -51,6 +51,7 @@
     "test:color-extractor": "node scripts/test-color-extractor-core.mjs && node scripts/test-color-extractor-runtime.mjs",
     "test:color-space-compare": "node scripts/test-color-space-compare-core.mjs && node scripts/test-color-space-compare-runtime.mjs",
     "test:image-batch": "node scripts/test-image-batch-core.mjs",
+    "test:image-batch-tool-contract": "node scripts/test-image-batch-tool-contract.mjs",
     "test:image-native": "cargo test --manifest-path src-tauri/Cargo.toml image_conversion_tests --lib",
     "test:image-crop": "node scripts/test-image-crop-core.mjs && node scripts/test-image-crop-tool-contract.mjs && cargo test --manifest-path src-tauri/Cargo.toml image_crop_tests --lib",
     "test:hardware-inspector": "node scripts/test-hardware-inspector-contract.mjs",

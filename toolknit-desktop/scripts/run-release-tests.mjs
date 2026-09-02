@@ -51,6 +51,7 @@ const releaseTests = [
   'test:color-extractor',
   'test:color-space-compare',
   'test:image-batch',
+  'test:image-batch-tool-contract',
   'test:image-native',
   'test:image-crop',
   'test:markdown-editor',

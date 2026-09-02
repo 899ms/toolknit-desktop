@@ -46,6 +46,10 @@ const [
   imageColorReplaceWorkerSource,
   imageColorReplaceCompatibilitySource,
   imageColorReplaceFeatureStyles,
+  imageBatchToolSource,
+  imageBatchControllerSource,
+  imageBatchTemplateSource,
+  imageBatchFeatureStyles,
   excelToPdfToolSource,
   excelToPdfControllerSource,
   excelToPdfTemplateSource,
@@ -81,6 +85,10 @@ const [
   readFile(new URL('../src/features/image-color-replace/worker.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/image-color-replace-ui.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/image-color-replace/image-color-replace.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/image-batch/tool.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/image-batch/controller.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/image-batch/template.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/image-batch/image-batch.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/excel-to-pdf/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/excel-to-pdf/controller.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/excel-to-pdf/template.js', import.meta.url), 'utf8'),
@@ -127,6 +135,17 @@ assert.match(imageColorReplaceWorkerSource, /from ['"]\.\/core\.js['"]/, 'the im
 assert.match(imageColorReplaceCompatibilitySource, /from ['"]\.\/features\/image-color-replace\/tool\.js['"]/, 'the legacy image color replacement UI path must forward to the feature entry');
 assert.match(imageColorReplaceFeatureStyles, /\.color-replace-stage-section\s*\{/, 'the feature stylesheet must own image color replacement layout');
 assert.doesNotMatch(appStyles + finalToolStyles, /(?:\.color-replace|\.color-pair|\.color-swatch|\.color-target-picker)/, 'shared stylesheets must not retain image color replacement selectors');
+assert.match(imageBatchToolSource, /from ['"]\.\/template\.js['"]/, 'the image batch tools must delegate markup to their feature template');
+assert.match(imageBatchToolSource, /from ['"]\.\/controller\.js['"]/, 'the image batch tools must delegate runtime behavior to their controller');
+assert.match(imageBatchToolSource, /import ['"]\.\/image-batch\.css['"]/, 'the image batch tools must own their lazy stylesheet');
+assert.match(imageBatchControllerSource, /createLifecycleScope\(\)/, 'the image batch controller must own permanent and open-session cleanup');
+assert.match(imageBatchControllerSource, /owner\.use\(unlisten\)/, 'the image batch controller must release native drag listeners with the owning session');
+assert.match(imageBatchControllerSource, /isCurrentOperation\(operation\)/, 'image batch operations must reject stale results');
+assert.match(imageBatchControllerSource, /name\.textContent =/, 'image batch runtime filenames must use safe text nodes');
+assert.doesNotMatch(imageBatchControllerSource, /\.innerHTML\s*=/, 'image batch runtime values must not be written through innerHTML');
+assert.match(imageBatchTemplateSource, /imageBatchPortalTemplate/, 'image batch modal markup must load with the feature');
+assert.match(imageBatchFeatureStyles, /\.image-convert-v2/, 'the feature stylesheet must own image conversion layout');
+assert.doesNotMatch(appStyles + finalToolStyles, /\.image-(?:convert|compress)-v2|#image(?:Convert|Compress)SuccessOverlay/, 'shared stylesheets must not retain migrated image batch selectors');
 assert.match(excelToPdfToolSource, /from ['"]\.\/template\.js['"]/, 'the Excel to PDF tool must delegate markup to its feature template');
 assert.match(excelToPdfToolSource, /from ['"]\.\/controller\.js['"]/, 'the Excel to PDF tool must delegate runtime behavior to its controller');
 assert.match(excelToPdfToolSource, /import ['"]\.\/excel-to-pdf\.css['"]/, 'the Excel to PDF feature must own its lazy stylesheet');
@@ -195,6 +214,13 @@ assert.equal(LAZY_TOOL_SPECS['markdown-editor']?.overlayId, 'markdownEditorOverl
 assert.match(LAZY_TOOL_SPECS['markdown-editor'].load.toString(), /\.\/markdown-editor\/tool\.js/, 'Markdown Editor must load its feature entry directly');
 assert.equal(LAZY_TOOL_SPECS['image-crop']?.overlayId, 'imageCropOverlay', 'Image Crop must be lazy-registered');
 assert.match(LAZY_TOOL_SPECS['image-crop'].load.toString(), /\.\/image-crop\/tool\.js/, 'Image Crop must load its feature entry directly');
+for (const [toolId, overlayId] of Object.entries({
+  'image-convert': 'imageConvertOverlay',
+  'image-compress': 'imageCompressOverlay'
+})) {
+  assert.equal(LAZY_TOOL_SPECS[toolId]?.overlayId, overlayId, `${toolId} must be lazy-registered`);
+  assert.match(LAZY_TOOL_SPECS[toolId].load.toString(), /\.\/image-batch\/tool\.js/, `${toolId} must load the image batch feature entry`);
+}
 for (const [toolId, overlayId] of Object.entries({
   'hardware-overview': 'hardwareOverviewOverlay',
   'hardware-cpu-memory': 'hardwareCpuMemoryOverlay',

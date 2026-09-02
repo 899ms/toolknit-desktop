@@ -219,6 +219,17 @@ check(imageCropControllerSource.includes("invoke('crop_image'"), 'Image Crop mus
 check(!imageCropControllerSource.includes("from '@tauri-apps/"), 'Image Crop must use the platform Tauri boundary');
 check(imageCropToolSource.includes('imageCropTemplate()'), 'Image Crop must materialize only its trusted static template');
 
+const imageBatchControllerSource = read('toolknit-desktop/src/features/image-batch/controller.js');
+const imageBatchToolSource = read('toolknit-desktop/src/features/image-batch/tool.js');
+check(!imageBatchControllerSource.includes('.innerHTML ='), 'Image batch runtime data must not be written through innerHTML');
+check(imageBatchControllerSource.includes('name.textContent ='), 'Image batch filenames must use safe text nodes');
+check(imageBatchControllerSource.includes('owner.use(unlisten)'), 'Image batch native drag listeners must be lifecycle-owned');
+check(imageBatchControllerSource.includes('isCurrentOperation(operation)'), 'Image batch results must reject stale operations');
+check(imageBatchControllerSource.includes("invoke('cancel_convert')"), 'Image batch cancellation must retain the native command boundary');
+check(!imageBatchControllerSource.includes("from '@tauri-apps/api/core'"), 'Image batch tools must use the platform Tauri core boundary');
+check(!imageBatchControllerSource.includes("from '@tauri-apps/api/event'"), 'Image batch tools must use the platform Tauri event boundary');
+check(imageBatchToolSource.includes('imageBatchPageTemplate(mode)'), 'Image batch tools must materialize only their trusted static templates');
+
 const hardwareControllerSource = read('toolknit-desktop/src/features/hardware-inspector/controller.js');
 const hardwareToolSource = read('toolknit-desktop/src/features/hardware-inspector/tool.js');
 const hardwareRendererSource = [

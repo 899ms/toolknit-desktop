@@ -57,11 +57,12 @@ Last updated: 2026-09-02
 | `b67cff3` | Migrated Markdown Editor into a feature-owned module boundary |
 | `fec2595` | Migrated Image Crop into a feature-owned module boundary |
 | `446cddc` | Migrated the first four Hardware Inspector tools and snapshot lifecycle |
+| `d86579e` | Completed the seven-tool Hardware Inspector family migration |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 40 of 65 desktop tools have completed migration batches (**61.5%** coverage).
+- 42 of 65 desktop tools have completed migration batches (**64.6%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -484,6 +485,30 @@ and render an old result without session identity. Live queries now share the
 snapshot revision, stop their timer at every lifecycle boundary and discard a
 result that resolves after close; the focused test holds a live query pending,
 closes the tool and verifies that no second render occurs.
+
+Image Format Conversion and Image Compression now share a feature-owned batch
+controller, static template generator and lazy stylesheet under
+`src/features/image-batch/`. Their full pages, modal markup and 698 lines of
+runtime orchestration no longer live in `index.html` and `main.js`; the image
+batch core also leaves the initial entry and loads only with these tools.
+
+Native WebView drag/drop now belongs to each open session and releases its
+`unlisten` callback on close, including a registration that resolves after the
+session is invalidated. Pointer sorting uses an independent render scope,
+runtime filenames use text nodes, and native progress results carry both owner
+and operation identity. Closing during work releases the progress listener,
+invokes the existing `cancel_convert` command and prevents delayed progress or
+success UI from writing into a later open.
+
+Desktop and 680 by 800 browser checks covered both lazy entries, format and
+quality selection, close and repeated reopen, one-instance portal ownership
+and narrow layout overflow. Three repeated reopen cycles retained exactly one
+overlay and one portal, with no console warning or error. Focused core and
+lifecycle contracts, the architecture gate, 683 security checks and production
+build pass. The two tools share an approximately 23.09 kB JavaScript chunk and
+1.02 kB CSS chunk. Main JavaScript is now 1,755.36 kB, main CSS is 526.03 kB,
+`main.js` is 18,469 lines and `index.html` is 9,813 lines. Only the existing
+crypto externalization and large-chunk warnings remain.
 
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.

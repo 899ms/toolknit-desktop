@@ -79,6 +79,16 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./image-color-replace/tool.js'),
     init: 'initImageColorReplaceTool'
   }),
+  'image-convert': Object.freeze({
+    overlayId: 'imageConvertOverlay',
+    load: () => import('./image-batch/tool.js'),
+    init: 'initImageConvertTool'
+  }),
+  'image-compress': Object.freeze({
+    overlayId: 'imageCompressOverlay',
+    load: () => import('./image-batch/tool.js'),
+    init: 'initImageCompressTool'
+  }),
   'image-crop': Object.freeze({
     overlayId: 'imageCropOverlay',
     load: () => import('./image-crop/tool.js'),

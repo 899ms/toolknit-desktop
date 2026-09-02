@@ -1,0 +1,43 @@
+.image-convert-v2 .pdf-merge-v2-poster::after {
+  content: 'IMG';
+}
+
+.image-compress-v2 .pdf-merge-v2-poster::after {
+  right: 18px;
+  content: 'COMP';
+  font-size: 96px;
+}
+
+.image-convert-v2 .pdf-merge-v2-workspace,
+.image-compress-v2 .pdf-merge-v2-workspace {
+  grid-template-rows: auto auto minmax(170px, 1fr) auto auto;
+}
+
+.image-convert-v2 .pdf-merge-v2-queue,
+.image-compress-v2 .pdf-merge-v2-queue {
+  padding-top: 18px;
+}
+
+.image-convert-v2 .pdf-merge-v2-files,
+.image-compress-v2 .pdf-merge-v2-files {
+  max-height: 238px;
+}
+
+.image-convert-v2 .pdf-merge-v2-files .audio-convert-file-name,
+.image-compress-v2 .pdf-merge-v2-files .audio-convert-file-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.image-convert-v2 #imageConvertFiles:empty::before {
+  content: '暂无图片文件 · 点击上传或拖入文件后会显示在这里';
+}
+
+.image-compress-v2 #imageCompressFiles:empty::before {
+  content: '暂无待压缩图片 · 点击上传或拖入文件后会显示在这里';
+}
+
+#imageConvertSuccessOverlay .audio-convert-success-dialog,
+#imageCompressSuccessOverlay .audio-convert-success-dialog {
+  max-width: 460px;
+}

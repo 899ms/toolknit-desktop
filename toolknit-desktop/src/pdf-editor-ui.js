@@ -31,6 +31,7 @@ import {
 import { createPdfEditorDocumentStore } from './features/pdf-editor/documents.js';
 import { createPdfEditorZoomController } from './features/pdf-editor/zoom.js';
 import { createPdfEditorComponentRenderer } from './features/pdf-editor/component-renderer.js';
+import { createPdfEditorComponentModel } from './features/pdf-editor/component-model.js';
 import {
   buildTextLine,
   editedTextVisualBox,
@@ -1205,15 +1206,11 @@ export function initPdfEditorTool({
   }
 
   function componentElementKey(component) {
-    if (!component) return '';
-    return component.type === 'text' ? component.key : `${component.type}:${component.key}`;
+    return componentModel.componentElementKey(component);
   }
 
   function sameComponent(left, right) {
-    return Boolean(left && right
-      && left.type === right.type
-      && left.pageId === right.pageId
-      && componentElementKey(left) === componentElementKey(right));
+    return componentModel.sameComponent(left, right);
   }
 
   function componentElement(component) {
@@ -1230,58 +1227,20 @@ export function initPdfEditorTool({
     return componentElement(selectedComponent);
   }
 
-  function componentCollection(component) {
-    if (!component) return null;
-    if (component.type === 'inserted-text') return insertedTexts;
-    if (component.type === 'inserted-image') return insertedImages;
-    if (component.type === 'inserted-shape') return insertedShapes;
-    return null;
-  }
-
   function resolveComponentObject(component) {
-    const collection = componentCollection(component);
-    if (!collection || component.key == null) return null;
-    return collection.find(item => item.id === component.key) || null;
+    return componentModel.resolveComponentObject(component);
   }
 
   function getComponentRotation(component) {
-    if (!component) return 0;
-    if (component.type === 'text') {
-      const edit = textEdits.get(component.key);
-      return Number(edit?.segment?.rotation) || 0;
-    }
-    return Number(resolveComponentObject(component)?.rotation) || 0;
+    return componentModel.getComponentRotation(component);
   }
 
   function snapRotationToAxis(rotationDeg, threshold = 6) {
-    const normalized = ((Number(rotationDeg) || 0) % 360 + 360) % 360;
-    for (const candidate of [0, 90, 180, 270, 360]) {
-      if (Math.abs(normalized - candidate) <= threshold) return candidate % 360;
-    }
-    return normalized;
+    return componentModel.snapRotationToAxis(rotationDeg, threshold);
   }
 
   function setComponentRotation(component, rotationDeg) {
-    if (!component) return;
-    const normalized = ((Number(rotationDeg) || 0) % 360 + 360) % 360;
-    if (component.type === 'text') {
-      const baseSegment = cloneState(component.segment || {});
-      const edit = ensureTextEditEntry(component, baseSegment);
-      if (!edit?.segment) return;
-      edit.segment = { ...edit.segment, rotation: normalized };
-      edit.newText = String(edit.newText ?? baseSegment.text ?? '');
-      textEdits.set(component.key, edit);
-      if (selectedComponent?.type === 'text' && selectedComponent.key === component.key) {
-        selectedComponent.segment = cloneState(edit.segment);
-      }
-      return;
-    }
-    const object = resolveComponentObject(component);
-    if (!object) return;
-    object.rotation = normalized;
-    if (selectedComponent?.type === component.type && selectedComponent.key === component.key) {
-      selectedComponent.object = cloneState(object);
-    }
+    return componentModel.setComponentRotation(component, rotationDeg);
   }
 
   function positionComponentMenu() {
@@ -1517,45 +1476,15 @@ export function initPdfEditorTool({
   }
 
   function editableComponentKey(component) {
-    if (!component) return '';
-    return component.type === 'text'
-      ? `${component.pageId}:${component.lineIndex}:${component.segmentIndex}`
-      : `${component.type}:${component.key}`;
+    return componentModel.editableComponentKey(component);
   }
 
   function ensureTextEditEntry(component, segment) {
-    if (!component?.key) return null;
-    const existing = textEdits.get(component.key);
-    if (existing) {
-      if (!existing.baseSegment && segment) existing.baseSegment = cloneState(segment);
-      if (!existing.segment && segment) existing.segment = cloneState(segment);
-      return existing;
-    }
-    const next = {
-      newText: String(segment?.text ?? ''),
-      baseSegment: cloneState(segment || {}),
-      segment: cloneState(segment || {})
-    };
-    textEdits.set(component.key, next);
-    return next;
+    return componentModel.ensureTextEditEntry(component, segment);
   }
 
   function sameTextSegmentLayout(a, b) {
-    if (!a || !b) return false;
-    const boxA = a.box || {};
-    const boxB = b.box || {};
-    const epsilon = 0.01;
-    return Math.abs((Number(a.baselineX) || 0) - (Number(b.baselineX) || 0)) < epsilon
-      && Math.abs((Number(a.baselineY) || 0) - (Number(b.baselineY) || 0)) < epsilon
-      && Math.abs((Number(a.fontSize) || 0) - (Number(b.fontSize) || 0)) < epsilon
-      && Math.abs((Number(boxA.x) || 0) - (Number(boxB.x) || 0)) < epsilon
-      && Math.abs((Number(boxA.y) || 0) - (Number(boxB.y) || 0)) < epsilon
-      && Math.abs((Number(boxA.width) || 0) - (Number(boxB.width) || 0)) < epsilon
-      && Math.abs((Number(boxA.height) || 0) - (Number(boxB.height) || 0)) < epsilon
-      && Math.abs((Number(a.rotation) || 0) - (Number(b.rotation) || 0)) < epsilon
-      && Boolean(a.bold) === Boolean(b.bold)
-      && Boolean(a.italic) === Boolean(b.italic)
-      && JSON.stringify(a.color || null) === JSON.stringify(b.color || null);
+    return componentModel.sameTextSegmentLayout(a, b);
   }
 
   function updateComponentFromDelta(
@@ -1565,188 +1494,29 @@ export function initPdfEditorTool({
     baseComponent = componentDragState?.component || selectedComponent,
     { deferRender = false } = {}
   ) {
-    if (!baseComponent) return;
-    if (baseComponent.type === 'text') {
-      const baseSegment = cloneState(baseComponent.segment || selectedComponent?.segment || {});
-      const edit = ensureTextEditEntry(baseComponent, baseSegment);
-      if (!edit?.segment) return;
-      const baseBox = baseSegment.box || baseSegment.sourceBox || {};
-      const sourceBox = edit.baseSegment?.sourceBox
-        || edit.baseSegment?.box
-        || baseSegment.sourceBox
-        || baseSegment.box;
-      const scale = Math.max(0.5, Number(deltaScale) || 1);
-      edit.segment = {
-        ...baseSegment,
-        baselineX: (Number(baseSegment.baselineX) || 0) + deltaX,
-        baselineY: (Number(baseSegment.baselineY) || 0) + deltaY,
-        fontSize: Math.max(1, (Number(baseSegment.fontSize) || 10) * scale),
-        box: {
-          x: (Number(baseBox.x) || 0) + deltaX,
-          y: (Number(baseBox.y) || 0) + deltaY,
-          width: Math.max(1, (Number(baseBox.width) || 1) * scale),
-          height: Math.max(1, (Number(baseBox.height) || 1) * scale)
-        },
-        sourceBox: sourceBox ? cloneState(sourceBox) : undefined
-      };
-      if (!edit.baseSegment) edit.baseSegment = cloneState(baseSegment);
-      edit.newText = String(edit.newText ?? baseSegment.text ?? '');
-      textEdits.set(baseComponent.key, edit);
-      if (selectedComponent?.type === 'text' && selectedComponent.key === baseComponent.key) {
-        selectedComponent.segment = cloneState(edit.segment);
-      }
-    } else if (baseComponent.type === 'inserted-text') {
-      const object = insertedTexts.find(item => item.id === baseComponent.key);
-      if (!object) return;
-      const baseObject = cloneState(baseComponent.object || object);
-      object.x = (Number(baseObject.x) || 0) + deltaX;
-      object.y = (Number(baseObject.y) || 0) + deltaY;
-      object.fontSize = Math.max(6, (Number(baseObject.fontSize) || 16) * deltaScale);
-      if (selectedComponent?.type === 'inserted-text' && selectedComponent.key === baseComponent.key) {
-        selectedComponent.object = cloneState(object);
-      }
-    } else if (baseComponent.type === 'inserted-image') {
-      const object = insertedImages.find(item => item.id === baseComponent.key);
-      if (!object) return;
-      const baseObject = cloneState(baseComponent.object || object);
-      object.x = (Number(baseObject.x) || 0) + deltaX;
-      object.y = (Number(baseObject.y) || 0) + deltaY;
-      object.width = Math.max(12, (Number(baseObject.width) || 1) * deltaScale);
-      object.height = Math.max(12, (Number(baseObject.height) || 1) * deltaScale);
-      if (selectedComponent?.type === 'inserted-image' && selectedComponent.key === baseComponent.key) {
-        selectedComponent.object = cloneState(object);
-      }
-    } else if (baseComponent.type === 'inserted-shape') {
-      const object = insertedShapes.find(item => item.id === baseComponent.key);
-      if (!object) return;
-      const baseObject = cloneState(baseComponent.object || object);
-      object.x = (Number(baseObject.x) || 0) + deltaX;
-      object.y = (Number(baseObject.y) || 0) + deltaY;
-      object.width = Math.max(6, (Number(baseObject.width) || 1) * deltaScale);
-      object.height = Math.max(6, (Number(baseObject.height) || 1) * deltaScale);
-      if (selectedComponent?.type === 'inserted-shape' && selectedComponent.key === baseComponent.key) {
-        selectedComponent.object = cloneState(object);
-      }
-    }
-    if (deferRender) {
-      applyComponentDomVisual(baseComponent);
-    } else {
-      syncComponentModeClass();
-      updateControls();
-      refreshCurrentTextLayer();
-    }
+    return componentModel.updateComponentFromDelta(
+      deltaX,
+      deltaY,
+      deltaScale,
+      baseComponent,
+      { deferRender }
+    );
   }
 
   function componentBox(component, object) {
-    if (component?.type === 'text') {
-      const segment = object || textEdits.get(component.key)?.segment || component.segment;
-      const sourceBox = segment?.box || segment?.sourceBox;
-      if (!sourceBox) return null;
-      return {
-        x: Number(sourceBox.x) || 0,
-        y: Number(sourceBox.y) || 0,
-        width: Math.max(1, Number(sourceBox.width) || 1),
-        height: Math.max(1, Number(sourceBox.height) || 1)
-      };
-    }
-    if (!object) return null;
-    if (component.type === 'inserted-text') {
-      return insertedTextVisualBox(object);
-    }
-    return {
-      x: Number(object.x) || 0,
-      y: Number(object.y) || 0,
-      width: Math.max(1, Number(object.width) || 1),
-      height: Math.max(1, Number(object.height) || 1)
-    };
+    return componentModel.componentBox(component, object);
   }
 
   function collectSnapTargets(pageId, excludeType, excludeKey) {
-    const targets = [];
-    const textCache = textLinesCache.get(pageId);
-    if (textCache?.lines?.length) {
-      for (let lineIndex = 0; lineIndex < textCache.lines.length; lineIndex++) {
-        const line = textCache.lines[lineIndex];
-        const segments = Array.isArray(line.segments) && line.segments.length
-          ? line.segments
-          : [{
-            text: line.text,
-            baselineX: line.baselineX,
-            baselineY: line.baselineY,
-            fontSize: line.fontSize,
-            box: line.box
-          }];
-        for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
-          const key = `${pageId}:${lineIndex}:${segmentIndex}`;
-          if (excludeType === 'text' && key === excludeKey) continue;
-          const edit = textEdits.get(key);
-          const box = componentBox(
-            { type: 'text', key },
-            edit?.segment || segments[segmentIndex]
-          );
-          if (box) targets.push(box);
-        }
-      }
-    }
-    for (const object of insertedTexts) {
-      if (object.pageId !== pageId || (excludeType === 'inserted-text' && object.id === excludeKey)) continue;
-      const box = componentBox({ type: 'inserted-text' }, object);
-      if (box) targets.push(box);
-    }
-    for (const object of insertedImages) {
-      if (object.pageId !== pageId || (excludeType === 'inserted-image' && object.id === excludeKey)) continue;
-      const box = componentBox({ type: 'inserted-image' }, object);
-      if (box) targets.push(box);
-    }
-    for (const object of insertedShapes) {
-      if (object.pageId !== pageId || (excludeType === 'inserted-shape' && object.id === excludeKey)) continue;
-      const box = componentBox({ type: 'inserted-shape' }, object);
-      if (box) targets.push(box);
-    }
-    return targets;
+    return componentModel.collectSnapTargets(pageId, excludeType, excludeKey);
   }
 
   function snapAxisDelta(mine, targets, threshold) {
-    let best = 0;
-    let bestDistance = threshold + 1;
-    for (const value of mine) {
-      for (const target of targets) {
-        const distance = target - value;
-        if (Math.abs(distance) <= threshold && Math.abs(distance) < Math.abs(bestDistance)) {
-          bestDistance = Math.abs(distance);
-          best = distance;
-        }
-      }
-    }
-    return best;
+    return componentModel.snapAxisDelta(mine, targets, threshold);
   }
 
   function snapComponentDrag(component, dx, dy, snapTargets = null) {
-    const object = component.type === 'text'
-      ? (textEdits.get(component.key)?.segment || component.segment)
-      : (component.object || resolveComponentObject(component));
-    const box = componentBox(component, object);
-    if (!object || !box) return { dx, dy };
-    const pageId = component.pageId || object.pageId;
-    const targets = snapTargets || collectSnapTargets(pageId, component.type, component.key);
-    if (!targets.length) return { dx, dy };
-    const threshold = 6;
-    const left = box.x + dx;
-    const centerX = left + box.width / 2;
-    const right = left + box.width;
-    const top = box.y + dy;
-    const centerY = top + box.height / 2;
-    const bottom = top + box.height;
-    const xTargets = [];
-    const yTargets = [];
-    for (const target of targets) {
-      xTargets.push(target.x, target.x + target.width / 2, target.x + target.width);
-      yTargets.push(target.y, target.y + target.height / 2, target.y + target.height);
-    }
-    return {
-      dx: dx + snapAxisDelta([left, centerX, right], xTargets, threshold),
-      dy: dy + snapAxisDelta([top, centerY, bottom], yTargets, threshold)
-    };
+    return componentModel.snapComponentDrag(component, dx, dy, snapTargets);
   }
 
   function shapeStrokeCss(strokeWidth, scale) {
@@ -2541,6 +2311,26 @@ export function initPdfEditorTool({
     positionComponentMenu,
     renderMainPreview,
     listenerOptions
+  });
+
+  const componentModel = createPdfEditorComponentModel({
+    getTextEdits: () => textEdits,
+    getInsertedTexts: () => insertedTexts,
+    getInsertedImages: () => insertedImages,
+    getInsertedShapes: () => insertedShapes,
+    getTextLinesCache: () => textLinesCache,
+    getSelectedComponent: () => selectedComponent,
+    setSelectedComponent: value => { selectedComponent = value; },
+    cloneState,
+    onChanged: ({ deferRender, component }) => {
+      if (deferRender) {
+        applyComponentDomVisual(component);
+      } else {
+        syncComponentModeClass();
+        updateControls();
+        refreshCurrentTextLayer();
+      }
+    }
   });
 
   const componentRenderer = createPdfEditorComponentRenderer({

@@ -12,8 +12,6 @@
 .tool-page-v2-rail,
 .tool-page-v2-workspace,
 .md-workbench,
-.color-replace-stage-section,
-.color-replace-controls,
 .crypto-sidebar,
 .crypto-workspace {
   background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.018)), rgba(10,10,11,.56);
@@ -78,77 +76,10 @@
 
 /* Image replacement: three sibling surfaces on desktop, stacked in order on
    narrow windows so the export controls remain reachable. */
-.color-replace-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) minmax(300px,324px) !important; }
-.color-replace-stage-section { display: grid !important; grid-template-rows: auto minmax(0,1fr) auto; row-gap: 14px; padding: 22px; overflow: hidden !important; }
-.color-replace-controls { display: flex; flex-direction: column; min-height: 0; padding: 0 22px 22px; overflow-y: auto !important; scrollbar-gutter: stable; }
-.color-replace-controls > section { flex: 0 0 auto; }
-.color-replace-stage { min-height: 0; }
-.color-replace-stage-actions { min-width: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
-.color-replace-stage-footer { min-width: 0; flex-wrap: wrap; gap: 8px 16px; }
 
 /* The color replacer uses a neutral white control accent. Keep the empty
    state quiet until an image is loaded; the legacy display rule otherwise
    overrides the native [hidden] behavior of the busy indicator. */
-.color-replace-shell .color-replace-busy[hidden] { display: none !important; }
-.color-replace-shell .color-replace-busy span { border-top-color: #fff; }
-.color-replace-shell .color-replace-empty svg,
-.color-replace-shell .color-replace-stage-footer svg,
-.color-replace-shell .color-pair > button > svg,
-.color-replace-shell .color-pair > label > svg,
-.color-replace-shell .color-pair-arrow svg,
-.color-replace-shell .color-replace-range output { color: rgba(255,255,255,.9); }
-.color-replace-shell .color-pair > button.is-active { border-color: rgba(255,255,255,.72); }
-.color-replace-shell .color-target-picker { cursor: pointer; }
-.color-replace-shell input[type="range"] { accent-color: #fff; }
-.color-replace-shell .color-replace-toggle input:checked + i { background: #fff; }
-.color-replace-shell .color-replace-toggle input:checked + i::after { background: #171819; }
-.color-replace-shell .color-replace-format button.is-active {
-  border-color: #fff;
-  background: #fff;
-  color: #111;
-}
-.color-replace-shell .color-replace-export { border-color: #fff; background: #fff; color: #111; }
-.color-replace-shell .color-replace-stage-actions [data-cr-compare] {
-  color: #fff !important;
-}
-.color-replace-shell .color-replace-stage-actions [data-cr-compare]:disabled {
-  opacity: 1;
-  color: #fff !important;
-  cursor: not-allowed;
-}
-.color-replace-shell .color-replace-stage-actions [data-cr-compare] > span,
-.color-replace-shell .color-replace-stage-actions [data-cr-compare] > svg,
-.color-replace-shell .color-replace-stage-actions [data-cr-pick] > span,
-.color-replace-shell .color-replace-stage-actions [data-cr-pick] > svg {
-  color: #fff !important;
-}
-.color-replace-shell .color-replace-stage-actions [data-cr-export],
-.color-replace-shell .color-replace-stage-actions [data-cr-export]:disabled {
-  opacity: 1;
-  border-color: #fff;
-  background: #fff;
-  color: #111 !important;
-}
-.color-replace-shell .color-replace-stage-actions [data-cr-export] > span,
-.color-replace-shell .color-replace-stage-actions [data-cr-export] > svg { color: #111 !important; }
-.color-replace-shell .color-replace-stage-actions [data-cr-export] { cursor: pointer; }
-.color-replace-shell .color-replace-stage-actions [data-cr-export]:disabled { cursor: not-allowed; }
-.app-toast.color-replace-export-toast .app-toast-message { display: inline; }
-.app-toast.color-replace-export-toast .color-replace-output-link {
-  color: #0969da;
-  font-weight: 750;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-  cursor: pointer;
-  overflow-wrap: anywhere;
-}
-.app-toast.color-replace-export-toast .color-replace-output-link:hover { color: #034ea2; }
-.app-toast.color-replace-export-toast .color-replace-output-link:focus-visible {
-  outline: 2px solid #0969da;
-  outline-offset: 2px;
-  border-radius: 2px;
-}
 
 /* Developer toolbox and crypto fill the workspace instead of ending at the
    intrinsic textarea height. */
@@ -339,15 +270,10 @@
 @media (min-width:1560px) {
   .md-tool-main,
 .crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
-  .color-replace-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) minmax(320px,360px) !important; }
 }
 @media (max-width:1180px) {
   .md-tool-main,
 .crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
-  .color-replace-main { grid-template-columns: 250px minmax(0,1fr) !important; grid-template-rows: minmax(470px,auto) auto !important; align-content: start; }
-  .color-replace-stage-section { grid-column: 2; grid-row: 1; }
-  .color-replace-controls { grid-column: 2; grid-row: 2; min-height: 800px !important; }
-  .color-replace-stage-actions { justify-content: flex-start; }
 }
 @media (max-width:760px) {
   .tool-page-v2-body { overflow: visible; }
@@ -363,9 +289,6 @@
   .crypto-workspace { min-height: 760px !important; overflow: visible !important; }
   .crypto-panel { height: auto; min-height: 560px; }
   .crypto-io textarea { min-height: 220px; height: 220px; }
-  .color-replace-main { display: flex !important; flex-direction: column; }
-  .color-replace-stage-section { flex: 0 0 520px; height: 520px; min-height: 520px !important; }
-  .color-replace-controls { flex: 0 0 auto; min-height: 800px !important; overflow: visible !important; }
 }
 
 /* Markdown editor: the toolbar has an explicit inner scrolling rail. This

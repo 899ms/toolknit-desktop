@@ -12,6 +12,8 @@ import { preserveColorSpaceValues as featurePreserveColorSpaceValues } from '../
 import { preserveColorSpaceValues as compatiblePreserveColorSpaceValues } from '../src/color-space-compare-controls.js';
 import { selectInstalledModels as featureSelectInstalledModels } from '../src/features/bg-removal/core.js';
 import { selectInstalledModels as compatibleSelectInstalledModels } from '../src/bg-removal-core.js';
+import { rgbToHex as featureImageColorRgbToHex } from '../src/features/image-color-replace/core.js';
+import { rgbToHex as compatibleImageColorRgbToHex } from '../src/image-color-replace-core.js';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
 import { toolTopbarMarkup as sharedToolTopbarMarkup } from '../src/shared/tool-page-shell.js';
 import { toolTopbarMarkup as compatibleToolTopbarMarkup } from '../src/tool-page-shell.js';
@@ -31,6 +33,14 @@ const [
   colorSpaceCompatibilityStyles,
   bgRemovalCompatibilitySource,
   bgRemovalCompatibilityStyles,
+  imageColorReplaceToolSource,
+  imageColorReplaceControllerSource,
+  imageColorReplaceTemplateSource,
+  imageColorReplaceWorkerSource,
+  imageColorReplaceCompatibilitySource,
+  imageColorReplaceFeatureStyles,
+  appStyles,
+  finalToolStyles,
   ...sharedShellConsumers
 ] = await Promise.all([
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
@@ -47,9 +57,16 @@ const [
   readFile(new URL('../src/color-space-compare.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/bg-removal-ui.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/bg-removal.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/image-color-replace/tool.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/image-color-replace/controller.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/image-color-replace/template.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/image-color-replace/worker.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/image-color-replace-ui.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/image-color-replace/image-color-replace.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/tool-page-v2-final.css', import.meta.url), 'utf8'),
   ...[
     'crypto-tool-ui.js',
-    'image-color-replace-ui.js',
     'markdown-editor-ui.js'
   ].map(file => readFile(new URL(`../src/${file}`, import.meta.url), 'utf8'))
 ]);
@@ -59,6 +76,7 @@ assert.equal(formatCompatibleJson, formatFeatureJson, 'the legacy developer tool
 assert.equal(compatibleRgbToHex, featureRgbToHex, 'the legacy color-space core path must re-export the feature implementation');
 assert.equal(compatiblePreserveColorSpaceValues, featurePreserveColorSpaceValues, 'the legacy color-space controls path must re-export the feature implementation');
 assert.equal(compatibleSelectInstalledModels, featureSelectInstalledModels, 'the legacy background-removal core path must re-export the feature implementation');
+assert.equal(compatibleImageColorRgbToHex, featureImageColorRgbToHex, 'the legacy image-color-replace core path must re-export the feature implementation');
 assert.equal(compatibleToolTopbarMarkup, sharedToolTopbarMarkup, 'the legacy tool shell path must re-export the shared implementation');
 assert.doesNotMatch(mainSource, /from ['"]@tauri-apps\/api\/(?:core|event)['"]/, 'main.js must use the platform boundary');
 assert.match(mainSource, /from ['"]\.\/platform\/tauri-runtime\.js['"]/, 'main.js must import the Tauri platform boundary');
@@ -73,6 +91,18 @@ assert.match(bgRemovalToolSource, /from ['"]\.\/template\.js['"]/, 'the backgrou
 assert.match(bgRemovalTemplateSource, /data-bgr-action="process"/, 'the background-removal template must retain the process action contract');
 assert.match(bgRemovalCompatibilitySource, /from ['"]\.\/features\/bg-removal\/tool\.js['"]/, 'the legacy background-removal tool path must forward to the feature entry');
 assert.equal(bgRemovalCompatibilityStyles.trim(), "@import url('./features/bg-removal/bg-removal.css');", 'the legacy background-removal stylesheet must forward to the feature stylesheet');
+assert.match(imageColorReplaceToolSource, /from ['"]\.\.\/\.\.\/shared\/tool-page-shell\.js['"]/, 'the image color replacement feature must consume the shared tool shell');
+assert.match(imageColorReplaceToolSource, /from ['"]\.\/template\.js['"]/, 'the image color replacement tool must delegate markup to its feature template');
+assert.match(imageColorReplaceToolSource, /from ['"]\.\/controller\.js['"]/, 'the image color replacement tool must delegate runtime behavior to its controller');
+assert.match(imageColorReplaceToolSource, /import ['"]\.\/image-color-replace\.css['"]/, 'the image color replacement feature must own its lazy stylesheet');
+assert.match(imageColorReplaceControllerSource, /createLifecycleScope\(\)/, 'the image color replacement controller must own permanent listener cleanup');
+assert.match(imageColorReplaceControllerSource, /from ['"]\.\.\/\.\.\/platform\/tauri-runtime\.js['"]/, 'the image color replacement controller must use the platform boundary');
+assert.doesNotMatch(imageColorReplaceControllerSource, /from ['"]@tauri-apps\/api\/core['"]/, 'the image color replacement controller must not bypass the platform boundary');
+assert.match(imageColorReplaceTemplateSource, /data-cr-export/, 'the image color replacement template must retain the export action contract');
+assert.match(imageColorReplaceWorkerSource, /from ['"]\.\/core\.js['"]/, 'the image color replacement Worker must consume the feature core');
+assert.match(imageColorReplaceCompatibilitySource, /from ['"]\.\/features\/image-color-replace\/tool\.js['"]/, 'the legacy image color replacement UI path must forward to the feature entry');
+assert.match(imageColorReplaceFeatureStyles, /\.color-replace-stage-section\s*\{/, 'the feature stylesheet must own image color replacement layout');
+assert.doesNotMatch(appStyles + finalToolStyles, /(?:\.color-replace|\.color-pair|\.color-swatch|\.color-target-picker)/, 'shared stylesheets must not retain image color replacement selectors');
 assert.match(indexSource, /href="\.\/src\/tool-custom-select\.css"/, 'the existing stylesheet position must remain stable');
 assert.equal(selectCompatibilityStyles.trim(), "@import url('./styles/components/tool-custom-select.css');", 'the legacy stylesheet must forward to the component stylesheet');
 assert.match(selectComponentStyles, /\.tool-custom-select-trigger\s*\{/, 'the component stylesheet must own custom select visuals');
@@ -110,6 +140,8 @@ class FakeTarget {
 validateLazyToolSpecs(LAZY_TOOL_SPECS);
 assert.ok(Object.keys(LAZY_TOOL_SPECS).length > 0, 'the application must register at least one lazy tool');
 assert.equal(LAZY_TOOL_SPECS['pdf-editor']?.overlayId, 'pdfEditorOverlay', 'PDF Editor must be lazy-registered');
+assert.equal(LAZY_TOOL_SPECS['image-color-replace']?.overlayId, 'imageColorReplaceOverlay', 'Image Color Replace must be lazy-registered');
+assert.match(LAZY_TOOL_SPECS['image-color-replace'].load.toString(), /\.\/image-color-replace\/tool\.js/, 'Image Color Replace must load its feature entry directly');
 assert.match(mainSource, /LAZY_TOOL_SPECS/, 'main must use the shared lazy registry');
 assert.doesNotMatch(mainSource, /from ['"]\.\/pdf-editor-ui\.js['"]/, 'PDF Editor must not be statically imported by main');
 assert.match(mainSource, /pdfWorkerUrl,/, 'lazy features must receive the PDF worker URL through context');

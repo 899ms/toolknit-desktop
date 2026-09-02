@@ -1,4 +1,4 @@
-import { replaceImageColors } from './image-color-replace-core.js';
+import { replaceImageColors } from './core.js';
 
 self.addEventListener('message', event => {
   const { taskId, buffer, width, height, options } = event.data || {};

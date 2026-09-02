@@ -35,6 +35,7 @@ Last updated: 2026-09-02
 | `1540ef2` | Isolated PDF Editor text grouping and visual-box calculations |
 | `6b02cd6` | Isolated PDF Editor zoom state, anchor scrolling and scheduling lifecycle |
 | `485f6f9` | Isolated PDF Editor text/component DOM rendering and injected interaction bindings |
+| `85cbc37` | Isolated PDF Editor component state, transforms and snap geometry |
 
 ## Current verified counts
 
@@ -156,6 +157,15 @@ handles, accessibility state and render-time event bindings. Selection,
 mutation, drag/resize sessions and component-menu updates remain injected from
 the compatibility orchestrator. The state contract now reads the renderer
 source directly and asserts that the legacy UI only delegates rendering.
+
+PDF Editor component identity, collection lookup, text-edit entry creation,
+rotation normalization, component transforms, resize-independent box geometry,
+alignment target collection and snap deltas now live in
+`src/features/pdf-editor/component-model.js`. The module receives state through
+getters and reports changed state through an injected callback, so undo/redo can
+replace collections without stale references and the model remains DOM-free.
+Its regression suite covers identity, rotation snapping, text-layout equality,
+object transforms and alignment snapping.
 
 ## Hidden issues fixed during migration
 

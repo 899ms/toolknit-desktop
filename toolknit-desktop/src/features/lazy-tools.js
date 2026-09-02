@@ -79,6 +79,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./image-color-replace/tool.js'),
     init: 'initImageColorReplaceTool'
   }),
+  'image-crop': Object.freeze({
+    overlayId: 'imageCropOverlay',
+    load: () => import('./image-crop/tool.js'),
+    init: 'initImageCropTool'
+  }),
   'color-space-compare': Object.freeze({
     overlayId: 'colorSpaceCompareOverlay',
     load: () => import('./color-space-compare/tool.js'),

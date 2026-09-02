@@ -59,7 +59,7 @@ Last updated: 2026-09-02
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 32 of 65 desktop tools have completed migration batches (**49.2%** coverage).
+- 33 of 65 desktop tools have completed migration batches (**50.8%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -409,6 +409,35 @@ the production build pass. Markdown Editor emits a 1,004.39 kB JavaScript
 chunk and 22.60 kB CSS chunk; main JavaScript remains 1,838.21 kB and main CSS
 is now 561.29 kB. Only the pre-existing crypto externalization and large-chunk
 warnings remain.
+
+Image Crop now lives under `src/features/image-crop/`. The feature owns an
+802-line lifecycle controller, 208-line pure geometry core, 113-line static
+template, 44-line composition entry and 357-line lazy stylesheet. The legacy
+root core remains a compatibility forward, while `main.js`, `styles.css` and
+the static HTML no longer own the implementation, feature styles or full tool
+markup. The lazy registry now creates the workspace and success dialog only on
+first use.
+
+Each open session owns native drag/drop registration, its `ResizeObserver`,
+animation frame, pointer state and plasma background. File decoding and native
+export carry request or operation identity, so a closed session cannot attach a
+late `unlisten`, publish an old image or write an old export result into a later
+open. Browser object URLs, decoded images, canvas state and success data are
+released on close or dispose. Runtime filenames, output paths and result data
+are written through text nodes rather than HTML interpolation.
+
+Browser regression at 1280 x 720, 720 x 800 and 480 x 360 covered lazy DOM
+creation, file loading, crop ratios, guides, spiral direction, JPG settings,
+rotation, keyboard movement, repeated close/reopen, settings navigation and
+resource cleanup without console warnings or errors. A compact-window defect
+was found where the independently scrolling control grid collapsed to about
+one pixel and made the export button unreachable; the narrow layout now uses
+the outer workspace scroll, with a contract assertion protecting the fix. The
+focused JavaScript and five Rust crop tests, architecture gate, 647 security
+checks, `cargo check`, full 80-script release gate and production build pass.
+Image Crop emits a 27.67 kB JavaScript chunk and 9.64 kB CSS chunk; main
+JavaScript is now 1,820.36 kB and main CSS is 551.67 kB. Only the pre-existing
+crypto externalization and large-chunk warnings remain.
 
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.

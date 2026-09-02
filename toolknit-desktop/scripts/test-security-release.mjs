@@ -208,6 +208,17 @@ check(markdownCoreSource.includes("default-src 'none'"), 'Standalone Markdown ex
 check(markdownCoreSource.includes('img-src data:'), 'Standalone Markdown exports must allow embedded images only');
 check(markdownCoreSource.includes('name="referrer" content="no-referrer"'), 'Standalone Markdown exports must not leak referrer data');
 
+const imageCropControllerSource = read('toolknit-desktop/src/features/image-crop/controller.js');
+const imageCropToolSource = read('toolknit-desktop/src/features/image-crop/tool.js');
+check(!imageCropControllerSource.includes('.innerHTML ='), 'Image Crop runtime data must not be written through innerHTML');
+check(imageCropControllerSource.includes('owner.use(unlisten)'), 'Image Crop native drag listeners must be lifecycle-owned');
+check(imageCropControllerSource.includes('isCurrentLoad(owner, requestId)'), 'Image Crop loads must reject stale session results');
+check(imageCropControllerSource.includes('isCurrentOperation(operation)'), 'Image Crop exports must reject stale operation results');
+check(imageCropControllerSource.includes('URL.revokeObjectURL(objectUrl)'), 'Image Crop browser previews must revoke object URLs');
+check(imageCropControllerSource.includes("invoke('crop_image'"), 'Image Crop must retain the native crop command boundary');
+check(!imageCropControllerSource.includes("from '@tauri-apps/"), 'Image Crop must use the platform Tauri boundary');
+check(imageCropToolSource.includes('imageCropTemplate()'), 'Image Crop must materialize only its trusted static template');
+
 const mcpSource = read('toolknit-desktop/cli/lib/mcp-server.mjs');
 for (const required of [
   'const MAX_MCP_MESSAGE_BYTES = 8 * 1024 * 1024',

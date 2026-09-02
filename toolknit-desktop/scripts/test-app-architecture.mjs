@@ -193,6 +193,8 @@ assert.equal(LAZY_TOOL_SPECS['excel-to-pdf']?.overlayId, 'excelToPdfOverlay', 'E
 assert.match(LAZY_TOOL_SPECS['excel-to-pdf'].load.toString(), /\.\/excel-to-pdf\/tool\.js/, 'Excel to PDF must load its feature entry directly');
 assert.equal(LAZY_TOOL_SPECS['markdown-editor']?.overlayId, 'markdownEditorOverlay', 'Markdown Editor must be lazy-registered');
 assert.match(LAZY_TOOL_SPECS['markdown-editor'].load.toString(), /\.\/markdown-editor\/tool\.js/, 'Markdown Editor must load its feature entry directly');
+assert.equal(LAZY_TOOL_SPECS['image-crop']?.overlayId, 'imageCropOverlay', 'Image Crop must be lazy-registered');
+assert.match(LAZY_TOOL_SPECS['image-crop'].load.toString(), /\.\/image-crop\/tool\.js/, 'Image Crop must load its feature entry directly');
 assert.match(mainSource, /LAZY_TOOL_SPECS/, 'main must use the shared lazy registry');
 assert.doesNotMatch(mainSource, /from ['"]\.\/pdf-editor-ui\.js['"]/, 'PDF Editor must not be statically imported by main');
 assert.match(mainSource, /pdfWorkerUrl,/, 'lazy features must receive the PDF worker URL through context');

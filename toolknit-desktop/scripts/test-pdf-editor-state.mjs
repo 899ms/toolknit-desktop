@@ -85,6 +85,10 @@ const componentInteractionSource = await readFile(
   new URL('../src/features/pdf-editor/component-interaction.js', import.meta.url),
   'utf8'
 );
+const contentEditingSource = await readFile(
+  new URL('../src/features/pdf-editor/content-editing.js', import.meta.url),
+  'utf8'
+);
 
 const snapshotStart = uiSource.indexOf('function captureEditorSnapshot()');
 const snapshotEnd = uiSource.indexOf('function applyEditorSnapshot(', snapshotStart);
@@ -128,7 +132,8 @@ assert.match(componentControlsSource, /function appendResizeHandles\(container, 
 assert.doesNotMatch(uiSource, /componentMenu\.hidden = !visible;/);
 assert.doesNotMatch(uiSource, /const xmlns = 'http:\/\/www\.w3\.org\/2000\/svg';/);
 assert.match(uiSource, /openEditModal\(object\.id, object, object, 'edit-inserted-text'\)/);
-assert.match(uiSource, /modalMode === 'edit-inserted-text'/);
+assert.match(contentEditingSource, /modalMode === 'edit-inserted-text'/);
+assert.match(contentEditingSource, /setInsertedShapes\(insertedShapes\)/);
 assert.match(exporterSource, /textBox: getEditedTextVisualBox\(edit, edit\.segment\)/);
 assert.match(uiSource, /componentRenderer\.render\(lines, cssViewport, scale, pageId\)/);
 assert.match(componentRendererSource, /Number\(segmentData\.rotation\) \|\| 0/);
@@ -142,7 +147,7 @@ assert.match(textLayoutSource, /export function insertedTextVisualBox\(object\)/
 assert.match(textLayoutSource, /estimateInsertedTextWidth\(object\?\.text, fontSize\)/);
 assert.doesNotMatch(uiSource, /function editedTextVisualBox\(edit, segment\)/);
 assert.doesNotMatch(uiSource, /function insertedTextVisualBox\(object\)/);
-assert.match(uiSource, /IMAGE_BATCH_LIMITS\.maxBytesPerFile/);
+assert.match(contentEditingSource, /IMAGE_BATCH_LIMITS\.maxBytesPerFile/);
 assert.match(insertAssetsSource, /limits\.maxPixelsPerFile/);
 assert.match(insertAssetsSource, /export function readEncodedImageDimensions\(bytes, mimeType\)/);
 assert.match(insertAssetsSource, /export function assertImagePixelLimit\(dimensions/);
@@ -153,9 +158,9 @@ assert.match(componentInteractionSource, /function beginComponentResize\(event, 
 assert.match(componentInteractionSource, /function beginComponentRotate\(event\)/);
 assert.match(componentInteractionSource, /function reset\(\)/);
 assert.doesNotMatch(uiSource, /function beginComponentDrag\(event, component\)\s*\{\s*if \(!componentMode/);
-const imagePrepareStart = uiSource.indexOf('async function prepareInsertImage(');
-const imagePrepareEnd = uiSource.indexOf('function saveEditModal(', imagePrepareStart);
-const imagePrepareSource = uiSource.slice(imagePrepareStart, imagePrepareEnd);
+const imagePrepareStart = contentEditingSource.indexOf('async function prepareInsertImage(');
+const imagePrepareEnd = contentEditingSource.indexOf('function saveEditModal(', imagePrepareStart);
+const imagePrepareSource = contentEditingSource.slice(imagePrepareStart, imagePrepareEnd);
 assert.ok(imagePrepareStart >= 0 && imagePrepareEnd > imagePrepareStart);
 assert.ok(
   imagePrepareSource.indexOf('readEncodedImageDimensions(bytes, mimeType)')
@@ -164,9 +169,9 @@ assert.ok(
 );
 assert.match(componentRendererSource, /segmentElement\.style\.transformOrigin = '50% 50%'/);
 
-const editModeStart = uiSource.indexOf('function setEditMode(');
-const editModeEnd = uiSource.indexOf('function openEditModal(', editModeStart);
-const editModeSource = uiSource.slice(editModeStart, editModeEnd);
+const editModeStart = contentEditingSource.indexOf('function setEditMode(');
+const editModeEnd = contentEditingSource.indexOf('function openEditModal(', editModeStart);
+const editModeSource = contentEditingSource.slice(editModeStart, editModeEnd);
 assert.ok(editModeStart >= 0 && editModeEnd > editModeStart);
 assert.match(editModeSource, /if \(!page \|\| !pageSupportsContentEditing\(page\)\)/);
 assert.doesNotMatch(editModeSource, /page\?\.rotation/);

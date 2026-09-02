@@ -32,12 +32,8 @@ import { createPdfEditorZoomController } from './features/pdf-editor/zoom.js';
 import { createPdfEditorComponentRenderer } from './features/pdf-editor/component-renderer.js';
 import { createPdfEditorComponentModel } from './features/pdf-editor/component-model.js';
 import { createPdfEditorComponentControls } from './features/pdf-editor/component-controls.js';
-import {
-  assertImagePixelLimit,
-  readEncodedImageDimensions,
-  readImageDimensions
-} from './features/pdf-editor/insert-assets.js';
 import { createPdfEditorComponentInteraction } from './features/pdf-editor/component-interaction.js';
+import { createPdfEditorContentEditing } from './features/pdf-editor/content-editing.js';
 import { createPdfEditorPreview } from './features/pdf-editor/preview.js';
 import {
   buildTextLine,
@@ -45,7 +41,6 @@ import {
   groupTextItemsIntoLines,
   insertedTextVisualBox
 } from './features/pdf-editor/text-layout.js';
-import { IMAGE_BATCH_LIMITS } from './image-batch-core.js';
 
 const ZOOM_MIN = 0.08;
 const ZOOM_MAX = 8;
@@ -224,6 +219,7 @@ export function initPdfEditorTool({
   let insertedShapes = [];
   let selectedComponent = null;
   let componentInteraction = null;
+  let contentEditing = null;
   let componentRenderFrame = 0;
   let componentControls = null;
   let preview = null;
@@ -1096,69 +1092,9 @@ export function initPdfEditorTool({
   }
 
   function handleCanvasPlacement(event) {
-    if (!insertMode || !pendingInsert || !canvasWrap) return;
-    const page = currentPage();
-    const cache = currentTextLayerCache();
-    if (!page || !cache || !pageSupportsContentEditing(page)) return;
-    const bounds = canvasWrap.getBoundingClientRect();
-    const cssX = Math.max(0, Math.min(bounds.width, event.clientX - bounds.left));
-    const cssY = Math.max(0, Math.min(bounds.height, event.clientY - bounds.top));
-    const [pdfX, pdfY] = cache.cssViewport.convertToPdfPoint(cssX, cssY);
-    if (pendingInsert.type === 'text') {
-      const fontSize = pendingInsert.fontSize;
-      insertedTexts.push({
-        id: `text-${++idCounter}`,
-        pageId: page.id,
-        x: pdfX,
-        y: pdfY - fontSize * 0.24,
-        text: pendingInsert.text,
-        fontSize,
-        bold: pendingInsert.bold,
-        rotation: 0,
-        color: pendingInsert.color
-      });
-    } else if (pendingInsert.type === 'image') {
-      const imageId = `image-${++idCounter}`;
-      insertedImageStore.set(imageId, {
-        bytes: pendingInsert.bytes,
-        mimeType: pendingInsert.mimeType
-      });
-      insertedImages.push({
-        id: imageId,
-        pageId: page.id,
-        x: pdfX,
-        y: pdfY - pendingInsert.height,
-        width: pendingInsert.width,
-        height: pendingInsert.height,
-        rotation: 0,
-        bytes: pendingInsert.bytes,
-        mimeType: pendingInsert.mimeType,
-        previewUrl: pendingInsert.previewUrl
-      });
-    } else if (pendingInsert.type === 'shape') {
-      insertedShapes.push({
-        id: `shape-${++idCounter}`,
-        pageId: page.id,
-        shapeType: pendingInsert.shapeType,
-        x: pdfX - pendingInsert.width / 2,
-        y: pdfY - pendingInsert.height / 2,
-        width: pendingInsert.width,
-        height: pendingInsert.height,
-        rotation: 0,
-        fill: pendingInsert.fill,
-        stroke: pendingInsert.stroke,
-        strokeWidth: pendingInsert.strokeWidth
-      });
-    }
-    pendingInsert = null;
-    insertMode = null;
-    updateControls();
-    renderMainPreview();
-    commitEditorHistory();
-    showToast(t('home.pdfEditor.insertPlaced'), 3500);
-    event.preventDefault();
-    event.stopPropagation();
+    return contentEditing?.handleCanvasPlacement(event);
   }
+
 
   function syncEditModeClass() {
     if (textLayerEl) {
@@ -1403,306 +1339,45 @@ export function initPdfEditorTool({
 
 
   function setEditMode(enabled) {
-    const page = currentPage();
-    if (enabled) {
-      if (!hasDocument()) {
-        showToast(t('home.pdfEditor.appendNeedsFile'));
-        return;
-      }
-      if (!page || !pageSupportsContentEditing(page)) {
-        showToast(t('home.pdfEditor.editTextRotated'));
-        return;
-      }
-      const cache = page ? textLinesCache.get(page.id) : null;
-      if (!cache || cache.lines.length === 0) {
-        showToast(t('home.pdfEditor.editTextNoText'));
-        return;
-      }
-      if (!componentMode) setComponentMode(true);
-      editMode = true;
-      selectedComponent = null;
-      closeEditModal();
-    } else {
-      editMode = false;
-      closeEditModal();
-      insertMode = null;
-      clearPendingInsert();
-    }
-    if (editTextBtn) {
-      editTextBtn.classList.toggle('is-active', editMode);
-      editTextBtn.setAttribute('aria-pressed', String(editMode));
-    }
-    if (selectComponentBtn) {
-      selectComponentBtn.classList.toggle('is-active', componentMode);
-      selectComponentBtn.setAttribute('aria-pressed', String(componentMode));
-    }
-    syncEditModeClass();
-    syncComponentModeClass();
-    updateControls();
-    renderMainPreview();
+    return contentEditing?.setEditMode(enabled);
   }
 
   function openEditModal(key, segment, fallbackSegment, mode = 'edit') {
-    if (!editModal || !editModalInput) return;
-    editingLineKey = key;
-    modalMode = mode;
-    const source = segment || fallbackSegment || { text: '' };
-    const original = source.text || '';
-    const edit = mode === 'edit' ? textEdits.get(key) : null;
-    editModalInput.value = edit ? edit.newText : original;
-    if (editModalOriginal) editModalOriginal.textContent = original;
-    if (editModalTitle) editModalTitle.textContent = t('home.pdfEditor.editText');
-    if (editSecurityNote) editSecurityNote.hidden = mode !== 'edit';
-    if (editModalOriginalLabel) editModalOriginalLabel.style.display = '';
-    if (editModalOriginal) editModalOriginal.style.display = '';
-    if (editModalNewLabel) editModalNewLabel.textContent = t('home.pdfEditor.editTextNew');
-    editModal.classList.add('visible');
-    editModal.inert = false;
-    editModal.setAttribute('aria-hidden', 'false');
-    syncInteractiveLayers();
-    requestAnimationFrame(() => {
-      editModalInput.focus();
-      editModalInput.select();
-    });
+    return contentEditing?.openEditModal(key, segment, fallbackSegment, mode);
   }
 
   function closeEditModal() {
-    if (!editModal) return;
-    editModal.classList.remove('visible');
-    editModal.inert = true;
-    editModal.setAttribute('aria-hidden', 'true');
-    editingLineKey = null;
-    modalMode = null;
-    syncInteractiveLayers();
+    return contentEditing?.closeEditModal();
   }
 
   function cancelInsertMode() {
-    clearPendingInsert();
-    insertMode = null;
-    closeEditModal();
-    updateControls();
-    refreshCurrentTextLayer();
+    return contentEditing?.cancelInsertMode();
   }
 
   function openInsertTextModal() {
-    if (!hasDocument() || activeOperation) return;
-    const page = currentPage();
-    if (!page || !pageSupportsContentEditing(page)) {
-      showToast(t('home.pdfEditor.editTextRotated'));
-      return;
-    }
-    editMode = false;
-    componentMode = false;
-    selectedComponent = null;
-    insertMode = 'text';
-    clearPendingInsert();
-    modalMode = 'insert-text';
-    if (editModalTitle) editModalTitle.textContent = t('home.pdfEditor.insertText');
-    if (editModalOriginalLabel) editModalOriginalLabel.style.display = 'none';
-    if (editModalOriginal) editModalOriginal.style.display = 'none';
-    if (editModalNewLabel) editModalNewLabel.textContent = t('home.pdfEditor.insertTextValue');
-    if (editSecurityNote) editSecurityNote.hidden = true;
-    if (editModalInput) editModalInput.value = '';
-    editModal?.classList.add('visible');
-    if (editModal) {
-      editModal.inert = false;
-      editModal.setAttribute('aria-hidden', 'false');
-    }
-    syncEditModeClass();
-    syncComponentModeClass();
-    syncInteractiveLayers();
-    requestAnimationFrame(() => editModalInput?.focus());
-    updateControls();
-    renderMainPreview();
+    return contentEditing?.openInsertTextModal();
   }
 
-  async function chooseInsertImage() {
-    if (!hasDocument() || activeOperation) return;
-    const page = currentPage();
-    if (!page || !pageSupportsContentEditing(page)) {
-      showToast(t('home.pdfEditor.editTextRotated'));
-      return;
-    }
-    insertMode = 'image';
-    clearPendingInsert();
-    editMode = false;
-    componentMode = false;
-    selectedComponent = null;
-    if (editTextBtn) {
-      editTextBtn.classList.remove('is-active');
-      editTextBtn.setAttribute('aria-pressed', 'false');
-    }
-    syncEditModeClass();
-    syncComponentModeClass();
-    if (imageInput) {
-      imageInput.value = '';
-      imageInput.click();
-    }
-    updateControls();
-    renderMainPreview();
+  function chooseInsertImage() {
+    return contentEditing?.chooseInsertImage();
   }
 
   function insertShape(shapeType) {
-    if (!hasDocument() || activeOperation) return;
-    const page = currentPage();
-    if (!page || !pageSupportsContentEditing(page)) {
-      showToast(t('home.pdfEditor.editTextRotated'));
-      return;
-    }
-    editMode = false;
-    componentMode = false;
-    selectedComponent = null;
-    closeEditModal();
-    clearPendingInsert();
-    if (editTextBtn) {
-      editTextBtn.classList.remove('is-active');
-      editTextBtn.setAttribute('aria-pressed', 'false');
-    }
-    const cache = currentTextLayerCache();
-    const pageWidth = cache?.cssViewport?.width ? cache.cssViewport.width / (cache.scale || 1) : 612;
-    const isLine = shapeType === 'line';
-    const width = isLine ? Math.min(220, pageWidth * 0.36) : Math.min(200, pageWidth * 0.32);
-    const height = isLine ? 0 : Math.max(80, width * 0.58);
-    pendingInsert = {
-      type: 'shape',
-      shapeType,
-      width,
-      height,
-      fill: isLine ? null : [1, 1, 1],
-      stroke: [0, 0, 0],
-      strokeWidth: 2
-    };
-    insertMode = isLine ? 'shape-line' : `shape-${shapeType}`;
-    syncEditModeClass();
-    syncComponentModeClass();
-    syncInteractiveLayers();
-    updateControls();
-    renderMainPreview();
-    showToast(t('home.pdfEditor.insertShapeHint'), 6000);
+    return contentEditing?.insertShape(shapeType);
   }
 
   async function prepareInsertImage(file) {
-    if (!file) return;
-    try {
-      const fileSize = await fileSizeFor(file);
-      if (!Number.isSafeInteger(fileSize) || fileSize < 1) {
-        throw new Error('图像文件大小无效');
-      }
-      if (fileSize > IMAGE_BATCH_LIMITS.maxBytesPerFile) {
-        throw new Error(`图像文件超过 ${Math.floor(IMAGE_BATCH_LIMITS.maxBytesPerFile / 1024 / 1024)}MB 限制`);
-      }
-      const bytes = await readBytes(file);
-      const declaredMime = String(file.type || '').toLowerCase();
-      const mimeType = declaredMime || (/\.jpe?g$/i.test(String(file.name || '')) ? 'image/jpeg' : 'image/png');
-      if (!['image/png', 'image/jpeg', 'image/jpg'].includes(mimeType)) {
-        throw new Error('仅支持 PNG 或 JPEG 图像');
-      }
-      const encodedDimensions = readEncodedImageDimensions(bytes, mimeType);
-      if (encodedDimensions) assertImagePixelLimit(encodedDimensions);
-      const dimensions = await readImageDimensions(bytes, mimeType);
-      const safeDimensions = assertImagePixelLimit(dimensions);
-      const cache = currentTextLayerCache();
-      const pageWidth = cache?.cssViewport?.width ? cache.cssViewport.width / (cache.scale || 1) : 612;
-      const width = Math.min(240, Math.max(64, pageWidth * 0.4));
-      const height = Math.max(40, width * (safeDimensions.height / Math.max(1, safeDimensions.width)));
-      const previewUrl = URL.createObjectURL(new Blob([bytes], { type: mimeType }));
-      pendingInsert = { type: 'image', bytes, mimeType, width, height, previewUrl };
-      insertMode = 'image';
-      showToast(t('home.pdfEditor.insertImageHint'), 6000);
-      updateControls();
-    } catch (error) {
-      insertMode = null;
-      clearPendingInsert();
-      showToast(t('home.pdfEditor.insertImageFailed', { error: String(error?.message || error) }));
-      updateControls();
-    }
+    return contentEditing?.prepareInsertImage(file);
   }
 
   function saveEditModal() {
-    if (modalMode === 'insert-text') {
-      const text = String(editModalInput?.value || '').trim();
-      if (!text) {
-        showToast(t('home.pdfEditor.insertTextEmpty'));
-        return;
-      }
-      pendingInsert = {
-        type: 'text',
-        text,
-        fontSize: 16,
-        bold: false,
-        color: [0, 0, 0]
-      };
-      closeEditModal();
-      showToast(t('home.pdfEditor.insertTextHint'), 6000);
-      updateControls();
-      return;
-    }
-    if (modalMode === 'edit-inserted-text') {
-      const objectId = editingLineKey;
-      const object = insertedTexts.find(item => item.id === objectId);
-      if (!object) {
-        closeEditModal();
-        clearSelectedComponent();
-        return;
-      }
-      const newText = String(editModalInput?.value ?? '').trim();
-      if (!newText) {
-        showToast(t('home.pdfEditor.insertTextEmpty'));
-        return;
-      }
-      if (newText === object.text) {
-        closeEditModal();
-        return;
-      }
-      object.text = newText;
-      if (selectedComponent?.type === 'inserted-text' && selectedComponent.key === object.id) {
-        selectedComponent = compactPdfEditorComponent(selectedComponent);
-      }
-      closeEditModal();
-      refreshCurrentTextLayer();
-      commitEditorHistory();
-      return;
-    }
-    if (editingLineKey == null) return;
-    const key = editingLineKey;
-    const parts = String(key).split(':');
-    const pageId = parts[0];
-    const lineIndex = Number(parts[1]);
-    const segmentIndex = Number(parts[2]);
-    const cache = textLinesCache.get(pageId);
-    const line = cache?.lines?.[lineIndex];
-    const segment = line?.segments?.[segmentIndex] || line;
-    if (!segment) {
-      closeEditModal();
-      return;
-    }
-    const newText = editModalInput?.value ?? '';
-    const existingEdit = textEdits.get(key);
-    const baseSegment = existingEdit?.baseSegment || segment;
-    if (newText === segment.text && (!existingEdit || sameTextSegmentLayout(existingEdit.segment, baseSegment))) {
-      textEdits.delete(key);
-    } else {
-      const currentEdit = existingEdit || { newText: segment.text || '', segment: cloneState(segment) };
-      currentEdit.newText = newText;
-      currentEdit.segment = cloneState(currentEdit.segment || segment);
-      if (!currentEdit.baseSegment) currentEdit.baseSegment = cloneState(baseSegment);
-      textEdits.set(key, currentEdit);
-    }
-    closeEditModal();
-    const current = currentPage();
-    if (current && current.id === pageId && cache) {
-      renderTextLayer(cache.lines, cache.cssViewport, cache.scale, pageId);
-    }
-    commitEditorHistory();
+    return contentEditing?.saveEditModal();
   }
 
   function handleEditModalCancel() {
-    if (modalMode === 'insert-text') {
-      cancelInsertMode();
-      return;
-    }
-    closeEditModal();
+    return contentEditing?.handleEditModalCancel();
   }
+
 
   function renderMainPreview(zoomToken = zoom.getPreviewToken(), zoomRequest = null) {
     return preview?.render(zoomToken, zoomRequest);
@@ -1844,6 +1519,70 @@ export function initPdfEditorTool({
     updateControls,
     commitEditorHistory,
     listenerOptions
+  });
+
+  contentEditing = createPdfEditorContentEditing({
+    documentRef: document,
+    windowRef: window,
+    getCanvasWrap: () => canvasWrap,
+    imageInput,
+    editTextBtn,
+    selectComponentBtn,
+    editModal,
+    editModalOriginal,
+    editModalInput,
+    editSecurityNote,
+    editModalTitle,
+    editModalOriginalLabel,
+    editModalNewLabel,
+    t,
+    listenerOptions,
+    getEditMode: () => editMode,
+    setEditModeState: value => { editMode = Boolean(value); },
+    getComponentMode: () => componentMode,
+    setComponentModeState: value => { componentMode = Boolean(value); },
+    getInsertMode: () => insertMode,
+    setInsertMode: value => { insertMode = value; },
+    getPendingInsert: () => pendingInsert,
+    setPendingInsert: value => { pendingInsert = value; },
+    getEditingLineKey: () => editingLineKey,
+    setEditingLineKey: value => { editingLineKey = value; },
+    getModalMode: () => modalMode,
+    setModalMode: value => { modalMode = value; },
+    getSelectedComponent: () => selectedComponent,
+    setSelectedComponent: value => { selectedComponent = value; },
+    getTextEdits: () => textEdits,
+    getTextLinesCache: () => textLinesCache,
+    getInsertedTexts: () => insertedTexts,
+    setInsertedTexts: value => { insertedTexts = value; },
+    getInsertedImages: () => insertedImages,
+    setInsertedImages: value => { insertedImages = value; },
+    getInsertedShapes: () => insertedShapes,
+    setInsertedShapes: value => { insertedShapes = value; },
+    hasDocument,
+    getCurrentPage: currentPage,
+    getCurrentTextLayerCache: currentTextLayerCache,
+    pageSupportsContentEditing,
+    getActiveOperation: () => activeOperation,
+    nextId: type => `${type}-${++idCounter}`,
+    storeInsertedImage: (id, value) => { insertedImageStore.set(id, value); },
+    clearPendingInsert,
+    closeSelectedComponent: clearSelectedComponent,
+    setComponentMode,
+    syncEditModeClass,
+    syncComponentModeClass,
+    syncInteractiveLayers,
+    updateControls,
+    renderMainPreview,
+    refreshCurrentTextLayer,
+    renderTextLayer,
+    fileSizeFor,
+    readBytes,
+    cloneState,
+    compactComponent: compactPdfEditorComponent,
+    sameTextSegmentLayout,
+    commitEditorHistory,
+    showToast
   });
 
   const componentRenderer = createPdfEditorComponentRenderer({

@@ -34,6 +34,9 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
 - `src/features/pdf-editor/documents.js` owns PDF.js loading tasks, source
   document caching, same-source load de-duplication, generation invalidation
   and document destruction at reset/dispose boundaries.
+- `src/features/pdf-editor/text-layout.js` owns PDF text-item line grouping,
+  source/edited/inserted text visual boxes and PDF-to-viewport rectangle
+  conversion without DOM or tool-lifecycle ownership.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 - `src/core/serialized-request-session.js` owns one-at-a-time async requests,
   timeout state, request-specific cancellation and stale-result identity.
@@ -140,17 +143,10 @@ tool entry so it becomes a separate production chunk.
 - PDF Editor now enters through the lazy registry instead of being statically
   initialized by `main.js`. Its bounded history, modal focus behavior,
   thumbnail queue/observer, drag sorting, cancellation identity, export
-  assembly and canvas release helpers have feature-owned boundaries; the legacy
-  UI orchestrator remains a compatibility owner while document, main preview
-  and component sections migrate in later batches.
-- PDF Compress, split into queue/session orchestration and a native compression
-  processor. The existing `compress_pdf` command and partial-failure semantics
-  remain unchanged. Queue rendering uses text nodes and a disposable pointer
-  sort scope; native drag/drop registration, progress state, success metadata,
-  output-folder opening and operation identity are owned by the lazy feature.
-  The historical result-drawer references were dead because the HTML never
-  contained those nodes, so the real completion dialog remains the only result
-  surface.
+  assembly, document loading/cache/destruction, text-item grouping, visual text
+  boxes and canvas release helpers have feature-owned boundaries. The legacy
+  UI orchestrator remains a compatibility owner while main preview and
+  component editing sections migrate in later batches.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

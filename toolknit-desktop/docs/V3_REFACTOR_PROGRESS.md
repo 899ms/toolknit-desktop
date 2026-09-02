@@ -30,7 +30,9 @@ Last updated: 2026-09-02
 | `d7a8776` | Isolated PDF Editor bounded history and transaction locking |
 | `427f11d` | Lazy-loaded PDF Editor and isolated focus, thumbnail and render-resource ownership |
 | `d63f21d` | Isolated the native AI provider command and its security tests |
+| `a55ae27` | Isolated PDF Editor assembly, font loading and output publication |
 | `4bcb075` | Isolated PDF Editor document loading, caching and PDF.js cleanup ownership |
+| `1540ef2` | Isolated PDF Editor text grouping and visual-box calculations |
 
 ## Current verified counts
 
@@ -129,6 +131,13 @@ same-source load de-duplication, generation invalidation and close/dispose
 cleanup. Replacement loading still stages and validates the new document
 before the existing editor state is reset; the document contract test protects
 that ordering and stale-load destruction.
+
+PDF Editor text-item grouping, line construction, source/replacement/inserted
+visual boxes and PDF-to-viewport rectangle conversion now live in a 163-line
+UI-independent layout module. Its executable regression test covers ordering,
+line separation, style inference, coordinate inversion, box precedence and
+inserted-text width fallback. The legacy UI orchestrator is now 3,813 lines and
+no longer owns or duplicates those calculations.
 
 ## Hidden issues fixed during migration
 
@@ -331,9 +340,9 @@ that ordering and stale-load destruction.
 
 ## Next batches
 
-1. Audit PDF Editor, the remaining PDF template ownership and the next
-   coherent legacy candidate by lifecycle risk, dependency weight and
-   compatibility scope.
+1. Continue PDF Editor main-preview and component-editing ownership, then audit
+   the remaining PDF template ownership and select the next coherent legacy
+   candidate by lifecycle risk, dependency weight and compatibility scope.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed

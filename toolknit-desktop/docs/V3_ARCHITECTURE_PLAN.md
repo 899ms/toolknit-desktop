@@ -54,13 +54,19 @@ PDF/ZIP export cancellation, stale document/result guards, password-layer
 sequencing and compact-window workspace protection. PDF Enhance is now the
 eighth migrated PDF workspace, with its shared enhancement engine, PDF.js
 rendering, atomic native writer, browser download URLs and compact success
-dialog owned by the lazy feature. The next frontend family must be selected
+dialog owned by the lazy feature. PDF Compress is also migrated, and PDF
+Editor now owns bounded history, focus, thumbnails, rendering cancellation,
+export, document loading/cache/destruction and pure text-layout calculations
+outside its remaining compatibility orchestrator. The native AI provider
+command is the first extracted Rust boundary; the broader native split
+remains pending. The next frontend batch must continue PDF Editor
+preview/component ownership or be selected
 from the remaining ownership inventory by cohesion and risk, then pass the same
 contract, lifecycle, browser and release gates. The shared document reader,
 main-entry PDF worker URL, PDF enhancement core/engine and PDF
 encryption/decryption core modules remain compatibility boundaries until all
-consumers are audited; native and CLI/MCP restructuring remains later-phase
-work.
+consumers are audited; broader native and CLI/MCP restructuring remains
+later-phase work.
 
 ## Batch gate
 

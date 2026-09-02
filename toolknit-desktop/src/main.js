@@ -13,6 +13,7 @@
       import { tauriCorePromise, tauriEventPromise } from './platform/tauri-runtime.js';
       import { readTextDocument } from './shared/text-document-reader.js';
       import { formatFileSize } from './shared/file-size.js';
+      import { escapeHtml, escapeAttr } from './shared/html.js';
       import { HELP_CONTENT, getHelpContent } from './help-data.js';
       import { SUPPORT_JOURNAL_ENTRIES } from './support-journal-data.js';
       import { getLegalContent } from './legal-data.js';
@@ -24,11 +25,6 @@
         assertColorExtractorFile,
         paletteFromRgba
       } from './color-extractor-core.js';
-      import {
-        AudioConvertError,
-        normalizeAudioTargetFormat,
-        validateAudioBatchSelection
-      } from './audio-convert-core.js';
       import {
         BpmDetectError,
         analyzeAudioKeyPcm,
@@ -1940,6 +1936,12 @@
 
       function launchToolFromHome(toolId) {
         if (!toolId) return;
+        // Lazy tools own their lifecycle in the registry. Calling it directly
+        // avoids relying on a hidden category item to replay a click event.
+        if (LAZY_TOOL_SPECS[toolId]) {
+          void lazyFeatureRegistry.open(toolId);
+          return;
+        }
         const toolItem = Array.from(document.querySelectorAll('.audio-list-item'))
           .find(item => item.dataset.tool === toolId);
         if (!toolItem || toolItem.dataset.availability === 'planned') return;
@@ -4346,39 +4348,6 @@
         feedbackSettings.addEventListener('click', closeFeedbackOverlay);
       }
 
-      // Audio Convert Tool Page
-      const audioConvertOverlay = document.getElementById('audioConvertOverlay');
-      const audioConvertBack = document.getElementById('audioConvertBack');
-      const plasmaBg = document.getElementById('plasmaBg');
-      let plasmaInstance = null;
-
-      function openAudioConvertOverlay() {
-        if (!audioConvertOverlay) return;
-        audioConvertOverlay.classList.add('visible');
-        if (plasmaBg && !plasmaInstance) {
-          plasmaInstance = initStandardToolPlasma(plasmaBg);
-        }
-      }
-
-      function closeAudioConvertOverlay() {
-        if (!audioConvertOverlay) return;
-        audioConvertOverlay.classList.remove('visible');
-        if (plasmaInstance) {
-          plasmaInstance();
-          plasmaInstance = null;
-        }
-        cancelActiveAudioConversion();
-        audioConvertProcessMask.classList.remove('visible');
-        audioConvertProcessBarFill.style.width = '0%';
-        // Clear file list for fresh start next time
-        clearAudioFiles();
-      }
-
-
-      if (audioConvertBack) {
-        audioConvertBack.addEventListener('click', closeAudioConvertOverlay);
-      }
-
       // PPT image extraction is mounted by the lazy feature registry.
 
 
@@ -5911,416 +5880,8 @@
         }
       });
 
-      // Click on audio-list-item with data-tool="convert" to open the convert page
-      document.querySelectorAll('.audio-list-item[data-tool="convert"]').forEach(item => {
-        item.addEventListener('click', () => {
-          openToolWithFfmpegCheck(openAudioConvertOverlay);
-        });
-        item.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            openToolWithFfmpegCheck(openAudioConvertOverlay);
-          }
-        });
-      });
+      // Audio Convert is mounted by the lazy feature registry.
 
-      // Audio Convert drag & drop / files / processing
-      const audioConvertDropZone = document.getElementById('audioConvertDropZone');
-      const audioConvertFiles = document.getElementById('audioConvertFiles');
-      const audioConvertCta = document.getElementById('audioConvertCta');
-      const audioConvertProcessBtn = document.getElementById('audioConvertProcessBtn');
-      const audioConvertProcessMask = document.getElementById('audioConvertProcessMask');
-      const audioConvertProcessBarFill = document.getElementById('audioConvertProcessBarFill');
-      const audioConvertProcessText = document.getElementById('audioConvertProcessText');
-      const audioConvertCancelBtn = document.getElementById('audioConvertCancelBtn');
-      let selectedAudioFiles = [];
-      let processingAudio = false;
-      let targetAudioFormat = 'MP3';
-      let audioConversionRunId = 0;
-      let audioConvertUnlisten = null;
-      const audioConvertSuccessOverlay = document.getElementById('audioConvertSuccessOverlay');
-      const audioConvertSuccessPath = document.getElementById('audioConvertSuccessPath');
-      const audioConvertSuccessMeta = document.getElementById('audioConvertSuccessMeta');
-      const audioConvertSuccessFormat = document.getElementById('audioConvertSuccessFormat');
-      const audioConvertSuccessCount = document.getElementById('audioConvertSuccessCount');
-      const audioConvertOpenFolder = document.getElementById('audioConvertOpenFolder');
-      const audioConvertSuccessOk = document.getElementById('audioConvertSuccessOk');
-      const audioConvertFormatOptions = document.getElementById('audioConvertFormatOptions');
-
-      function addAudioFiles(fileList) {
-        if (!fileList || fileList.length === 0) return;
-        const nextFiles = [...selectedAudioFiles];
-        for (const file of fileList) {
-          // Deduplicate by path (preferred) or name+size fallback
-          const dup = file.path
-            ? nextFiles.some(f => f.path === file.path)
-            : nextFiles.some(f => f.name === file.name && f.size === file.size);
-          if (dup) continue;
-          nextFiles.push(file);
-        }
-        try {
-          validateAudioBatchSelection(nextFiles);
-        } catch (error) {
-          console.error('Audio selection validation failed:', error);
-          alert(error instanceof AudioConvertError ? error.message : t('home.audioConvert.conversionError'));
-          return;
-        }
-        selectedAudioFiles = nextFiles;
-        renderAudioFiles();
-      }
-
-      function removeAudioFile(index) {
-        selectedAudioFiles.splice(index, 1);
-        renderAudioFiles();
-      }
-
-      function clearAudioFiles() {
-        selectedAudioFiles = [];
-        renderAudioFiles();
-      }
-
-      function renderAudioFiles() {
-        if (!audioConvertFiles) return;
-        audioConvertFiles.innerHTML = '';
-        if (selectedAudioFiles.length > 0) {
-          audioConvertFiles.classList.add('has-files');
-        } else {
-          audioConvertFiles.classList.remove('has-files');
-        }
-        selectedAudioFiles.forEach((file, index) => {
-          const item = document.createElement('div');
-          item.className = 'audio-convert-file-item';
-          item.dataset.index = index;
-          const sizeText = Number(file.size) > 0 ? formatFileSize(file.size) : '';
-          item.innerHTML = `
-            <span class="audio-convert-file-index">${index + 1}</span>
-            <span class="audio-convert-file-name">${escapeHtml(file.name)}</span>
-            ${sizeText ? `<span class="audio-convert-file-size">${escapeHtml(sizeText)}</span>` : ''}
-            <button class="audio-convert-file-remove" data-index="${index}" aria-label="remove">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-          `;
-          audioConvertFiles.appendChild(item);
-        });
-        audioConvertFiles.querySelectorAll('.audio-convert-file-remove').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const idx = parseInt(btn.dataset.index, 10);
-            if (!isNaN(idx)) removeAudioFile(idx);
-          });
-        });
-        enableSortableFileList(audioConvertFiles, selectedAudioFiles, renderAudioFiles, () => processingAudio);
-        toggleAudioProcessButton();
-      }
-
-      function toggleAudioProcessButton() {
-        if (!audioConvertProcessBtn) return;
-        if (selectedAudioFiles.length > 0) {
-          audioConvertProcessBtn.style.display = '';
-          requestAnimationFrame(() => audioConvertProcessBtn.classList.add('visible'));
-        } else {
-          audioConvertProcessBtn.classList.remove('visible');
-          const onTransitionEnd = (e) => {
-            if (e.propertyName === 'opacity' && !audioConvertProcessBtn.classList.contains('visible')) {
-              audioConvertProcessBtn.style.display = 'none';
-              audioConvertProcessBtn.removeEventListener('transitionend', onTransitionEnd);
-            }
-          };
-          audioConvertProcessBtn.addEventListener('transitionend', onTransitionEnd);
-        }
-      }
-
-      function showAudioDropZone() {
-        if (audioConvertDropZone) audioConvertDropZone.classList.add('visible');
-        if (audioConvertOverlay) audioConvertOverlay.classList.add('drag-over');
-      }
-
-      function hideAudioDropZone() {
-        if (audioConvertDropZone) audioConvertDropZone.classList.remove('visible');
-        if (audioConvertOverlay) audioConvertOverlay.classList.remove('drag-over');
-      }
-
-      // Tauri native drag-drop events — provides file paths
-      // Must use getCurrentWebview (not getCurrentWindow) because drag-drop
-      // events are emitted at the Webview level, not the Window level.
-      if (isTauri && audioConvertOverlay) {
-        (async () => {
-          const { getCurrentWebview } = await import('@tauri-apps/api/webview');
-          const webview = getCurrentWebview();
-          await webview.onDragDropEvent((event) => {
-            if (!audioConvertOverlay.classList.contains('visible') || processingAudio) return;
-            const payload = event.payload;
-            if (payload.type === 'enter' || payload.type === 'over') {
-              showAudioDropZone();
-            } else if (payload.type === 'leave') {
-              hideAudioDropZone();
-            } else if (payload.type === 'drop') {
-              hideAudioDropZone();
-              const paths = payload.paths || [];
-              if (paths.length === 0) return;
-              const audioExts = ['mp3', 'aac', 'm4a', 'wav', 'flac', 'alac', 'ogg', 'wma'];
-              const fileList = paths
-                .filter(p => audioExts.some(ext => p.toLowerCase().endsWith('.' + ext)))
-                .map(path => ({ name: path.split(/[\\/]/).pop() || path, path, size: 0 }));
-              if (fileList.length > 0) {
-                addAudioFiles(fileList);
-              }
-            }
-          });
-        })();
-      }
-
-      if (audioConvertCta) {
-        audioConvertCta.addEventListener('click', async () => {
-          if (isTauri) {
-            try {
-              const { open } = await import('@tauri-apps/plugin-dialog');
-              const selected = await open({
-                multiple: true,
-                filters: [{
-                  name: 'Audio Files',
-                  extensions: ['mp3', 'aac', 'm4a', 'wav', 'flac', 'alac', 'ogg', 'wma']
-                }]
-              });
-              if (selected && Array.isArray(selected)) {
-                const fileList = selected.map(path => ({ name: path.split(/[\\/]/).pop() || path, path, size: 0 }));
-                addAudioFiles(fileList);
-              }
-            } catch (e) {
-              console.error('Audio file selection error', e);
-            }
-          } else {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.multiple = true;
-            input.accept = 'audio/*';
-            input.addEventListener('change', () => {
-              addAudioFiles(input.files);
-              input.value = '';
-            });
-            input.click();
-          }
-        });
-      }
-
-      function showSuccessDialog(result) {
-        const outputPath = result?.output_dir || (isTauri
-          ? 'C:\\Users\\Downloads\\toolknit-converted'
-          : '~/Downloads/toolknit-converted');
-        const successCount = result?.success_count ?? selectedAudioFiles.length;
-        const failCount = result?.fail_count ?? 0;
-        const firstFileName = selectedAudioFiles[0]?.name || '';
-
-        // All files failed — show error alert instead of success dialog
-        if (failCount > 0 && successCount === 0) {
-          const errorDetails = result?.errors?.length > 0
-            ? result.errors.slice(0, 3).join('\n')
-            : '';
-          alert(t('home.audioConvert.allFailed', { count: failCount }) + (errorDetails ? '\n\n' + errorDetails : ''));
-          return;
-        }
-
-        let summary;
-        if (failCount > 0 && successCount > 0) {
-          summary = t('home.audioConvert.successSummaryPartial', { success: successCount, fail: failCount, format: targetAudioFormat });
-        } else if (successCount > 1) {
-          summary = t('home.audioConvert.successSummaryPlural', { count: successCount, format: targetAudioFormat });
-        } else {
-          summary = t('home.audioConvert.successSummarySingle', { name: firstFileName, format: targetAudioFormat });
-        }
-        if (audioConvertSuccessMeta) {
-          audioConvertSuccessMeta.textContent = summary;
-        }
-        if (audioConvertSuccessFormat) {
-          audioConvertSuccessFormat.textContent = targetAudioFormat;
-        }
-        if (audioConvertSuccessCount) {
-          audioConvertSuccessCount.textContent = `${successCount} ${t('home.audioConvert.successCountUnit')}`;
-        }
-        if (audioConvertSuccessPath) {
-          audioConvertSuccessPath.textContent = displayFilesystemPath(outputPath);
-        }
-        lastOutputPath = outputPath;
-        if (audioConvertSuccessOverlay) {
-          audioConvertSuccessOverlay.classList.add('visible');
-        }
-      }
-
-      function closeSuccessDialog() {
-        if (audioConvertSuccessOverlay) {
-          audioConvertSuccessOverlay.classList.remove('visible');
-        }
-        clearAudioFiles();
-      }
-
-      if (audioConvertCancelBtn) {
-        audioConvertCancelBtn.addEventListener('click', cancelActiveAudioConversion);
-      }
-
-      function cancelActiveAudioConversion() {
-        const wasProcessing = processingAudio;
-        audioConversionRunId += 1;
-        if (audioConvertUnlisten) {
-          audioConvertUnlisten();
-          audioConvertUnlisten = null;
-        }
-        if (audioConvertProcessMask) audioConvertProcessMask.classList.remove('visible');
-        if (audioConvertProcessBarFill) audioConvertProcessBarFill.style.width = '0%';
-        processingAudio = false;
-        if (isTauri && wasProcessing) {
-          tauriCorePromise
-            .then(({ invoke }) => invoke('cancel_convert'))
-            .catch((error) => console.error('Cancel failed:', error));
-        }
-      }
-
-      async function startAudioProcessing() {
-        if (!audioConvertProcessMask || !audioConvertProcessBarFill || processingAudio) return;
-        if (selectedAudioFiles.length === 0) return;
-        try {
-          validateAudioBatchSelection(selectedAudioFiles);
-          targetAudioFormat = normalizeAudioTargetFormat(targetAudioFormat);
-        } catch (error) {
-          alert(error instanceof AudioConvertError ? error.message : t('home.audioConvert.conversionError'));
-          return;
-        }
-        const runId = ++audioConversionRunId;
-        processingAudio = true;
-        audioConvertProcessMask.classList.add('visible');
-        audioConvertProcessBarFill.style.width = '0%';
-
-        if (isTauri) {
-          let unlisten = null;
-          try {
-            const { invoke } = await tauriCorePromise;
-            const { listen } = await tauriEventPromise;
-
-            const finalOutputDir = await getOutputDir('Audio');
-
-            // Collect file paths from selectedAudioFiles
-            const inputPaths = selectedAudioFiles.map(f => f.path).filter(Boolean);
-            if (inputPaths.length === 0) {
-              console.error('No valid file paths were found in the audio selection.');
-              if (runId === audioConversionRunId) {
-                audioConvertProcessMask.classList.remove('visible');
-                processingAudio = false;
-              }
-              alert(t('common.filePathsNotAvailable'));
-              return;
-            }
-
-            let currentFile = 0;
-            const totalFiles = inputPaths.length;
-
-            // Ensure ffmpeg is available (prompt user to download if missing)
-            const ffmpegReady = await ensureFfmpegAvailable();
-            if (!ffmpegReady) {
-              if (runId === audioConversionRunId) {
-                audioConvertProcessMask.classList.remove('visible');
-                processingAudio = false;
-              }
-              return;
-            }
-
-            unlisten = await listen('convert-progress', (event) => {
-              if (runId !== audioConversionRunId) return;
-              const data = event.payload;
-              if (data.status === 'converting') {
-                currentFile = data.current;
-                const fileProgress = (data.current - 1 + data.progress) / data.total;
-                const percent = Math.min(99, Math.round(fileProgress * 100));
-                audioConvertProcessBarFill.style.width = `${percent}%`;
-                if (audioConvertProcessText) {
-                  audioConvertProcessText.textContent = `${t('home.audioConvert.processing')} (${data.current}/${data.total})`;
-                }
-              }
-            });
-            if (runId !== audioConversionRunId) {
-              unlisten();
-              return;
-            }
-            audioConvertUnlisten = unlisten;
-
-            const result = await invoke('convert_audio_batch', {
-              inputPaths: inputPaths,
-              outputDir: finalOutputDir,
-              targetFormat: targetAudioFormat,
-              quality: null
-            });
-
-            unlisten();
-            if (audioConvertUnlisten === unlisten) audioConvertUnlisten = null;
-            if (runId !== audioConversionRunId) return;
-            audioConvertProcessBarFill.style.width = '100%';
-
-            setTimeout(() => {
-              if (runId !== audioConversionRunId) return;
-              audioConvertProcessMask.classList.remove('visible');
-              audioConvertProcessBarFill.style.width = '0%';
-              processingAudio = false;
-              showSuccessDialog(result);
-            }, 400);
-          } catch (e) {
-            console.error('Conversion failed:', e);
-            if (unlisten) unlisten();
-            if (audioConvertUnlisten === unlisten) audioConvertUnlisten = null;
-            if (runId !== audioConversionRunId) return;
-            audioConvertProcessMask.classList.remove('visible');
-            audioConvertProcessBarFill.style.width = '0%';
-            processingAudio = false;
-            if (audioConvertProcessText) {
-              audioConvertProcessText.textContent = t('home.audioConvert.processing');
-            }
-            alert(t('common.errorOccurred', { error: e?.message || e }));
-          }
-        } else {
-          audioConvertProcessMask.classList.remove('visible');
-          audioConvertProcessBarFill.style.width = '0%';
-          processingAudio = false;
-          alert(t('home.audioConvert.desktopOnly'));
-        }
-      }
-
-      if (audioConvertProcessBtn) {
-        audioConvertProcessBtn.addEventListener('click', () => {
-          if (selectedAudioFiles.length > 0) startAudioProcessing();
-        });
-      }
-
-      if (audioConvertSuccessOk) {
-        audioConvertSuccessOk.addEventListener('click', () => {
-          closeSuccessDialog();
-        });
-      }
-
-      let lastOutputPath = '';
-      if (audioConvertOpenFolder) {
-        audioConvertOpenFolder.addEventListener('click', () => {
-          if (isTauri && lastOutputPath) {
-            openOutputFolder(lastOutputPath).catch(e => console.error('Open folder error', e));
-          }
-          closeSuccessDialog();
-        });
-      }
-
-      if (audioConvertFormatOptions) {
-        audioConvertFormatOptions.addEventListener('click', (e) => {
-          const btn = e.target.closest('.audio-convert-format-option');
-          if (!btn) return;
-          audioConvertFormatOptions.querySelectorAll('.audio-convert-format-option').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          targetAudioFormat = normalizeAudioTargetFormat(btn.dataset.format);
-        });
-      }
-
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      function escapeAttr(text) {
-        return escapeHtml(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-      }
 
       function enableSortableFileList(container, files, render, isLocked = () => false) {
         if (!container || !Array.isArray(files)) return;
@@ -12429,6 +11990,18 @@ March 18, 2026|Launch Day
                   void retryOpen();
                 });
             return ready;
+          }
+          if ((toolId === 'audio-extract' || toolId === 'convert') && isTauri) {
+            const ready = await ensureFfmpegAvailable();
+            if (!ready) {
+              showDependencyGate({
+                openFn: retryOpen,
+                needsFfmpeg: true,
+                needsModel: false,
+                needsLibreOffice: false
+              });
+              return false;
+            }
           }
           return true;
         },

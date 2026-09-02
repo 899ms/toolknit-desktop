@@ -9186,65 +9186,6 @@
         content: '暂无待压缩 PDF · 点击上传或拖入文件后会显示在这里';
       }
 
-      /* ===== Audio Convert · Tool Page 2.0 ===== */
-      .audio-convert-v2 .pdf-merge-v2-poster::after {
-        content: 'AUDIO';
-        right: 18px;
-        font-size: 86px;
-        letter-spacing: -0.02em;
-      }
-
-      .audio-convert-v2 .pdf-merge-v2-workspace {
-        grid-template-rows: auto auto minmax(170px, 1fr) auto auto;
-      }
-
-      .audio-convert-v2 .pdf-merge-v2-options {
-        align-items: flex-start;
-      }
-
-      .audio-convert-v2 .audio-convert-format-selector {
-        min-width: 0;
-        flex: 1 1 auto;
-      }
-
-      .audio-convert-v2 .audio-convert-format-options {
-        max-width: 100%;
-      }
-
-      .audio-convert-v2 .pdf-merge-v2-options-hint {
-        flex: 0 1 360px;
-      }
-
-      .audio-convert-v2 .pdf-merge-v2-queue {
-        padding-top: 18px;
-      }
-
-      .audio-convert-v2 .pdf-merge-v2-files {
-        max-height: 238px;
-      }
-
-      .audio-convert-v2 #audioConvertFiles:empty::before {
-        content: '暂无待转换音频 · 点击上传或拖入 MP3 / WAV / FLAC 等文件';
-      }
-
-      .audio-convert-v2 .pdf-merge-v2-files .audio-convert-file-name {
-        flex: 1 1 auto;
-        min-width: 0;
-      }
-
-      .audio-convert-v2 .pdf-merge-v2-files .audio-convert-file-size {
-        margin-left: auto;
-        padding: 0 10px;
-        color: rgba(255, 255, 255, 0.42);
-        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
-        font-size: 12px;
-        letter-spacing: 0.03em;
-      }
-
-      .audio-convert-v2 .pdf-merge-v2-info {
-        padding-bottom: 20px;
-      }
-
       /* ===== Video Convert · Tool Page 2.0 ===== */
       .video-convert-v2 .pdf-merge-v2-poster::after {
         content: 'VIDEO';

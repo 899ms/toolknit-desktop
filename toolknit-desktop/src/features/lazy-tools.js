@@ -104,6 +104,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./audio-extract/tool.js'),
     init: 'initAudioExtractTool'
   }),
+  convert: Object.freeze({
+    overlayId: 'audioConvertFeatureOverlay',
+    load: () => import('./audio-convert/tool.js'),
+    init: 'initAudioConvertTool'
+  }),
   'bg-removal': Object.freeze({
     overlayId: 'bgRemovalOverlay',
     load: () => import('./bg-removal/tool.js'),

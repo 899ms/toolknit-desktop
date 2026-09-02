@@ -48,6 +48,8 @@ Last updated: 2026-09-02
 | `f3bfc5a` | Isolated PDF Editor operation identity, progress and file-access runtime |
 | `690b69f` | Isolated PDF Editor DOM, keyboard and native drag/drop event bindings |
 | `f637f5d` | Isolated PDF Editor derived control state and labels |
+| `2663d2b` | Isolated PDF Editor snapshot, restore and dirty-state controller |
+| `07d2261` | Isolated teleprompter system/offline recognition lifecycle |
 
 ## Current verified counts
 
@@ -299,6 +301,16 @@ regressions; the UI entry retains only injected composition and delegation.
 The state extraction also updated the source contract test to inspect the new
 controller directly, preventing a stale test from requiring removed snapshot
 logic in the legacy entry.
+
+The teleprompter recognition batch now lives in
+`src/features/teleprompter/recognition.js` (385 lines). It owns system
+SpeechRecognition start/result watchdogs and restart sessions, offline 16 kHz
+sample buffering and resampling, microphone/AudioContext teardown, Tauri
+recognition session cancellation, model gating and generation checks. The UI
+entry is reduced to playback and script responsibilities; the existing runtime
+suite now executes a simulated recognition session and verifies that listening
+is not reported before `onstart`, transcripts reach the follower, and stop
+aborts the active recognizer.
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the

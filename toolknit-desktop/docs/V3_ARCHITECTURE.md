@@ -61,6 +61,10 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
   history-facing dirty-state confirmation, mode synchronization and inserted
   image preview URL replacement. It receives state through explicit getters and
   setters so the UI entry remains a composition boundary.
+- `src/features/teleprompter/recognition.js` owns system SpeechRecognition
+  watchdogs/restarts, offline microphone sampling and resampling, Tauri
+  recognition sessions, model gating, cancellation generations and stale-result
+  protection. The teleprompter UI injects playback, transcript and status hooks.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 - `src/core/serialized-request-session.js` owns one-at-a-time async requests,
   timeout state, request-specific cancellation and stale-result identity.
@@ -173,6 +177,10 @@ tool entry so it becomes a separate production chunk.
   feature-owned boundaries.
   The legacy UI orchestrator remains a compatibility owner for the remaining
   document/session wiring while later batches continue reducing it.
+- Teleprompter recognition is now an explicit feature-owned boundary. System
+  and offline recognition resources are released through one controller, while
+  the legacy teleprompter entry retains script rendering and playback UI until
+  later batches split those responsibilities.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

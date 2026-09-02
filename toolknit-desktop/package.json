@@ -79,6 +79,7 @@
     "test:ppt-render-tool-contract": "node scripts/test-ppt-render-tool-contract.mjs",
     "test:ppt-outline": "node scripts/test-ppt-outline-core.mjs && node scripts/test-ppt-outline-runtime.mjs",
     "test:ppt-workflows-tool-contract": "node scripts/test-ppt-workflows-tool-contract.mjs",
+    "test:ppt-draft-tool-contract": "node scripts/test-ppt-draft-tool-contract.mjs",
     "test:ppt-draft": "node scripts/test-ppt-draft-core.mjs && node scripts/test-ppt-draft-runtime.mjs",
     "test:dependencies": "node scripts/test-dependency-contract.mjs",
     "test:hardware-gpu-display": "node scripts/test-hardware-gpu-display.mjs",

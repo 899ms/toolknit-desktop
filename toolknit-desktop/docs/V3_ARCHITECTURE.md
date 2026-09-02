@@ -91,13 +91,14 @@ tool entry so it becomes a separate production chunk.
 
 ## Current snapshot
 
-- 49 of 65 desktop tools are migrated (**75.4%**); 12 categories, 127 Tauri
+- 50 of 65 desktop tools are migrated (**76.9%**); 12 categories, 127 Tauri
   command implementations, 46 MCP tools and the existing CLI contracts remain
   unchanged.
-- The current source footprint is 15,019 lines in `src/main.js`, 24,093 lines
-  in `src/styles.css` and 8,763 lines in `index.html`.
-- The production entry is approximately 1,531.34 kB JavaScript and 499.11 kB
-  CSS. The PPT image extraction entry is lazy and loads JSZip on demand.
+- The current source footprint is 13,538 lines in `src/main.js`, 22,772 lines
+  in `src/styles.css` and 8,454 lines in `index.html`.
+- The production entry is approximately 1,423.95 kB JavaScript and 487.68 kB
+  CSS. PPT image extraction and PPT AI Draft/PPTX entries are lazy; JSZip and
+  the AI Draft editor dependencies load only when their tools open.
 
 ## Migrated ownership
 
@@ -197,6 +198,13 @@ tool entry so it becomes a separate production chunk.
   progress, cancellation, export and operation identity, and `ppt-images.css`
   owns feature-only layout. Open sessions release timers, native `unlisten`
   callbacks, preview object URLs and stale asynchronous work on close/reopen.
+- `src/features/ppt-draft/` owns PPT AI Draft/PPTX as a complete lazy boundary.
+  `template.js` builds the existing page shell, `controller.js` owns the AI
+  request/session lifecycle, editor autosave, Plasma and language resources,
+  `preview.js` owns editor preview rendering, and `ppt-draft.css` owns the
+  feature layout. Session revisions and AbortControllers prevent closed or
+  superseded generations from writing to later UI; disposal releases timers,
+  listeners and rendering resources.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

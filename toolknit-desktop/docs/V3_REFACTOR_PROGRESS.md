@@ -43,6 +43,7 @@ Last updated: 2026-09-02
 | `478da43` | Normalized PDF Editor proxy formatting after the interaction split |
 | `1310525` | Isolated PDF Editor content editing, insertion flow and lifecycle regression coverage |
 | `edd6649` | Isolated PDF Editor page operations and resource-safe mutation coverage |
+| `45590d2` | Isolated PDF Editor file selection, replacement and append sessions |
 
 ## Current verified counts
 
@@ -244,6 +245,13 @@ PDF Editor current-page and selection state now lives in
 order target resolution, single/toggle/range selection, select-all, inversion
 and cross-page component clearing are tested independently while thumbnail
 rendering remains owned by the thumbnail controller.
+
+PDF Editor file selection and document mutation sessions now live in
+`src/features/pdf-editor/file-session.js`. Browser/Tauri file picking, bounded
+file reads, staged replacement loading, append validation, source/page ID
+allocation, progress/error publication and clean commit ordering are injected
+through the orchestrator. A file-session suite covers replacement staging,
+invalid-file preservation, append output state and picker behavior.
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the

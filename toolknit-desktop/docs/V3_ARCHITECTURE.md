@@ -45,6 +45,9 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
 - `src/features/pdf-editor/page-operations.js` owns page rotation, ordering,
   duplication, blank-page insertion and deletion while injecting the existing
   document/source stores and history boundary.
+- `src/features/pdf-editor/file-session.js` owns browser/Tauri file selection,
+  bounded reads, staged replacement loading and append validation/commit
+  ordering while leaving document destruction to the document store.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 - `src/core/serialized-request-session.js` owns one-at-a-time async requests,
   timeout state, request-specific cancellation and stale-result identity.
@@ -153,7 +156,7 @@ tool entry so it becomes a separate production chunk.
   thumbnail queue/observer, drag sorting, cancellation identity, export
   assembly, document loading/cache/destruction, text-item grouping, visual text
   boxes, zoom scheduling, content editing, page selection, page mutations and
-  canvas release helpers have feature-owned boundaries. The legacy UI
+  file sessions and canvas release helpers have feature-owned boundaries. The legacy UI
   orchestrator remains a compatibility owner for the remaining document/session
   wiring while later batches continue reducing it.
 

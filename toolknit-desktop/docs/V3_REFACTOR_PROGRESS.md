@@ -1,6 +1,6 @@
 # ToolKnit Desktop V3 Refactor Progress
 
-Last updated: 2026-09-02
+Last updated: 2026-09-03
 
 ## Local checkpoints
 
@@ -60,11 +60,12 @@ Last updated: 2026-09-02
 | `d86579e` | Completed the seven-tool Hardware Inspector family migration |
 | `315e8bc` | Migrated Image Format Conversion and Image Compression as one lazy tool family |
 | `this batch` | Migrated PPT text extraction, PPT compression and PPT outline as one lazy workflow family |
+| `this batch` | Migrated PPT To PDF and PPT To Image as a lazy renderer family |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 46 of 65 desktop tools have completed migration batches (**70.8%** coverage).
+- 48 of 65 desktop tools have completed migration batches (**73.8%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -72,12 +73,12 @@ Last updated: 2026-09-02
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security | After PDF Enhance | After PDF Compress | After PDF Editor | After PPT workflows |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security | After PDF Enhance | After PDF Compress | After PDF Editor | After PPT workflows | After PPT render |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 | 21,708 | 21,250 | 21,241 | 16,184 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 | 27,059 | 24,975 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB | 2,288.63 kB | 1,839.13 kB | 1,603.72 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB | 597.52 kB | 525.34 kB |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 | 21,708 | 21,250 | 21,241 | 16,184 | 15,709 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 | 27,059 | 24,975 | 24,644 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB | 2,288.63 kB | 1,839.13 kB | 1,603.72 kB | 1,591.36 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB | 597.52 kB | 525.34 kB | 520.27 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
@@ -760,11 +761,26 @@ Vite instance initially lacked the new registry bindings; a fresh development
 instance loaded the current modules and confirmed all three entries. This is a
 development-cache issue, not a production bundle failure.
 
-The PPT family emits an approximately 48.11 kB JavaScript chunk and 24.67 kB
-feature CSS chunk. Current source sizes are 16,184 lines for `src/main.js`,
-24,975 lines for `src/styles.css` and 9,141 lines for `index.html`; the
-production entry is 1,603.72 kB JavaScript and 525.34 kB CSS. Only the known
-browser `crypto` externalization and large-chunk warnings remain.
+PPT To PDF and PPT To Image now share the lazy `src/features/ppt-render/`
+family. Their old static pages, global controller and global CSS were removed
+from `index.html`, `src/main.js` and `src/styles.css`; the feature now owns its
+template, controller, styles, open session and native WebView drag listener.
+Operation identity prevents PPTX reads, LibreOffice conversion and the PDF To
+Image bridge from writing into a closed or newer session. File and result
+metadata are rendered through safe text nodes.
+
+The PPT renderer contract, both render runtime suites, the existing PPT
+workflow suites, the architecture gate, production build and `git diff --check`
+pass. Browser checks at 1280 by 720, 680 by 900 and 480 by 360 cover
+first lazy open, close/reopen, one visible overlay and horizontal overflow for
+both render tools; no console warning or error was observed.
+
+The PPT render family emits an approximately 48.11 kB JavaScript chunk and
+24.67 kB feature CSS chunk; its JSZip and LibreOffice bridge dependencies are
+loaded only when a PPT renderer opens. Current source sizes are 15,709 lines
+for `src/main.js`, 24,644 lines for `src/styles.css` and 8,909 lines for
+`index.html`; the production entry is 1,591.36 kB JavaScript and 520.27 kB CSS.
+Only the known browser `crypto` externalization and large-chunk warnings remain.
 
 ## Next batches
 

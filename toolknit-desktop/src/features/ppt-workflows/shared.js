@@ -198,13 +198,19 @@ export function bindPptChrome(scope, overlay, {
   handleWindowAction = () => {}
 } = {}) {
   scope.event(overlay, 'click', event => {
-    const hostAction = event.target.closest('[data-ppt-host-action]')?.dataset.pptHostAction;
+    const hostTarget = event.target.closest('[data-ppt-host-action], [data-home-link], [data-open-support]');
+    const hostAction = hostTarget?.dataset.pptHostAction
+      || hostTarget?.dataset.homeLink
+      || (hostTarget?.hasAttribute('data-open-support') ? 'support' : '');
     if (hostAction === 'settings') openSettings();
     else if (hostAction === 'support') openSupport();
     else if (hostAction === 'website') openExternalUrl('https://toolknit.com');
-    const windowAction = event.target.closest('[data-ppt-window-action]')?.dataset.pptWindowAction;
+    const windowTarget = event.target.closest('[data-ppt-window-action], [data-action]');
+    const windowAction = windowTarget?.dataset.pptWindowAction || windowTarget?.dataset.action;
     if (windowAction) handleWindowAction(windowAction);
   });
   const back = overlay.querySelector('[id$="Back"]');
   if (back) scope.event(back, 'click', () => onClose?.());
+  const settings = overlay.querySelector('[id$="V2Settings"]');
+  if (settings) scope.event(settings, 'click', () => openSettings());
 }

@@ -34,6 +34,7 @@ import { createPdfEditorComponentModel } from './features/pdf-editor/component-m
 import { createPdfEditorComponentControls } from './features/pdf-editor/component-controls.js';
 import { createPdfEditorComponentInteraction } from './features/pdf-editor/component-interaction.js';
 import { createPdfEditorContentEditing } from './features/pdf-editor/content-editing.js';
+import { createPdfEditorPageOperations } from './features/pdf-editor/page-operations.js';
 import { createPdfEditorPreview } from './features/pdf-editor/preview.js';
 import {
   buildTextLine,
@@ -220,6 +221,7 @@ export function initPdfEditorTool({
   let selectedComponent = null;
   let componentInteraction = null;
   let contentEditing = null;
+  let pageOperations = null;
   let componentRenderFrame = 0;
   let componentControls = null;
   let preview = null;
@@ -1585,6 +1587,60 @@ export function initPdfEditorTool({
     showToast
   });
 
+  pageOperations = createPdfEditorPageOperations({
+    documentRef: document,
+    t,
+    getActiveOperation: () => activeOperation,
+    getPages: () => pages,
+    setPages: value => { pages = value; },
+    getSources: () => sources,
+    getSourceStore: () => sourceStore,
+    getTextEdits: () => textEdits,
+    getInsertedTexts: () => insertedTexts,
+    setInsertedTexts: value => { insertedTexts = value; },
+    getInsertedImages: () => insertedImages,
+    setInsertedImages: value => { insertedImages = value; },
+    getInsertedShapes: () => insertedShapes,
+    setInsertedShapes: value => { insertedShapes = value; },
+    getInsertedImageStore: () => insertedImageStore,
+    getSelectedComponent: () => selectedComponent,
+    getCurrentId: () => currentId,
+    setCurrentId: value => { currentId = value; },
+    getSelectedIds: () => selectedIds,
+    setSelectedIds: value => { selectedIds = value; },
+    getSelectionAnchorId: () => selectionAnchorId,
+    setSelectionAnchorId: value => { selectionAnchorId = value; },
+    getPageStrip: () => pageStrip,
+    hasDocument,
+    targetIds,
+    currentPage,
+    pageStateFor,
+    refreshTile,
+    renderMainPreview,
+    updateControls,
+    commitEditorHistory,
+    showToast,
+    clearSelectedComponent,
+    ensureTextEditEntry,
+    releasePreview,
+    buildTiles,
+    updateFileCard,
+    beginOperation,
+    assertOperation,
+    endOperation,
+    showProcess,
+    setLocalizedProgress,
+    getSourceDoc,
+    cacheSourceRotation,
+    effectivePageRotation,
+    messageForError,
+    nextId: type => `${type}-${++idCounter}`,
+    cloneState,
+    normalizeEditSnapshot,
+    normalizeInsertedImageSnapshot,
+    normalizeInsertedShapeSnapshot
+  });
+
   const componentRenderer = createPdfEditorComponentRenderer({
     getTextLayer: () => textLayerEl,
     getEditMode: () => editMode,
@@ -1815,260 +1871,23 @@ export function initPdfEditorTool({
 
   // ----- Page operations -----
   function rotateSelected(delta) {
-    if (activeOperation || !hasDocument()) return;
-    const ids = targetIds();
-    for (const id of ids) {
-      const page = pages.find(item => item.id === id);
-      if (!page) continue;
-      page.rotation = normalizePageRotation(page.rotation + delta);
-      const pageState = pageStateFor(id);
-      if (pageState) refreshTile(pageState);
-    }
-    renderMainPreview();
-    updateControls();
-    commitEditorHistory();
+    return pageOperations?.rotateSelected(delta);
   }
 
   function moveCurrent(direction) {
-    if (activeOperation || !hasDocument()) return;
-    const page = currentPage();
-    if (!page) return;
-    const index = pages.indexOf(page);
-    const targetIndex = direction === -1 ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= pages.length) return;
-    const [moved] = pages.splice(index, 1);
-    pages.splice(targetIndex, 0, moved);
-    // Reorder the DOM tiles in lockstep without discarding rendered canvases.
-    const targetTile = pageStateFor(page.id)?.tile;
-    if (targetTile) {
-      const ordered = Array.from(pageStrip.children);
-      const domIndex = ordered.indexOf(targetTile);
-      if (domIndex !== -1) {
-        ordered.splice(domIndex, 1);
-        ordered.splice(targetIndex, 0, targetTile);
-        const fragment = document.createDocumentFragment();
-        ordered.forEach(node => fragment.appendChild(node));
-        pageStrip.appendChild(fragment);
-      }
-    }
-    for (let i = 0; i < pages.length; i++) {
-      const pageState = pageStateFor(pages[i].id);
-      if (pageState) pageState.indexEl.textContent = String(i + 1);
-    }
-    updateControls();
-    commitEditorHistory();
+    return pageOperations?.moveCurrent(direction);
   }
 
   function duplicateSelectedPages() {
-    if (activeOperation || !hasDocument()) return;
-    const ids = targetIds();
-    if (!ids.length) return;
-    if (pages.length + ids.length > PDF_EDITOR_LIMITS.maxPages) {
-      showToast(t('home.pdfEditor.tooManyPages'));
-      return;
-    }
-
-    const idsToDuplicate = new Set(ids);
-    const duplicateIds = [];
-    const nextPages = [];
-    const pageCopies = new Map();
-    for (const page of pages) {
-      nextPages.push(page);
-      if (!idsToDuplicate.has(page.id)) continue;
-      const duplicate = {
-        ...page,
-        id: `page-${++idCounter}`
-      };
-      nextPages.push(duplicate);
-      duplicateIds.push(duplicate.id);
-      pageCopies.set(page.id, duplicate.id);
-    }
-
-    const copiedTextEdits = [];
-    for (const [key, edit] of textEdits.entries()) {
-      const sourcePageId = String(key).split(':')[0];
-      const targetPageId = pageCopies.get(sourcePageId);
-      if (!targetPageId) continue;
-      copiedTextEdits.push([
-        `${targetPageId}${String(key).slice(sourcePageId.length)}`,
-        normalizeEditSnapshot(edit)
-      ]);
-    }
-    for (const [key, edit] of copiedTextEdits) textEdits.set(key, edit);
-
-    for (const object of [...insertedTexts]) {
-      const pageId = pageCopies.get(object.pageId);
-      if (!pageId) continue;
-      insertedTexts.push({
-        ...cloneState(object),
-        id: `text-${++idCounter}`,
-        pageId
-      });
-    }
-    for (const object of [...insertedImages]) {
-      const pageId = pageCopies.get(object.pageId);
-      if (!pageId) continue;
-      const imageId = `image-${++idCounter}`;
-      const stored = insertedImageStore.get(object.id);
-      const bytes = stored?.bytes || object.bytes;
-      insertedImageStore.set(imageId, { bytes, mimeType: object.mimeType });
-      insertedImages.push({
-        ...normalizeInsertedImageSnapshot(object),
-        id: imageId,
-        pageId,
-        bytes,
-        previewUrl: bytes?.length
-          ? URL.createObjectURL(new Blob([bytes], { type: object.mimeType || 'image/png' }))
-          : ''
-      });
-    }
-    for (const object of [...insertedShapes]) {
-      const pageId = pageCopies.get(object.pageId);
-      if (!pageId) continue;
-      insertedShapes.push({
-        ...normalizeInsertedShapeSnapshot(object),
-        id: `shape-${++idCounter}`,
-        pageId
-      });
-    }
-
-    pages = nextPages;
-    currentId = duplicateIds.at(-1) || currentId;
-    selectedIds = new Set(duplicateIds);
-    selectionAnchorId = duplicateIds[0] || currentId;
-    clearSelectedComponent();
-    buildTiles();
-    updateFileCard();
-    commitEditorHistory();
+    return pageOperations?.duplicateSelectedPages();
   }
 
   async function insertBlankPage() {
-    if (activeOperation || !hasDocument()) return;
-    if (pages.length >= PDF_EDITOR_LIMITS.maxPages) {
-      showToast(t('home.pdfEditor.tooManyPages'));
-      return;
-    }
-
-    const operation = beginOperation('append');
-    showProcess('preparingPages', 10);
-    try {
-      const current = currentPage();
-      let width = 612;
-      let height = 792;
-      if (current) {
-        const sourceDoc = await getSourceDoc(current.sourceId);
-        assertOperation(operation);
-        const sourcePage = await sourceDoc.getPage(current.pageIndex + 1);
-        cacheSourceRotation(current, sourcePage);
-        const viewport = sourcePage.getViewport({
-          scale: 1,
-          rotation: effectivePageRotation(current)
-        });
-        width = Math.max(72, Number(viewport.width) || width);
-        height = Math.max(72, Number(viewport.height) || height);
-        try { sourcePage.cleanup(); } catch (_) {}
-      }
-
-      const blankDocument = await PDFDocument.create();
-      blankDocument.addPage([width, height]);
-      const bytes = await blankDocument.save({ useObjectStreams: true });
-      assertOperation(operation);
-      const totalBytes = sources.reduce((sum, source) => sum + Number(source.size || 0), 0) + bytes.length;
-      if (totalBytes > PDF_EDITOR_LIMITS.maxMergeTotalBytes) {
-        throw new Error('PDF inputs exceed the merge size limit');
-      }
-
-      const source = {
-        id: `src-${++idCounter}`,
-        name: 'blank-page.pdf',
-        bytes,
-        size: bytes.length,
-        pageCount: 1
-      };
-      const blankPage = {
-        id: `page-${++idCounter}`,
-        sourceId: source.id,
-        pageIndex: 0,
-        rotation: 0,
-        sourceRotation: 0
-      };
-      sources.push(source);
-      sourceStore.set(source.id, source);
-      const insertAt = Math.max(0, pages.findIndex(page => page.id === currentId) + 1);
-      pages.splice(insertAt, 0, blankPage);
-      currentId = blankPage.id;
-      selectedIds = new Set([blankPage.id]);
-      selectionAnchorId = blankPage.id;
-      clearSelectedComponent();
-      buildTiles();
-      updateFileCard();
-      commitEditorHistory();
-      setLocalizedProgress(100, 'preparingPages');
-    } catch (error) {
-      const cancelled = operation.cancelled || error instanceof PdfEditorCancelledError;
-      showToast(
-        cancelled ? t('home.pdfEditor.cancelled') : messageForError(error, 'append'),
-        cancelled ? 4500 : 9000
-      );
-    } finally {
-      endOperation(operation);
-    }
+    return pageOperations?.insertBlankPage();
   }
 
   function deleteSelected() {
-    if (activeOperation || !hasDocument()) return;
-    if (selectedComponent) {
-      if (selectedComponent.type === 'text') {
-        const edit = ensureTextEditEntry(selectedComponent, selectedComponent.segment);
-        if (edit?.segment) {
-          edit.newText = '';
-          textEdits.set(selectedComponent.key, edit);
-        }
-      } else if (selectedComponent.type === 'inserted-text') {
-        insertedTexts = insertedTexts.filter(item => item.id !== selectedComponent.key);
-      } else if (selectedComponent.type === 'inserted-image') {
-        const object = insertedImages.find(item => item.id === selectedComponent.key);
-        if (object?.previewUrl) URL.revokeObjectURL(object.previewUrl);
-        insertedImages = insertedImages.filter(item => item.id !== selectedComponent.key);
-      } else if (selectedComponent.type === 'inserted-shape') {
-        insertedShapes = insertedShapes.filter(item => item.id !== selectedComponent.key);
-      }
-      clearSelectedComponent();
-      commitEditorHistory();
-      return;
-    }
-    const ids = targetIds();
-    if (ids.length >= pages.length) {
-      showToast(t('home.pdfEditor.cannotDeleteAll'));
-      return;
-    }
-    const remaining = pages.filter(page => !ids.includes(page.id));
-    if (remaining.length === 0) {
-      showToast(t('home.pdfEditor.cannotDeleteAll'));
-      return;
-    }
-    pages = remaining;
-    for (const id of ids) {
-      const pageState = pageStateFor(id);
-      if (pageState) releasePreview(pageState, false);
-      textLinesCache.delete(id);
-      for (const key of Array.from(textEdits.keys())) {
-        if (String(key).split(':')[0] === id) textEdits.delete(key);
-      }
-      insertedTexts = insertedTexts.filter(item => item.pageId !== id);
-      for (const image of insertedImages.filter(item => item.pageId === id)) {
-        if (image.previewUrl) URL.revokeObjectURL(image.previewUrl);
-      }
-      insertedImages = insertedImages.filter(item => item.pageId !== id);
-      insertedShapes = insertedShapes.filter(item => item.pageId !== id);
-    }
-    selectedIds = new Set([...selectedIds].filter(id => !ids.includes(id)));
-    if (currentId && ids.includes(currentId)) currentId = null;
-    if (!currentId) currentId = pages[0]?.id || null;
-    if (currentId && !selectedIds.size) selectedIds = new Set([currentId]);
-    buildTiles();
-    updateFileCard();
-    commitEditorHistory();
+    return pageOperations?.deleteSelected();
   }
 
   function resetEditorState() {

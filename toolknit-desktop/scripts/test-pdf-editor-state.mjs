@@ -89,6 +89,10 @@ const contentEditingSource = await readFile(
   new URL('../src/features/pdf-editor/content-editing.js', import.meta.url),
   'utf8'
 );
+const pageOperationsSource = await readFile(
+  new URL('../src/features/pdf-editor/page-operations.js', import.meta.url),
+  'utf8'
+);
 
 const snapshotStart = uiSource.indexOf('function captureEditorSnapshot()');
 const snapshotEnd = uiSource.indexOf('function applyEditorSnapshot(', snapshotStart);
@@ -134,6 +138,10 @@ assert.doesNotMatch(uiSource, /const xmlns = 'http:\/\/www\.w3\.org\/2000\/svg';
 assert.match(uiSource, /openEditModal\(object\.id, object, object, 'edit-inserted-text'\)/);
 assert.match(contentEditingSource, /modalMode === 'edit-inserted-text'/);
 assert.match(contentEditingSource, /setInsertedShapes\(insertedShapes\)/);
+assert.match(uiSource, /return pageOperations\?\.rotateSelected\(delta\)/);
+assert.match(uiSource, /return pageOperations\?\.deleteSelected\(\)/);
+assert.match(pageOperationsSource, /function duplicateSelectedPages\(\)/);
+assert.match(pageOperationsSource, /insertedImageStore\.delete\(selectedComponent\.key\)/);
 assert.match(exporterSource, /textBox: getEditedTextVisualBox\(edit, edit\.segment\)/);
 assert.match(uiSource, /componentRenderer\.render\(lines, cssViewport, scale, pageId\)/);
 assert.match(componentRendererSource, /Number\(segmentData\.rotation\) \|\| 0/);

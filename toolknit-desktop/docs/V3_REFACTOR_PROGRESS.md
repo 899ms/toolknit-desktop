@@ -226,8 +226,17 @@ storage, both edit modes, modal cancellation and history commits.
   migrated text feature now invalidates pending reads on close.
 - PDF Editor shape placement previously mutated a local array without writing
   it back through the orchestration state boundary. The content-editing
-  controller now commits the updated shape collection, with a regression test
-  covering the placement path.
+controller now commits the updated shape collection, with a regression test
+covering the placement path.
+
+PDF Editor page mutations now live in `src/features/pdf-editor/page-operations.js`.
+Rotation, ordering, page duplication, blank-page creation and deletion are
+kept outside the UI orchestrator while the existing document/source stores,
+selection state, rendering callbacks and history boundary are injected. Page
+duplication preserves text edits and inserted content; deleting inserted images
+also removes their backing byte entry and revokes preview URLs. The page
+operation suite covers mutation order, copied edits/content, resource release,
+blank-page creation and history/progress behavior.
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the

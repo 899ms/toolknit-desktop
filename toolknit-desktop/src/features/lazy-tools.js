@@ -49,6 +49,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./pdf-enhance/tool.js'),
     init: 'initPdfEnhanceTool'
   }),
+  'pdf-compress': Object.freeze({
+    overlayId: 'pdfCompressOverlay',
+    load: () => import('./pdf-compress/tool.js'),
+    init: 'initPdfCompressTool'
+  }),
   teleprompter: Object.freeze({
     overlayId: 'teleprompterOverlay',
     load: () => import('../teleprompter-ui.js'),

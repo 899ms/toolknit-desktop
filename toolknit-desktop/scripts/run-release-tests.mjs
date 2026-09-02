@@ -20,6 +20,7 @@ const releaseTests = [
   'test:pdf-decrypt',
   'test:pdf-security-tool-contract',
   'test:pdf-compress',
+  'test:pdf-compress-tool-contract',
   'test:pdf-enhance',
   'test:pdf-enhance-tool-contract',
   'test:pdf-editor',

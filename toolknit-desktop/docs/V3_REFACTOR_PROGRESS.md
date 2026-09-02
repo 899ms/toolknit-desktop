@@ -53,11 +53,12 @@ Last updated: 2026-09-02
 | `07ebe3b` | Migrated Color Space Compare into a feature-owned module boundary |
 | `0a66263` | Migrated Background Removal into a feature-owned module boundary |
 | `1b02043` | Migrated Image Color Replace into a feature-owned module boundary |
+| `ec6ea9d` | Migrated Excel To PDF into a feature-owned module boundary |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 30 of 65 desktop tools have completed migration batches (**46.2%** coverage).
+- 31 of 65 desktop tools have completed migration batches (**47.7%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -355,6 +356,30 @@ differences at every viewport. The production build emits a 17.02 kB JavaScript
 chunk and 17.58 kB CSS chunk for the feature; the current main JavaScript and CSS
 remain 1,839.08 kB and 581.53 kB. The feature JS/Rust tests, architecture gate,
 `cargo check` and production build all pass; only the pre-existing crypto
+externalization and large-chunk warnings remain.
+
+Excel To PDF now lives under `src/features/excel-to-pdf/`. The feature owns a
+463-line lifecycle controller, 177-line template, 52-line pure core, 15-line
+composition entry and 174-line lazy stylesheet. The root UI and CSS paths are
+compatibility forwards, while the lazy registry imports the feature entry
+directly. Tauri core/event/dialog/webview access now crosses the platform
+boundary. Queue rows use DOM nodes and `textContent`, so untrusted workbook
+names no longer enter `innerHTML`. Native drag and progress `unlisten` callbacks,
+the post-conversion timeout and session-sensitive async results are released or
+invalidated with the owning open session. A late native listener can no longer
+attach after close, and disposing an active conversion requests cancellation
+without allowing its result to write into a removed overlay.
+
+Browser regression at 1280 x 720, 720 x 800 and 480 x 360 covered first open,
+file selection, queue rendering, setting selection, close, two consecutive
+reopens and compact scrolling. The overlay remained a single DOM instance,
+queue/settings state stayed stable, no horizontal overflow or top-bar overlap
+was observed, and the browser console reported no warning or error. The full
+release gate passes 80 npm scripts and 623 security checks; the focused suite
+passes four Excel Rust tests with the external LibreOffice/sample QA test
+ignored by design. `cargo check` and production build pass. Excel To PDF emits
+a 21.09 kB JavaScript chunk and 6.21 kB CSS chunk; main JavaScript is now
+1,838.21 kB and main CSS remains 581.53 kB. Only the pre-existing crypto
 externalization and large-chunk warnings remain.
 
 - A copy-feedback timer could restore a pre-switch language label after global

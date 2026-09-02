@@ -32,6 +32,7 @@ import { createPdfEditorPageSelection } from './features/pdf-editor/page-selecti
 import { createPdfEditorPreview } from './features/pdf-editor/preview.js';
 import { createPdfEditorView } from './features/pdf-editor/view.js';
 import { createPdfEditorOperationRuntime } from './features/pdf-editor/operation.js';
+import { createPdfEditorEvents } from './features/pdf-editor/events.js';
 import {
   buildTextLine,
   editedTextVisualBox,
@@ -174,7 +175,6 @@ export function initPdfEditorTool({
   let mainEpoch = 0;
   let lastRenderScale = 1;
   let idCounter = 0;
-  let nativeDragUnlisten = null;
   let disposed = false;
   let unsubscribeLangChange = () => {};
   let canvasWrap = null;
@@ -208,6 +208,7 @@ export function initPdfEditorTool({
   let savedSnapshot = null;
   let pdfEditorView = null;
   let operationRuntime = null;
+  let pdfEditorEvents = null;
   const showToast = (message, duration = 7000) => {
     if (!disposed) window.showToast?.(message, { duration, dismissible: true });
   };
@@ -1684,176 +1685,116 @@ export function initPdfEditorTool({
   });
 
   // ----- Event wiring -----
-  back?.addEventListener('click', closeOverlay, listenerOptions);
-  cta?.addEventListener('click', chooseMainFile, listenerOptions);
-  appendBtn?.addEventListener('click', chooseAppendFile, listenerOptions);
-  replaceBtn?.addEventListener('click', chooseMainFile, listenerOptions);
-  editTextBtn?.addEventListener('click', () => setEditMode(!editMode), listenerOptions);
-  editTextSidebarBtn?.addEventListener('click', () => setEditMode(!editMode), listenerOptions);
-  insertTextBtn?.addEventListener('click', openInsertTextModal, listenerOptions);
-  insertImageBtn?.addEventListener('click', () => { void chooseInsertImage(); }, listenerOptions);
-  insertRectBtn?.addEventListener('click', () => insertShape('rect'), listenerOptions);
-  insertEllipseBtn?.addEventListener('click', () => insertShape('ellipse'), listenerOptions);
-  insertLineBtn?.addEventListener('click', () => insertShape('line'), listenerOptions);
-  selectComponentBtn?.addEventListener('click', () => setComponentMode(!componentMode), listenerOptions);
-  componentScaleDownBtn?.addEventListener('click', () => scaleSelectedComponent(0.9), listenerOptions);
-  componentScaleUpBtn?.addEventListener('click', () => scaleSelectedComponent(1.1), listenerOptions);
-  componentEditBtn?.addEventListener('click', editSelectedComponent, listenerOptions);
-  componentRotateBtn?.addEventListener('pointerdown', beginComponentRotate, listenerOptions);
-  componentDeleteBtn?.addEventListener('click', deleteSelected, listenerOptions);
-  shapeFillInput?.addEventListener('input', event => updateSelectedShapeProperty('fill', hexToRgb01(event.target.value)), listenerOptions);
-  shapeStrokeInput?.addEventListener('input', event => updateSelectedShapeProperty('stroke', hexToRgb01(event.target.value)), listenerOptions);
-  shapeStrokeWidth?.addEventListener('input', event => updateSelectedShapeProperty('strokeWidth', Number(event.target.value) || 0), listenerOptions);
-  shapeFillInput?.addEventListener('change', commitEditorHistory, listenerOptions);
-  shapeStrokeInput?.addEventListener('change', commitEditorHistory, listenerOptions);
-  shapeStrokeWidth?.addEventListener('change', commitEditorHistory, listenerOptions);
-  resetBtn?.addEventListener('click', resetEditorState, listenerOptions);
-  undoBtn?.addEventListener('click', () => undoEditorChange(), listenerOptions);
-  redoBtn?.addEventListener('click', () => redoEditorChange(), listenerOptions);
-  editModalSave?.addEventListener('click', saveEditModal, listenerOptions);
-  editModalCancel?.addEventListener('click', handleEditModalCancel, listenerOptions);
-  editModalClose?.addEventListener('click', handleEditModalCancel, listenerOptions);
-  editModalInput?.addEventListener('keydown', event => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      saveEditModal();
-    } else if (event.key === 'Escape') {
-      event.preventDefault();
-      handleEditModalCancel();
-    }
-  }, listenerOptions);
-  rotateCcwBtn?.addEventListener('click', () => rotateSelected(-90), listenerOptions);
-  rotateCwBtn?.addEventListener('click', () => rotateSelected(90), listenerOptions);
-  moveUpBtn?.addEventListener('click', () => moveCurrent(-1), listenerOptions);
-  moveDownBtn?.addEventListener('click', () => moveCurrent(1), listenerOptions);
-  duplicateBtn?.addEventListener('click', duplicateSelectedPages, listenerOptions);
-  blankPageBtn?.addEventListener('click', () => { void insertBlankPage(); }, listenerOptions);
-  selectAllBtn?.addEventListener('click', selectAllPages, listenerOptions);
-  invertSelectionBtn?.addEventListener('click', invertPageSelection, listenerOptions);
-  deleteBtn?.addEventListener('click', deleteSelected, listenerOptions);
-  extractBtn?.addEventListener('click', () => { void exporter.extractSelected(targetIds()); }, listenerOptions);
-  exportBtn?.addEventListener('click', () => { void exporter.exportPdf(); }, listenerOptions);
-  processCancel?.addEventListener('click', () => { void cancelActiveOperation(); }, listenerOptions);
-  successOk?.addEventListener('click', () => closeSuccess(), listenerOptions);
-  successOpenFolder?.addEventListener('click', async () => {
-    const outputFolder = pdfEditorView?.getLastOutputFolder();
-    if (!isTauri || !outputFolder) return;
-    try {
-      const invoke = await getInvoke();
-      await invoke('open_path', { path: outputFolder });
-    } catch (_) {
-      showToast(t('home.pdfEditor.openFolderFailed'));
-    }
-  }, listenerOptions);
-
-  zoom.bindButton(zoomOutBtn, 1 / 1.25);
-  zoom.bindButton(zoomInBtn, 1.25);
-  fitWidthBtn?.addEventListener('click', () => zoom.setZoom('fit', zoom.getState().zoomPercent), listenerOptions);
-  zoomValueBtn?.addEventListener('click', () => zoom.setZoom('fit', zoom.getState().zoomPercent), listenerOptions);
-  canvasScroll?.addEventListener('wheel', zoom.handleWheel, { ...listenerOptions, passive: false });
-  canvasScroll?.addEventListener('scroll', () => {
-    if (selectedComponent) requestAnimationFrame(positionComponentMenu);
-  }, listenerOptions);
+  pdfEditorEvents = createPdfEditorEvents({
+    documentRef: document,
+    windowRef: window,
+    listenerOptions,
+    isTauri,
+    overlay,
+    dropZone,
+    fileInput,
+    appendInput,
+    imageInput,
+    back,
+    cta,
+    appendBtn,
+    replaceBtn,
+    editTextBtn,
+    editTextSidebarBtn,
+    insertTextBtn,
+    insertImageBtn,
+    insertRectBtn,
+    insertEllipseBtn,
+    insertLineBtn,
+    selectComponentBtn,
+    componentScaleDownBtn,
+    componentScaleUpBtn,
+    componentEditBtn,
+    componentRotateBtn,
+    componentDeleteBtn,
+    shapeFillInput,
+    shapeStrokeInput,
+    shapeStrokeWidth,
+    resetBtn,
+    undoBtn,
+    redoBtn,
+    editModalSave,
+    editModalCancel,
+    editModalClose,
+    editModalInput,
+    rotateCcwBtn,
+    rotateCwBtn,
+    moveUpBtn,
+    moveDownBtn,
+    duplicateBtn,
+    blankPageBtn,
+    selectAllBtn,
+    invertSelectionBtn,
+    deleteBtn,
+    extractBtn,
+    exportBtn,
+    processCancel,
+    successOk,
+    successOpenFolder,
+    zoomOutBtn,
+    zoomInBtn,
+    fitWidthBtn,
+    zoomValueBtn,
+    canvasScroll,
+    zoom,
+    exporter,
+    getLastOutputFolder: () => pdfEditorView?.getLastOutputFolder(),
+    getInvoke,
+    t,
+    getEditMode: () => editMode,
+    getComponentMode: () => componentMode,
+    getSelectedComponent: () => selectedComponent,
+    getCurrentOperation: currentOperation,
+    isDisposed: () => disposed,
+    hexToRgb01,
+    updateSelectedShapeProperty,
+    commitEditorHistory,
+    setEditMode: value => setEditMode(value),
+    chooseMainFile,
+    chooseAppendFile,
+    openInsertTextModal,
+    chooseInsertImage,
+    insertShape,
+    setComponentMode,
+    scaleSelectedComponent,
+    editSelectedComponent,
+    beginComponentRotate,
+    deleteSelected,
+    resetEditorState,
+    undoEditorChange,
+    redoEditorChange,
+    saveEditModal,
+    handleEditModalCancel,
+    rotateSelected,
+    moveCurrent,
+    duplicateSelectedPages,
+    insertBlankPage,
+    selectAllPages,
+    invertPageSelection,
+    targetIds,
+    cancelActiveOperation,
+    closeOverlay,
+    closeSuccess,
+    loadMainFile,
+    appendPdfBytes,
+    prepareInsertImage,
+    cancelInsertMode,
+    showDropZone,
+    hideDropZone,
+    openOverlay,
+    positionComponentMenu,
+    showToast
+  });
   window.addEventListener('resize', scheduleFitPreview, listenerOptions);
   if (typeof ResizeObserver === 'function' && canvasScroll) {
     fitResizeObserver = new ResizeObserver(scheduleFitPreview);
     fitResizeObserver.observe(canvasScroll);
   }
-
-  fileInput?.addEventListener('change', () => {
-    const files = Array.from(fileInput.files || []);
-    if (files.length > 1) {
-      showToast(t('home.pdfEditor.singlePdfOnly'));
-      return;
-    }
-    void loadMainFile(files[0]);
-  }, listenerOptions);
-
-  appendInput?.addEventListener('change', () => {
-    const files = Array.from(appendInput.files || []);
-    if (files.length > 1) {
-      showToast(t('home.pdfEditor.singlePdfOnly'));
-      return;
-    }
-    const file = files[0];
-    if (!file) return;
-    void file.arrayBuffer().then(buffer => {
-      return appendPdfBytes(new Uint8Array(buffer), file.name, file.size);
-    });
-  }, listenerOptions);
-
-  imageInput?.addEventListener('change', () => {
-    const file = Array.from(imageInput.files || [])[0];
-    void prepareInsertImage(file);
-  }, listenerOptions);
-  imageInput?.addEventListener('cancel', cancelInsertMode, listenerOptions);
-
-  overlay.addEventListener('dragover', event => {
-    if (!overlay.classList.contains('visible') || isTauri) return;
-    event.preventDefault();
-    showDropZone();
-  }, listenerOptions);
-  overlay.addEventListener('dragleave', event => {
-    if (event.relatedTarget && overlay.contains(event.relatedTarget)) return;
-    hideDropZone();
-  }, listenerOptions);
-  overlay.addEventListener('drop', event => {
-    if (isTauri) return;
-    event.preventDefault();
-    hideDropZone();
-    const files = Array.from(event.dataTransfer?.files || []);
-    if (files.length !== 1) {
-      showToast(t('home.pdfEditor.singlePdfOnly'));
-      return;
-    }
-    void loadMainFile(files[0]);
-  }, listenerOptions);
-
-  if (isTauri) {
-    void (async () => {
-      try {
-        const { getCurrentWebview } = await import('@tauri-apps/api/webview');
-        const unlisten = await getCurrentWebview().onDragDropEvent(event => {
-          if (disposed || !overlay.classList.contains('visible') || currentOperation()) return;
-          const payload = event.payload || {};
-          if (payload.type === 'enter' || payload.type === 'over') {
-            showDropZone();
-          } else if (payload.type === 'leave') {
-            hideDropZone();
-          } else if (payload.type === 'drop') {
-            hideDropZone();
-            const paths = Array.from(payload.paths || []);
-            if (paths.length !== 1) {
-              showToast(t('home.pdfEditor.singlePdfOnly'));
-              return;
-            }
-            const path = paths[0];
-            void loadMainFile({
-              name: path.split(/[\\/]/).pop() || path,
-              path,
-              size: 0
-            });
-          }
-        });
-        if (disposed) {
-          try { unlisten(); } catch (_) {}
-          return;
-        }
-        nativeDragUnlisten = unlisten;
-      } catch (error) {
-        if (!disposed) console.error('[PDF Editor] Native drag-drop setup failed:', error);
-      }
-    })();
-  }
-
-  document.querySelectorAll('.audio-list-item[data-tool="pdf-editor"]').forEach(item => {
-    item.addEventListener('click', openOverlay, listenerOptions);
-    item.addEventListener('keydown', event => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      openOverlay();
-    }, listenerOptions);
-  });
 
   document.addEventListener('keydown', handleDocumentKeydown, listenerOptions);
 
@@ -1889,8 +1830,7 @@ export function initPdfEditorTool({
       listenerController.abort();
       try { unsubscribeLangChange(); } catch (_) {}
       unsubscribeLangChange = () => {};
-      try { nativeDragUnlisten?.(); } catch (_) {}
-      nativeDragUnlisten = null;
+      pdfEditorEvents?.dispose();
       pdfEditorView?.dispose();
       processMask?.classList.remove('visible');
       if (fileInput) fileInput.value = '';

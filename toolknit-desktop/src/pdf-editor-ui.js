@@ -1400,7 +1400,7 @@ export function initPdfEditorTool({
   function beginComponentResize(event, component, handle = 'se') {
     return componentInteraction?.beginComponentResize(event, component, handle);
   }
- 
+
 
   function setEditMode(enabled) {
     const page = currentPage();

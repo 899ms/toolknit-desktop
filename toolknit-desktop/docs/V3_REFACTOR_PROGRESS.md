@@ -37,6 +37,8 @@ Last updated: 2026-09-02
 | `485f6f9` | Isolated PDF Editor text/component DOM rendering and injected interaction bindings |
 | `85cbc37` | Isolated PDF Editor component state, transforms and snap geometry |
 | `c7b9db9` | Isolated PDF Editor main preview rendering and canvas lifecycle |
+| `3850445` | Isolated PDF Editor component controls, shape panel and resize handles |
+| `94a6b23` | Isolated PDF Editor image-insert validation and decode boundaries |
 
 ## Current verified counts
 
@@ -175,6 +177,20 @@ canvas disposal. The UI injects document/page access, zoom state and component
 layer callbacks while retaining the existing DOM and public behavior. A
 deterministic preview lifecycle test covers first paint, text caching, canvas
 commit, task cancellation and disposal.
+
+PDF Editor floating component controls now live in
+`src/features/pdf-editor/component-controls.js`. Menu and shape-panel
+positioning, shape property synchronization, SVG construction and generated
+resize handles are owned by this controller; selection and pointer mutation
+remain injected from the UI orchestrator. Its regression suite covers menu and
+panel visibility, bounded stroke edits, SVG output and line/box handle counts.
+
+PDF Editor image insertion validation now lives in
+`src/features/pdf-editor/insert-assets.js`. PNG/JPEG header inspection,
+pixel-limit enforcement and browser decode URL cleanup are independently
+testable and are called by the existing insertion flow without changing file
+type, size or output behavior. The boundary suite covers valid and malformed
+headers, oversized dimensions and decode cleanup.
 
 ## Hidden issues fixed during migration
 
@@ -377,9 +393,9 @@ commit, task cancellation and disposal.
 
 ## Next batches
 
-1. Continue PDF Editor main-preview and component-editing ownership, then audit
-   the remaining PDF template ownership and select the next coherent legacy
-   candidate by lifecycle risk, dependency weight and compatibility scope.
+1. Continue PDF Editor component-editing ownership, then audit the remaining
+   PDF template ownership and select the next coherent legacy candidate by
+   lifecycle risk, dependency weight and compatibility scope.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed

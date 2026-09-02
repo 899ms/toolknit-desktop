@@ -12,7 +12,6 @@ import {
   normalizePageRotation,
   resolvePdfPageRotation
 } from './pdf-editor-core.js';
-import { resizePdfBoxFromHandle, rotatePdfDeltaToLocal } from './pdf-editor-geometry.js';
 import {
   compactPdfEditorComponent,
   pdfEditorPageIdsInDocumentOrder,
@@ -38,14 +37,13 @@ import {
   readEncodedImageDimensions,
   readImageDimensions
 } from './features/pdf-editor/insert-assets.js';
+import { createPdfEditorComponentInteraction } from './features/pdf-editor/component-interaction.js';
 import { createPdfEditorPreview } from './features/pdf-editor/preview.js';
 import {
   buildTextLine,
   editedTextVisualBox,
   groupTextItemsIntoLines,
-  insertedTextVisualBox,
-  rectToViewport,
-  sourceTextBox
+  insertedTextVisualBox
 } from './features/pdf-editor/text-layout.js';
 import { IMAGE_BATCH_LIMITS } from './image-batch-core.js';
 
@@ -225,10 +223,7 @@ export function initPdfEditorTool({
   let insertedImageStore = new Map();
   let insertedShapes = [];
   let selectedComponent = null;
-  let componentDragState = null;
-  let componentPointerCleanup = null;
-  let componentRotateTimer = null;
-  let componentRotateState = null;
+  let componentInteraction = null;
   let componentRenderFrame = 0;
   let componentControls = null;
   let preview = null;
@@ -390,9 +385,7 @@ export function initPdfEditorTool({
       });
       insertedShapes = (Array.isArray(snapshot.insertedShapes) ? snapshot.insertedShapes : []).map(item => normalizeInsertedShapeSnapshot(item));
       selectedComponent = restoreSelectedComponent(snapshot.selectedComponent);
-      stopComponentPointerSession();
-      componentDragState = null;
-      componentRotateState = null;
+      componentInteraction?.reset();
       editingLineKey = null;
       modalMode = null;
       insertMode = null;
@@ -814,8 +807,7 @@ export function initPdfEditorTool({
       cancelAnimationFrame(componentRenderFrame);
       componentRenderFrame = 0;
     }
-    stopComponentPointerSession();
-    stopComponentRotate();
+    componentInteraction?.reset();
     closeEditModal();
     editMode = false;
     componentMode = false;
@@ -863,8 +855,7 @@ export function initPdfEditorTool({
     selectionAnchorId = null;
     thumbnails.clear();
     selectedComponent = null;
-    componentDragState = null;
-    componentRotateState = null;
+    componentInteraction?.reset();
     editorHistory.clear();
     baselineSnapshot = null;
     savedSnapshot = null;
@@ -1252,84 +1243,19 @@ export function initPdfEditorTool({
   }
 
   function stopComponentRotate() {
-    if (componentRotateTimer) {
-      clearInterval(componentRotateTimer);
-      componentRotateTimer = null;
-    }
-    componentRotateState = null;
+    return componentInteraction?.stopComponentRotate();
   }
 
   function stopComponentPointerSession() {
-    if (componentPointerCleanup) {
-      componentPointerCleanup();
-      componentPointerCleanup = null;
-    }
-  }
-
-  function bindComponentPointerSession(onMove, onUp) {
-    const cleanup = () => {
-      document.removeEventListener('pointermove', onMove, true);
-      document.removeEventListener('pointerup', onUp, true);
-      document.removeEventListener('pointercancel', onUp, true);
-      if (componentPointerCleanup === cleanup) componentPointerCleanup = null;
-    };
-    stopComponentPointerSession();
-    componentPointerCleanup = cleanup;
-    document.addEventListener('pointermove', onMove, true);
-    document.addEventListener('pointerup', onUp, true);
-    document.addEventListener('pointercancel', onUp, true);
-    return cleanup;
+    return componentInteraction?.stopComponentPointerSession();
   }
 
   function scaleSelectedComponent(factor) {
-    if (!selectedComponent || !componentMode || activeOperation) return;
-    updateComponentFromDelta(0, 0, factor, selectedComponent);
-    commitEditorHistory();
+    return componentInteraction?.scaleSelectedComponent(factor);
   }
 
   function beginComponentRotate(event) {
-    if (!componentMode || !selectedComponent || activeOperation) return;
-    if (event.button != null && event.button !== 0) return;
-    event.preventDefault();
-    event.stopPropagation();
-    stopComponentRotate();
-    const target = selectedComponentElement();
-    const targetRect = target?.getBoundingClientRect();
-    let centerX = event.clientX;
-    let centerY = event.clientY;
-    if (targetRect) {
-      centerX = targetRect.left + targetRect.width / 2;
-      centerY = targetRect.top + targetRect.height / 2;
-    }
-    const startAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180 / Math.PI;
-    componentRotateState = {
-      component: cloneState(selectedComponent),
-      pointerId: event.pointerId,
-      centerX,
-      centerY,
-      startAngle,
-      baseRotation: getComponentRotation(selectedComponent)
-    };
-    const onMove = moveEvent => {
-      if (!componentRotateState || moveEvent.pointerId !== componentRotateState.pointerId) return;
-      moveEvent.preventDefault();
-      const angle = Math.atan2(
-        moveEvent.clientY - componentRotateState.centerY,
-        moveEvent.clientX - componentRotateState.centerX
-      ) * 180 / Math.PI;
-      const rotation = snapRotationToAxis(componentRotateState.baseRotation + (angle - componentRotateState.startAngle));
-      setComponentRotation(selectedComponent, rotation);
-      updateControls();
-      applyComponentDomVisual(selectedComponent);
-    };
-    const onUp = upEvent => {
-      if (!componentRotateState || upEvent.pointerId !== componentRotateState.pointerId) return;
-      componentPointerCleanup?.();
-      stopComponentRotate();
-      flushComponentVisualRefresh();
-      commitEditorHistory();
-    };
-    bindComponentPointerSession(onMove, onUp);
+    return componentInteraction?.beginComponentRotate(event);
   }
 
   function editSelectedComponent() {
@@ -1364,9 +1290,7 @@ export function initPdfEditorTool({
       closeEditModal();
     } else {
       selectedComponent = null;
-      componentDragState = null;
-      stopComponentPointerSession();
-      stopComponentRotate();
+      componentInteraction?.reset();
     }
     if (editTextBtn) {
       editTextBtn.classList.toggle('is-active', editMode);
@@ -1421,7 +1345,7 @@ export function initPdfEditorTool({
     deltaX,
     deltaY,
     deltaScale = 1,
-    baseComponent = componentDragState?.component || selectedComponent,
+    baseComponent = selectedComponent,
     { deferRender = false } = {}
   ) {
     return componentModel.updateComponentFromDelta(
@@ -1462,218 +1386,21 @@ export function initPdfEditorTool({
   }
 
   function applyComponentResize(component, baseObject, handle, localDx, localDy) {
-    if (!component || !baseObject) return;
-
-    if (component.type === 'text') {
-      // The text control is the south-east handle. In PDF space a screen
-      // drag downward produces a negative y delta, so subtract localDy.
-      const factor = Math.max(0.5, 1 + ((localDx - localDy) / 80));
-      updateComponentFromDelta(0, 0, factor, component);
-      return;
-    }
-
-    const object = resolveComponentObject(component);
-    if (!object) return;
-
-    const isLine = component.type === 'inserted-shape' && baseObject.shapeType === 'line';
-    const resized = resizePdfBoxFromHandle(
-      baseObject,
-      handle,
-      localDx,
-      localDy,
-      { minWidth: isLine ? 2 : 10, minHeight: isLine ? 0.5 : 10 }
-    );
-    object.x = resized.x;
-    object.y = resized.y;
-    object.width = resized.width;
-    object.height = resized.height;
-    if (selectedComponent?.type === component.type && selectedComponent.key === component.key) {
-      selectedComponent.object = cloneState(object);
-    }
+    return componentInteraction?.applyComponentResize(component, baseObject, handle, localDx, localDy);
   }
 
   function applyComponentDomVisual(component) {
-    if (!textLayerEl || !component) return;
-    const page = currentPage();
-    const cache = page ? textLinesCache.get(page.id) : null;
-    if (!page || !cache) return;
-    if (component.type === 'text') {
-      if (component.pageId !== page.id) return;
-      const line = cache.lines?.[component.lineIndex];
-      const sourceSegment = line?.segments?.[component.segmentIndex] || component.segment;
-      const edit = textEdits.get(component.key);
-      const segment = edit?.segment || component.segment || sourceSegment;
-      const el = componentElement(component);
-      if (!line || !segment || !el) return;
-      const lineRect = rectToViewport(cache.cssViewport, line.box);
-      const visualBox = edit
-        ? (editedTextVisualBox(edit, segment) || segment.box || line.box)
-        : (segment.box || line.box);
-      const segmentRect = rectToViewport(cache.cssViewport, visualBox);
-      applyRelativeViewportRect(el, segmentRect, lineRect);
-      el.style.fontSize = Math.max(1, (segment.fontSize || line.fontSize) * cache.scale) + 'px';
-      el.style.lineHeight = Math.max(1, segmentRect.height) + 'px';
-      el.style.transformOrigin = '50% 50%';
-      el.style.transform = `rotate(${Number(segment.rotation) || 0}deg)`;
-      if (edit) {
-        el.classList.add('is-edited');
-        el.textContent = edit.newText || '';
-        el.style.width = Math.max(1, segmentRect.width) + 'px';
-        ensureTextMask(
-          el.parentElement,
-          component.key,
-          sourceTextBox(edit, sourceSegment),
-          line.box,
-          cache.cssViewport,
-          Number(segment.rotation) || 0,
-          visualBox
-        );
-      }
-      positionComponentMenu();
-      return;
-    }
-    const object = resolveComponentObject(component);
-    if (!object) return;
-    const el = componentElement(component);
-    if (!el) return;
-    let box;
-    if (component.type === 'inserted-text') {
-      box = insertedTextVisualBox(object);
-    } else {
-      box = { x: Number(object.x) || 0, y: Number(object.y) || 0, width: Math.max(1, Number(object.width) || 1), height: Math.max(1, Number(object.height) || 1) };
-    }
-    const rect = rectToViewport(cache.cssViewport, box);
-    el.style.left = rect.left + 'px';
-    el.style.top = rect.top + 'px';
-    el.style.width = Math.max(1, rect.width) + 'px';
-    el.style.height = Math.max(1, rect.height) + 'px';
-    el.style.transform = `rotate(${Number(object.rotation) || 0}deg)`;
-    if (component.type === 'inserted-text') {
-      el.style.fontSize = Math.max(1, (Number(object.fontSize) || 16) * cache.scale) + 'px';
-      el.style.lineHeight = Math.max(1, rect.height) + 'px';
-    } else if (component.type === 'inserted-shape') {
-      const existing = el.querySelector('svg');
-      if (existing) existing.remove();
-      el.appendChild(buildShapeSvg(object, rect.width, rect.height, cache.scale));
-    }
-    positionComponentMenu();
+    return componentInteraction?.applyComponentDomVisual(component);
   }
 
   function beginComponentDrag(event, component) {
-    if (!componentMode || editMode || insertMode || !hasDocument() || activeOperation) return;
-    if (event.button != null && event.button !== 0) return;
-    event.preventDefault();
-    event.stopPropagation();
-    selectComponent(component);
-    const cache = currentTextLayerCache();
-    if (!cache) return;
-    componentDragState = {
-      mode: 'drag',
-      component: cloneState(component),
-      pointerId: event.pointerId,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      cache,
-      snapTargets: collectSnapTargets(component.pageId, component.type, component.key),
-      started: false
-    };
-    const onMove = moveEvent => {
-      if (!componentDragState || moveEvent.pointerId !== componentDragState.pointerId) return;
-      moveEvent.preventDefault();
-      if (!componentDragState.started) {
-        const distance = Math.hypot(
-          moveEvent.clientX - componentDragState.startClientX,
-          moveEvent.clientY - componentDragState.startClientY
-        );
-        if (distance < 4) return;
-        componentDragState.started = true;
-      }
-      const bounds = canvasWrap?.getBoundingClientRect();
-      const startCss = componentDragState.cache.cssViewport.convertToPdfPoint(
-        componentDragState.startClientX - (bounds?.left || 0),
-        componentDragState.startClientY - (bounds?.top || 0)
-      );
-      const nextCss = componentDragState.cache.cssViewport.convertToPdfPoint(
-        moveEvent.clientX - (bounds?.left || 0),
-        moveEvent.clientY - (bounds?.top || 0)
-      );
-      let dx = nextCss[0] - startCss[0];
-      let dy = nextCss[1] - startCss[1];
-      const snapped = snapComponentDrag(
-        componentDragState.component,
-        dx,
-        dy,
-        componentDragState.snapTargets
-      );
-      updateComponentFromDelta(snapped.dx, snapped.dy, 1, componentDragState.component, { deferRender: true });
-    };
-    const onUp = upEvent => {
-      if (!componentDragState || upEvent.pointerId !== componentDragState.pointerId) return;
-      const moved = Boolean(componentDragState.started);
-      componentPointerCleanup?.();
-      flushComponentVisualRefresh();
-      componentDragState = null;
-      if (moved) commitEditorHistory();
-    };
-    bindComponentPointerSession(onMove, onUp);
+    return componentInteraction?.beginComponentDrag(event, component);
   }
 
   function beginComponentResize(event, component, handle = 'se') {
-    if (!componentMode || editMode || insertMode || !hasDocument() || activeOperation) return;
-    if (event.button != null && event.button !== 0) return;
-    event.preventDefault();
-    event.stopPropagation();
-    selectComponent(component);
-    const cache = currentTextLayerCache();
-    if (!cache) return;
-    const liveObject = resolveComponentObject(component);
-    const baseObject = component.type === 'text'
-      ? cloneState(component.segment || {})
-      : cloneState(liveObject || {});
-    componentDragState = {
-      mode: 'resize',
-      component: cloneState(component),
-      baseObject,
-      pointerId: event.pointerId,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      handle,
-      rotation: Number(liveObject?.rotation) || getComponentRotation(component),
-      cache
-    };
-    const onMove = moveEvent => {
-      if (!componentDragState || moveEvent.pointerId !== componentDragState.pointerId) return;
-      moveEvent.preventDefault();
-      const bounds = canvasWrap?.getBoundingClientRect();
-      const startPdf = componentDragState.cache.cssViewport.convertToPdfPoint(
-        componentDragState.startClientX - (bounds?.left || 0),
-        componentDragState.startClientY - (bounds?.top || 0)
-      );
-      const currentPdf = componentDragState.cache.cssViewport.convertToPdfPoint(
-        moveEvent.clientX - (bounds?.left || 0),
-        moveEvent.clientY - (bounds?.top || 0)
-      );
-      const dx = currentPdf[0] - startPdf[0];
-      const dy = currentPdf[1] - startPdf[1];
-      const localDelta = rotatePdfDeltaToLocal(dx, dy, componentDragState.rotation);
-      applyComponentResize(
-        componentDragState.component,
-        componentDragState.baseObject,
-        componentDragState.handle,
-        localDelta.x,
-        localDelta.y
-      );
-      applyComponentDomVisual(componentDragState.component);
-    };
-    const onUp = upEvent => {
-      if (!componentDragState || upEvent.pointerId !== componentDragState.pointerId) return;
-      componentPointerCleanup?.();
-      flushComponentVisualRefresh();
-      componentDragState = null;
-      commitEditorHistory();
-    };
-    bindComponentPointerSession(onMove, onUp);
+    return componentInteraction?.beginComponentResize(event, component, handle);
   }
+ 
 
   function setEditMode(enabled) {
     const page = currentPage();
@@ -2080,6 +1807,43 @@ export function initPdfEditorTool({
     beginComponentResize,
     updateControls,
     refreshCurrentTextLayer
+  });
+
+  componentInteraction = createPdfEditorComponentInteraction({
+    documentRef: document,
+    getComponentMode: () => componentMode,
+    getEditMode: () => editMode,
+    getInsertMode: () => insertMode,
+    getActiveOperation: () => activeOperation,
+    hasDocument,
+    getSelectedComponent: () => selectedComponent,
+    getCurrentPage: currentPage,
+    getCurrentTextLayerCache: currentTextLayerCache,
+    getCanvasWrap: () => canvasWrap,
+    getTextLayer: () => textLayerEl,
+    getTextLinesCache: () => textLinesCache,
+    getTextEdits: () => textEdits,
+    getInsertedTexts: () => insertedTexts,
+    getInsertedImages: () => insertedImages,
+    getInsertedShapes: () => insertedShapes,
+    cloneState,
+    selectComponent,
+    componentElement,
+    resolveComponentObject,
+    getComponentRotation,
+    snapRotationToAxis,
+    setComponentRotation,
+    collectSnapTargets,
+    snapComponentDrag,
+    updateComponentFromDelta,
+    applyRelativeViewportRect,
+    ensureTextMask,
+    buildShapeSvg,
+    positionComponentMenu,
+    flushComponentVisualRefresh,
+    updateControls,
+    commitEditorHistory,
+    listenerOptions
   });
 
   const componentRenderer = createPdfEditorComponentRenderer({

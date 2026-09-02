@@ -81,6 +81,10 @@ const insertAssetsSource = await readFile(
   new URL('../src/features/pdf-editor/insert-assets.js', import.meta.url),
   'utf8'
 );
+const componentInteractionSource = await readFile(
+  new URL('../src/features/pdf-editor/component-interaction.js', import.meta.url),
+  'utf8'
+);
 
 const snapshotStart = uiSource.indexOf('function captureEditorSnapshot()');
 const snapshotEnd = uiSource.indexOf('function applyEditorSnapshot(', snapshotStart);
@@ -144,6 +148,11 @@ assert.match(insertAssetsSource, /export function readEncodedImageDimensions\(by
 assert.match(insertAssetsSource, /export function assertImagePixelLimit\(dimensions/);
 assert.match(insertAssetsSource, /export async function readImageDimensions\(bytes, mimeType/);
 assert.doesNotMatch(uiSource, /function readEncodedImageDimensions\(bytes, mimeType\)/);
+assert.match(componentInteractionSource, /function beginComponentDrag\(event, component\)/);
+assert.match(componentInteractionSource, /function beginComponentResize\(event, component, handle = 'se'\)/);
+assert.match(componentInteractionSource, /function beginComponentRotate\(event\)/);
+assert.match(componentInteractionSource, /function reset\(\)/);
+assert.doesNotMatch(uiSource, /function beginComponentDrag\(event, component\)\s*\{\s*if \(!componentMode/);
 const imagePrepareStart = uiSource.indexOf('async function prepareInsertImage(');
 const imagePrepareEnd = uiSource.indexOf('function saveEditModal(', imagePrepareStart);
 const imagePrepareSource = uiSource.slice(imagePrepareStart, imagePrepareEnd);

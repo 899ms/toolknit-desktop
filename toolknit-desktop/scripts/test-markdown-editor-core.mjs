@@ -1,5 +1,18 @@
 import assert from 'node:assert/strict';
-import { applyMarkdownAction, buildStandaloneMarkdownHtml, createMarkdownRenderer, extractMarkdownHeadings, rewriteMarkdownImages, sanitizeExportBaseName } from '../src/markdown-editor-core.js';
+import * as compatibleCore from '../src/markdown-editor-core.js';
+import {
+  applyMarkdownAction,
+  buildStandaloneMarkdownHtml,
+  createMarkdownRenderer,
+  extractMarkdownHeadings,
+  rewriteMarkdownImages,
+  sanitizeExportBaseName
+} from '../src/features/markdown-editor/core.js';
+import { markdownPreviewAssetUrl } from '../src/features/markdown-editor/preview-security.js';
+
+assert.equal(compatibleCore.applyMarkdownAction, applyMarkdownAction);
+assert.equal(compatibleCore.createMarkdownRenderer, createMarkdownRenderer);
+assert.equal(markdownPreviewAssetUrl('a/b'), 'https://toolknit.local/markdown-asset/a%2Fb');
 
 assert.deepEqual(extractMarkdownHeadings('# A\n```md\n## hidden\n```\n### [Visible](x)'), [
   { level: 1, text: 'A', line: 1, id: 'md-heading-1' },

@@ -26148,74 +26148,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .feature-tool-overlay svg { width: 17px; height: 17px; }
 
 /* Markdown editor */
-.md-tool-shell { height: 100%; background: radial-gradient(circle at 82% 2%, rgba(44,122,104,.14), transparent 28%), #0b0d0c; }
-.md-tool-topbar { height: 70px; display: grid; grid-template-columns: 210px 1fr auto; align-items: center; gap: 20px; padding: 0 22px; border-bottom: 1px solid rgba(255,255,255,.1); background: rgba(9,11,10,.82); backdrop-filter: blur(20px); }
-.md-back,.md-top-actions button { height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(255,255,255,.14); border-radius: 5px; background: rgba(255,255,255,.05); cursor: pointer; }
-.md-back { width: 126px; }
-.md-brand { min-width: 0; display: flex; align-items: baseline; gap: 14px; }
-.md-brand span,.md-panel-label span,.md-pane-head span,.md-help-hero>span { color: rgba(255,255,255,.43); font-size: 10px; font-weight: 800; text-transform: uppercase; }
-.md-brand strong { overflow: hidden; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
-.md-top-actions { display: flex; gap: 8px; }
-.md-top-actions button { padding: 0 14px; }
-.md-top-actions button.is-primary { color: #0b1512; border-color: #d8fff3; background: #d8fff3; font-weight: 800; }
-.md-top-actions button.is-active { border-color: rgba(216,255,243,.5); background: rgba(216,255,243,.12); }
-.md-tool-main { height: calc(100% - 70px); display: grid; grid-template-columns: 230px minmax(0,1fr); }
-.md-outline-panel { min-height: 0; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.018); }
-.md-panel-label { display: grid; gap: 4px; padding: 22px 20px 18px; border-bottom: 1px solid rgba(255,255,255,.08); }
-.md-panel-label strong { font-size: 15px; }
-.md-outline { flex: 1; overflow: auto; padding: 12px 10px; }
-.md-outline p { padding: 8px 10px; color: rgba(255,255,255,.36); font-size: 12px; line-height: 1.7; }
-.md-outline button { width: 100%; height: 34px; display: block; overflow: hidden; padding: 0 10px 0 calc(10px + (var(--level) - 1) * 11px); border: 0; border-left: 2px solid transparent; background: transparent; color: rgba(255,255,255,.62); text-align: left; cursor: pointer; }
-.md-outline button:hover { border-left-color: #9ee8d5; background: rgba(158,232,213,.07); color: #fff; }
-.md-outline button span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.md-draft-state { min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 18px; border-top: 1px solid rgba(255,255,255,.08); color: rgba(255,255,255,.43); font-size: 11px; }
-.md-draft-state svg { width: 15px; color: #80ccb9; }
-.md-workbench { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0,1fr); }
-.md-toolbar { min-height: 54px; display: flex; align-items: center; gap: 8px; padding: 8px 14px; overflow-x: auto; border-bottom: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.025); }
-.md-toolbar-group,.md-view-switch { display: flex; flex: 0 0 auto; gap: 2px; padding-right: 8px; border-right: 1px solid rgba(255,255,255,.1); }
-.md-toolbar button { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid transparent; border-radius: 4px; background: transparent; color: rgba(255,255,255,.67); cursor: pointer; }
-.md-toolbar button:hover,.md-toolbar button.is-active { border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.09); color: #fff; }
-.md-view-switch { margin-left: auto; padding: 3px; border: 1px solid rgba(255,255,255,.12); border-radius: 5px; background: rgba(0,0,0,.16); }
-.md-view-switch button { width: auto; min-width: 50px; padding: 0 9px; font-size: 11px; }
-.md-view-switch button.is-active { background: #eafdf6; color: #10231d; font-weight: 800; }
-.md-editor-view { min-height: 0; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
-.md-editor-view[data-view="preview"] { grid-template-columns: 1fr; }
-.md-editor-view[data-view="preview"] .md-input-pane,.md-editor-view[data-view="editor"] .md-preview-pane { display: none; }
-.md-editor-view[data-view="editor"] { grid-template-columns: 1fr; }
-.md-preview-pane,.md-input-pane { min-width: 0; min-height: 0; display: grid; grid-template-rows: 38px minmax(0,1fr); }
-.md-preview-pane { border-right: 1px solid rgba(255,255,255,.1); background: #eff2ef; color: #18201d; }
-.md-input-pane { background: #101311; }
-.md-pane-head { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid rgba(255,255,255,.09); background: #0f1210; }
-.md-pane-head small { color: rgba(255,255,255,.4); font-size: 10px; }
-.md-preview { overflow: auto; padding: 32px clamp(28px,4vw,58px) 70px; }
-.markdown-body { font-size: 15px; line-height: 1.8; }
-.markdown-body h1,.markdown-body h2,.markdown-body h3,.markdown-body h4 { scroll-margin-top: 32px; transition: background-color .2s ease, box-shadow .2s ease; }
-.markdown-body h1 { padding-bottom: 10px; border-bottom: 2px solid #25342e; font-size: 30px; }
-.markdown-body h2 { margin-top: 36px; padding-bottom: 7px; border-bottom: 1px solid #cbd4d0; font-size: 23px; }
-.markdown-body h3 { margin-top: 28px; font-size: 19px; }
-.markdown-body p,.markdown-body li { color: #3b4742; }
-.markdown-body blockquote { margin: 20px 0; padding: 10px 16px; border-left: 4px solid #2f8e79; background: #e1ebe7; color: #43534d; }
-.markdown-body pre { overflow: auto; padding: 18px; border-radius: 5px; background: #17201d; color: #eef7f3; }
-.markdown-body code { padding: 2px 5px; border-radius: 3px; background: #dde7e2; }
-.markdown-body pre code { padding: 0; background: none; }
-.markdown-body table { width: 100%; border-collapse: collapse; }
-.markdown-body th,.markdown-body td { padding: 9px 11px; border: 1px solid #cad3cf; }
-.markdown-body img,.markdown-body svg { max-width: 100%; height: auto; }
-.markdown-body .is-outline-highlight,.cm-line.is-outline-highlight { background: rgba(31,151,121,.16); box-shadow: inset 3px 0 #26987a; }
-.md-math-block { overflow-x: auto; padding: 14px; text-align: center; }
-.md-render-error { border: 1px solid #b45d57; }
-.md-codemirror,.md-codemirror .cm-editor { height: 100%; min-height: 0; }
-.md-codemirror .cm-editor { background: transparent; color: #d9e2de; font: 13px/1.72 Consolas,"Cascadia Code",monospace; }
-.md-codemirror .cm-scroller { overflow: auto; padding: 14px 0 60px; }
-.md-codemirror .cm-gutters { border: 0; background: transparent; color: rgba(255,255,255,.23); }
-.md-codemirror .cm-activeLine,.md-codemirror .cm-activeLineGutter { background: rgba(255,255,255,.035); }
-.md-codemirror .cm-content { padding: 0 14px; caret-color: #b7f6e4; }
-.md-help-page { min-height: 0; overflow: auto; padding: 0 clamp(30px,6vw,88px) 80px; background: #eef2ef; color: #17201d; }
-.md-help-document { width: min(920px,100%); margin: 0 auto; }
-.md-help-hero { padding: 56px 0 34px; border-bottom: 2px solid #1b2924; }
-.md-help-hero>span { color: #5c6c66; }.md-help-hero h1 { margin: 8px 0; font-size: 36px; }.md-help-hero p { color: #596660; }
-.md-help-document section { display: grid; grid-template-columns: 230px minmax(0,1fr); gap: 30px; padding: 28px 0; border-bottom: 1px solid #ccd5d1; }
-.md-help-document h2 { margin: 0; font-size: 18px; }.md-help-document p { margin: 0; color: #53605b; line-height: 1.8; }.md-help-document pre { margin: 0; overflow: auto; padding: 16px 18px; border-radius: 5px; background: #17201d; color: #eff7f4; }
 
 /* Smart color replacement */
 
@@ -26235,15 +26167,10 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 
 @keyframes tk-spin { to { transform: rotate(360deg); } }
 @media (max-width: 1100px) {
-  .md-tool-main { grid-template-columns: 190px minmax(0,1fr); }
-  .md-editor-view { grid-template-columns: 1fr; }.md-preview-pane { display: none; }.md-view-switch { margin-left: 0; }
   .crypto-main { grid-template-columns: 190px minmax(0,1fr); }
 }
 @media (max-width: 760px) {
-  .md-tool-topbar,
-.crypto-topbar { grid-template-columns: auto 1fr; height: 60px; padding: 0 12px; }.md-top-actions,
-.crypto-security { display: none!important; }
-  .md-tool-main { height: calc(100% - 60px); grid-template-columns: 1fr; }.md-outline-panel { display: none; }.md-toolbar { overflow-x: auto; }.md-editor-view { grid-template-columns: 1fr; }
+  .crypto-topbar { grid-template-columns: auto 1fr; height: 60px; padding: 0 12px; }.crypto-security { display: none!important; }
   .crypto-main { height: calc(100% - 60px); grid-template-columns: 1fr; }.crypto-sidebar { height: 58px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.1); }.crypto-sidebar-head,.crypto-nav-group { display: none; }.crypto-sidebar nav { height: 58px; display: flex; overflow-x: auto; padding: 8px; }.crypto-sidebar nav button { min-width: 120px; }.crypto-workspace { height: calc(100vh - 118px); }.crypto-io-grid,.crypto-secret-grid,.crypto-key-grid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion:reduce){.crypto-status.is-busy svg{animation:none}.crypto-file-progress i{transition:none}}
@@ -26379,7 +26306,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 }
 .tool-page-v2-rail,
 .tool-page-v2-workspace,
-.md-workbench,
 .crypto-sidebar,
 .crypto-workspace {
   min-width: 0;
@@ -26408,26 +26334,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .tool-page-v2-steps small { color: rgba(255,255,255,.43); font-size: 10px; line-height: 1.5; }
 
 /* Markdown */
-.md-tool-main { grid-template-columns: minmax(286px, 330px) minmax(0, 1fr); }
-.md-outline-panel { gap: 0; }
-.md-outline-block { min-height: 132px; display: flex; flex: 1 1 auto; flex-direction: column; margin-top: 22px; border-top: 1px solid rgba(255,255,255,.1); }
-.md-outline-block .md-panel-label { padding: 16px 0 8px; border: 0; }
-.md-outline { min-height: 40px; padding: 0; }
-.md-outline p { padding: 8px 0; }
-.md-outline button { padding-left: calc((var(--level) - 1) * 10px); }
-.md-draft-state { min-height: 38px; padding: 0; border-top: 1px solid rgba(255,255,255,.1); }
-.md-workbench { display: grid; grid-template-rows: auto minmax(0,1fr); }
-.md-toolbar { background: rgba(0,0,0,.16); }
-.md-help-action { min-height: 32px; display: inline-flex; align-items: center; gap: 6px; margin-left: auto; padding: 0 10px; border: 1px solid rgba(255,255,255,.12); border-radius: 5px; color: rgba(255,255,255,.7); background: rgba(255,255,255,.035); cursor: pointer; }
-.md-toolbar .md-help-action { width: auto; flex: 0 0 auto; display: inline-flex; place-items: normal; white-space: nowrap; }
-.md-toolbar .md-help-action span { display: none; }
-.md-help-action:hover, .md-help-action.is-active { color: #fff; background: rgba(255,255,255,.1); }
-.md-help-action svg { width: 15px; height: 15px; }
-.md-view-switch { margin-left: 0; }
-.md-editor-view { min-height: 0; }
-.md-preview-pane { background: rgba(244,247,245,.94); }
-.md-input-pane { background: rgba(12,14,13,.68); }
-.md-help-page { background: rgba(238,242,239,.96); }
 
 /* Smart color replacement */
 
@@ -26459,10 +26365,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
   .tool-page-v2-rail { min-height: auto; }
   .tool-page-v2-rail h1 { font-size: 38px; }
   .tool-page-v2-steps { grid-template-columns: repeat(2,minmax(0,1fr)); margin-top: 22px; }
-  .md-outline-block { display: none; }
-  .md-workbench { min-height: 620px; }
-  .md-editor-view { grid-template-columns: 1fr; }
-  .md-preview-pane { display: none; }
   .crypto-io-grid,
 .crypto-secret-grid,
 .crypto-key-grid { grid-template-columns: 1fr; }
@@ -26474,34 +26376,13 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
    two-column modal geometry. */
 
 /* EOF layout precedence for Tool Page 2.1. */
-.md-tool-main,
 .crypto-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) !important; }
-.md-workbench { display:grid !important; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:16px; overflow:visible !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
-.md-toolbar { grid-column:1/-1; border:1px solid rgba(255,255,255,.1); border-radius:16px; background:rgba(13,14,15,.78); }
-.md-editor-view { display:contents !important; }
-.md-input-pane,.md-preview-pane { height:100%; border:1px solid rgba(255,255,255,.1); border-radius:20px; overflow:hidden; }
-.md-input-pane { grid-column:1; grid-row:2; background:rgba(13,15,14,.84); }
-.md-preview-pane { grid-column:2; grid-row:2; }
-.md-help-page { grid-column:1/-1; grid-row:2; height:100%; border:1px solid rgba(255,255,255,.1); border-radius:20px; overflow:auto; }
-.md-codemirror { min-height:0; overflow:auto; }
 .crypto-workspace { grid-template-rows:auto auto minmax(0,1fr) auto; min-height:0; overflow:hidden !important; }
 .crypto-panel { min-height:0; height:100%; overflow:auto; padding:22px 28px 28px; }
 .crypto-io textarea { min-height:0; height:100%; resize:none; }
-@media (min-width:1560px) { .md-tool-main,
-.crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } }
-@media (max-width:1180px) { .md-tool-main,
-.crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } }
+@media (min-width:1560px) { .crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } }
+@media (max-width:1180px) { .crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } }
 @media (max-width:760px) {
-  .md-workbench { display:flex !important; flex-direction:column; gap:12px; min-height:620px !important; flex:0 0 620px; }
-  .md-toolbar { flex:0 0 auto; border-radius:14px; }
-  .md-editor-view { display:block !important; min-height:0; flex:1 1 auto; }
-  .md-input-pane,.md-preview-pane,.md-help-page { height:620px; min-height:620px; }
-  .md-input-pane { display:grid; }
-  .md-preview-pane { display:none; }
-  .md-editor-view[data-view="preview"] .md-input-pane { display:none; }
-  .md-editor-view[data-view="preview"] .md-preview-pane { display:grid; }
-  .md-editor-view[data-view="editor"] .md-preview-pane { display:none; }
-  .md-editor-view[data-view="editor"] .md-input-pane { display:grid; }
   .crypto-workspace { min-height:760px !important; overflow:visible !important; }
   .crypto-panel { height:auto; min-height:560px; }
   .crypto-io textarea { min-height:220px; height:220px; }
@@ -26522,7 +26403,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .tool-page-v2-body { height: auto !important; min-height: 0 !important; }
 .tool-page-v2-rail,
 .tool-page-v2-workspace,
-.md-workbench,
 .crypto-sidebar,
 .crypto-workspace {
   background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.018)), rgba(10,10,11,.56);
@@ -26531,54 +26411,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 }
 
 /* Markdown: one framed workbench, two equal inner surfaces. */
-.md-workbench {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 14px;
-  padding: 16px;
-  overflow: hidden !important;
-  border-radius: 24px;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-}
-.md-toolbar {
-  grid-column: 1;
-  min-width: 0;
-  min-height: 52px;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 13px;
-  background: rgba(8, 10, 10, .62);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
-}
-.md-editor-view {
-  min-width: 0;
-  min-height: 0;
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 14px;
-  overflow: hidden;
-}
-.md-input-pane,
-.md-preview-pane {
-  grid-column: auto !important;
-  grid-row: auto !important;
-  min-width: 0;
-  min-height: 0;
-  height: auto;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: none;
-}
-.md-input-pane { background: rgba(7, 10, 10, .68); }
-.md-preview-pane { background: rgba(244, 247, 245, .94); }
-.md-codemirror { min-height: 0; overflow: auto; }
-.md-help-page { grid-column: 1; grid-row: 2; min-height: 0; height: auto; border-radius: 15px; }
-.md-editor-view[data-view="preview"] .md-input-pane { display: none; }
-.md-editor-view[data-view="preview"] .md-preview-pane { display: grid; }
-.md-editor-view[data-view="editor"] .md-preview-pane { display: none; }
-.md-editor-view[data-view="editor"] .md-input-pane { display: grid; }
 
 /* Image replacement: stage and controls stay as two sibling glass cards on
    wide screens, then stack without changing control order on narrow screens. */
@@ -26595,24 +26427,13 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .crypto-io textarea { min-height: 0; height: 100%; resize: none; }
 
 @media (min-width: 1560px) {
-  .md-tool-main,
-.crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
+  .crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
 }
 @media (max-width: 1180px) {
-  .md-tool-main,
-.crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
+  .crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
 }
 @media (max-width: 760px) {
   .tool-page-v2-body { overflow: visible; }
-  .md-workbench { display: flex !important; flex-direction: column; min-height: 680px !important; flex: 0 0 680px; padding: 12px; }
-  .md-toolbar { flex: 0 0 auto; }
-  .md-editor-view { display: block !important; min-height: 0; flex: 1 1 auto; overflow: hidden; }
-  .md-input-pane, .md-preview-pane { height: 100%; min-height: 0; }
-  .md-preview-pane { display: none; }
-  .md-editor-view[data-view="preview"] .md-preview-pane { display: grid; }
-  .md-editor-view[data-view="preview"] .md-input-pane { display: none; }
-  .md-editor-view[data-view="editor"] .md-input-pane { display: grid; }
-  .md-editor-view[data-view="editor"] .md-preview-pane { display: none; }
   .crypto-workspace { min-height: 760px !important; overflow: visible !important; }
   .crypto-panel { height: auto; min-height: 560px; }
   .crypto-io textarea { min-height: 220px; height: 220px; }
@@ -26620,34 +26441,13 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 
 /* Last cascade layer: these selectors intentionally come after the legacy
    toolbox stylesheet so all 2.1 pages use the shared shell geometry. */
-.md-tool-main,
 .crypto-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) !important; }
-.md-workbench { display:grid !important; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:16px; overflow:visible !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
-.md-toolbar { grid-column:1/-1; border:1px solid rgba(255,255,255,.1); border-radius:16px; background:rgba(13,14,15,.78); box-shadow:0 14px 40px rgba(0,0,0,.2); }
-.md-editor-view { display:contents !important; }
-.md-input-pane,.md-preview-pane { height:100%; border:1px solid rgba(255,255,255,.1); border-radius:20px; overflow:hidden; box-shadow:0 18px 50px rgba(0,0,0,.22); }
-.md-input-pane { grid-column:1; grid-row:2; background:rgba(13,15,14,.84); }
-.md-preview-pane { grid-column:2; grid-row:2; }
-.md-help-page { grid-column:1/-1; grid-row:2; height:100%; border:1px solid rgba(255,255,255,.1); border-radius:20px; overflow:auto; box-shadow:0 18px 50px rgba(0,0,0,.22); }
-.md-codemirror { min-height:0; overflow:auto; }
 .crypto-workspace { grid-template-rows:auto auto minmax(0,1fr) auto; min-height:0; overflow:hidden !important; }
 .crypto-panel { min-height:0; height:100%; overflow:auto; padding:22px 28px 28px; }
 .crypto-io textarea { min-height:0; height:100%; resize:none; }
-@media (min-width:1560px) { .md-tool-main,
-.crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } }
-@media (max-width:1180px) { .md-tool-main,
-.crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } }
+@media (min-width:1560px) { .crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } }
+@media (max-width:1180px) { .crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } }
 @media (max-width:760px) {
-  .md-workbench { display:flex !important; flex-direction:column; gap:12px; min-height:620px !important; flex:0 0 620px; }
-  .md-toolbar { flex:0 0 auto; border-radius:14px; }
-  .md-editor-view { display:block !important; min-height:0; flex:1 1 auto; }
-  .md-input-pane,.md-preview-pane,.md-help-page { height:620px; min-height:620px; }
-  .md-input-pane { display:grid; }
-  .md-preview-pane { display:none; }
-  .md-editor-view[data-view="preview"] .md-input-pane { display:none; }
-  .md-editor-view[data-view="preview"] .md-preview-pane { display:grid; }
-  .md-editor-view[data-view="editor"] .md-preview-pane { display:none; }
-  .md-editor-view[data-view="editor"] .md-input-pane { display:grid; }
   .crypto-workspace { min-height:760px !important; overflow:visible !important; }
   .crypto-panel { height:auto; min-height:560px; }
   .crypto-io textarea { min-height:220px; height:220px; }
@@ -26655,54 +26455,18 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 
 /* Final precedence for the 2.1 workbench layout. Keep this after the legacy
    feature rules above so the shared shell always wins. */
-.md-tool-main,
 .crypto-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) !important; }
-.md-workbench {
-  display: grid !important;
-  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
-  grid-template-rows: auto minmax(0,1fr);
-  gap: 16px;
-  overflow: visible !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-.md-toolbar { grid-column: 1/-1; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: rgba(13,14,15,.78); box-shadow: 0 14px 40px rgba(0,0,0,.2); }
-.md-editor-view { display: contents !important; }
-.md-input-pane,
-.md-preview-pane { height: 100%; border: 1px solid rgba(255,255,255,.1); border-radius: 20px; overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.22); }
-.md-input-pane { grid-column: 1; grid-row: 2; background: rgba(13,15,14,.84); }
-.md-preview-pane { grid-column: 2; grid-row: 2; }
-.md-help-page { grid-column: 1/-1; grid-row: 2; height: 100%; border: 1px solid rgba(255,255,255,.1); border-radius: 20px; overflow: auto; box-shadow: 0 18px 50px rgba(0,0,0,.22); }
-.md-codemirror { min-height: 0; overflow: auto; }
 .crypto-workspace { grid-template-rows: auto auto minmax(0,1fr) auto; min-height: 0; overflow: hidden !important; }
 .crypto-panel { min-height: 0; height: 100%; overflow: auto; padding: 22px 28px 28px; }
 .crypto-io textarea { min-height: 0; height: 100%; resize: none; }
 .crypto-io-grid { min-height: 0; }
 @media (min-width:1560px) {
-  .md-tool-main,
-.crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
+  .crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
 }
 @media (max-width:1180px) {
-  .md-tool-main,
-.crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
+  .crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
 }
 @media (max-width:760px) {
-  .md-workbench { display: flex !important; flex-direction: column; gap: 12px; min-height: 620px !important; flex: 0 0 620px; }
-  .md-toolbar { flex: 0 0 auto; border-radius: 14px; }
-  .md-editor-view { display: block !important; min-height: 0; flex: 1 1 auto; }
-  .md-input-pane,
-  .md-preview-pane,
-  .md-help-page { height: 620px; min-height: 620px; }
-  .md-input-pane { display: grid; }
-  .md-preview-pane { display: none; }
-  .md-editor-view[data-view="preview"] .md-input-pane { display: none; }
-  .md-editor-view[data-view="preview"] .md-preview-pane { display: grid; }
-  .md-editor-view[data-view="editor"] .md-preview-pane { display: none; }
-  .md-editor-view[data-view="editor"] .md-input-pane { display: grid; }
   .crypto-workspace { min-height: 760px !important; overflow: visible !important; }
   .crypto-panel { height: auto; min-height: 560px; }
   .crypto-io textarea { min-height: 220px; height: 220px; }
@@ -26714,7 +26478,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
    interchangeable. Keep the reference geometry: a stable information rail,
    glass work surfaces, and controls that consume the available height.
    ------------------------------------------------------------------------- */
-.md-tool-main,
 .crypto-main {
   grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) !important;
 }
@@ -26722,53 +26485,6 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 /* Markdown follows the two-surface editor pattern used by the reference
    text tools. The wrapper becomes layout-only so each surface can keep its
    own scroll container and glass boundary. */
-.md-workbench {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 16px;
-  overflow: visible !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-.md-toolbar {
-  grid-column: 1 / -1;
-  min-width: 0;
-  min-height: 54px;
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 16px;
-  background: rgba(13,14,15,.78);
-  box-shadow: 0 14px 40px rgba(0,0,0,.2);
-}
-.md-editor-view { display: contents !important; }
-.md-input-pane,
-.md-preview-pane {
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 18px 50px rgba(0,0,0,.22);
-}
-.md-input-pane { grid-column: 1; grid-row: 2; background: rgba(13,15,14,.84); }
-.md-preview-pane { grid-column: 2; grid-row: 2; border-right: 1px solid rgba(255,255,255,.1); }
-.md-help-page {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  min-height: 0;
-  height: 100%;
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 20px;
-  overflow: auto;
-  box-shadow: 0 18px 50px rgba(0,0,0,.22);
-}
-.md-codemirror { min-height: 0; overflow: auto; }
-.md-preview { scrollbar-gutter: stable; }
 
 /* The color stage is a fixed work surface; only the control column scrolls.
    This keeps the export controls reachable at every desktop height. */
@@ -26791,28 +26507,12 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 .crypto-io-grid { min-height: 0; }
 
 @media (min-width: 1560px) {
-  .md-tool-main,
-.crypto-main { grid-template-columns: minmax(320px, 356px) minmax(0,1fr) !important; }
+  .crypto-main { grid-template-columns: minmax(320px, 356px) minmax(0,1fr) !important; }
 }
 @media (max-width: 1180px) {
-  .md-tool-main,
-.crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
-  .md-workbench { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
 }
 @media (max-width: 760px) {
-  .md-workbench { display: flex !important; flex-direction: column; gap: 12px; }
-  .md-toolbar { flex: 0 0 auto; border-radius: 14px; }
-  .md-editor-view { display: block !important; min-height: 0; flex: 1 1 auto; }
-  .md-input-pane,
-  .md-preview-pane,
-  .md-help-page { height: 620px; min-height: 620px; }
-  .md-input-pane { display: grid; }
-  .md-preview-pane { display: none; }
-  .md-editor-view[data-view="preview"] .md-input-pane { display: none; }
-  .md-editor-view[data-view="preview"] .md-preview-pane { display: grid; }
-  .md-editor-view[data-view="editor"] .md-preview-pane { display: none; }
-  .md-editor-view[data-view="editor"] .md-input-pane { display: grid; }
-  .md-help-page { flex: 1 1 auto; }
   .crypto-workspace { min-height: 760px !important; overflow: visible !important; }
   .crypto-panel { height: auto; min-height: 560px; }
   .crypto-io textarea { min-height: 220px; height: 220px; }
@@ -26824,22 +26524,18 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
    an unused strip below every new tool. Grid owns the row height here; inner
    panels own their scrolling. */
 .tool-page-v2-body,
-.md-tool-main,
 .crypto-main {
   height: auto !important;
   min-height: 0 !important;
 }
 .tool-page-v2-body { overflow: hidden; }
-.md-workbench,
 .crypto-sidebar,
 .crypto-workspace { min-height: 0; }
-.md-workbench,
 .crypto-workspace { overflow: hidden; }
 .crypto-sidebar,
 .crypto-panel { overflow-y: auto; overscroll-behavior: contain; }
 .tool-page-v2-support,
 .tool-page-v2-support:hover { color: #050506 !important; }
-.md-editor-view { min-height: 0; overflow: hidden; }
 
 @media (max-width: 1180px) {
   .tool-page-v2-body { overflow-y: auto; }
@@ -26848,43 +26544,20 @@ body.window-is-maximized .settings-overlay.v2-settings .settings-content {
 @media (max-width: 760px) {
   .tool-page-v2-body { overflow: visible; }
   .tool-page-v2-rail { flex: 0 0 auto; }
-  .md-workbench { min-height: 620px !important; flex: 0 0 620px; }
   .crypto-workspace { min-height: 700px !important; flex: 0 0 auto; }
-  .md-workbench,
-.crypto-workspace { overflow: visible; }
+  .crypto-workspace { overflow: visible; }
 }
 .developer-tool-quicklist { margin: 0 auto 26px; max-width: 1180px; }
 
 /* Final shared-shell precedence for the legacy toolbox block above. */
 /* EOF layout precedence for Tool Page 2.1. */
-.md-tool-main,
 .crypto-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) !important; }
-.md-workbench { display:grid !important; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:16px; overflow:visible !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
-.md-toolbar { grid-column:1/-1; border:1px solid rgba(255,255,255,.1); border-radius:16px; background:rgba(13,14,15,.78); }
-.md-editor-view { display:contents !important; }
-.md-input-pane,.md-preview-pane { height:100%; border:1px solid rgba(255,255,255,.1); border-radius:20px; overflow:hidden; }
-.md-input-pane { grid-column:1; grid-row:2; background:rgba(13,15,14,.84); }
-.md-preview-pane { grid-column:2; grid-row:2; }
-.md-help-page { grid-column:1/-1; grid-row:2; height:100%; border:1px solid rgba(255,255,255,.1); border-radius:20px; overflow:auto; }
-.md-codemirror { min-height:0; overflow:auto; }
 .crypto-workspace { grid-template-rows:auto auto minmax(0,1fr) auto; min-height:0; overflow:hidden !important; }
 .crypto-panel { min-height:0; height:100%; overflow:auto; padding:22px 28px 28px; }
 .crypto-io textarea { min-height:0; height:100%; resize:none; }
-@media (min-width:1560px) { .md-tool-main,
-.crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } }
-@media (max-width:1180px) { .md-tool-main,
-.crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } }
+@media (min-width:1560px) { .crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } }
+@media (max-width:1180px) { .crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } }
 @media (max-width:760px) {
-  .md-workbench { display:flex !important; flex-direction:column; gap:12px; min-height:620px !important; flex:0 0 620px; }
-  .md-toolbar { flex:0 0 auto; border-radius:14px; }
-  .md-editor-view { display:block !important; min-height:0; flex:1 1 auto; }
-  .md-input-pane,.md-preview-pane,.md-help-page { height:620px; min-height:620px; }
-  .md-input-pane { display:grid; }
-  .md-preview-pane { display:none; }
-  .md-editor-view[data-view="preview"] .md-input-pane { display:none; }
-  .md-editor-view[data-view="preview"] .md-preview-pane { display:grid; }
-  .md-editor-view[data-view="editor"] .md-preview-pane { display:none; }
-  .md-editor-view[data-view="editor"] .md-input-pane { display:grid; }
   .crypto-workspace { min-height:760px !important; overflow:visible !important; }
   .crypto-panel { height:auto; min-height:560px; }
   .crypto-io textarea { min-height:220px; height:220px; }

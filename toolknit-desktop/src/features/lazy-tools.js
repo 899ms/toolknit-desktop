@@ -71,7 +71,7 @@ export const LAZY_TOOL_SPECS = Object.freeze({
   }),
   'markdown-editor': Object.freeze({
     overlayId: 'markdownEditorOverlay',
-    load: () => import('../markdown-editor-ui.js'),
+    load: () => import('./markdown-editor/tool.js'),
     init: 'initMarkdownEditorTool'
   }),
   'image-color-replace': Object.freeze({

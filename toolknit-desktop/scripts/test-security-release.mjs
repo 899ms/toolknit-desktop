@@ -184,7 +184,9 @@ await assert.rejects(
 );
 checks += 1;
 
-const markdownSource = read('toolknit-desktop/src/markdown-editor-ui.js');
+const markdownControllerSource = read('toolknit-desktop/src/features/markdown-editor/controller.js');
+const markdownPreviewSecuritySource = read('toolknit-desktop/src/features/markdown-editor/preview-security.js');
+const markdownSource = `${markdownControllerSource}\n${markdownPreviewSecuritySource}`;
 for (const required of [
   'function safeLivePreviewFragment',
   "template.content.querySelectorAll('img')",
@@ -193,11 +195,15 @@ for (const required of [
   "link.setAttribute('rel', 'noopener noreferrer')",
   "preview.replaceChildren(safeLivePreviewFragment(clean, assets))",
   "host.replaceChildren(safeLivePreviewFragment(html, []))",
-  "invoke('open_url',{url:href})"
+  "invoke('open_url', { url: href })"
 ]) {
   check(markdownSource.includes(required), `Markdown preview security boundary is missing: ${required}`);
 }
-const markdownCoreSource = read('toolknit-desktop/src/markdown-editor-core.js');
+check(markdownControllerSource.includes("from '../../platform/tauri-runtime.js'"), 'Markdown must use the centralized Tauri platform boundary');
+check(!markdownControllerSource.includes("from '@tauri-apps/"), 'Markdown must not import Tauri APIs directly');
+check(markdownControllerSource.includes('isOpenSession(owner)'), 'Markdown async work must verify its owning open session');
+check(markdownControllerSource.includes('return { open, close, dispose }'), 'Markdown must expose the complete tool lifecycle contract');
+const markdownCoreSource = read('toolknit-desktop/src/features/markdown-editor/core.js');
 check(markdownCoreSource.includes("default-src 'none'"), 'Standalone Markdown exports must block network access by default');
 check(markdownCoreSource.includes('img-src data:'), 'Standalone Markdown exports must allow embedded images only');
 check(markdownCoreSource.includes('name="referrer" content="no-referrer"'), 'Standalone Markdown exports must not leak referrer data');

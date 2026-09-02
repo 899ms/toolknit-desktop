@@ -14,6 +14,8 @@ import { selectInstalledModels as featureSelectInstalledModels } from '../src/fe
 import { selectInstalledModels as compatibleSelectInstalledModels } from '../src/bg-removal-core.js';
 import { rgbToHex as featureImageColorRgbToHex } from '../src/features/image-color-replace/core.js';
 import { rgbToHex as compatibleImageColorRgbToHex } from '../src/image-color-replace-core.js';
+import { applyMarkdownAction as featureMarkdownAction } from '../src/features/markdown-editor/core.js';
+import { applyMarkdownAction as compatibleMarkdownAction } from '../src/markdown-editor-core.js';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
 import { toolTopbarMarkup as sharedToolTopbarMarkup } from '../src/shared/tool-page-shell.js';
 import { toolTopbarMarkup as compatibleToolTopbarMarkup } from '../src/tool-page-shell.js';
@@ -24,7 +26,12 @@ const [
   indexSource,
   selectCompatibilityStyles,
   selectComponentStyles,
-  markdownEditorSource,
+  markdownCompatibilitySource,
+  markdownToolSource,
+  markdownControllerSource,
+  markdownTemplateSource,
+  markdownPreviewSecuritySource,
+  markdownFeatureStyles,
   developerToolboxSource,
   colorSpaceToolSource,
   bgRemovalToolSource,
@@ -55,6 +62,11 @@ const [
   readFile(new URL('../src/tool-custom-select.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/styles/components/tool-custom-select.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/markdown-editor-ui.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/markdown-editor/tool.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/markdown-editor/controller.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/markdown-editor/template.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/markdown-editor/preview-security.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/markdown-editor/markdown-editor.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/developer-toolbox/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/color-space-compare/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/bg-removal/tool.js', import.meta.url), 'utf8'),
@@ -78,8 +90,7 @@ const [
   readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/tool-page-v2-final.css', import.meta.url), 'utf8'),
   ...[
-    'crypto-tool-ui.js',
-    'markdown-editor-ui.js'
+    'crypto-tool-ui.js'
   ].map(file => readFile(new URL(`../src/${file}`, import.meta.url), 'utf8'))
 ]);
 
@@ -89,6 +100,7 @@ assert.equal(compatibleRgbToHex, featureRgbToHex, 'the legacy color-space core p
 assert.equal(compatiblePreserveColorSpaceValues, featurePreserveColorSpaceValues, 'the legacy color-space controls path must re-export the feature implementation');
 assert.equal(compatibleSelectInstalledModels, featureSelectInstalledModels, 'the legacy background-removal core path must re-export the feature implementation');
 assert.equal(compatibleImageColorRgbToHex, featureImageColorRgbToHex, 'the legacy image-color-replace core path must re-export the feature implementation');
+assert.equal(compatibleMarkdownAction, featureMarkdownAction, 'the legacy Markdown core path must re-export the feature implementation');
 assert.equal(compatibleToolTopbarMarkup, sharedToolTopbarMarkup, 'the legacy tool shell path must re-export the shared implementation');
 assert.doesNotMatch(mainSource, /from ['"]@tauri-apps\/api\/(?:core|event)['"]/, 'main.js must use the platform boundary');
 assert.match(mainSource, /from ['"]\.\/platform\/tauri-runtime\.js['"]/, 'main.js must import the Tauri platform boundary');
@@ -129,8 +141,20 @@ assert.match(excelToPdfFeatureStyles, /\.excel-to-pdf-overlay\s*\{/, 'the featur
 assert.match(indexSource, /href="\.\/src\/tool-custom-select\.css"/, 'the existing stylesheet position must remain stable');
 assert.equal(selectCompatibilityStyles.trim(), "@import url('./styles/components/tool-custom-select.css');", 'the legacy stylesheet must forward to the component stylesheet');
 assert.match(selectComponentStyles, /\.tool-custom-select-trigger\s*\{/, 'the component stylesheet must own custom select visuals');
-assert.match(markdownEditorSource, /data-lucide="save"/, 'the Markdown draft state must use a registered Lucide icon');
-assert.doesNotMatch(markdownEditorSource, /data-lucide="cloud-check"/, 'the removed Lucide cloud-check icon must not emit runtime warnings');
+assert.match(markdownCompatibilitySource, /from ['"]\.\/features\/markdown-editor\/tool\.js['"]/, 'the legacy Markdown UI path must forward to the feature entry');
+assert.match(markdownToolSource, /from ['"]\.\/template\.js['"]/, 'the Markdown tool must delegate markup to its feature template');
+assert.match(markdownToolSource, /from ['"]\.\/controller\.js['"]/, 'the Markdown tool must delegate behavior to its feature controller');
+assert.match(markdownToolSource, /import ['"]\.\/markdown-editor\.css['"]/, 'the Markdown feature must own its lazy stylesheet');
+assert.match(markdownControllerSource, /createLifecycleScope\(\)/, 'the Markdown controller must own permanent and open-session lifecycle cleanup');
+assert.match(markdownControllerSource, /lifecycle\.use\(bindToolPageChrome\(shell, close\)\)/, 'the Markdown controller must release shared page chrome listeners');
+assert.match(markdownControllerSource, /from ['"]\.\.\/\.\.\/platform\/tauri-runtime\.js['"]/, 'the Markdown controller must use the platform boundary');
+assert.doesNotMatch(markdownControllerSource, /from ['"]@tauri-apps\//, 'the Markdown controller must not bypass the platform boundary');
+assert.match(markdownControllerSource, /return \{ open, close, dispose \}/, 'the Markdown controller must implement the complete lifecycle contract');
+assert.match(markdownTemplateSource, /data-lucide="save"/, 'the Markdown draft state must use a registered Lucide icon');
+assert.doesNotMatch(markdownTemplateSource, /data-lucide="cloud-check"/, 'the removed Lucide cloud-check icon must not emit runtime warnings');
+assert.match(markdownPreviewSecuritySource, /template\.content\.querySelectorAll\(['"]img['"]\)/, 'the Markdown preview must inspect every image');
+assert.match(markdownFeatureStyles, /\.md-workbench\s*\{/, 'the Markdown feature stylesheet must own the workbench');
+assert.doesNotMatch(appStyles + finalToolStyles, /\.md-|\.markdown-body|\.markdown-editor-overlay/, 'shared stylesheets must not retain Markdown selectors');
 
 function deferred() {
   let resolve;
@@ -167,6 +191,8 @@ assert.equal(LAZY_TOOL_SPECS['image-color-replace']?.overlayId, 'imageColorRepla
 assert.match(LAZY_TOOL_SPECS['image-color-replace'].load.toString(), /\.\/image-color-replace\/tool\.js/, 'Image Color Replace must load its feature entry directly');
 assert.equal(LAZY_TOOL_SPECS['excel-to-pdf']?.overlayId, 'excelToPdfOverlay', 'Excel to PDF must be lazy-registered');
 assert.match(LAZY_TOOL_SPECS['excel-to-pdf'].load.toString(), /\.\/excel-to-pdf\/tool\.js/, 'Excel to PDF must load its feature entry directly');
+assert.equal(LAZY_TOOL_SPECS['markdown-editor']?.overlayId, 'markdownEditorOverlay', 'Markdown Editor must be lazy-registered');
+assert.match(LAZY_TOOL_SPECS['markdown-editor'].load.toString(), /\.\/markdown-editor\/tool\.js/, 'Markdown Editor must load its feature entry directly');
 assert.match(mainSource, /LAZY_TOOL_SPECS/, 'main must use the shared lazy registry');
 assert.doesNotMatch(mainSource, /from ['"]\.\/pdf-editor-ui\.js['"]/, 'PDF Editor must not be statically imported by main');
 assert.match(mainSource, /pdfWorkerUrl,/, 'lazy features must receive the PDF worker URL through context');

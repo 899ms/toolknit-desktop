@@ -77,6 +77,10 @@ const componentControlsSource = await readFile(
   new URL('../src/features/pdf-editor/component-controls.js', import.meta.url),
   'utf8'
 );
+const insertAssetsSource = await readFile(
+  new URL('../src/features/pdf-editor/insert-assets.js', import.meta.url),
+  'utf8'
+);
 
 const snapshotStart = uiSource.indexOf('function captureEditorSnapshot()');
 const snapshotEnd = uiSource.indexOf('function applyEditorSnapshot(', snapshotStart);
@@ -135,8 +139,11 @@ assert.match(textLayoutSource, /estimateInsertedTextWidth\(object\?\.text, fontS
 assert.doesNotMatch(uiSource, /function editedTextVisualBox\(edit, segment\)/);
 assert.doesNotMatch(uiSource, /function insertedTextVisualBox\(object\)/);
 assert.match(uiSource, /IMAGE_BATCH_LIMITS\.maxBytesPerFile/);
-assert.match(uiSource, /IMAGE_BATCH_LIMITS\.maxPixelsPerFile/);
-assert.match(uiSource, /function readEncodedImageDimensions\(bytes, mimeType\)/);
+assert.match(insertAssetsSource, /limits\.maxPixelsPerFile/);
+assert.match(insertAssetsSource, /export function readEncodedImageDimensions\(bytes, mimeType\)/);
+assert.match(insertAssetsSource, /export function assertImagePixelLimit\(dimensions/);
+assert.match(insertAssetsSource, /export async function readImageDimensions\(bytes, mimeType/);
+assert.doesNotMatch(uiSource, /function readEncodedImageDimensions\(bytes, mimeType\)/);
 const imagePrepareStart = uiSource.indexOf('async function prepareInsertImage(');
 const imagePrepareEnd = uiSource.indexOf('function saveEditModal(', imagePrepareStart);
 const imagePrepareSource = uiSource.slice(imagePrepareStart, imagePrepareEnd);

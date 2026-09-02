@@ -34,6 +34,7 @@ Last updated: 2026-09-02
 | `4bcb075` | Isolated PDF Editor document loading, caching and PDF.js cleanup ownership |
 | `1540ef2` | Isolated PDF Editor text grouping and visual-box calculations |
 | `6b02cd6` | Isolated PDF Editor zoom state, anchor scrolling and scheduling lifecycle |
+| `485f6f9` | Isolated PDF Editor text/component DOM rendering and injected interaction bindings |
 
 ## Current verified counts
 
@@ -147,6 +148,14 @@ requests now live in a dedicated lifecycle controller. It invalidates stale
 zoom requests on reset/dispose and is covered by an executable contract test
 for fit/manual transitions, frame commits, scroll anchoring, cancellation and
 button cleanup.
+
+PDF Editor text-layer and inserted-component DOM rendering now lives in
+`src/features/pdf-editor/component-renderer.js`. The renderer owns text masks,
+edited and inserted text, inserted images and shapes, generated selection
+handles, accessibility state and render-time event bindings. Selection,
+mutation, drag/resize sessions and component-menu updates remain injected from
+the compatibility orchestrator. The state contract now reads the renderer
+source directly and asserts that the legacy UI only delegates rendering.
 
 ## Hidden issues fixed during migration
 

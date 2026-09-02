@@ -52,11 +52,12 @@ Last updated: 2026-09-02
 | `07d2261` | Isolated teleprompter system/offline recognition lifecycle |
 | `07ebe3b` | Migrated Color Space Compare into a feature-owned module boundary |
 | `0a66263` | Migrated Background Removal into a feature-owned module boundary |
+| `1b02043` | Migrated Image Color Replace into a feature-owned module boundary |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 29 of 65 desktop tools have completed migration batches (**44.6%** coverage).
+- 30 of 65 desktop tools have completed migration batches (**46.2%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -339,6 +340,23 @@ feature. The root JS/CSS/core paths remain compatibility forwards. Existing
 MODNet model gating, native drag/drop, canvas editing, export-folder behavior,
 and operation cancellation are unchanged and remain covered by the core and
 matting test contracts.
+
+Image Color Replace now lives under `src/features/image-color-replace/`. Its
+runtime behavior is owned by `controller.js` (560 lines), pure pixel processing
+by `core.js` (154 lines), markup by `template.js` (24 lines), and composition by
+the 52-line `tool.js`. The 338-line feature stylesheet and 11-line Worker load
+only with the lazy feature; the former root UI and core paths remain compatibility
+forwards, while the unused root Worker path was removed. Repeated-open runtime
+checks found and fixed an eyedropper state mismatch: reopening now restores both
+the internal sampling mode and its active button/canvas state without adding a
+second listener. Computed-style comparisons against commit `28096ad` inspected
+200 matching DOM nodes at 1280 x 720, 1000 x 720 and 720 x 800, with zero style
+differences at every viewport. The production build emits a 17.02 kB JavaScript
+chunk and 17.58 kB CSS chunk for the feature; the current main JavaScript and CSS
+remain 1,839.08 kB and 581.53 kB. The feature JS/Rust tests, architecture gate,
+`cargo check` and production build all pass; only the pre-existing crypto
+externalization and large-chunk warnings remain.
+
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the

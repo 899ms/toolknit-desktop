@@ -32,6 +32,7 @@ import { createPdfEditorDocumentStore } from './features/pdf-editor/documents.js
 import { createPdfEditorZoomController } from './features/pdf-editor/zoom.js';
 import { createPdfEditorComponentRenderer } from './features/pdf-editor/component-renderer.js';
 import { createPdfEditorComponentModel } from './features/pdf-editor/component-model.js';
+import { createPdfEditorPreview } from './features/pdf-editor/preview.js';
 import {
   buildTextLine,
   editedTextVisualBox,
@@ -223,6 +224,7 @@ export function initPdfEditorTool({
   let componentRotateTimer = null;
   let componentRotateState = null;
   let componentRenderFrame = 0;
+  let preview = null;
   let fitResizeObserver = null;
   let fitResizeFrame = 0;
   let editingLineKey = null;
@@ -1064,28 +1066,7 @@ export function initPdfEditorTool({
   }
   // ----- Main preview -----
   function cancelMainRender() {
-    mainEpoch++;
-    if (mainRenderTask) {
-      try { mainRenderTask.cancel(); } catch (_) {}
-      mainRenderTask = null;
-    }
-  }
-
-  function ensureMainCanvas() {
-    if (!canvasWrap) {
-      canvasWrap = document.createElement('div');
-      canvasWrap.className = 'pdf-editor-canvas-wrap';
-      canvasStage.appendChild(canvasWrap);
-    }
-    if (!textLayerEl) {
-      textLayerEl = document.createElement('div');
-      textLayerEl.className = 'pdf-editor-text-layer';
-      textLayerEl.setAttribute('aria-hidden', 'true');
-      canvasWrap.appendChild(textLayerEl);
-      canvasWrap.addEventListener('click', handleCanvasPlacement, { ...listenerOptions, capture: true });
-      canvasWrap.addEventListener('click', handleCanvasBackgroundClick, listenerOptions);
-    }
-    return canvasWrap;
+    return preview?.cancel();
   }
 
   function syncTextLayerAccessibility() {
@@ -2173,129 +2154,8 @@ export function initPdfEditorTool({
     closeEditModal();
   }
 
-  async function renderMainPreview(zoomToken = zoom.getPreviewToken(), zoomRequest = null) {
-    zoom.beginRender();
-    cancelMainRender();
-    const page = currentPage();
-    if (!page || !hasDocument()) {
-      if (canvasWrap) canvasWrap.style.display = 'none';
-      zoom.clearPreviewHint(zoomToken);
-      syncStageVisibility();
-      return;
-    }
-    const epoch = mainEpoch;
-    let loadedPage = null;
-    let renderTask = null;
-    let nextCanvas = null;
-    try {
-      const doc = await getSourceDoc(page.sourceId);
-      if (epoch !== mainEpoch || disposed) return;
-      loadedPage = await doc.getPage(page.pageIndex + 1);
-      if (epoch !== mainEpoch || disposed) return;
-      cacheSourceRotation(page, loadedPage);
-      // The page model is intentionally kept free of cached PDF metadata in
-      // history snapshots. Refresh controls once the current page's source
-      // rotation is known so edit/insert actions do not show a false warning
-      // during the first render or after undo/redo.
-      updateControls();
-      const displayRotation = effectivePageRotation(page);
-      const base = loadedPage.getViewport({ scale: 1, rotation: displayRotation });
-      let scale;
-      const zoomState = zoom.getState();
-      if (zoomState.viewMode === 'fit') {
-        const availWidth = Math.max(220, (canvasScroll?.clientWidth || 800) - 80);
-        scale = Math.max(ZOOM_MIN, Math.min(4, availWidth / Math.max(1, base.width)));
-      } else {
-        scale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoomState.zoomPercent));
-      }
-      updateZoomLabel();
-      const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
-      const viewport = loadedPage.getViewport({ scale: scale * dpr, rotation: displayRotation });
-      ensureMainCanvas();
-      const previousCanvas = mainCanvas;
-      const cssWidth = Math.max(1, Math.round(viewport.width / dpr));
-      const cssHeight = Math.max(1, Math.round(viewport.height / dpr));
-      // Render into a detached canvas so the currently painted frame remains
-      // visible while PDF.js is working. Resizing the live canvas clears it
-      // immediately and was the main source of zoom flicker.
-      nextCanvas = document.createElement('canvas');
-      nextCanvas.className = 'pdf-editor-main-canvas';
-      nextCanvas.style.visibility = 'hidden';
-      nextCanvas.width = Math.max(1, Math.round(viewport.width));
-      nextCanvas.height = Math.max(1, Math.round(viewport.height));
-      nextCanvas.style.width = cssWidth + 'px';
-      nextCanvas.style.height = cssHeight + 'px';
-      // Keep the candidate completely out of layout while PDF.js is drawing.
-      // Even a visibility-hidden canvas participates in the scrollable overflow
-      // and can make the stage jump before the frame is ready.
-      canvasWrap.style.display = '';
-      const context = nextCanvas.getContext('2d', { alpha: false });
-      if (!context) throw new Error('Cannot create preview canvas');
-      context.fillStyle = '#ffffff';
-      context.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
-      renderTask = loadedPage.render({ canvasContext: context, viewport, background: '#ffffff' });
-      mainRenderTask = renderTask;
-      await renderTask.promise;
-      if (mainRenderTask === renderTask) mainRenderTask = null;
-      if (epoch !== mainEpoch || disposed || !zoom.isCurrentRequest(zoomRequest)) {
-        releaseCanvas(nextCanvas);
-        return;
-      }
-
-      nextCanvas.style.visibility = '';
-      if (previousCanvas?.isConnected) {
-        previousCanvas.replaceWith(nextCanvas);
-      } else {
-        canvasWrap.appendChild(nextCanvas);
-      }
-      if (previousCanvas && previousCanvas !== nextCanvas) releaseCanvas(previousCanvas);
-      mainCanvas = nextCanvas;
-      canvasWrap.style.width = cssWidth + 'px';
-      canvasWrap.style.height = cssHeight + 'px';
-      lastRenderScale = scale;
-      zoom.commitRender(zoomToken, zoomRequest, scale);
-      // The new frame is now committed; subsequent text geometry is measured
-      // against its final CSS viewport rather than the transient preview.
-      syncStageVisibility();
-
-      const cssViewport = loadedPage.getViewport({ scale, rotation: displayRotation });
-      const editable = pageSupportsContentEditing(page);
-      if (editable) {
-        try {
-          const cachedLines = textLinesCache.get(page.id);
-          let lines = cachedLines?.rotation === displayRotation && Array.isArray(cachedLines.lines)
-            ? cachedLines.lines
-            : null;
-          if (!lines) {
-            const content = await loadedPage.getTextContent();
-            if (epoch !== mainEpoch || disposed) return;
-            lines = groupTextItemsIntoLines(content.items).map(buildTextLine);
-          }
-          textLinesCache.set(page.id, { lines, scale, cssViewport, rotation: displayRotation, epoch });
-          renderTextLayer(lines, cssViewport, scale, page.id);
-        } catch (error) {
-          if (epoch === mainEpoch && !disposed) {
-            console.error('[PDF Editor] text layer failed:', error);
-          }
-          textLinesCache.delete(page.id);
-          renderTextLayer([], cssViewport, scale, page.id);
-        }
-      } else {
-        textLinesCache.delete(page.id);
-        renderTextLayer([], cssViewport, scale, page.id);
-        if (editMode) setEditMode(false);
-      }
-    } catch (error) {
-      if (mainRenderTask === renderTask) mainRenderTask = null;
-      if (!isRenderCancellation(error) && epoch === mainEpoch && !disposed) {
-        console.error('[PDF Editor] preview render failed:', error);
-      }
-    } finally {
-      zoom.clearPreviewHint(zoomToken);
-      if (mainRenderTask === renderTask) mainRenderTask = null;
-      if (nextCanvas && nextCanvas !== mainCanvas) releaseCanvas(nextCanvas);
-      try { loadedPage?.cleanup(); } catch (_) {}
-    }
+  function renderMainPreview(zoomToken = zoom.getPreviewToken(), zoomRequest = null) {
+    return preview?.render(zoomToken, zoomRequest);
   }
 
   const zoom = createPdfEditorZoomController({
@@ -2311,6 +2171,48 @@ export function initPdfEditorTool({
     positionComponentMenu,
     renderMainPreview,
     listenerOptions
+  });
+
+  preview = createPdfEditorPreview({
+    canvasStage,
+    canvasScroll,
+    getCanvasWrap: () => canvasWrap,
+    setCanvasWrap: value => { canvasWrap = value; },
+    getTextLayer: () => textLayerEl,
+    setTextLayer: value => { textLayerEl = value; },
+    getMainCanvas: () => mainCanvas,
+    setMainCanvas: value => { mainCanvas = value; },
+    getMainRenderTask: () => mainRenderTask,
+    setMainRenderTask: value => { mainRenderTask = value; },
+    getMainEpoch: () => mainEpoch,
+    setMainEpoch: value => { mainEpoch = value; },
+    getLastRenderScale: () => lastRenderScale,
+    setLastRenderScale: value => { lastRenderScale = value; },
+    getZoom: () => zoom,
+    getCurrentPage: currentPage,
+    hasDocument,
+    getSourceDoc,
+    cacheSourceRotation,
+    effectivePageRotation,
+    pageSupportsContentEditing,
+    getTextLinesCache: () => textLinesCache,
+    setTextLinesCache: value => { textLinesCache = value; },
+    getEditMode: () => editMode,
+    setEditMode: value => setEditMode(value),
+    isDisposed: () => disposed,
+    renderTextLayer,
+    handleCanvasPlacement,
+    handleCanvasBackgroundClick,
+    syncStageVisibility,
+    updateControls,
+    updateZoomLabel,
+    groupTextItemsIntoLines,
+    buildTextLine,
+    listenerOptions,
+    documentRef: document,
+    windowRef: window,
+    zoomMin: ZOOM_MIN,
+    zoomMax: ZOOM_MAX
   });
 
   const componentModel = createPdfEditorComponentModel({
@@ -3084,7 +2986,7 @@ export function initPdfEditorTool({
         componentRenderFrame = 0;
       }
       syncInteractiveLayers();
-      cancelMainRender();
+      preview?.dispose();
       stopTileObserver(true);
       void resetDocument().finally(() => documents.dispose());
     }

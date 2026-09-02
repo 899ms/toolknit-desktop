@@ -62,7 +62,7 @@ Last updated: 2026-09-03
 | `eca4b2a` | Migrated PPT text extraction, PPT compression and PPT outline as one lazy workflow family |
 | `f7bf885` | Migrated PPT To PDF and PPT To Image as a lazy renderer family |
 | `c886d85` | Migrated PPT image extraction into its own lazy feature boundary |
-| `(this batch)` | Migrated Audio Extract into its own lazy feature boundary |
+| `900b6c9` | Migrated Audio Extract into its own lazy feature boundary |
 
 ## Current verified counts
 

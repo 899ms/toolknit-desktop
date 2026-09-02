@@ -62,11 +62,12 @@ Last updated: 2026-09-03
 | `eca4b2a` | Migrated PPT text extraction, PPT compression and PPT outline as one lazy workflow family |
 | `f7bf885` | Migrated PPT To PDF and PPT To Image as a lazy renderer family |
 | `c886d85` | Migrated PPT image extraction into its own lazy feature boundary |
+| `(this batch)` | Migrated Audio Extract into its own lazy feature boundary |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 51 of 65 desktop tools have completed migration batches (**78.5%** coverage).
+- 52 of 65 desktop tools have completed migration batches (**80.0%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -74,12 +75,12 @@ Last updated: 2026-09-03
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security | After PDF Enhance | After PDF Compress | After PDF Editor | After PPT workflows | After PPT render | After PPT images | After PPT Draft | After Image Stitch |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 | 21,708 | 21,250 | 21,241 | 16,184 | 15,709 | 15,019 | 13,538 | 13,000 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 | 27,059 | 24,975 | 24,644 | 24,644 | 24,093 | 22,772 | 21,962 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB | 2,288.63 kB | 1,839.13 kB | 1,603.72 kB | 1,591.36 kB | 1,531.34 kB | 1,423.95 kB | 1,405.69 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB | 597.52 kB | 525.34 kB | 520.27 kB | 520.27 kB | 499.11 kB | 487.68 kB | 465.07 kB |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security | After PDF Enhance | After PDF Compress | After PDF Editor | After PPT workflows | After PPT render | After PPT images | After PPT Draft | After Image Stitch | After Audio Extract |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 | 21,708 | 21,250 | 21,241 | 16,184 | 15,709 | 15,019 | 13,538 | 13,000 | 12,511 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 | 27,059 | 24,975 | 24,644 | 24,644 | 24,093 | 22,772 | 21,962 | 21,408 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB | 2,288.63 kB | 1,839.13 kB | 1,603.72 kB | 1,591.36 kB | 1,531.34 kB | 1,423.95 kB | 1,405.69 kB | 1,395.57 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB | 597.52 kB | 525.34 kB | 520.27 kB | 520.27 kB | 499.11 kB | 487.68 kB | 465.07 kB | 455.39 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
@@ -827,9 +828,26 @@ console warning/error inspection. The production output emits an approximately
 30.82 kB lazy JavaScript chunk and a 14.57 kB feature CSS chunk. This batch
 raises the verified migration count to 51 of 65 tools (**78.5%**).
 
+Audio Extract now lives in the lazy `src/features/audio-extract/` boundary. Its
+template and feature CSS are created only when the tool opens; the controller
+owns queue rendering, native drag/drop, FFmpeg availability gating, extraction
+progress, cancellation, output publication and operation identity. Closing or
+reopening the page invalidates active work and releases the feature session, so
+stale extraction results cannot update a later open. The existing FFmpeg bridge
+and output-folder behavior remain compatible.
+
+The Audio Extract core, runtime and lazy-tool contract suites, architecture gate,
+production build and `git diff --check` pass. Fresh-browser checks cover lazy
+opening, close/reopen, one host instance, output-folder targeting and console
+warning/error inspection. The production output emits an approximately 20.43 kB
+lazy JavaScript chunk and a 5.24 kB feature CSS chunk. A shared
+`src/shared/file-size.js` compatibility helper preserves formatting for legacy
+consumers after the static implementation was removed. This batch raises the
+verified migration count to 52 of 65 tools (**80.0%**).
+
 ## Next batches
 
-1. Select the next coherent low- or medium-risk frontend family from the 14
+1. Select the next coherent low- or medium-risk frontend family from the 13
    remaining tools and continue batched migration under the accelerated
    verification protocol.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local

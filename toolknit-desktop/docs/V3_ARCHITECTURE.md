@@ -68,6 +68,8 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 - `src/core/serialized-request-session.js` owns one-at-a-time async requests,
   timeout state, request-specific cancellation and stale-result identity.
+- `src/shared/file-size.js` owns the shared byte-to-human-size formatter used by
+  migrated and legacy file-processing tools.
 - `src/features/ai-workbench/ai-workbench-shared.css` owns the chat, prompt and
   action primitives shared by AI Document and AI Table.
 
@@ -91,15 +93,15 @@ tool entry so it becomes a separate production chunk.
 
 ## Current snapshot
 
-- 51 of 65 desktop tools are migrated (**78.5%**); 12 categories, 127 Tauri
+- 52 of 65 desktop tools are migrated (**80.0%**); 12 categories, 127 Tauri
   command implementations, 46 MCP tools and the existing CLI contracts remain
   unchanged.
-- The current source footprint is 13,000 lines in `src/main.js`, 21,962 lines
-  in `src/styles.css` and 8,317 lines in `index.html`.
-- The production entry is approximately 1,405.69 kB JavaScript and 465.07 kB
-  CSS. PPT image extraction, PPT AI Draft/PPTX and Image Stitch entries are
-  lazy; JSZip, the AI Draft editor dependencies and PDF.js Image Stitch import
-  code load only when their tools open.
+- The current source footprint is 12,511 lines in `src/main.js`, 21,408 lines
+  in `src/styles.css` and 8,148 lines in `index.html`.
+- The production entry is approximately 1,395.57 kB JavaScript and 455.39 kB
+  CSS. PPT image extraction, PPT AI Draft/PPTX, Image Stitch and Audio Extract
+  entries are lazy; JSZip, the AI Draft editor dependencies, PDF.js Image Stitch
+  import code and FFmpeg extraction dependencies load only when their tools open.
 
 ## Migrated ownership
 
@@ -213,6 +215,13 @@ tool entry so it becomes a separate production chunk.
   and operation identity. Closing invalidates the session and destroys any
   pending PDF.js loading task, so inspection, rendering and export results
   cannot update a later open. The existing window bridge names remain intact.
+- `src/features/audio-extract/` owns audio extraction as a complete lazy
+  boundary. `template.js` builds the existing portal, `controller.js` owns
+  browser/Tauri input, native drag/drop, FFmpeg readiness, queue/progress state,
+  cancellation, output publication and operation identity, and
+  `audio-extract.css` owns feature-only layout. Open-session cleanup releases
+  native listeners, timers and stale extraction work while preserving the
+  existing FFmpeg bridge contract.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

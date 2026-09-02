@@ -50,6 +50,9 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
   ordering while leaving document destruction to the document store.
 - `src/features/pdf-editor/view.js` owns the visible editor session shell:
   overlay open/close, success state, drag hints, file metadata and zoom labels.
+- `src/features/pdf-editor/operation.js` owns the single active operation,
+  progress surface, cancellation identity, error localization and browser/Tauri
+  file reads for the editor.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 - `src/core/serialized-request-session.js` owns one-at-a-time async requests,
   timeout state, request-specific cancellation and stale-result identity.

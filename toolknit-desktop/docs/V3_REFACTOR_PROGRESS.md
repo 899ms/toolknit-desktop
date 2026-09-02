@@ -45,6 +45,7 @@ Last updated: 2026-09-02
 | `edd6649` | Isolated PDF Editor page operations and resource-safe mutation coverage |
 | `45590d2` | Isolated PDF Editor file selection, replacement and append sessions |
 | `da87d8b` | Isolated PDF Editor overlay, success, drag-hint and view-label state |
+| `f3bfc5a` | Isolated PDF Editor operation identity, progress and file-access runtime |
 
 ## Current verified counts
 
@@ -260,6 +261,12 @@ card metadata and zoom labels are owned by the controller with injected focus,
 document and reset callbacks. Its lifecycle suite covers repeated open, busy
 close protection, success rendering, drag state, empty/document stages, input
 cleanup and zoom label updates.
+
+PDF Editor operation state now lives in `src/features/pdf-editor/operation.js`.
+The runtime owns the active operation identity, progress surface, cancellation
+of PDF.js loading tasks, localized error mapping and browser/Tauri file reads.
+The operation suite covers stale-operation rejection, loading cancellation,
+progress metadata, password/limit/error mapping and both file-access paths.
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the
@@ -449,9 +456,9 @@ cleanup and zoom label updates.
 
 ## Next batches
 
-1. Continue PDF Editor operation and document/session coordination ownership,
-   then audit the remaining PDF template ownership and select the next coherent
-   legacy candidate by lifecycle risk, dependency weight and compatibility scope.
+1. Continue PDF Editor document/session coordination ownership, then audit the
+   remaining PDF template ownership and select the next coherent legacy
+   candidate by lifecycle risk, dependency weight and compatibility scope.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed

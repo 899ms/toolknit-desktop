@@ -58,7 +58,8 @@ dialog owned by the lazy feature. PDF Compress is also migrated, and PDF
 Editor now owns bounded history, focus, thumbnails, rendering cancellation,
 export, document loading/cache/destruction, pure text-layout calculations,
 content editing, page selection, page mutations, file sessions and visible
-view state outside its remaining compatibility orchestrator. The
+view state, operation identity and file-access runtime outside its remaining
+compatibility orchestrator. The
 native AI provider command is the first
 extracted Rust boundary; the broader native split remains pending. The next
 frontend batch must continue the remaining PDF Editor document/session wiring

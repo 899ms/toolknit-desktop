@@ -36,6 +36,7 @@ Last updated: 2026-09-02
 | `6b02cd6` | Isolated PDF Editor zoom state, anchor scrolling and scheduling lifecycle |
 | `485f6f9` | Isolated PDF Editor text/component DOM rendering and injected interaction bindings |
 | `85cbc37` | Isolated PDF Editor component state, transforms and snap geometry |
+| `c7b9db9` | Isolated PDF Editor main preview rendering and canvas lifecycle |
 
 ## Current verified counts
 
@@ -166,6 +167,14 @@ getters and reports changed state through an injected callback, so undo/redo can
 replace collections without stale references and the model remains DOM-free.
 Its regression suite covers identity, rotation snapping, text-layout equality,
 object transforms and alignment snapping.
+
+PDF Editor main-page rendering now lives in `src/features/pdf-editor/preview.js`.
+The controller owns PDF.js page/render tasks, epoch invalidation, detached
+candidate canvases, device-pixel scaling, text-content cache refresh and main
+canvas disposal. The UI injects document/page access, zoom state and component
+layer callbacks while retaining the existing DOM and public behavior. A
+deterministic preview lifecycle test covers first paint, text caching, canvas
+commit, task cancellation and disposal.
 
 ## Hidden issues fixed during migration
 

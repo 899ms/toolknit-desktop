@@ -22,6 +22,7 @@ import {
   pdfEditorPageIdsInDocumentOrder,
   pdfEditorSnapshotsEqual
 } from './pdf-editor-state.js';
+import { createPdfEditorHistory } from './features/pdf-editor/history.js';
 import { IMAGE_BATCH_LIMITS } from './image-batch-core.js';
 
 const THUMB_CSS_WIDTH = 132;
@@ -269,9 +270,6 @@ export function initPdfEditorTool({
   let fitResizeFrame = 0;
   let editingLineKey = null;
   let modalMode = null;
-  let historyStack = [];
-  let historyIndex = -1;
-  let historyLock = false;
   let baselineSnapshot = null;
   let savedSnapshot = null;
   let fontRegularBytes = null;
@@ -447,8 +445,7 @@ export function initPdfEditorTool({
 
   function applyEditorSnapshot(snapshot) {
     if (!snapshot) return;
-    historyLock = true;
-    try {
+    editorHistory.withLock(() => {
       if (Array.isArray(snapshot.sourceIds)) {
         sources = snapshot.sourceIds
           .map(id => sourceStore.get(id))
@@ -502,32 +499,27 @@ export function initPdfEditorTool({
       updateFileCard();
       updateZoomLabel();
       updateControls();
-    } finally {
-      historyLock = false;
-    }
+    });
   }
 
+  const editorHistory = createPdfEditorHistory({
+    capture: captureEditorSnapshot,
+    apply: applyEditorSnapshot,
+    equals: pdfEditorSnapshotsEqual,
+    hasDocument,
+    onChange: () => updateControls()
+  });
+
   function resetEditorHistory() {
-    historyStack = [captureEditorSnapshot()];
-    historyIndex = 0;
+    return editorHistory.reset();
   }
 
   function commitEditorHistory() {
-    if (historyLock) return;
-    const snapshot = captureEditorSnapshot();
-    historyStack = historyStack.slice(0, historyIndex + 1);
-    historyStack.push(snapshot);
-    if (historyStack.length > 40) {
-      historyStack.shift();
-    }
-    historyIndex = historyStack.length - 1;
-    updateControls();
+    return editorHistory.commit();
   }
 
   function hasUnsavedChanges() {
-    return Boolean(hasDocument()
-      && savedSnapshot
-      && !pdfEditorSnapshotsEqual(captureEditorSnapshot(), savedSnapshot));
+    return editorHistory.hasUnsavedChanges(savedSnapshot);
   }
 
   function confirmDiscardChanges(action) {
@@ -537,25 +529,19 @@ export function initPdfEditorTool({
   }
 
   function canUndo() {
-    return historyIndex > 0;
+    return editorHistory.canUndo();
   }
 
   function canRedo() {
-    return historyIndex >= 0 && historyIndex < historyStack.length - 1;
+    return editorHistory.canRedo();
   }
 
   function undoEditorChange() {
-    if (!canUndo()) return;
-    historyIndex -= 1;
-    applyEditorSnapshot(historyStack[historyIndex]);
-    updateControls();
+    editorHistory.undo();
   }
 
   function redoEditorChange() {
-    if (!canRedo()) return;
-    historyIndex += 1;
-    applyEditorSnapshot(historyStack[historyIndex]);
-    updateControls();
+    editorHistory.redo();
   }
 
   function handleDocumentKeydown(event) {
@@ -984,8 +970,7 @@ export function initPdfEditorTool({
     selectedComponent = null;
     componentDragState = null;
     componentRotateState = null;
-    historyStack = [];
-    historyIndex = -1;
+    editorHistory.clear();
     baselineSnapshot = null;
     savedSnapshot = null;
     updateFileCard();
@@ -3680,8 +3665,8 @@ export function initPdfEditorTool({
       // canvas explicitly after the document state is committed.
       renderMainPreview();
       resetEditorHistory();
-      baselineSnapshot = cloneState(historyStack[0]);
-      savedSnapshot = cloneState(historyStack[0]);
+      baselineSnapshot = cloneState(editorHistory.firstSnapshot());
+      savedSnapshot = cloneState(editorHistory.firstSnapshot());
       setLocalizedProgress(100, 'loadingDocument');
     } catch (error) {
       const cancelled = operation.cancelled || error instanceof PdfEditorCancelledError;
@@ -4086,8 +4071,8 @@ export function initPdfEditorTool({
     if (!confirmDiscardChanges('reset')) return;
     applyEditorSnapshot(baselineSnapshot);
     resetEditorHistory();
-    baselineSnapshot = cloneState(historyStack[0]);
-    savedSnapshot = cloneState(historyStack[0]);
+    baselineSnapshot = cloneState(editorHistory.firstSnapshot());
+    savedSnapshot = cloneState(editorHistory.firstSnapshot());
   }
 
   function buildAssembleArgs(ids) {

@@ -23,7 +23,7 @@
     "test:pdf-compress-tool-contract": "node scripts/test-pdf-compress-tool-contract.mjs",
     "test:pdf-enhance": "node scripts/test-pdf-enhance-core.mjs",
     "test:pdf-enhance-tool-contract": "node scripts/test-pdf-enhance-tool-contract.mjs",
-    "test:pdf-editor": "node scripts/test-pdf-editor-core.mjs && node scripts/test-pdf-editor-geometry.mjs && node scripts/test-pdf-editor-state.mjs",
+    "test:pdf-editor": "node scripts/test-pdf-editor-core.mjs && node scripts/test-pdf-editor-geometry.mjs && node scripts/test-pdf-editor-state.mjs && node scripts/test-pdf-editor-history.mjs",
     "test:pdf-page-number": "node scripts/test-pdf-page-number-core.mjs",
     "test:pdf-page-number-tool-contract": "node scripts/test-pdf-page-number-tool-contract.mjs",
     "test:pdf-crop": "node scripts/test-pdf-crop-core.mjs",

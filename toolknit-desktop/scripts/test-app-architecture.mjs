@@ -197,9 +197,12 @@ assert.equal(LAZY_TOOL_SPECS['image-crop']?.overlayId, 'imageCropOverlay', 'Imag
 assert.match(LAZY_TOOL_SPECS['image-crop'].load.toString(), /\.\/image-crop\/tool\.js/, 'Image Crop must load its feature entry directly');
 for (const [toolId, overlayId] of Object.entries({
   'hardware-overview': 'hardwareOverviewOverlay',
+  'hardware-cpu-memory': 'hardwareCpuMemoryOverlay',
+  'hardware-gpu-display': 'hardwareGpuDisplayOverlay',
   'hardware-mainboard': 'hardwareMainboardOverlay',
   'hardware-storage': 'hardwareStorageOverlay',
-  'hardware-network-devices': 'hardwareNetworkDevicesOverlay'
+  'hardware-network-devices': 'hardwareNetworkDevicesOverlay',
+  'hardware-power-sensors': 'hardwarePowerSensorsOverlay'
 })) {
   assert.equal(LAZY_TOOL_SPECS[toolId]?.overlayId, overlayId, `${toolId} must be lazy-registered`);
   assert.match(LAZY_TOOL_SPECS[toolId].load.toString(), /\.\/hardware-inspector\/tool\.js/, `${toolId} must load the hardware feature entry`);

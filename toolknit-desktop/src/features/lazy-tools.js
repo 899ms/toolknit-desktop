@@ -89,6 +89,16 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./hardware-inspector/tool.js'),
     init: 'initHardwareOverviewTool'
   }),
+  'hardware-cpu-memory': Object.freeze({
+    overlayId: 'hardwareCpuMemoryOverlay',
+    load: () => import('./hardware-inspector/tool.js'),
+    init: 'initHardwareCpuMemoryTool'
+  }),
+  'hardware-gpu-display': Object.freeze({
+    overlayId: 'hardwareGpuDisplayOverlay',
+    load: () => import('./hardware-inspector/tool.js'),
+    init: 'initHardwareGpuDisplayTool'
+  }),
   'hardware-mainboard': Object.freeze({
     overlayId: 'hardwareMainboardOverlay',
     load: () => import('./hardware-inspector/tool.js'),
@@ -103,6 +113,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     overlayId: 'hardwareNetworkDevicesOverlay',
     load: () => import('./hardware-inspector/tool.js'),
     init: 'initHardwareNetworkDevicesTool'
+  }),
+  'hardware-power-sensors': Object.freeze({
+    overlayId: 'hardwarePowerSensorsOverlay',
+    load: () => import('./hardware-inspector/tool.js'),
+    init: 'initHardwarePowerSensorsTool'
   }),
   'color-space-compare': Object.freeze({
     overlayId: 'colorSpaceCompareOverlay',

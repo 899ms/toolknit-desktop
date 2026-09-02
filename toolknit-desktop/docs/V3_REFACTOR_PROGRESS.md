@@ -56,11 +56,12 @@ Last updated: 2026-09-02
 | `ec6ea9d` | Migrated Excel To PDF into a feature-owned module boundary |
 | `b67cff3` | Migrated Markdown Editor into a feature-owned module boundary |
 | `fec2595` | Migrated Image Crop into a feature-owned module boundary |
+| `446cddc` | Migrated the first four Hardware Inspector tools and snapshot lifecycle |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 37 of 65 desktop tools have completed migration batches (**56.9%** coverage).
+- 40 of 65 desktop tools have completed migration batches (**61.5%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -440,35 +441,49 @@ Image Crop emits a 27.67 kB JavaScript chunk and 9.64 kB CSS chunk; main
 JavaScript is now 1,820.36 kB and main CSS is 551.67 kB. Only the pre-existing
 crypto externalization and large-chunk warnings remain.
 
-Hardware Overview, Mainboard and Firmware, Storage and Health, and Network and
-Devices now live under `src/features/hardware-inspector/`. The four read-only
-tools share a snapshot controller, a 56-line pure rendering helper,
-one composition entry and feature-owned static templates while retaining
-separate render definitions. Their full HTML and 771 lines of legacy runtime
-code no longer live in `index.html` and `main.js`. Every open session carries a
-revision guard, so results from a closed or superseded hardware query cannot
-write into a later session; loading and error states use safe DOM nodes, and
-runtime hardware values remain escaped before entering result markup.
+All seven Hardware Inspector tools now live under
+`src/features/hardware-inspector/`: Hardware Overview, CPU and Memory, GPU and
+Displays, Mainboard and Firmware, Storage and Health, Network and Devices, and
+Power and Sensors. They share a 192-line snapshot controller, a 56-line pure
+rendering helper, a 101-line static shell generator and one composition entry,
+while retaining separate renderer definitions. Their full HTML and 1,500 lines
+of legacy runtime code no longer live in `index.html` and `main.js`.
+
+Every open session carries a revision guard, so results from a closed or
+superseded hardware query cannot write into a later session. CPU and Memory's
+five-second live metrics now use the same guard and stop their timer on refresh,
+close and dispose. Loading and error states use safe DOM nodes, and all seven
+renderers execute against malicious-value fixtures to prove runtime hardware
+values remain escaped before entering result markup.
 
 Browser regression at the normal desktop size and 680 by 900 covered first
 lazy open, refresh, close, repeated reopen, one-instance DOM ownership and the
-browser-only fallback for all four tools. The narrow layout switches to one
-column with no horizontal overflow, and the console reported no warning or
-error. The focused contract, architecture gate, 658 security checks and
-production build pass. The hardware family emits an approximately 39.48 kB
-JavaScript chunk; main JavaScript is now 1,797.57 kB and main CSS remains
-551.67 kB. Hardware CSS is split into a 922-line base and 235-line stable
-override layer, but both remain temporarily global because CPU and Memory,
-GPU and Displays, and Power and Sensors still consume the shared rules.
-`main.js` likewise retains a temporary import of the shared hardware rendering
-helper. The next hardware batch must remove both compatibility dependencies
-only after those three pages migrate.
+browser-only fallback for the first four tools. The narrow layout switches to
+one column with no horizontal overflow, and the console reported no warning or
+error. The remaining three shells match the pre-migration DOM structure after
+whitespace normalization; their focused lifecycle and renderer tests pass.
+The in-app browser rejected the post-edit local-page reload through its URL
+safety policy, so a fresh visual pass for those three pages remains explicitly
+unclaimed rather than being bypassed.
+
+The focused contract, architecture gate, 672 security checks and production
+build pass. The complete hardware family emits an approximately 48.11 kB
+JavaScript chunk and 24.67 kB CSS chunk. Main JavaScript is now 1,773.48 kB,
+main CSS is 527.00 kB, `main.js` is 19,174 lines and `index.html` is 10,122
+lines. Both hardware stylesheets and the shared render core now load only with
+the feature; no temporary hardware import remains in `index.html` or `main.js`.
 
 The migrated controller also fixes a legacy language-switch defect: changing
 language while a browser-only or native read-error state was visible replaced
 the error with a permanent scanning label. Explicit loading, desktop-only,
 data and error view states now redraw their own localized content, with an
 executable browser-fallback regression test.
+
+The former CPU and Memory live refresh could complete after the overlay closed
+and render an old result without session identity. Live queries now share the
+snapshot revision, stop their timer at every lifecycle boundary and discard a
+result that resolves after close; the focused test holds a live query pending,
+closes the tool and verifies that no second render occurs.
 
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
@@ -659,9 +674,8 @@ executable browser-fallback regression test.
 
 ## Next batches
 
-1. Migrate CPU and Memory, GPU and Displays, and Power and Sensors into the
-   hardware feature family, then remove the temporary global hardware CSS and
-   `main.js` rendering-helper import so the complete family loads on demand.
+1. Select the next coherent low- or medium-risk frontend family and continue
+   batched migration under the accelerated verification protocol.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed

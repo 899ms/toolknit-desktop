@@ -1,4 +1,4 @@
-/* Extracted in original cascade order. Loaded globally until the remaining hardware pages migrate. */
+/* Extracted in original cascade order and loaded with the complete hardware family. */
       /* ===== Hardware Overview ===== */
       .hardware-overview-overlay .plasma-bg {
         opacity: 1;

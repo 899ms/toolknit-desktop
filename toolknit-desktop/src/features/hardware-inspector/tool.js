@@ -1,16 +1,24 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
 import { getLang, onLangChange, t } from '../../i18n.js';
 import { createHardwareSnapshotController } from './controller.js';
+import { createCpuMemoryDefinition } from './cpu-memory.js';
+import { createGpuDisplayDefinition } from './gpu-display.js';
 import { createHardwareOverviewDefinition } from './overview.js';
 import { createMainboardDefinition } from './mainboard.js';
+import { createPowerSensorsDefinition } from './power-sensors.js';
 import { createStorageDefinition } from './storage.js';
 import { createNetworkDevicesDefinition } from './network-devices.js';
 import {
+  hardwareCpuMemoryTemplate,
+  hardwareGpuDisplayTemplate,
   hardwareMainboardTemplate,
   hardwareNetworkDevicesTemplate,
   hardwareOverviewTemplate,
+  hardwarePowerSensorsTemplate,
   hardwareStorageTemplate
 } from './templates.js';
+import './hardware-inspector.css';
+import './hardware-inspector-overrides.css';
 
 const WEBSITE_URL = 'https://toolknit.com';
 
@@ -97,6 +105,14 @@ export function initHardwareOverviewTool(context) {
   return initHardwareSnapshotTool({ ...context, template: hardwareOverviewTemplate, createDefinition: createHardwareOverviewDefinition });
 }
 
+export function initHardwareCpuMemoryTool(context) {
+  return initHardwareSnapshotTool({ ...context, template: hardwareCpuMemoryTemplate, createDefinition: createCpuMemoryDefinition });
+}
+
+export function initHardwareGpuDisplayTool(context) {
+  return initHardwareSnapshotTool({ ...context, template: hardwareGpuDisplayTemplate, createDefinition: createGpuDisplayDefinition });
+}
+
 export function initHardwareMainboardTool(context) {
   return initHardwareSnapshotTool({ ...context, template: hardwareMainboardTemplate, createDefinition: createMainboardDefinition });
 }
@@ -107,4 +123,8 @@ export function initHardwareStorageTool(context) {
 
 export function initHardwareNetworkDevicesTool(context) {
   return initHardwareSnapshotTool({ ...context, template: hardwareNetworkDevicesTemplate, createDefinition: createNetworkDevicesDefinition });
+}
+
+export function initHardwarePowerSensorsTool(context) {
+  return initHardwareSnapshotTool({ ...context, template: hardwarePowerSensorsTemplate, createDefinition: createPowerSensorsDefinition });
 }

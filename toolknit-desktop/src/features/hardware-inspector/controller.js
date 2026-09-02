@@ -24,7 +24,8 @@ export function createHardwareSnapshotController({
   definition,
   isTauri,
   onLangChange,
-  notify = message => window.showToast?.(message)
+  notify = message => window.showToast?.(message),
+  tauri = tauriCorePromise
 }) {
   const lifecycle = createLifecycleScope();
   const prefix = definition.prefix;
@@ -41,6 +42,8 @@ export function createHardwareSnapshotController({
   let scannedAt = null;
   let viewState = 'idle';
   let errorDetail = '';
+  let liveTimer = null;
+  let liveLoading = false;
 
   function isCurrent(operation) {
     return active && !disposed && operation === revision;
@@ -75,10 +78,43 @@ export function createHardwareSnapshotController({
     renderLoading();
   }
 
+  function stopLiveUpdates() {
+    if (liveTimer !== null) clearInterval(liveTimer);
+    liveTimer = null;
+    liveLoading = false;
+  }
+
+  async function refreshLiveData() {
+    if (!definition.live || !active || disposed || !isTauri || !data || liveLoading) return;
+    const operation = revision;
+    liveLoading = true;
+    try {
+      const { invoke } = await tauri;
+      if (!isCurrent(operation)) return;
+      const result = await invoke(definition.live.command);
+      if (!isCurrent(operation)) return;
+      data = definition.live.merge(data, result);
+      scannedAt = new Date();
+      viewState = 'data';
+      renderCurrentState();
+    } catch {
+      // Live metrics are best-effort; the last complete snapshot stays visible.
+    } finally {
+      if (isCurrent(operation)) liveLoading = false;
+    }
+  }
+
+  function startLiveUpdates() {
+    stopLiveUpdates();
+    if (!definition.live || !active || disposed || !isTauri || !data) return;
+    liveTimer = setInterval(() => { void refreshLiveData(); }, definition.live.intervalMs);
+  }
+
   async function load() {
     if (!active || loading || disposed) return;
     const operation = ++revision;
     loading = true;
+    stopLiveUpdates();
     viewState = 'loading';
     errorDetail = '';
     renderCurrentState();
@@ -93,7 +129,7 @@ export function createHardwareSnapshotController({
         }
         return;
       }
-      const { invoke } = await tauriCorePromise;
+      const { invoke } = await tauri;
       if (!isCurrent(operation)) return;
       const result = await invoke(definition.command);
       if (!isCurrent(operation)) return;
@@ -101,6 +137,7 @@ export function createHardwareSnapshotController({
       scannedAt = new Date();
       viewState = 'data';
       renderCurrentState();
+      startLiveUpdates();
     } catch (error) {
       if (!isCurrent(operation)) return;
       const detail = String((typeof error === 'string' ? error : error?.message) || '').trim();
@@ -133,6 +170,7 @@ export function createHardwareSnapshotController({
       active = false;
       revision += 1;
       loading = false;
+      stopLiveUpdates();
       refresh.classList.remove('is-loading');
       refresh.disabled = false;
     },
@@ -141,12 +179,14 @@ export function createHardwareSnapshotController({
       disposed = true;
       active = false;
       revision += 1;
+      stopLiveUpdates();
       lifecycle.dispose();
       data = null;
       scannedAt = null;
       viewState = 'idle';
       errorDetail = '';
     },
-    refresh() { return load(); }
+    refresh() { return load(); },
+    refreshLive() { return refreshLiveData(); }
   };
 }

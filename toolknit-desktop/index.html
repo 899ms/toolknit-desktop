@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ToolKnit Desktop</title>
     <link rel="stylesheet" href="./src/styles.css">
-    <link rel="stylesheet" href="./src/features/hardware-inspector/hardware-inspector.css">
-    <link rel="stylesheet" href="./src/features/hardware-inspector/hardware-inspector-overrides.css">
     <link rel="stylesheet" href="./src/tool-page-v2-final.css">
     <link rel="stylesheet" href="./src/teleprompter.css">
     <link rel="stylesheet" href="./src/tool-custom-select.css">
@@ -696,139 +694,9 @@
 
     <div class="pdf-merge-overlay pdf-merge-v2 hardware-v2 hardware-overview-overlay" id="hardwareOverviewOverlay" aria-hidden="true" data-hardware-mark="SYS"></div>
 
-    <div class="pdf-merge-overlay pdf-merge-v2 hardware-v2 hardware-cpu-memory-overlay" id="hardwareCpuMemoryOverlay" aria-hidden="true" data-hardware-mark="CPU">
-      <div class="plasma-bg pdf-merge-v2-bg" id="hardwareCpuMemoryPlasmaBg"></div>
-      <header class="pdf-merge-v2-topbar">
-        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
-          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="hardwareCpuMemoryBack" type="button" data-i18n-title="settings.back" title="返回首页">
-            <i data-lucide="arrow-left"></i>
-            <span data-i18n="settings.back">返回首页</span>
-          </button>
-          <span class="pdf-merge-v2-top-tag">CPU / MEMORY · TOOL PAGE 2.3</span>
-        </div>
-        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
-          <button class="home-v2-nav-link" type="button" data-home-link="website">
-            <i data-lucide="globe-2"></i>
-            <span>网页版本</span>
-          </button>
-          <button class="home-v2-support-top" type="button" data-open-support>
-            <i data-lucide="heart"></i>
-            <span>支持作者</span>
-          </button>
-          <div class="home-v2-window-cluster" aria-label="窗口与设置">
-            <button class="home-v2-icon-button" id="hardwareCpuMemoryV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
-              <i data-lucide="settings"></i>
-            </button>
-            <div class="home-v2-window-controls" aria-label="窗口控制">
-              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
-              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
-              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
-            </div>
-          </div>
-        </div>
-      </header>
-      <div class="audio-convert-body pdf-merge-v2-body hardware-v2-body hardware-cpu-memory-body">
-        <aside class="pdf-merge-v2-poster hardware-v2-poster hardware-cpu-memory-hero" aria-label="CPU 与内存说明">
-          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.cpuMemoryPage.heroLabel">System Monitor</div>
-          <h1 class="pdf-merge-v2-title" data-i18n="home.cpuMemoryPage.title">CPU 与内存</h1>
-          <p class="pdf-merge-v2-subtitle" data-i18n="home.cpuMemoryPage.subtitle">本地读取处理器规格、内存拓扑与当前资源占用。</p>
-          <div class="pdf-merge-v2-poster-note">
-            <span>READ ONLY</span>
-            <strong>核心、线程、频率、缓存与内存拓扑只读读取。</strong>
-          </div>
-          <div class="pdf-merge-v2-steps" aria-label="硬件信息读取流程">
-            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong>本机读取</strong><p>调用桌面端安全接口读取系统公开信息。</p></div></div>
-            <div class="pdf-merge-v2-step"><span>02</span><div><strong>分类整理</strong><p>按核心参数、设备表格和状态提示分组。</p></div></div>
-            <div class="pdf-merge-v2-step"><span>03</span><div><strong>人工判断</strong><p>缺失字段不会猜测，避免误导硬件结论。</p></div></div>
-            <div class="pdf-merge-v2-step"><span>04</span><div><strong>刷新更新</strong><p>点击刷新可重新读取当前状态。</p></div></div>
-          </div>
-        </aside>
-        <main class="pdf-merge-v2-workspace hardware-v2-workspace">
-          <section class="hardware-v2-panel">
-            <div class="hardware-v2-panel-head">
-              <div>
-                <span class="pdf-merge-v2-section-kicker">LOCAL INSPECTOR</span>
-                <h2 data-i18n="home.cpuMemoryPage.title">CPU 与内存</h2>
-              </div>
-              <div class="hardware-overview-refresh-row hardware-v2-refresh-row">
-                <button class="hardware-overview-refresh hardware-v2-refresh" id="hardwareCpuMemoryRefresh" type="button" data-i18n-title="home.cpuMemoryPage.refresh" data-i18n-aria-label="home.cpuMemoryPage.refresh">
-                  <i data-lucide="refresh-cw"></i>
-                </button>
-                <span id="hardwareCpuMemoryUpdatedAt" aria-live="polite"></span>
-              </div>
-            </div>
-            <div class="hardware-v2-content hardware-cpu-memory-content" id="hardwareCpuMemoryContent" aria-live="polite"></div>
-          </section>
-        </main>
-      </div>
-    </div>
+    <div class="pdf-merge-overlay pdf-merge-v2 hardware-v2 hardware-cpu-memory-overlay" id="hardwareCpuMemoryOverlay" aria-hidden="true" data-hardware-mark="CPU"></div>
 
-    <div class="pdf-merge-overlay pdf-merge-v2 hardware-v2 hardware-gpu-display-overlay" id="hardwareGpuDisplayOverlay" aria-hidden="true" data-hardware-mark="GPU">
-      <div class="plasma-bg pdf-merge-v2-bg" id="hardwareGpuDisplayPlasmaBg"></div>
-      <header class="pdf-merge-v2-topbar">
-        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
-          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="hardwareGpuDisplayBack" type="button" data-i18n-title="settings.back" title="返回首页">
-            <i data-lucide="arrow-left"></i>
-            <span data-i18n="settings.back">返回首页</span>
-          </button>
-          <span class="pdf-merge-v2-top-tag">GPU / DISPLAY · TOOL PAGE 2.3</span>
-        </div>
-        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
-          <button class="home-v2-nav-link" type="button" data-home-link="website">
-            <i data-lucide="globe-2"></i>
-            <span>网页版本</span>
-          </button>
-          <button class="home-v2-support-top" type="button" data-open-support>
-            <i data-lucide="heart"></i>
-            <span>支持作者</span>
-          </button>
-          <div class="home-v2-window-cluster" aria-label="窗口与设置">
-            <button class="home-v2-icon-button" id="hardwareGpuDisplayV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
-              <i data-lucide="settings"></i>
-            </button>
-            <div class="home-v2-window-controls" aria-label="窗口控制">
-              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
-              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
-              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
-            </div>
-          </div>
-        </div>
-      </header>
-      <div class="audio-convert-body pdf-merge-v2-body hardware-v2-body hardware-gpu-display-body">
-        <aside class="pdf-merge-v2-poster hardware-v2-poster hardware-gpu-display-hero" aria-label="显卡与显示器说明">
-          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.gpuDisplayPage.heroLabel">Graphics & Displays</div>
-          <h1 class="pdf-merge-v2-title" data-i18n="home.gpuDisplayPage.title">显卡与显示器</h1>
-          <p class="pdf-merge-v2-subtitle" data-i18n="home.gpuDisplayPage.subtitle">本地读取图形适配器、驱动、显存与已连接显示器信息。</p>
-          <div class="pdf-merge-v2-poster-note">
-            <span>READ ONLY</span>
-            <strong>显卡、驱动、显存与显示器状态本机读取。</strong>
-          </div>
-          <div class="pdf-merge-v2-steps" aria-label="硬件信息读取流程">
-            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong>本机读取</strong><p>调用桌面端安全接口读取系统公开信息。</p></div></div>
-            <div class="pdf-merge-v2-step"><span>02</span><div><strong>分类整理</strong><p>按核心参数、设备表格和状态提示分组。</p></div></div>
-            <div class="pdf-merge-v2-step"><span>03</span><div><strong>人工判断</strong><p>缺失字段不会猜测，避免误导硬件结论。</p></div></div>
-            <div class="pdf-merge-v2-step"><span>04</span><div><strong>刷新更新</strong><p>点击刷新可重新读取当前状态。</p></div></div>
-          </div>
-        </aside>
-        <main class="pdf-merge-v2-workspace hardware-v2-workspace">
-          <section class="hardware-v2-panel">
-            <div class="hardware-v2-panel-head">
-              <div>
-                <span class="pdf-merge-v2-section-kicker">LOCAL INSPECTOR</span>
-                <h2 data-i18n="home.gpuDisplayPage.title">显卡与显示器</h2>
-              </div>
-              <div class="hardware-overview-refresh-row hardware-v2-refresh-row">
-                <button class="hardware-overview-refresh hardware-v2-refresh" id="hardwareGpuDisplayRefresh" type="button" data-i18n-title="home.gpuDisplayPage.refresh" data-i18n-aria-label="home.gpuDisplayPage.refresh">
-                  <i data-lucide="refresh-cw"></i>
-                </button>
-                <span id="hardwareGpuDisplayUpdatedAt" aria-live="polite"></span>
-              </div>
-            </div>
-            <div class="hardware-v2-content hardware-gpu-display-content" id="hardwareGpuDisplayContent" aria-live="polite"></div>
-          </section>
-        </main>
-      </div>
-    </div>
+    <div class="pdf-merge-overlay pdf-merge-v2 hardware-v2 hardware-gpu-display-overlay" id="hardwareGpuDisplayOverlay" aria-hidden="true" data-hardware-mark="GPU"></div>
 
     <div class="pdf-merge-overlay pdf-merge-v2 hardware-v2 hardware-mainboard-overlay" id="hardwareMainboardOverlay" aria-hidden="true" data-hardware-mark="BIOS"></div>
 
@@ -836,72 +704,7 @@
 
     <div class="pdf-merge-overlay pdf-merge-v2 hardware-v2 hardware-network-devices-overlay" id="hardwareNetworkDevicesOverlay" aria-hidden="true" data-hardware-mark="I/O"></div>
 
-    <div class="pdf-merge-overlay pdf-merge-v2 hardware-v2 hardware-power-sensors-overlay" id="hardwarePowerSensorsOverlay" aria-hidden="true" data-hardware-mark="PWR">
-      <div class="plasma-bg pdf-merge-v2-bg" id="hardwarePowerSensorsPlasmaBg"></div>
-      <header class="pdf-merge-v2-topbar">
-        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
-          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="hardwarePowerSensorsBack" type="button" data-i18n-title="settings.back" title="返回首页">
-            <i data-lucide="arrow-left"></i>
-            <span data-i18n="settings.back">返回首页</span>
-          </button>
-          <span class="pdf-merge-v2-top-tag">POWER · TOOL PAGE 2.3</span>
-        </div>
-        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
-          <button class="home-v2-nav-link" type="button" data-home-link="website">
-            <i data-lucide="globe-2"></i>
-            <span>网页版本</span>
-          </button>
-          <button class="home-v2-support-top" type="button" data-open-support>
-            <i data-lucide="heart"></i>
-            <span>支持作者</span>
-          </button>
-          <div class="home-v2-window-cluster" aria-label="窗口与设置">
-            <button class="home-v2-icon-button" id="hardwarePowerSensorsV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
-              <i data-lucide="settings"></i>
-            </button>
-            <div class="home-v2-window-controls" aria-label="窗口控制">
-              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
-              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
-              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
-            </div>
-          </div>
-        </div>
-      </header>
-      <div class="audio-convert-body pdf-merge-v2-body hardware-v2-body hardware-power-sensors-body">
-        <aside class="pdf-merge-v2-poster hardware-v2-poster hardware-power-sensors-hero" aria-label="电源与传感器说明">
-          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.powerSensorsPage.heroLabel">Power & Sensors</div>
-          <h1 class="pdf-merge-v2-title" data-i18n="home.powerSensorsPage.title">电源与传感器</h1>
-          <p class="pdf-merge-v2-subtitle" data-i18n="home.powerSensorsPage.subtitle">本地读取电源计划、电池状态与固件实际提供的温度、风扇传感器。</p>
-          <div class="pdf-merge-v2-poster-note">
-            <span>READ ONLY</span>
-            <strong>电池、温度、风扇数据取决于固件和驱动暴露能力。</strong>
-          </div>
-          <div class="pdf-merge-v2-steps" aria-label="硬件信息读取流程">
-            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong>本机读取</strong><p>调用桌面端安全接口读取系统公开信息。</p></div></div>
-            <div class="pdf-merge-v2-step"><span>02</span><div><strong>分类整理</strong><p>按核心参数、设备表格和状态提示分组。</p></div></div>
-            <div class="pdf-merge-v2-step"><span>03</span><div><strong>人工判断</strong><p>缺失字段不会猜测，避免误导硬件结论。</p></div></div>
-            <div class="pdf-merge-v2-step"><span>04</span><div><strong>刷新更新</strong><p>点击刷新可重新读取当前状态。</p></div></div>
-          </div>
-        </aside>
-        <main class="pdf-merge-v2-workspace hardware-v2-workspace">
-          <section class="hardware-v2-panel">
-            <div class="hardware-v2-panel-head">
-              <div>
-                <span class="pdf-merge-v2-section-kicker">LOCAL INSPECTOR</span>
-                <h2 data-i18n="home.powerSensorsPage.title">电源与传感器</h2>
-              </div>
-              <div class="hardware-overview-refresh-row hardware-v2-refresh-row">
-                <button class="hardware-overview-refresh hardware-v2-refresh" id="hardwarePowerSensorsRefresh" type="button" data-i18n-title="home.powerSensorsPage.refresh" data-i18n-aria-label="home.powerSensorsPage.refresh">
-                  <i data-lucide="refresh-cw"></i>
-                </button>
-                <span id="hardwarePowerSensorsUpdatedAt" aria-live="polite"></span>
-              </div>
-            </div>
-            <div class="hardware-v2-content hardware-power-sensors-content" id="hardwarePowerSensorsContent" aria-live="polite"></div>
-          </section>
-        </main>
-      </div>
-    </div>
+    <div class="pdf-merge-overlay pdf-merge-v2 hardware-v2 hardware-power-sensors-overlay" id="hardwarePowerSensorsOverlay" aria-hidden="true" data-hardware-mark="PWR"></div>
 
     <div class="pdf-merge-overlay pdf-merge-v2 cleanup-v2 audio-convert-overlay" id="largeFileCleanupOverlay" aria-hidden="true">
       <div class="plasma-bg pdf-merge-v2-bg" id="largeFileCleanupPlasmaBg"></div>

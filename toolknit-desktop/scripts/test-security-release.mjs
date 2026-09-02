@@ -222,12 +222,16 @@ check(imageCropToolSource.includes('imageCropTemplate()'), 'Image Crop must mate
 const hardwareControllerSource = read('toolknit-desktop/src/features/hardware-inspector/controller.js');
 const hardwareToolSource = read('toolknit-desktop/src/features/hardware-inspector/tool.js');
 const hardwareRendererSource = [
-  'overview.js', 'mainboard.js', 'storage.js', 'network-devices.js'
+  'overview.js', 'cpu-memory.js', 'gpu-display.js', 'mainboard.js',
+  'storage.js', 'network-devices.js', 'power-sensors.js'
 ].map(file => read(`toolknit-desktop/src/features/hardware-inspector/${file}`)).join('\n');
 check(hardwareControllerSource.includes('isCurrent(operation)'), 'Hardware inspection results must reject stale sessions');
+check(hardwareControllerSource.includes('async function refreshLiveData()'), 'Hardware live metrics must use the shared session guard');
+check(hardwareControllerSource.includes('stopLiveUpdates()'), 'Hardware live timers must stop with their owning session');
 check(hardwareControllerSource.includes('content.replaceChildren(wrapper)'), 'Hardware loading and error data must use safe DOM nodes');
 check(!hardwareControllerSource.includes("from '@tauri-apps/"), 'Hardware inspection must use the platform Tauri boundary');
 check(hardwareToolSource.includes('controller.dispose()'), 'Hardware inspection must dispose feature lifecycle state');
+check(hardwareToolSource.includes("import './hardware-inspector.css'"), 'Hardware inspection must own its lazy stylesheet');
 check(hardwareRendererSource.includes('escapeHtml'), 'Hardware inspection result markup must escape runtime values');
 
 const mcpSource = read('toolknit-desktop/cli/lib/mcp-server.mjs');

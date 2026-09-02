@@ -21,6 +21,12 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
   listener together. The pointer variant also guards native WebView drops
   while a PDF queue is being reordered.
 - `src/features/lazy-tools.js` is the declarative feature loading catalog.
+- `src/features/pdf-editor/history.js` owns bounded undo/redo snapshots and
+  transaction locking without coupling history to the DOM.
+- `src/features/pdf-editor/focus.js` owns modal focus trapping and restoration
+  for the PDF Editor overlay hierarchy.
+- `src/features/pdf-editor/thumbnails.js` owns page-tile rendering,
+  IntersectionObserver scheduling, PDF.js thumbnail tasks and drag reordering.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 - `src/core/serialized-request-session.js` owns one-at-a-time async requests,
   timeout state, request-specific cancellation and stale-result identity.
@@ -116,14 +122,20 @@ tool entry so it becomes a separate production chunk.
   and native atomic-write sessions. Operation identity blocks closed or
   superseded sessions from publishing output or updating later UI, and the
   feature-owned compact-height rules keep its completion dialog reachable.
-- PDF Compress, split into queue/session orchestration and a native compression
+ - PDF Compress, split into queue/session orchestration and a native compression
   processor. The existing `compress_pdf` command and partial-failure semantics
   remain unchanged. Queue rendering uses text nodes and a disposable pointer
   sort scope; native drag/drop registration, progress state, success metadata,
   output-folder opening and operation identity are owned by the lazy feature.
   The historical result-drawer references were dead because the HTML never
-  contained those nodes, so the real completion dialog remains the only result
-  surface.
+   contained those nodes, so the real completion dialog remains the only result
+   surface.
+- PDF Editor now enters through the lazy registry instead of being statically
+  initialized by `main.js`. Its bounded history, modal focus behavior,
+  thumbnail queue/observer, drag sorting and canvas release helpers have
+  feature-owned boundaries; the legacy UI orchestrator remains a compatibility
+  owner while document, main preview, component and export sections migrate in
+  later batches.
 - PDF Compress, split into queue/session orchestration and a native compression
   processor. The existing `compress_pdf` command and partial-failure semantics
   remain unchanged. Queue rendering uses text nodes and a disposable pointer

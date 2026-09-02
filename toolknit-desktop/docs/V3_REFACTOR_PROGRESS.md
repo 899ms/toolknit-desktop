@@ -44,6 +44,7 @@ Last updated: 2026-09-02
 | `1310525` | Isolated PDF Editor content editing, insertion flow and lifecycle regression coverage |
 | `edd6649` | Isolated PDF Editor page operations and resource-safe mutation coverage |
 | `45590d2` | Isolated PDF Editor file selection, replacement and append sessions |
+| `da87d8b` | Isolated PDF Editor overlay, success, drag-hint and view-label state |
 
 ## Current verified counts
 
@@ -252,6 +253,13 @@ file reads, staged replacement loading, append validation, source/page ID
 allocation, progress/error publication and clean commit ordering are injected
 through the orchestrator. A file-session suite covers replacement staging,
 invalid-file preservation, append output state and picker behavior.
+
+PDF Editor visible session state now lives in `src/features/pdf-editor/view.js`.
+Overlay open/close, success metadata, output-folder state, drag hints, file
+card metadata and zoom labels are owned by the controller with injected focus,
+document and reset callbacks. Its lifecycle suite covers repeated open, busy
+close protection, success rendering, drag state, empty/document stages, input
+cleanup and zoom label updates.
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the
@@ -441,9 +449,9 @@ invalid-file preservation, append output state and picker behavior.
 
 ## Next batches
 
-1. Continue PDF Editor component-editing ownership, then audit the remaining
-   PDF template ownership and select the next coherent legacy candidate by
-   lifecycle risk, dependency weight and compatibility scope.
+1. Continue PDF Editor operation and document/session coordination ownership,
+   then audit the remaining PDF template ownership and select the next coherent
+   legacy candidate by lifecycle risk, dependency weight and compatibility scope.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed

@@ -29,6 +29,7 @@ Last updated: 2026-09-02
 | `3edb97c` | Migrated PDF Compress queue, native compression processing and lifecycle ownership |
 | `d7a8776` | Isolated PDF Editor bounded history and transaction locking |
 | `427f11d` | Lazy-loaded PDF Editor and isolated focus, thumbnail and render-resource ownership |
+| `d63f21d` | Isolated the native AI provider command and its security tests |
 
 ## Current verified counts
 
@@ -112,6 +113,15 @@ Queue text uses safe nodes. The historical result-drawer references were dead
 because no drawer DOM existed in either HTML version; they were removed while
 retaining the visible completion dialog. Compact-height rules keep the workspace
 scrollable and the completion dialog bounded at 480 by 360.
+
+The native AI provider now lives in `src-tauri/src/ai_provider.rs`; `lib.rs`
+retains only module registration and public command wiring. Its endpoint,
+request-size and response-size security tests remain unchanged, and the
+command inventory is back to 127 implementations and 126 unique names. The
+current PDF Editor batch moves PDF assembly, font loading, browser/native
+output publication and operation-guarded success state into a dedicated
+exporter; the existing state contract now checks the moved export-field
+construction in that module.
 
 ## Hidden issues fixed during migration
 

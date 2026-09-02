@@ -67,6 +67,7 @@ assert.equal(pdfEditorSnapshotsEqual(cleanSnapshot, {
 assert.equal(pdfEditorSnapshotsEqual(null, cleanSnapshot), false);
 
 const uiSource = await readFile(new URL('../src/pdf-editor-ui.js', import.meta.url), 'utf8');
+const exporterSource = await readFile(new URL('../src/features/pdf-editor/exporter.js', import.meta.url), 'utf8');
 
 const snapshotStart = uiSource.indexOf('function captureEditorSnapshot()');
 const snapshotEnd = uiSource.indexOf('function applyEditorSnapshot(', snapshotStart);
@@ -104,7 +105,7 @@ assert.match(uiSource, /savedSnapshot = captureEditorSnapshot\(\)/);
 assert.match(uiSource, /\['text', 'inserted-text'\]\.includes\(selectedComponent\?\.type\)/);
 assert.match(uiSource, /openEditModal\(object\.id, object, object, 'edit-inserted-text'\)/);
 assert.match(uiSource, /modalMode === 'edit-inserted-text'/);
-assert.match(uiSource, /textBox: editedTextVisualBox\(edit, edit\.segment\)/);
+assert.match(exporterSource, /textBox: getEditedTextVisualBox\(edit, edit\.segment\)/);
 assert.match(uiSource, /Number\(segmentData\.rotation\) \|\| 0/);
 assert.match(uiSource, /dataset\?\.maskKey === `\$\{key\}:rotated`/);
 assert.match(uiSource, /function editedTextVisualBox\(edit, segment\)/);

@@ -9,9 +9,6 @@ import {
   assertPdfEditorFile,
   assertPdfEditorMergeSelection,
   assertPdfEditorPageCount,
-  assemblePdf,
-  assemblePdfWithTextEdits,
-  buildPdfName,
   estimateInsertedTextWidth,
   normalizePageRotation,
   resolvePdfPageRotation
@@ -28,18 +25,15 @@ import {
   isPdfEditorRenderCancellation as isRenderCancellation,
   releasePdfEditorCanvas as releaseCanvas
 } from './features/pdf-editor/render-utils.js';
+import {
+  createPdfEditorExporter,
+  PdfEditorCancelledError
+} from './features/pdf-editor/exporter.js';
 import { IMAGE_BATCH_LIMITS } from './image-batch-core.js';
 
 const ZOOM_MIN = 0.08;
 const ZOOM_MAX = 8;
 const ZOOM_RENDER_DEBOUNCE_MS = 130;
-
-class PdfEditorCancelledError extends Error {
-  constructor() {
-    super('PDF editor operation cancelled');
-    this.name = 'PdfEditorCancelledError';
-  }
-}
 
 function asUint8Array(value) {
   if (value instanceof Uint8Array) return value;
@@ -82,15 +76,6 @@ function rgb01ToCss(color, fallback = '#111111') {
 function isPasswordError(error) {
   return error?.name === 'PasswordException'
     || /password|encrypted/i.test(String(error?.message || error || ''));
-}
-
-function downloadBlob(blob, fileName) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = fileName;
-  anchor.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
 export function initPdfEditorTool({
@@ -246,9 +231,6 @@ export function initPdfEditorTool({
   let modalMode = null;
   let baselineSnapshot = null;
   let savedSnapshot = null;
-  let fontRegularBytes = null;
-  let fontSemiboldBytes = null;
-
   const showToast = (message, duration = 7000) => {
     if (!disposed) window.showToast?.(message, { duration, dismissible: true });
   };
@@ -3724,260 +3706,36 @@ export function initPdfEditorTool({
     savedSnapshot = cloneState(editorHistory.firstSnapshot());
   }
 
-  function buildAssembleArgs(ids) {
-    const sourceIndexById = new Map(sources.map((source, index) => [source.id, index]));
-    const byId = new Map(pages.map(page => [page.id, page]));
-    const assemblePages = ids
-      .map(id => byId.get(id))
-      .filter(Boolean)
-      .map(page => ({
-        sourceIndex: sourceIndexById.get(page.sourceId),
-        pageIndex: page.pageIndex,
-        rotation: page.rotation
-      }));
-    return {
-      sources: sources.map(source => ({ name: source.name, bytes: source.bytes })),
-      pages: assemblePages
-    };
-  }
-
-  async function writePdf(bytes, outputDir, fileName) {
-    if (isTauri) {
-      const invoke = await getInvoke();
-      return await invoke('write_unique_file_bytes', {
-        directory: outputDir,
-        fileName,
-        bytes: Array.from(bytes)
-      });
-    }
-    const blob = new Blob([bytes], { type: 'application/pdf' });
-    downloadBlob(blob, fileName);
-    return `${outputDir}/${fileName}`;
-  }
-
-  async function ensureFontBytes() {
-    if (fontRegularBytes && fontSemiboldBytes) return;
-    try {
-      const [regularResponse, semiboldResponse] = await Promise.all([
-        fetch('/assets/fonts/NotoSansSC-Regular.ttf'),
-        fetch('/assets/fonts/NotoSansSC-Semibold.ttf')
-      ]);
-      if (!regularResponse.ok || !semiboldResponse.ok) throw new Error('font fetch failed');
-      const [regularBytes, semiboldBytes] = await Promise.all([
-        regularResponse.arrayBuffer(),
-        semiboldResponse.arrayBuffer()
-      ]);
-      if (new Uint8Array(regularBytes, 0, 1)[0] === 0x3C
-        || new Uint8Array(semiboldBytes, 0, 1)[0] === 0x3C) {
-        throw new Error('font fetch returned HTML');
-      }
-      fontRegularBytes = new Uint8Array(regularBytes);
-      fontSemiboldBytes = new Uint8Array(semiboldBytes);
-    } catch (error) {
-      console.error('[PDF Editor] failed to load fonts:', error);
-      fontRegularBytes = null;
-      fontSemiboldBytes = null;
-    }
-  }
-
-  function buildTextEditArgs(ids) {
-    const pageIndexById = new Map(ids.map((id, index) => [id, index]));
-    const edits = [];
-    for (const [key, edit] of textEdits.entries()) {
-      const pageId = String(key).split(':')[0];
-      const pageIndex = pageIndexById.get(pageId);
-      if (pageIndex == null || !edit?.segment) continue;
-      edits.push({
-        pageIndex,
-        baselineX: edit.segment.baselineX,
-        baselineY: edit.segment.baselineY,
-        fontSize: edit.segment.fontSize,
-        text: edit.newText,
-        bold: edit.segment.bold,
-        italic: edit.segment.italic,
-        rotation: edit.segment.rotation,
-        box: edit.baseSegment?.sourceBox || edit.baseSegment?.box || edit.segment.sourceBox || edit.segment.box,
-        textBox: editedTextVisualBox(edit, edit.segment)
-          || edit.segment.box
-          || edit.segment.sourceBox
-          || edit.baseSegment?.box,
-        color: edit.segment.color
-      });
-    }
-    return edits;
-  }
-
-  function buildInsertedTextArgs(ids) {
-    const pageIndexById = new Map(ids.map((id, index) => [id, index]));
-    return insertedTexts
-      .filter(object => pageIndexById.has(object.pageId))
-      .map(object => {
-        const visualBox = insertedTextVisualBox(object);
-        return {
-          pageIndex: pageIndexById.get(object.pageId),
-          x: object.x,
-          y: object.y,
-          width: visualBox.width,
-          height: visualBox.height,
-          text: object.text,
-          fontSize: object.fontSize,
-          bold: object.bold,
-          rotation: object.rotation,
-          color: object.color
-        };
-      });
-  }
-
-  function buildInsertedImageArgs(ids) {
-    const pageIndexById = new Map(ids.map((id, index) => [id, index]));
-    return insertedImages
-      .filter(object => pageIndexById.has(object.pageId))
-      .map(object => ({
-        pageIndex: pageIndexById.get(object.pageId),
-        x: object.x,
-        y: object.y,
-        width: object.width,
-        height: object.height,
-        rotation: object.rotation,
-        bytes: object.bytes,
-        mimeType: object.mimeType
-      }));
-  }
-
-  function buildInsertedShapeArgs(ids) {
-    const pageIndexById = new Map(ids.map((id, index) => [id, index]));
-    return insertedShapes
-      .filter(object => pageIndexById.has(object.pageId))
-      .map(object => ({
-        pageIndex: pageIndexById.get(object.pageId),
-        shapeType: object.shapeType,
-        x: object.x,
-        y: object.y,
-        width: object.width,
-        height: object.height,
-        rotation: object.rotation,
-        fill: object.fill,
-        stroke: object.stroke,
-        strokeWidth: object.strokeWidth
-      }));
-  }
-
-  async function exportPdf() {
-    if (disposed || !hasDocument() || activeOperation) {
-      if (activeOperation) showToast(t('home.pdfEditor.busy'));
-      return;
-    }
-    const operation = beginOperation('export');
-    showProcess('exporting', 3);
-    try {
-      const args = buildAssembleArgs(pages.map(page => page.id));
-      if (!args.pages.length) throw new Error('No pages to export');
-      const pageIds = pages.map(page => page.id);
-      const textEditArgs = buildTextEditArgs(pageIds);
-      const textObjectArgs = buildInsertedTextArgs(pageIds);
-      const imageObjectArgs = buildInsertedImageArgs(pageIds);
-      const shapeObjectArgs = buildInsertedShapeArgs(pageIds);
-      const progressCallback = ({ done, total }) => {
-        assertOperation(operation);
-        setLocalizedProgress(10 + Math.round((done / total) * 68), 'assembling');
-      };
-      let bytes;
-      if (textEditArgs.length || textObjectArgs.length || imageObjectArgs.length || shapeObjectArgs.length) {
-        if (textEditArgs.length || textObjectArgs.length) await ensureFontBytes();
-        bytes = await assemblePdfWithTextEdits({
-          ...args,
-          textEdits: textEditArgs,
-          textObjects: textObjectArgs,
-          imageObjects: imageObjectArgs,
-          shapeObjects: shapeObjectArgs,
-          fontRegularBytes: fontRegularBytes || undefined,
-          fontSemiboldBytes: fontSemiboldBytes || undefined,
-          onProgress: progressCallback
-        });
-      } else {
-        bytes = await assemblePdf({
-          ...args,
-          onProgress: progressCallback
-        });
-      }
-      assertOperation(operation);
-      const outputDir = await getOutputDir('PDF_Editor');
-      assertOperation(operation);
-      const fileName = buildPdfName(mainSourceName(), 'edited');
-      setLocalizedProgress(88, 'exporting');
-      const outputPath = await writePdf(bytes, outputDir, fileName);
-      assertOperation(operation);
-      setLocalizedProgress(100, 'exporting');
+  const exporter = createPdfEditorExporter({
+    isTauri,
+    getInvoke,
+    getOutputDir,
+    t,
+    isDisposed: () => disposed,
+    hasDocument,
+    getActiveOperation: () => activeOperation,
+    getSources: () => sources,
+    getPages: () => pages,
+    getTextEdits: () => textEdits,
+    getInsertedTexts: () => insertedTexts,
+    getInsertedImages: () => insertedImages,
+    getInsertedShapes: () => insertedShapes,
+    getEditedTextVisualBox: editedTextVisualBox,
+    getInsertedTextVisualBox: insertedTextVisualBox,
+    getMainSourceName: mainSourceName,
+    beginOperation,
+    assertOperation,
+    endOperation,
+    showProcess,
+    setLocalizedProgress,
+    showToast,
+    messageForError,
+    showSuccess,
+    captureEditorSnapshot,
+    setSavedSnapshot: () => {
       savedSnapshot = captureEditorSnapshot();
-      showSuccess({ outputDir, outputPath, mode: 'export' }, operation.returnFocus);
-    } catch (error) {
-      const cancelled = operation.cancelled || error instanceof PdfEditorCancelledError;
-      showToast(
-        cancelled ? t('home.pdfEditor.cancelled') : messageForError(error, 'export'),
-        cancelled ? 4500 : 9000
-      );
-    } finally {
-      endOperation(operation);
     }
-  }
-
-  async function extractSelected() {
-    if (disposed || !hasDocument() || activeOperation) {
-      if (activeOperation) showToast(t('home.pdfEditor.busy'));
-      return;
-    }
-    const ids = targetIds();
-    if (!ids.length) {
-      showToast(t('home.pdfEditor.noSelection'));
-      return;
-    }
-    const operation = beginOperation('extract');
-    showProcess('extracting', 3);
-    try {
-      const args = buildAssembleArgs(ids);
-      const textEditArgs = buildTextEditArgs(ids);
-      const textObjectArgs = buildInsertedTextArgs(ids);
-      const imageObjectArgs = buildInsertedImageArgs(ids);
-      const shapeObjectArgs = buildInsertedShapeArgs(ids);
-      const progressCallback = ({ done, total }) => {
-        assertOperation(operation);
-        setLocalizedProgress(10 + Math.round((done / total) * 68), 'assembling');
-      };
-      let bytes;
-      if (textEditArgs.length || textObjectArgs.length || imageObjectArgs.length || shapeObjectArgs.length) {
-        if (textEditArgs.length || textObjectArgs.length) await ensureFontBytes();
-        bytes = await assemblePdfWithTextEdits({
-          ...args,
-          textEdits: textEditArgs,
-          textObjects: textObjectArgs,
-          imageObjects: imageObjectArgs,
-          shapeObjects: shapeObjectArgs,
-          fontRegularBytes: fontRegularBytes || undefined,
-          fontSemiboldBytes: fontSemiboldBytes || undefined,
-          onProgress: progressCallback
-        });
-      } else {
-        bytes = await assemblePdf({ ...args, onProgress: progressCallback });
-      }
-      assertOperation(operation);
-      const outputDir = await getOutputDir('PDF_Editor');
-      assertOperation(operation);
-      const fileName = buildPdfName(mainSourceName(), `extracted_${ids.length}`);
-      setLocalizedProgress(88, 'extracting');
-      const outputPath = await writePdf(bytes, outputDir, fileName);
-      assertOperation(operation);
-      setLocalizedProgress(100, 'extracting');
-      showSuccess({ outputDir, outputPath, mode: 'extract', count: ids.length }, operation.returnFocus);
-    } catch (error) {
-      const cancelled = operation.cancelled || error instanceof PdfEditorCancelledError;
-      showToast(
-        cancelled ? t('home.pdfEditor.cancelled') : messageForError(error, 'extract'),
-        cancelled ? 4500 : 9000
-      );
-    } finally {
-      endOperation(operation);
-    }
-  }
+  });
 
   // ----- Event wiring -----
   back?.addEventListener('click', closeOverlay, listenerOptions);
@@ -4027,8 +3785,8 @@ export function initPdfEditorTool({
   selectAllBtn?.addEventListener('click', selectAllPages, listenerOptions);
   invertSelectionBtn?.addEventListener('click', invertPageSelection, listenerOptions);
   deleteBtn?.addEventListener('click', deleteSelected, listenerOptions);
-  extractBtn?.addEventListener('click', () => { void extractSelected(); }, listenerOptions);
-  exportBtn?.addEventListener('click', () => { void exportPdf(); }, listenerOptions);
+  extractBtn?.addEventListener('click', () => { void exporter.extractSelected(targetIds()); }, listenerOptions);
+  exportBtn?.addEventListener('click', () => { void exporter.exportPdf(); }, listenerOptions);
   processCancel?.addEventListener('click', () => { void cancelActiveOperation(); }, listenerOptions);
   successOk?.addEventListener('click', () => closeSuccess(), listenerOptions);
   successOpenFolder?.addEventListener('click', async () => {
@@ -4179,6 +3937,7 @@ export function initPdfEditorTool({
       if (operation && !operation.cancelled) void cancelActiveOperation();
       activeOperation = null;
       disposed = true;
+      exporter.dispose();
       listenerController.abort();
       try { unsubscribeLangChange(); } catch (_) {}
       unsubscribeLangChange = () => {};

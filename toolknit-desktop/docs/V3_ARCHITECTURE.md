@@ -27,6 +27,10 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
   for the PDF Editor overlay hierarchy.
 - `src/features/pdf-editor/thumbnails.js` owns page-tile rendering,
   IntersectionObserver scheduling, PDF.js thumbnail tasks and drag reordering.
+- `src/features/pdf-editor/errors.js` owns cancellation identity shared by the
+  PDF Editor load and export flows.
+- `src/features/pdf-editor/exporter.js` owns PDF assembly, font resources,
+  browser/native output publication and operation-guarded completion state.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 - `src/core/serialized-request-session.js` owns one-at-a-time async requests,
   timeout state, request-specific cancellation and stale-result identity.
@@ -132,10 +136,10 @@ tool entry so it becomes a separate production chunk.
    surface.
 - PDF Editor now enters through the lazy registry instead of being statically
   initialized by `main.js`. Its bounded history, modal focus behavior,
-  thumbnail queue/observer, drag sorting and canvas release helpers have
-  feature-owned boundaries; the legacy UI orchestrator remains a compatibility
-  owner while document, main preview, component and export sections migrate in
-  later batches.
+  thumbnail queue/observer, drag sorting, cancellation identity, export
+  assembly and canvas release helpers have feature-owned boundaries; the legacy
+  UI orchestrator remains a compatibility owner while document, main preview
+  and component sections migrate in later batches.
 - PDF Compress, split into queue/session orchestration and a native compression
   processor. The existing `compress_pdf` command and partial-failure semantics
   remain unchanged. Queue rendering uses text nodes and a disposable pointer

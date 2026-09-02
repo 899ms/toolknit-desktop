@@ -42,6 +42,7 @@ Last updated: 2026-09-02
 | `3e8499f` | Isolated PDF Editor component drag, resize, rotate and pointer cleanup |
 | `478da43` | Normalized PDF Editor proxy formatting after the interaction split |
 | `1310525` | Isolated PDF Editor content editing, insertion flow and lifecycle regression coverage |
+| `edd6649` | Isolated PDF Editor page operations and resource-safe mutation coverage |
 
 ## Current verified counts
 
@@ -237,6 +238,12 @@ duplication preserves text edits and inserted content; deleting inserted images
 also removes their backing byte entry and revokes preview URLs. The page
 operation suite covers mutation order, copied edits/content, resource release,
 blank-page creation and history/progress behavior.
+
+PDF Editor current-page and selection state now lives in
+`src/features/pdf-editor/page-selection.js`. Current-page fallback, document
+order target resolution, single/toggle/range selection, select-all, inversion
+and cross-page component clearing are tested independently while thumbnail
+rendering remains owned by the thumbnail controller.
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the

@@ -35,6 +35,7 @@ import { createPdfEditorComponentControls } from './features/pdf-editor/componen
 import { createPdfEditorComponentInteraction } from './features/pdf-editor/component-interaction.js';
 import { createPdfEditorContentEditing } from './features/pdf-editor/content-editing.js';
 import { createPdfEditorPageOperations } from './features/pdf-editor/page-operations.js';
+import { createPdfEditorPageSelection } from './features/pdf-editor/page-selection.js';
 import { createPdfEditorPreview } from './features/pdf-editor/preview.js';
 import {
   buildTextLine,
@@ -222,6 +223,7 @@ export function initPdfEditorTool({
   let componentInteraction = null;
   let contentEditing = null;
   let pageOperations = null;
+  let pageSelection = null;
   let componentRenderFrame = 0;
   let componentControls = null;
   let preview = null;
@@ -575,7 +577,7 @@ export function initPdfEditorTool({
   }
 
   function currentPage() {
-    return pages.find(page => page.id === currentId) || pages[0] || null;
+    return pageSelection?.currentPage() || null;
   }
 
   function cacheSourceRotation(model, pdfPage) {
@@ -593,11 +595,11 @@ export function initPdfEditorTool({
   }
 
   function pageStateFor(id) {
-    return thumbnails.getPageState(id);
+    return pageSelection?.pageStateFor(id) || null;
   }
 
   function targetIds() {
-    return pdfEditorPageIdsInDocumentOrder(pages, selectedIds, currentId);
+    return pageSelection?.targetIds() || [];
   }
 
   function mainSourceName() {
@@ -958,60 +960,27 @@ export function initPdfEditorTool({
   }
 
   function selectOnly(pageState) {
-    selectedIds = new Set([pageState.id]);
-    selectionAnchorId = pageState.id;
-    updateControls();
+    return pageSelection?.selectOnly(pageState);
   }
 
   function toggleSelect(pageState) {
-    if (selectedIds.has(pageState.id)) {
-      selectedIds.delete(pageState.id);
-      if (selectionAnchorId === pageState.id) selectionAnchorId = null;
-    } else {
-      selectedIds.add(pageState.id);
-      selectionAnchorId = pageState.id;
-    }
-    updateControls();
+    return pageSelection?.toggleSelect(pageState);
   }
 
   function selectRange(pageState) {
-    if (!selectionAnchorId || !pageStateFor(selectionAnchorId)) {
-      selectOnly(pageState);
-      return;
-    }
-    const anchorIndex = pages.findIndex(page => page.id === selectionAnchorId);
-    const targetIndex = pages.findIndex(page => page.id === pageState.id);
-    if (anchorIndex < 0 || targetIndex < 0) return;
-    const [start, end] = anchorIndex <= targetIndex
-      ? [anchorIndex, targetIndex]
-      : [targetIndex, anchorIndex];
-    selectedIds = new Set(pages.slice(start, end + 1).map(page => page.id));
-    updateControls();
+    return pageSelection?.selectRange(pageState);
   }
 
   function selectAllPages() {
-    if (activeOperation || !hasDocument()) return;
-    selectedIds = new Set(pages.map(page => page.id));
-    selectionAnchorId = pages[0]?.id || null;
-    updateControls();
+    return pageSelection?.selectAllPages();
   }
 
   function invertPageSelection() {
-    if (activeOperation || !hasDocument()) return;
-    selectedIds = new Set(pages
-      .filter(page => !selectedIds.has(page.id))
-      .map(page => page.id));
-    selectionAnchorId = currentId;
-    updateControls();
+    return pageSelection?.invertPageSelection();
   }
 
   function setCurrent(pageState) {
-    currentId = pageState.id;
-    if (selectedComponent && selectedComponent.pageId !== pageState.id) {
-      clearSelectedComponent();
-    }
-    updateControls();
-    renderMainPreview();
+    return pageSelection?.setCurrent(pageState);
   }
 
   const documents = createPdfEditorDocumentStore({
@@ -1047,6 +1016,23 @@ export function initPdfEditorTool({
     updateControls,
     renderMainPreview,
     commitEditorHistory
+  });
+
+  pageSelection = createPdfEditorPageSelection({
+    getPages: () => pages,
+    getCurrentId: () => currentId,
+    setCurrentId: value => { currentId = value; },
+    getSelectedIds: () => selectedIds,
+    setSelectedIds: value => { selectedIds = value; },
+    getSelectionAnchorId: () => selectionAnchorId,
+    setSelectionAnchorId: value => { selectionAnchorId = value; },
+    getPageState: id => thumbnails.getPageState(id),
+    getActiveOperation: () => activeOperation,
+    hasDocument,
+    getSelectedComponent: () => selectedComponent,
+    clearSelectedComponent,
+    updateControls,
+    renderMainPreview
   });
 
   function buildTiles(shouldRender = true) {

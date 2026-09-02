@@ -40,6 +40,11 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
 - `src/features/pdf-editor/zoom.js` owns zoom mode/scale snapshots, wheel and
   button interactions, preview transforms, anchor scrolling and pending-frame
   cleanup without owning PDF.js rendering.
+- `src/features/pdf-editor/page-selection.js` owns current-page resolution,
+  document-order targets, page selection gestures and selection anchor state.
+- `src/features/pdf-editor/page-operations.js` owns page rotation, ordering,
+  duplication, blank-page insertion and deletion while injecting the existing
+  document/source stores and history boundary.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 - `src/core/serialized-request-session.js` owns one-at-a-time async requests,
   timeout state, request-specific cancellation and stale-result identity.
@@ -147,9 +152,10 @@ tool entry so it becomes a separate production chunk.
   initialized by `main.js`. Its bounded history, modal focus behavior,
   thumbnail queue/observer, drag sorting, cancellation identity, export
   assembly, document loading/cache/destruction, text-item grouping, visual text
-  boxes, zoom scheduling and canvas release helpers have feature-owned
-  boundaries. The legacy UI orchestrator remains a compatibility owner while
-  main preview and component editing sections migrate in later batches.
+  boxes, zoom scheduling, content editing, page selection, page mutations and
+  canvas release helpers have feature-owned boundaries. The legacy UI
+  orchestrator remains a compatibility owner for the remaining document/session
+  wiring while later batches continue reducing it.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

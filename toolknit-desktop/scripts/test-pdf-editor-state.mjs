@@ -93,6 +93,10 @@ const pageOperationsSource = await readFile(
   new URL('../src/features/pdf-editor/page-operations.js', import.meta.url),
   'utf8'
 );
+const pageSelectionSource = await readFile(
+  new URL('../src/features/pdf-editor/page-selection.js', import.meta.url),
+  'utf8'
+);
 
 const snapshotStart = uiSource.indexOf('function captureEditorSnapshot()');
 const snapshotEnd = uiSource.indexOf('function applyEditorSnapshot(', snapshotStart);
@@ -142,6 +146,9 @@ assert.match(uiSource, /return pageOperations\?\.rotateSelected\(delta\)/);
 assert.match(uiSource, /return pageOperations\?\.deleteSelected\(\)/);
 assert.match(pageOperationsSource, /function duplicateSelectedPages\(\)/);
 assert.match(pageOperationsSource, /insertedImageStore\.delete\(selectedComponent\.key\)/);
+assert.match(uiSource, /return pageSelection\?\.selectRange\(pageState\)/);
+assert.match(pageSelectionSource, /pdfEditorPageIdsInDocumentOrder/);
+assert.match(pageSelectionSource, /function invertPageSelection\(\)/);
 assert.match(exporterSource, /textBox: getEditedTextVisualBox\(edit, edit\.segment\)/);
 assert.match(uiSource, /componentRenderer\.render\(lines, cssViewport, scale, pageId\)/);
 assert.match(componentRendererSource, /Number\(segmentData\.rotation\) \|\| 0/);

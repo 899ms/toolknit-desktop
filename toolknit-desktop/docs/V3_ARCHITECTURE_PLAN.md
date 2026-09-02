@@ -56,12 +56,13 @@ eighth migrated PDF workspace, with its shared enhancement engine, PDF.js
 rendering, atomic native writer, browser download URLs and compact success
 dialog owned by the lazy feature. PDF Compress is also migrated, and PDF
 Editor now owns bounded history, focus, thumbnails, rendering cancellation,
-export, document loading/cache/destruction and pure text-layout calculations
-outside its remaining compatibility orchestrator. The native AI provider
-command is the first extracted Rust boundary; the broader native split
-remains pending. The next frontend batch must continue PDF Editor
-preview/component ownership or be selected
-from the remaining ownership inventory by cohesion and risk, then pass the same
+export, document loading/cache/destruction, pure text-layout calculations,
+content editing, page selection and page mutations outside its remaining
+compatibility orchestrator. The native AI provider command is the first
+extracted Rust boundary; the broader native split remains pending. The next
+frontend batch must continue the remaining PDF Editor document/session wiring
+or be selected from the remaining ownership inventory by cohesion and risk,
+then pass the same
 contract, lifecycle, browser and release gates. The shared document reader,
 main-entry PDF worker URL, PDF enhancement core/engine and PDF
 encryption/decryption core modules remain compatibility boundaries until all

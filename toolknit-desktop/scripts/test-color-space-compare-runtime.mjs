@@ -6,14 +6,14 @@ import {
   spaceToXyz,
   xyzToAllSpaces,
   xyzToDisplayRgb,
-} from '../src/color-space-compare-core.js';
+} from '../src/features/color-space-compare/core.js';
 import {
   bindColorNumberInput,
   getColorSliderPresentation,
   preserveColorSpaceValues,
   replaceColorSpaceChannel,
   stepColorValue,
-} from '../src/color-space-compare-controls.js';
+} from '../src/features/color-space-compare/controls.js';
 
 function approx(actual, expected, epsilon, message) {
   assert.ok(Math.abs(actual - expected) <= epsilon, `${message}: expected ${expected}, got ${actual}`);

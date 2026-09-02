@@ -81,7 +81,7 @@ export const LAZY_TOOL_SPECS = Object.freeze({
   }),
   'color-space-compare': Object.freeze({
     overlayId: 'colorSpaceCompareOverlay',
-    load: () => import('../color-space-compare-ui.js'),
+    load: () => import('./color-space-compare/tool.js'),
     init: 'initColorSpaceCompareTool'
   }),
   'hash-crypto': Object.freeze({

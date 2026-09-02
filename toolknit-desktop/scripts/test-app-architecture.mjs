@@ -6,6 +6,10 @@ import { readResponseTextLimited as readCoreResponse } from '../src/core/bounded
 import { readResponseTextLimited as readCompatibleResponse } from '../src/bounded-response.js';
 import { formatJsonText as formatFeatureJson } from '../src/features/developer-toolbox/core.js';
 import { formatJsonText as formatCompatibleJson } from '../src/developer-toolbox-core.js';
+import { rgbToHex as featureRgbToHex } from '../src/features/color-space-compare/core.js';
+import { rgbToHex as compatibleRgbToHex } from '../src/color-space-compare-core.js';
+import { preserveColorSpaceValues as featurePreserveColorSpaceValues } from '../src/features/color-space-compare/controls.js';
+import { preserveColorSpaceValues as compatiblePreserveColorSpaceValues } from '../src/color-space-compare-controls.js';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
 import { toolTopbarMarkup as sharedToolTopbarMarkup } from '../src/shared/tool-page-shell.js';
 import { toolTopbarMarkup as compatibleToolTopbarMarkup } from '../src/tool-page-shell.js';
@@ -18,6 +22,9 @@ const [
   selectComponentStyles,
   markdownEditorSource,
   developerToolboxSource,
+  colorSpaceToolSource,
+  colorSpaceCompatibilitySource,
+  colorSpaceCompatibilityStyles,
   ...sharedShellConsumers
 ] = await Promise.all([
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
@@ -27,8 +34,10 @@ const [
   readFile(new URL('../src/styles/components/tool-custom-select.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/markdown-editor-ui.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/developer-toolbox/tool.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/color-space-compare/tool.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/color-space-compare-ui.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/color-space-compare.css', import.meta.url), 'utf8'),
   ...[
-    'color-space-compare-ui.js',
     'crypto-tool-ui.js',
     'image-color-replace-ui.js',
     'markdown-editor-ui.js'
@@ -37,6 +46,8 @@ const [
 
 assert.equal(readCompatibleResponse, readCoreResponse, 'the legacy bounded-response path must re-export the core implementation');
 assert.equal(formatCompatibleJson, formatFeatureJson, 'the legacy developer toolbox core path must re-export the feature implementation');
+assert.equal(compatibleRgbToHex, featureRgbToHex, 'the legacy color-space core path must re-export the feature implementation');
+assert.equal(compatiblePreserveColorSpaceValues, featurePreserveColorSpaceValues, 'the legacy color-space controls path must re-export the feature implementation');
 assert.equal(compatibleToolTopbarMarkup, sharedToolTopbarMarkup, 'the legacy tool shell path must re-export the shared implementation');
 assert.doesNotMatch(mainSource, /from ['"]@tauri-apps\/api\/(?:core|event)['"]/, 'main.js must use the platform boundary');
 assert.match(mainSource, /from ['"]\.\/platform\/tauri-runtime\.js['"]/, 'main.js must import the Tauri platform boundary');
@@ -44,6 +55,9 @@ assert.match(platformSource, /from ['"]@tauri-apps\/api\/core['"]/, 'the platfor
 assert.match(platformSource, /from ['"]@tauri-apps\/api\/event['"]/, 'the platform boundary must own the Tauri event import');
 assert.ok(sharedShellConsumers.every(source => source.includes("from './shared/tool-page-shell.js'")), 'migrated feature tools must consume the shared tool shell');
 assert.match(developerToolboxSource, /from ['"]\.\.\/\.\.\/shared\/tool-page-shell\.js['"]/, 'the developer toolbox feature must consume the shared tool shell');
+assert.match(colorSpaceToolSource, /from ['"]\.\.\/\.\.\/shared\/tool-page-shell\.js['"]/, 'the color space compare feature must consume the shared tool shell');
+assert.match(colorSpaceCompatibilitySource, /from ['"]\.\/features\/color-space-compare\/tool\.js['"]/, 'the legacy color space tool path must forward to the feature entry');
+assert.equal(colorSpaceCompatibilityStyles.trim(), "@import url('./features/color-space-compare/color-space-compare.css');", 'the legacy color space stylesheet must forward to the feature stylesheet');
 assert.match(indexSource, /href="\.\/src\/tool-custom-select\.css"/, 'the existing stylesheet position must remain stable');
 assert.equal(selectCompatibilityStyles.trim(), "@import url('./styles/components/tool-custom-select.css');", 'the legacy stylesheet must forward to the component stylesheet');
 assert.match(selectComponentStyles, /\.tool-custom-select-trigger\s*\{/, 'the component stylesheet must own custom select visuals');

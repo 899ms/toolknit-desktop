@@ -42,7 +42,7 @@ import {
   xyzToLinearDisplayP3,
   xyzToLinearRec2020,
   xyzToOklab
-} from '../src/color-space-compare-core.js';
+} from '../src/features/color-space-compare/core.js';
 
 function approx(actual, expected, epsilon = 1e-8, message = '') {
   assert.ok(
@@ -387,11 +387,12 @@ for (const space of editableSpaces) {
 // The desktop integration must remain discoverable, localizable, and wired
 // through the 2.1 lazy tool shell rather than an isolated iframe.
 const projectRoot = new URL('..', import.meta.url);
-const [html, lazyTools, styles, ui, zh, en] = await Promise.all([
+const [html, lazyTools, styles, tool, controller, zh, en] = await Promise.all([
   readFile(new URL('index.html', projectRoot), 'utf8'),
   readFile(new URL('src/features/lazy-tools.js', projectRoot), 'utf8'),
-  readFile(new URL('src/color-space-compare.css', projectRoot), 'utf8'),
-  readFile(new URL('src/color-space-compare-ui.js', projectRoot), 'utf8'),
+  readFile(new URL('src/features/color-space-compare/color-space-compare.css', projectRoot), 'utf8'),
+  readFile(new URL('src/features/color-space-compare/tool.js', projectRoot), 'utf8'),
+  readFile(new URL('src/features/color-space-compare/controller.js', projectRoot), 'utf8'),
   readFile(new URL('src/locales/zh.json', projectRoot), 'utf8').then(JSON.parse),
   readFile(new URL('src/locales/en.json', projectRoot), 'utf8').then(JSON.parse),
 ]);
@@ -400,15 +401,15 @@ assert.match(html, /data-tool="color-space-compare"/, 'Creative tools must list 
 assert.match(html, /id="colorSpaceCompareOverlay"[^>]*aria-hidden="true"/, 'The lazy overlay host is required.');
 assert.doesNotMatch(html, /id="colorSpaceCompareWorkspace"/, 'The content must not use the global Workspace modal convention.');
 assert.doesNotMatch(html, /<iframe[^>]+color-space-compare/i, 'The tool must not regress to an isolated iframe.');
-assert.match(lazyTools, /'color-space-compare':[\s\S]*?import\('\.\.\/color-space-compare-ui\.js'\)/, 'The tool must use the V3 lazy registry.');
+assert.match(lazyTools, /'color-space-compare':[\s\S]*?import\('\.\/color-space-compare\/tool\.js'\)/, 'The tool must use the V3 lazy registry.');
 assert.match(lazyTools, /'color-space-compare':[\s\S]*?overlayId:\s*'colorSpaceCompareOverlay'[\s\S]*?init:\s*'initColorSpaceCompareTool'/, 'The lazy tool must target its overlay host and initializer.');
-assert.match(ui, /toolTopbarMarkup/, 'The shared 2.1 top bar is required.');
-assert.match(ui, /mountToolPageBackground/, 'The shared custom-background bridge is required.');
-assert.match(ui, /lostpointercapture/, 'Pointer capture loss must clear slider drag state.');
-assert.match(ui, /applyValue\(next, null, false\)/, 'Exact out-of-range step values must bypass slider clamping.');
-assert.match(ui, /resizeObserver\?\.disconnect\(\)/, 'Closing the page must disconnect its ResizeObserver.');
-assert.match(ui, /removeEventListener\('scroll', handleResize\)/, 'Closing the page must release its scroll listener.');
-assert.match(ui, /canvas\.width = 1;[\s\S]*?canvas\.height = 1;/, 'Closing the page must release canvas buffers.');
+assert.match(tool, /toolTopbarMarkup/, 'The shared 2.1 top bar is required.');
+assert.match(tool, /mountToolPageBackground/, 'The shared custom-background bridge is required.');
+assert.match(controller, /lostpointercapture/, 'Pointer capture loss must clear slider drag state.');
+assert.match(controller, /applyValue\(next, null, false\)/, 'Exact out-of-range step values must bypass slider clamping.');
+assert.match(controller, /resizeObserver\?\.disconnect\(\)/, 'Closing the page must disconnect its ResizeObserver.');
+assert.match(controller, /removeEventListener\('scroll', handleResize\)/, 'Closing the page must release its scroll listener.');
+assert.match(controller, /canvas\.width = 1;[\s\S]*?canvas\.height = 1;/, 'Closing the page must release canvas buffers.');
 assert.match(styles, /\.color-space-compare-sliders\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2/, 'The desktop two-column controls layout is required.');
 for (const [locale, dictionary] of [['Chinese', zh], ['English', en]]) {
   assert.equal(typeof dictionary.home?.colorSpaceCompare?.subtitle, 'string', `${locale} tool copy is missing.`);

@@ -1,0 +1,488 @@
+.color-space-compare-main {
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+}
+
+.color-space-compare-shell .tool-page-v2-rail h1 {
+  max-width: 250px;
+  font-size: clamp(38px, 4vw, 54px);
+  letter-spacing: 0;
+}
+
+.color-space-compare-summary {
+  gap: 0;
+  overflow-y: auto;
+  scrollbar-color: rgba(255, 255, 255, .24) transparent;
+  scrollbar-width: thin;
+}
+
+.color-space-compare-workspace {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: 0;
+}
+
+.color-space-compare-workspace-head {
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 26px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, .1);
+  background: rgba(0, 0, 0, .16);
+}
+
+.color-space-compare-workspace-head > div {
+  min-width: 0;
+}
+
+.color-space-compare-workspace-head span,
+.color-space-compare-card-kicker {
+  color: rgba(255, 255, 255, .48);
+  font-family: var(--tk-font-display-en), sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.color-space-compare-workspace-head h2 {
+  margin: 5px 0 0;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+.color-space-compare-workspace-head p {
+  width: min(390px, 45%);
+  margin: 0;
+  color: rgba(255, 255, 255, .54);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.65;
+  text-align: right;
+}
+
+.color-space-compare-controls {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 22px 28px;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(255, 255, 255, .24) transparent;
+  scrollbar-width: thin;
+}
+
+.color-space-compare-preview-card {
+  margin-top: 22px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, .24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035);
+}
+
+.color-space-compare-preview-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(104px, .75fr);
+  gap: 11px;
+  margin-top: 10px;
+}
+
+.color-space-compare-preview {
+  min-height: 100px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 10px;
+  background: #808080;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18);
+  transition: background-color 70ms linear;
+}
+
+.color-space-compare-preview-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+}
+
+.color-space-compare-hex,
+.color-space-compare-code-value,
+.color-space-compare-value-input {
+  font-family: "Cascadia Code", Consolas, monospace;
+}
+
+.color-space-compare-hex {
+  color: #fff;
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+.color-space-compare-gamut-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, .74);
+  background: rgba(255, 255, 255, .06);
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.color-space-compare-gamut-badge::before,
+.color-space-compare-gamut-item::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #ff6b6b;
+}
+
+.color-space-compare-gamut-badge.is-in::before,
+.color-space-compare-gamut-item.is-in::before {
+  background: #fff;
+}
+
+.color-space-compare-preview-status {
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, .5);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.color-space-compare-gamut-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 10px;
+  margin-top: 9px;
+}
+
+.color-space-compare-gamut-item {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, .58);
+  font-size: 10px;
+}
+
+.color-space-compare-gamut-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.color-space-compare-code-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.color-space-compare-code-card {
+  width: 100%;
+  min-height: 37px;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, .11);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .035);
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.color-space-compare-code-card:hover,
+.color-space-compare-code-card:focus-visible {
+  border-color: rgba(255, 255, 255, .42);
+  background: rgba(255, 255, 255, .085);
+  outline: none;
+}
+
+.color-space-compare-code-label {
+  color: rgba(255, 255, 255, .52);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.color-space-compare-code-value {
+  min-width: 0;
+  overflow: hidden;
+  color: #fff;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.color-space-compare-code-card svg {
+  width: 14px;
+  height: 14px;
+  color: rgba(255, 255, 255, .48);
+}
+
+.color-space-compare-sliders {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 14px;
+}
+
+.color-space-compare-section {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .055), rgba(255, 255, 255, .018)), rgba(5, 5, 6, .34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025);
+}
+
+.color-space-compare-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 13px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.color-space-compare-section-icon {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .07);
+}
+
+.color-space-compare-section-icon svg {
+  width: 14px;
+  height: 14px;
+  color: #fff;
+}
+
+.color-space-compare-section-desc {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  color: rgba(255, 255, 255, .42);
+  font-size: 9px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.color-space-compare-slider-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 22px minmax(78px, 1fr) 104px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.color-space-compare-slider-row:last-child {
+  margin-bottom: 0;
+}
+
+.color-space-compare-slider-label {
+  color: rgba(255, 255, 255, .82);
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 11px;
+  font-weight: 750;
+  text-align: center;
+}
+
+.color-space-compare-track {
+  position: relative;
+  min-width: 0;
+  height: 32px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 8px;
+  background: #292b2d;
+}
+
+.color-space-compare-track canvas,
+.color-space-compare-track-hit {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.color-space-compare-track canvas {
+  display: block;
+}
+
+.color-space-compare-track-hit {
+  z-index: 3;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.color-space-compare-track-hit:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -3px;
+}
+
+.color-space-compare-handle {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: 17px;
+  height: 24px;
+  border: 2px solid #fff;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, .12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .44);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.color-space-compare-slider-row.is-value-outside-range .color-space-compare-handle {
+  border-style: dashed;
+}
+
+.color-space-compare-value-group {
+  height: 32px;
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) 13px 22px;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .045);
+}
+
+.color-space-compare-value-group:focus-within {
+  border-color: #fff;
+  box-shadow: inset 0 0 0 1px #fff;
+}
+
+.color-space-compare-value-prefix,
+.color-space-compare-value-unit {
+  color: rgba(255, 255, 255, .42);
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 8px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.color-space-compare-value-input {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  padding: 0 2px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.color-space-compare-value-input::-webkit-outer-spin-button,
+.color-space-compare-value-input::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.color-space-compare-step-buttons {
+  align-self: stretch;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  border-left: 1px solid rgba(255, 255, 255, .08);
+}
+
+.color-space-compare-step-button {
+  width: 22px;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, .52);
+  cursor: pointer;
+}
+
+.color-space-compare-step-button:first-child {
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+
+.color-space-compare-step-button:hover,
+.color-space-compare-step-button:focus-visible {
+  color: #111;
+  background: #fff;
+  outline: none;
+}
+
+.color-space-compare-step-button:disabled {
+  color: rgba(255, 255, 255, .14);
+  background: transparent;
+  cursor: not-allowed;
+}
+
+.color-space-compare-step-button svg {
+  width: 9px;
+  height: 9px;
+}
+
+@media (max-width: 1180px) {
+  .color-space-compare-main {
+    grid-template-columns: 250px minmax(0, 1fr) !important;
+  }
+
+  .color-space-compare-workspace-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .color-space-compare-workspace-head p {
+    width: 100%;
+    text-align: left;
+  }
+
+  .color-space-compare-sliders {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .color-space-compare-workspace {
+    min-height: 780px;
+  }
+
+  .color-space-compare-workspace-head,
+  .color-space-compare-controls {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .color-space-compare-slider-row {
+    grid-template-columns: 20px minmax(72px, 1fr) 102px;
+    gap: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .color-space-compare-preview {
+    transition: none;
+  }
+}

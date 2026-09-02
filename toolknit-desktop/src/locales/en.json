@@ -2176,7 +2176,14 @@
       "scanDone": "PPTX loaded: {slides} slides, {size}.",
       "exportDone": "PPT to PDF finished: {pages} pages, {size}.",
       "exportFailed": "PPT to PDF failed: {error}",
-      "openFolderFailed": "Failed to open the output folder. Check whether the path still exists."
+      "openFolderFailed": "Failed to open the output folder. Check whether the path still exists.",
+      "invalidPptx": "This does not look like a valid PPTX file. Try another file.",
+      "fileTooLarge": "The PPTX exceeds the 200 MB limit. Choose a smaller file.",
+      "tooManySlides": "The PPTX has more than {count} slides. Split it first and try again.",
+      "tooManyImages": "The asset count exceeds the limit of {count}. Select fewer assets and try again.",
+      "cancelled": "PPT image extraction was cancelled.",
+      "exportFailed": "PPT image extraction failed: {error}",
+      "scanDone": "PPTX loaded: {slides} slides, {images} assets."
     },
     "pptToImagePage": {
       "heroLabel": "PPT Page Export",

@@ -2176,7 +2176,14 @@
       "scanDone": "PPTX 读取完成：{slides} 页，{size}。",
       "exportDone": "PPT 转 PDF 完成：{pages} 页，{size}。",
       "exportFailed": "PPT 转 PDF 失败：{error}",
-      "openFolderFailed": "打开输出文件夹失败，请检查路径是否存在。"
+      "openFolderFailed": "打开输出文件夹失败，请检查路径是否存在。",
+      "invalidPptx": "这个文件不像有效的 PPTX，请换一个文件测试。",
+      "fileTooLarge": "PPTX 文件超过 200MB 上限，请选择更小的文件。",
+      "tooManySlides": "PPTX 超过 {count} 页，建议拆分后再试。",
+      "tooManyImages": "素材数量超过 {count} 张上限，请减少选择后再试。",
+      "cancelled": "PPT 图片提取已取消。",
+      "exportFailed": "PPT 图片提取失败：{error}",
+      "scanDone": "PPTX 读取完成：{slides} 页，{images} 张素材。"
     },
     "pptToImagePage": {
       "heroLabel": "PPT Page Export",

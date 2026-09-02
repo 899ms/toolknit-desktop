@@ -71,6 +71,7 @@
     "test:video-gif": "node scripts/test-video-gif-core.mjs",
     "test:image-stitch": "node scripts/test-image-stitch-core.mjs && node scripts/test-image-stitch-runtime.mjs",
     "test:ppt-image-extract": "node scripts/test-ppt-image-extract-core.mjs && node scripts/test-ppt-image-extract-runtime.mjs",
+    "test:ppt-images-tool-contract": "node scripts/test-ppt-images-tool-contract.mjs",
     "test:ppt-text-extract": "node scripts/test-ppt-text-extract-core.mjs && node scripts/test-ppt-text-extract-runtime.mjs",
     "test:ppt-compress": "node scripts/test-ppt-compress-core.mjs && node scripts/test-ppt-compress-runtime.mjs",
     "test:ppt-to-pdf": "node scripts/test-ppt-render-core.mjs && node scripts/test-ppt-to-pdf-runtime.mjs",

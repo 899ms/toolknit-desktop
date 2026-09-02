@@ -84,6 +84,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./ppt-render/tool.js'),
     init: 'initPptToImageTool'
   }),
+  'ppt-images': Object.freeze({
+    overlayId: 'pptImagesOverlay',
+    load: () => import('./ppt-images/tool.js'),
+    init: 'initPptImagesTool'
+  }),
   teleprompter: Object.freeze({
     overlayId: 'teleprompterOverlay',
     load: () => import('../teleprompter-ui.js'),

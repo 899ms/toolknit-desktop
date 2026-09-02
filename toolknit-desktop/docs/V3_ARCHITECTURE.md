@@ -89,6 +89,16 @@ releases session resources. `dispose` also removes feature-lifetime listeners.
 Pure calculations live in `core.js`; feature-only CSS is imported by the lazy
 tool entry so it becomes a separate production chunk.
 
+## Current snapshot
+
+- 49 of 65 desktop tools are migrated (**75.4%**); 12 categories, 127 Tauri
+  command implementations, 46 MCP tools and the existing CLI contracts remain
+  unchanged.
+- The current source footprint is 15,019 lines in `src/main.js`, 24,093 lines
+  in `src/styles.css` and 8,763 lines in `index.html`.
+- The production entry is approximately 1,531.34 kB JavaScript and 499.11 kB
+  CSS. The PPT image extraction entry is lazy and loads JSZip on demand.
+
 ## Migrated ownership
 
 - Developer toolbox: JSON, Base64, URL, UUID and JWT.
@@ -181,6 +191,12 @@ tool entry so it becomes a separate production chunk.
   and offline recognition resources are released through one controller, while
   the legacy teleprompter entry retains script rendering and playback UI until
   later batches split those responsibilities.
+- `src/features/ppt-images/` owns PPT image extraction as a complete lazy
+  boundary. `template.js` builds the existing portal, `controller.js` owns the
+  browser/Tauri input queue, native drop registration, JSZip loading, previews,
+  progress, cancellation, export and operation identity, and `ppt-images.css`
+  owns feature-only layout. Open sessions release timers, native `unlisten`
+  callbacks, preview object URLs and stale asynchronous work on close/reopen.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

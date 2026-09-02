@@ -18,6 +18,7 @@
     "test:pdf-rotate-tool-contract": "node scripts/test-pdf-rotate-tool-contract.mjs",
     "test:pdf-encrypt": "node scripts/test-pdf-encrypt-core.mjs && node scripts/test-pdf-encrypt-native.mjs",
     "test:pdf-decrypt": "node scripts/test-pdf-decrypt-core.mjs",
+    "test:pdf-security-tool-contract": "node scripts/test-pdf-security-tool-contract.mjs",
     "test:pdf-compress": "node scripts/test-pdf-compress-core.mjs",
     "test:pdf-enhance": "node scripts/test-pdf-enhance-core.mjs",
     "test:pdf-editor": "node scripts/test-pdf-editor-core.mjs && node scripts/test-pdf-editor-geometry.mjs && node scripts/test-pdf-editor-state.mjs",

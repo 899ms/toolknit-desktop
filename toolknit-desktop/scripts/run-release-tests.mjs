@@ -18,6 +18,7 @@ const releaseTests = [
   'test:pdf-rotate-tool-contract',
   'test:pdf-encrypt',
   'test:pdf-decrypt',
+  'test:pdf-security-tool-contract',
   'test:pdf-compress',
   'test:pdf-enhance',
   'test:pdf-editor',

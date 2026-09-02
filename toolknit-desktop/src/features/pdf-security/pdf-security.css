@@ -1,0 +1,249 @@
+.pdf-encrypt-v2 .pdf-merge-v2-poster::after {
+  content: 'LOCK';
+}
+
+.pdf-decrypt-v2 .pdf-merge-v2-poster::after {
+  content: 'UNLK';
+}
+
+.pdf-encrypt-v2 .pdf-merge-v2-workspace,
+.pdf-decrypt-v2 .pdf-merge-v2-workspace {
+  grid-template-rows: auto minmax(190px, 1fr) auto auto;
+}
+
+.pdf-encrypt-v2 .pdf-merge-v2-queue,
+.pdf-decrypt-v2 .pdf-merge-v2-queue {
+  padding-top: 18px;
+}
+
+.pdf-encrypt-v2 .pdf-merge-v2-files,
+.pdf-decrypt-v2 .pdf-merge-v2-files {
+  max-height: 240px;
+}
+
+.pdf-encrypt-password-dialog {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 440px;
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px 36px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.pdf-encrypt-password-title {
+  margin: 0;
+  color: #1a1a22;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.pdf-encrypt-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pdf-encrypt-label {
+  color: #4a4a52;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pdf-encrypt-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 40px 10px 14px;
+  border: 1.5px solid #e0e0e8;
+  border-radius: 8px;
+  outline: none;
+  color: #1a1a22;
+  background: #f8f8fc;
+  font-size: 14px;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.pdf-encrypt-input:focus {
+  border-color: #6c6c75;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(108, 108, 117, 0.1);
+}
+
+.pdf-encrypt-input::-ms-reveal {
+  display: none;
+}
+
+.pdf-encrypt-input::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+}
+
+.pdf-encrypt-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pdf-encrypt-eye-btn {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: 0;
+  color: #9999a0;
+  background: none;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: color 0.2s, transform 0.2s;
+}
+
+.pdf-encrypt-eye-btn:hover {
+  color: #4a4a52;
+}
+
+.pdf-encrypt-eye-btn:active {
+  transform: translateY(-50%) scale(0.9);
+}
+
+.pdf-encrypt-eye-btn svg {
+  width: 18px;
+  height: 18px;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.pdf-encrypt-eye-btn .eye-open {
+  display: block;
+}
+
+.pdf-encrypt-eye-btn .eye-closed {
+  display: none;
+}
+
+.pdf-encrypt-eye-btn.show .eye-open {
+  display: none;
+}
+
+.pdf-encrypt-eye-btn.show .eye-closed {
+  display: block;
+}
+
+.pdf-encrypt-permissions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pdf-encrypt-permissions-title {
+  margin: 0;
+  color: #4a4a52;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pdf-encrypt-permissions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+
+.pdf-encrypt-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4a4a52;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.pdf-encrypt-checkbox-item:hover {
+  color: #1a1a22;
+}
+
+.pdf-encrypt-checkbox-item input[type='checkbox'] {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pdf-encrypt-check-box {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d0d0d8;
+  border-radius: 6px;
+  background: #f8f8fc;
+  transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pdf-encrypt-check-box::after {
+  position: absolute;
+  width: 5px;
+  height: 9px;
+  margin-top: -2px;
+  border-right: 2.5px solid #fff;
+  border-bottom: 2.5px solid #fff;
+  content: '';
+  opacity: 0;
+  transform: rotate(45deg) scale(0);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+}
+
+.pdf-encrypt-checkbox-item input[type='checkbox']:checked + .pdf-encrypt-check-box {
+  border-color: #1a1a22;
+  background: #1a1a22;
+  animation: pdf-security-check-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: scale(1.05);
+}
+
+.pdf-encrypt-checkbox-item input[type='checkbox']:checked + .pdf-encrypt-check-box::after {
+  opacity: 1;
+  transform: rotate(45deg) scale(1);
+}
+
+.pdf-encrypt-checkbox-item:hover .pdf-encrypt-check-box {
+  border-color: #6c6c75;
+}
+
+@keyframes pdf-security-check-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1.05); }
+}
+
+.pdf-encrypt-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (max-width: 560px) {
+  .pdf-encrypt-password-dialog {
+    padding: 24px 20px;
+  }
+
+  .pdf-encrypt-permissions-grid {
+    grid-template-columns: 1fr;
+  }
+}

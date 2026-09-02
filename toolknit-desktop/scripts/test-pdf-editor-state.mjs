@@ -69,6 +69,10 @@ assert.equal(pdfEditorSnapshotsEqual(null, cleanSnapshot), false);
 const uiSource = await readFile(new URL('../src/pdf-editor-ui.js', import.meta.url), 'utf8');
 const exporterSource = await readFile(new URL('../src/features/pdf-editor/exporter.js', import.meta.url), 'utf8');
 const textLayoutSource = await readFile(new URL('../src/features/pdf-editor/text-layout.js', import.meta.url), 'utf8');
+const componentRendererSource = await readFile(
+  new URL('../src/features/pdf-editor/component-renderer.js', import.meta.url),
+  'utf8'
+);
 
 const snapshotStart = uiSource.indexOf('function captureEditorSnapshot()');
 const snapshotEnd = uiSource.indexOf('function applyEditorSnapshot(', snapshotStart);
@@ -109,8 +113,13 @@ assert.match(uiSource, /\['text', 'inserted-text'\]\.includes\(selectedComponent
 assert.match(uiSource, /openEditModal\(object\.id, object, object, 'edit-inserted-text'\)/);
 assert.match(uiSource, /modalMode === 'edit-inserted-text'/);
 assert.match(exporterSource, /textBox: getEditedTextVisualBox\(edit, edit\.segment\)/);
-assert.match(uiSource, /Number\(segmentData\.rotation\) \|\| 0/);
-assert.match(uiSource, /dataset\?\.maskKey === `\$\{key\}:rotated`/);
+assert.match(uiSource, /componentRenderer\.render\(lines, cssViewport, scale, pageId\)/);
+assert.match(componentRendererSource, /Number\(segmentData\.rotation\) \|\| 0/);
+assert.match(componentRendererSource, /function ensureTextMask\(/);
+assert.match(componentRendererSource, /dataset\?\.maskKey === `\$\{key\}:rotated`/);
+assert.match(componentRendererSource, /pdf-editor-inserted-image-wrap/);
+assert.match(componentRendererSource, /pdf-editor-inserted-shape/);
+assert.doesNotMatch(uiSource, /textLayer\.replaceChildren\(\)/);
 assert.match(textLayoutSource, /export function editedTextVisualBox\(edit, segment\)/);
 assert.match(textLayoutSource, /export function insertedTextVisualBox\(object\)/);
 assert.match(textLayoutSource, /estimateInsertedTextWidth\(object\?\.text, fontSize\)/);
@@ -128,7 +137,7 @@ assert.ok(
     < imagePrepareSource.indexOf('await readImageDimensions(bytes, mimeType)'),
   'encoded image dimensions must be checked before browser decoding'
 );
-assert.match(uiSource, /segmentEl\.style\.transformOrigin = '50% 50%'/);
+assert.match(componentRendererSource, /segmentElement\.style\.transformOrigin = '50% 50%'/);
 
 const editModeStart = uiSource.indexOf('function setEditMode(');
 const editModeEnd = uiSource.indexOf('function openEditModal(', editModeStart);

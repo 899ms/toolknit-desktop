@@ -30,6 +30,7 @@ import {
 } from './features/pdf-editor/exporter.js';
 import { createPdfEditorDocumentStore } from './features/pdf-editor/documents.js';
 import { createPdfEditorZoomController } from './features/pdf-editor/zoom.js';
+import { createPdfEditorComponentRenderer } from './features/pdf-editor/component-renderer.js';
 import {
   buildTextLine,
   editedTextVisualBox,
@@ -1087,331 +1088,19 @@ export function initPdfEditorTool({
   }
 
   function syncTextLayerAccessibility() {
-    if (!textLayerEl) return;
-    const interactive = Boolean(componentMode || editMode || insertMode);
-    textLayerEl.setAttribute('aria-hidden', String(!interactive));
+    return componentRenderer.syncTextLayerAccessibility();
   }
 
   function applyRelativeViewportRect(element, rect, parentRect) {
-    if (!element || !rect || !parentRect) return;
-    element.style.left = (rect.left - parentRect.left) + 'px';
-    element.style.top = (rect.top - parentRect.top) + 'px';
-    element.style.width = Math.max(1, rect.width) + 'px';
-    element.style.height = Math.max(1, rect.height) + 'px';
+    return componentRenderer.applyRelativeViewportRect(element, rect, parentRect);
   }
 
   function ensureTextMask(lineElement, key, sourceBox, lineBox, cssViewport, rotation = 0, rotationBox = sourceBox) {
-    if (!lineElement || !sourceBox || !lineBox || !cssViewport) return null;
-    let mask = Array.from(lineElement.children).find(child => child.dataset?.maskKey === key) || null;
-    if (!mask) {
-      mask = document.createElement('div');
-      mask.className = 'pdf-editor-text-mask';
-      mask.dataset.maskKey = key;
-      lineElement.insertBefore(mask, lineElement.firstChild || null);
-    }
-    const sourceRect = rectToViewport(cssViewport, sourceBox);
-    const parentRect = rectToViewport(cssViewport, lineBox);
-    applyRelativeViewportRect(
-      mask,
-      sourceRect,
-      parentRect
-    );
-
-    // Keep the original glyphs covered while also covering the rotated
-    // replacement. CSS uses UI clockwise angles in screen coordinates, so
-    // leave this rotation positive; the export core converts it to PDF's
-    // opposite-sign Cartesian angle at its boundary.
-    const normalizedRotation = ((Number(rotation) || 0) % 360 + 360) % 360;
-    let rotatedMask = Array.from(lineElement.children)
-      .find(child => child.dataset?.maskKey === `${key}:rotated`) || null;
-    if (normalizedRotation === 0) {
-      rotatedMask?.remove();
-      return mask;
-    }
-    if (!rotatedMask) {
-      rotatedMask = document.createElement('div');
-      rotatedMask.className = 'pdf-editor-text-mask pdf-editor-text-mask-rotated';
-      rotatedMask.dataset.maskKey = `${key}:rotated`;
-      lineElement.insertBefore(rotatedMask, mask.nextSibling || null);
-    }
-    // The rotated mask is the replacement visual box itself. Applying the
-    // source rectangle here and rotating it around a different box produces
-    // an offset mask after a move or resize.
-    const replacementRect = rectToViewport(cssViewport, rotationBox || sourceBox);
-    applyRelativeViewportRect(rotatedMask, replacementRect, parentRect);
-    rotatedMask.style.transformOrigin = '50% 50%';
-    rotatedMask.style.transform = `rotate(${normalizedRotation}deg)`;
-    return mask;
+    return componentRenderer.ensureTextMask(lineElement, key, sourceBox, lineBox, cssViewport, rotation, rotationBox);
   }
 
   function renderTextLayer(lines, cssViewport, scale, pageId) {
-    if (!textLayerEl) return;
-    textLayerEl.replaceChildren();
-    textLayerEl.classList.toggle('is-edit-mode', editMode);
-    textLayerEl.classList.toggle('is-object-mode', componentMode);
-    textLayerEl.classList.toggle('is-insert-mode', Boolean(insertMode));
-    syncTextLayerAccessibility();
-    for (let index = 0; index < lines.length; index++) {
-      const line = lines[index];
-      const rect = rectToViewport(cssViewport, line.box);
-      const el = document.createElement('div');
-      el.className = 'pdf-editor-text-line';
-      el.dataset.lineKey = `${pageId}:${index}`;
-      el.style.left = rect.left + 'px';
-      el.style.top = rect.top + 'px';
-      el.style.height = Math.max(0, rect.height) + 'px';
-      el.style.width = Math.max(0, rect.width) + 'px';
-      el.style.fontSize = Math.max(1, line.fontSize * scale) + 'px';
-      el.style.lineHeight = Math.max(0, rect.height) + 'px';
-
-      const segments = Array.isArray(line.segments) && line.segments.length
-        ? line.segments
-        : [{
-          text: line.text,
-          baselineX: line.baselineX,
-          baselineY: line.baselineY,
-          fontSize: line.fontSize,
-          fontName: line.fontName,
-          bold: line.bold,
-          italic: line.italic,
-          box: line.box
-        }];
-
-      for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
-        const segment = segments[segmentIndex];
-        const key = `${pageId}:${index}:${segmentIndex}`;
-        const edit = textEdits.get(key);
-        const segmentData = edit?.segment || segment;
-        const visualBox = edit
-          ? (editedTextVisualBox(edit, segmentData) || segmentData.box || line.box)
-          : (segmentData.box || line.box);
-        const segmentRect = rectToViewport(cssViewport, visualBox);
-        if (edit) {
-          ensureTextMask(
-            el,
-            key,
-            sourceTextBox(edit, segment),
-            line.box,
-            cssViewport,
-            Number(segmentData.rotation) || 0,
-            visualBox
-          );
-        }
-        const segmentEl = document.createElement('div');
-        segmentEl.className = 'pdf-editor-text-segment';
-        segmentEl.dataset.segmentKey = key;
-        segmentEl.dataset.segmentType = 'text';
-        segmentEl.setAttribute('aria-label', segment.text || t('home.pdfEditor.textComponent'));
-        const isSelected = Boolean(componentMode
-          && selectedComponent?.type === 'text'
-          && selectedComponent.pageId === pageId
-          && selectedComponent.key === key);
-        segmentEl.classList.toggle('is-selected', isSelected);
-        applyRelativeViewportRect(segmentEl, segmentRect, rect);
-        segmentEl.style.fontSize = Math.max(1, (segmentData.fontSize || line.fontSize) * scale) + 'px';
-        segmentEl.style.lineHeight = Math.max(1, segmentRect.height) + 'px';
-        segmentEl.style.transformOrigin = '50% 50%';
-        segmentEl.style.transform = `rotate(${Number(segmentData.rotation) || 0}deg)`;
-        if (edit) {
-          segmentEl.classList.add('is-edited');
-          segmentEl.textContent = edit.newText || '';
-          segmentEl.style.width = Math.max(1, segmentRect.width) + 'px';
-        } else {
-          segmentEl.textContent = segment.text;
-        }
-        segmentEl.addEventListener('click', event => {
-          event.stopPropagation();
-          if (componentMode) {
-            selectComponent({
-              type: 'text',
-              pageId,
-              key,
-              lineIndex: index,
-              segmentIndex,
-              segment: segmentData
-            });
-            return;
-          }
-          if (insertMode) {
-            handleCanvasPlacement(event);
-            return;
-          }
-        }, listenerOptions);
-        segmentEl.addEventListener('pointerdown', event => {
-          if (!componentMode || editMode || insertMode) return;
-          const component = {
-            type: 'text',
-            pageId,
-            key,
-            lineIndex: index,
-            segmentIndex,
-            segment: segmentData
-          };
-          if (!sameComponent(selectedComponent, component)) return;
-          beginComponentDrag(event, component);
-        }, listenerOptions);
-        if (isSelected) {
-          const handle = document.createElement('button');
-          handle.type = 'button';
-          handle.className = 'pdf-editor-component-handle';
-          handle.dataset.handle = 'se';
-          handle.setAttribute('aria-label', t('home.pdfEditor.selectComponent'));
-          handle.addEventListener('pointerdown', event => {
-            beginComponentResize(event, {
-              type: 'text',
-              pageId,
-              key,
-              lineIndex: index,
-              segmentIndex,
-              segment: segmentData
-            });
-          }, listenerOptions);
-          segmentEl.appendChild(handle);
-        }
-        el.appendChild(segmentEl);
-      }
-      textLayerEl.appendChild(el);
-    }
-    for (const object of insertedTexts.filter(item => item.pageId === pageId)) {
-      const visualBox = insertedTextVisualBox(object);
-      const rect = rectToViewport(cssViewport, visualBox);
-      const el = document.createElement('div');
-      el.className = 'pdf-editor-inserted-text';
-      el.dataset.objectId = object.id;
-      el.dataset.segmentType = 'inserted-text';
-      el.dataset.segmentKey = `inserted-text:${object.id}`;
-      const isSelected = Boolean(componentMode
-        && selectedComponent?.type === 'inserted-text'
-        && selectedComponent.pageId === pageId
-        && selectedComponent.key === object.id);
-      el.classList.toggle('is-selected', isSelected);
-      el.textContent = object.text;
-      el.style.left = rect.left + 'px';
-      el.style.top = rect.top + 'px';
-      el.style.width = Math.max(1, rect.width) + 'px';
-      el.style.height = Math.max(1, rect.height) + 'px';
-      el.style.fontSize = Math.max(1, object.fontSize * scale) + 'px';
-      el.style.lineHeight = Math.max(1, rect.height) + 'px';
-      el.style.transformOrigin = '50% 50%';
-      el.style.transform = `rotate(${Number(object.rotation) || 0}deg)`;
-      el.addEventListener('click', event => {
-        event.stopPropagation();
-        if (componentMode) {
-          selectComponent({ type: 'inserted-text', pageId, key: object.id, object });
-          return;
-        }
-        if (insertMode) handleCanvasPlacement(event);
-      }, listenerOptions);
-      el.addEventListener('pointerdown', event => {
-        if (!componentMode || editMode || insertMode) return;
-        const component = { type: 'inserted-text', pageId, key: object.id, object };
-        if (!sameComponent(selectedComponent, component)) return;
-        beginComponentDrag(event, component);
-      }, listenerOptions);
-      if (isSelected) {
-        const handle = document.createElement('button');
-        handle.type = 'button';
-        handle.className = 'pdf-editor-component-handle';
-        handle.setAttribute('aria-label', t('home.pdfEditor.selectComponent'));
-        handle.addEventListener('pointerdown', event => {
-          beginComponentResize(event, { type: 'inserted-text', pageId, key: object.id, object });
-        }, listenerOptions);
-        el.appendChild(handle);
-      }
-      textLayerEl.appendChild(el);
-    }
-    for (const object of insertedImages.filter(item => item.pageId === pageId)) {
-      const rect = rectToViewport(cssViewport, {
-        x: object.x,
-        y: object.y,
-        width: object.width,
-        height: object.height
-      });
-      const imageWrap = document.createElement('div');
-      imageWrap.className = 'pdf-editor-inserted-image-wrap';
-      imageWrap.dataset.objectId = object.id;
-      imageWrap.dataset.segmentType = 'inserted-image';
-      imageWrap.dataset.segmentKey = `inserted-image:${object.id}`;
-      const isSelected = Boolean(componentMode
-        && selectedComponent?.type === 'inserted-image'
-        && selectedComponent.pageId === pageId
-        && selectedComponent.key === object.id);
-      imageWrap.classList.toggle('is-selected', isSelected);
-      imageWrap.style.left = rect.left + 'px';
-      imageWrap.style.top = rect.top + 'px';
-      imageWrap.style.width = Math.max(1, rect.width) + 'px';
-      imageWrap.style.height = Math.max(1, rect.height) + 'px';
-      imageWrap.style.transform = `rotate(${Number(object.rotation) || 0}deg)`;
-      const imageEl = document.createElement('img');
-      imageEl.className = 'pdf-editor-inserted-image';
-      imageEl.src = object.previewUrl;
-      imageEl.alt = t('home.pdfEditor.insertedImage');
-      imageEl.style.width = '100%';
-      imageEl.style.height = '100%';
-      imageEl.addEventListener('click', event => {
-        event.stopPropagation();
-        if (componentMode) {
-          selectComponent({ type: 'inserted-image', pageId, key: object.id, object });
-          return;
-        }
-        if (insertMode) handleCanvasPlacement(event);
-      }, listenerOptions);
-      imageEl.addEventListener('pointerdown', event => {
-        if (!componentMode || editMode || insertMode) return;
-        const component = { type: 'inserted-image', pageId, key: object.id, object };
-        if (!sameComponent(selectedComponent, component)) return;
-        beginComponentDrag(event, component);
-      }, listenerOptions);
-      if (isSelected) {
-        appendResizeHandles(imageWrap, { type: 'inserted-image' }, pageId, object);
-      }
-      imageWrap.appendChild(imageEl);
-      textLayerEl.appendChild(imageWrap);
-    }
-    for (const object of insertedShapes.filter(item => item.pageId === pageId)) {
-      const rect = rectToViewport(cssViewport, {
-        x: object.x,
-        y: object.y,
-        width: Math.max(1, object.width),
-        height: Math.max(1, object.height)
-      });
-      const shapeWrap = document.createElement('div');
-      shapeWrap.className = 'pdf-editor-inserted-shape';
-      if (object.shapeType === 'line') shapeWrap.classList.add('pdf-editor-inserted-shape--line');
-      shapeWrap.dataset.objectId = object.id;
-      shapeWrap.dataset.segmentType = 'inserted-shape';
-      shapeWrap.dataset.segmentKey = `inserted-shape:${object.id}`;
-      const isSelected = Boolean(componentMode
-        && selectedComponent?.type === 'inserted-shape'
-        && selectedComponent.pageId === pageId
-        && selectedComponent.key === object.id);
-      shapeWrap.classList.toggle('is-selected', isSelected);
-      shapeWrap.style.left = rect.left + 'px';
-      shapeWrap.style.top = rect.top + 'px';
-      shapeWrap.style.width = Math.max(1, rect.width) + 'px';
-      shapeWrap.style.height = Math.max(1, rect.height) + 'px';
-      shapeWrap.style.transform = `rotate(${Number(object.rotation) || 0}deg)`;
-      shapeWrap.appendChild(buildShapeSvg(object, rect.width, rect.height, scale));
-      shapeWrap.addEventListener('click', event => {
-        event.stopPropagation();
-        if (componentMode) {
-          selectComponent({ type: 'inserted-shape', pageId, key: object.id, object });
-          return;
-        }
-        if (insertMode) handleCanvasPlacement(event);
-      }, listenerOptions);
-      shapeWrap.addEventListener('pointerdown', event => {
-        if (!componentMode || editMode || insertMode) return;
-        const component = { type: 'inserted-shape', pageId, key: object.id, object };
-        if (!sameComponent(selectedComponent, component)) return;
-        beginComponentDrag(event, component);
-      }, listenerOptions);
-      if (isSelected) {
-        appendResizeHandles(shapeWrap, { type: 'inserted-shape' }, pageId, object);
-      }
-      textLayerEl.appendChild(shapeWrap);
-    }
-    syncComponentMenu();
+    return componentRenderer.render(lines, cssViewport, scale, pageId);
   }
 
   function handleCanvasBackgroundClick(event) {
@@ -2852,6 +2541,28 @@ export function initPdfEditorTool({
     positionComponentMenu,
     renderMainPreview,
     listenerOptions
+  });
+
+  const componentRenderer = createPdfEditorComponentRenderer({
+    getTextLayer: () => textLayerEl,
+    getEditMode: () => editMode,
+    getComponentMode: () => componentMode,
+    getInsertMode: () => insertMode,
+    getSelectedComponent: () => selectedComponent,
+    getTextEdits: () => textEdits,
+    getInsertedTexts: () => insertedTexts,
+    getInsertedImages: () => insertedImages,
+    getInsertedShapes: () => insertedShapes,
+    t,
+    listenerOptions,
+    selectComponent,
+    handleCanvasPlacement,
+    sameComponent,
+    beginComponentDrag,
+    beginComponentResize,
+    appendResizeHandles,
+    buildShapeSvg,
+    syncComponentMenu
   });
 
   // ----- Load / append -----

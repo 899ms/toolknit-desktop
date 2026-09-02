@@ -10,6 +10,8 @@ import { rgbToHex as featureRgbToHex } from '../src/features/color-space-compare
 import { rgbToHex as compatibleRgbToHex } from '../src/color-space-compare-core.js';
 import { preserveColorSpaceValues as featurePreserveColorSpaceValues } from '../src/features/color-space-compare/controls.js';
 import { preserveColorSpaceValues as compatiblePreserveColorSpaceValues } from '../src/color-space-compare-controls.js';
+import { selectInstalledModels as featureSelectInstalledModels } from '../src/features/bg-removal/core.js';
+import { selectInstalledModels as compatibleSelectInstalledModels } from '../src/bg-removal-core.js';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
 import { toolTopbarMarkup as sharedToolTopbarMarkup } from '../src/shared/tool-page-shell.js';
 import { toolTopbarMarkup as compatibleToolTopbarMarkup } from '../src/tool-page-shell.js';
@@ -23,8 +25,12 @@ const [
   markdownEditorSource,
   developerToolboxSource,
   colorSpaceToolSource,
+  bgRemovalToolSource,
+  bgRemovalTemplateSource,
   colorSpaceCompatibilitySource,
   colorSpaceCompatibilityStyles,
+  bgRemovalCompatibilitySource,
+  bgRemovalCompatibilityStyles,
   ...sharedShellConsumers
 ] = await Promise.all([
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
@@ -35,8 +41,12 @@ const [
   readFile(new URL('../src/markdown-editor-ui.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/developer-toolbox/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/color-space-compare/tool.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/bg-removal/tool.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/bg-removal/template.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/color-space-compare-ui.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/color-space-compare.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/bg-removal-ui.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/bg-removal.css', import.meta.url), 'utf8'),
   ...[
     'crypto-tool-ui.js',
     'image-color-replace-ui.js',
@@ -48,6 +58,7 @@ assert.equal(readCompatibleResponse, readCoreResponse, 'the legacy bounded-respo
 assert.equal(formatCompatibleJson, formatFeatureJson, 'the legacy developer toolbox core path must re-export the feature implementation');
 assert.equal(compatibleRgbToHex, featureRgbToHex, 'the legacy color-space core path must re-export the feature implementation');
 assert.equal(compatiblePreserveColorSpaceValues, featurePreserveColorSpaceValues, 'the legacy color-space controls path must re-export the feature implementation');
+assert.equal(compatibleSelectInstalledModels, featureSelectInstalledModels, 'the legacy background-removal core path must re-export the feature implementation');
 assert.equal(compatibleToolTopbarMarkup, sharedToolTopbarMarkup, 'the legacy tool shell path must re-export the shared implementation');
 assert.doesNotMatch(mainSource, /from ['"]@tauri-apps\/api\/(?:core|event)['"]/, 'main.js must use the platform boundary');
 assert.match(mainSource, /from ['"]\.\/platform\/tauri-runtime\.js['"]/, 'main.js must import the Tauri platform boundary');
@@ -58,6 +69,10 @@ assert.match(developerToolboxSource, /from ['"]\.\.\/\.\.\/shared\/tool-page-she
 assert.match(colorSpaceToolSource, /from ['"]\.\.\/\.\.\/shared\/tool-page-shell\.js['"]/, 'the color space compare feature must consume the shared tool shell');
 assert.match(colorSpaceCompatibilitySource, /from ['"]\.\/features\/color-space-compare\/tool\.js['"]/, 'the legacy color space tool path must forward to the feature entry');
 assert.equal(colorSpaceCompatibilityStyles.trim(), "@import url('./features/color-space-compare/color-space-compare.css');", 'the legacy color space stylesheet must forward to the feature stylesheet');
+assert.match(bgRemovalToolSource, /from ['"]\.\/template\.js['"]/, 'the background-removal tool must delegate markup to its feature template');
+assert.match(bgRemovalTemplateSource, /data-bgr-action="process"/, 'the background-removal template must retain the process action contract');
+assert.match(bgRemovalCompatibilitySource, /from ['"]\.\/features\/bg-removal\/tool\.js['"]/, 'the legacy background-removal tool path must forward to the feature entry');
+assert.equal(bgRemovalCompatibilityStyles.trim(), "@import url('./features/bg-removal/bg-removal.css');", 'the legacy background-removal stylesheet must forward to the feature stylesheet');
 assert.match(indexSource, /href="\.\/src\/tool-custom-select\.css"/, 'the existing stylesheet position must remain stable');
 assert.equal(selectCompatibilityStyles.trim(), "@import url('./styles/components/tool-custom-select.css');", 'the legacy stylesheet must forward to the component stylesheet');
 assert.match(selectComponentStyles, /\.tool-custom-select-trigger\s*\{/, 'the component stylesheet must own custom select visuals');

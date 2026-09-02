@@ -66,7 +66,7 @@ export const LAZY_TOOL_SPECS = Object.freeze({
   }),
   'bg-removal': Object.freeze({
     overlayId: 'bgRemovalOverlay',
-    load: () => import('../bg-removal-ui.js'),
+    load: () => import('./bg-removal/tool.js'),
     init: 'initBgRemovalTool'
   }),
   'markdown-editor': Object.freeze({

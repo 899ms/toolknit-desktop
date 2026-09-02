@@ -25,6 +25,7 @@ Last updated: 2026-09-02
 | `33287cf` | Migrated PDF Page Number workspace, PDF/ZIP export and responsive lifecycle |
 | `85d87f9` | Migrated PDF Crop workspace, document, PDF/ZIP export and responsive lifecycle |
 | `9397d78` | Migrated PDF Encrypt/Decrypt shared shell, password flow and lifecycle ownership |
+| `6223bb5` | Migrated PDF Enhance rendering, atomic output and lifecycle ownership |
 
 ## Current verified counts
 
@@ -36,12 +37,12 @@ Last updated: 2026-09-02
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security | After PDF Enhance |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 | 21,708 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
@@ -89,6 +90,15 @@ complete gate now passes 78 npm scripts and 550 security checks; `cargo check`
 passes and 92 Rust tests pass with the external LibreOffice QA test ignored by
 design. Fresh production output contains no PDF security fixture query or
 fixture filename.
+PDF Enhance now emits an approximately 19.85 kB lazy JavaScript chunk and a
+0.78 kB feature CSS chunk. Its deterministic two-page fixture covers all three
+strengths, browser processing, output metadata, feature-owned Escape handling,
+three close/reopen cycles and a compact 480 by 360 completion flow. A clipped
+compact-height completion dialog discovered during browser QA is now bounded
+and scroll-safe. The complete gate passes 79 npm scripts and 555 security
+checks; `cargo check` passes and 92 Rust tests pass with the external
+LibreOffice QA test ignored by design. Production output contains no PDF
+Enhance fixture query or fixture filename.
 
 ## Hidden issues fixed during migration
 
@@ -262,11 +272,27 @@ fixture filename.
   Browser encryption object URLs are revoked by the same open-session owner,
   and operation identity prevents a closed session from writing progress or
   success state into a later open.
+- PDF Enhance previously kept its native WebView drag registration for the
+  application lifetime and mixed PDF.js loading, page rendering, canvases,
+  output writing and result UI in `main.js`. Its open session and processor now
+  release every resource, including a drag registration that resolves after
+  close and a partially written native output.
+- PDF Enhance previously duplicated the shared enhancement algorithms inside
+  `main.js`. Desktop and CLI/MCP processing now use the same tested engine and
+  render-plan core, including the corrected unit-gain 5x5 sharpening kernel.
+- Closing PDF Enhance during asynchronous work could previously leave renders
+  and output publication alive. Operation identity, PDF.js task destruction,
+  canvas release and atomic write-session discard now prevent stale output and
+  stale UI writes.
+- The shared completion dialog exceeded a 360px-high viewport after its content
+  settled. Feature-owned compact-height sizing now keeps its content and both
+  actions reachable without changing the shared dialog used by other tools.
 
 ## Next batches
 
-1. Audit the remaining PDF workspaces and select the next coherent legacy
-   candidate by lifecycle risk, dependency weight and compatibility scope.
+1. Audit PDF Compress, PDF Editor and the remaining PDF template ownership,
+   then select the next coherent legacy candidate by lifecycle risk, dependency
+   weight and compatibility scope.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed
@@ -277,8 +303,9 @@ fixture filename.
 5. Split Rust ownership, then validate CLI/MCP packaging and final Windows
    behavior as defined in `V3_ARCHITECTURE_PLAN.md`.
 
-Known non-blocking warnings remain the ineffective `pdf-lib` dynamic import
-and chunks larger than 500 kB. The former ineffective `pdf-encrypt-core`
-dynamic-import warning disappeared with the PDF security migration. No
+Known non-blocking warnings remain the browser externalization notice for the
+`crypto` import inside `pdf-lib-plus-encrypt` and chunks larger than 500 kB.
+The former ineffective `pdf-encrypt-core` and `pdf-lib` dynamic-import warnings
+disappeared with the PDF Security and PDF Enhance migrations respectively. No
 migration batch may add a new warning or use these warnings as evidence of
 completion.

@@ -51,12 +51,16 @@ PDF Page Number, PDF Crop and the PDF Encrypt/Decrypt security family now
 complete seven legacy PDF workspace migrations, including PDF.js task cleanup,
 generated control ownership, native drag/drop release, sortable queue ownership,
 PDF/ZIP export cancellation, stale document/result guards, password-layer
-sequencing and compact-window workspace protection. The next frontend family
-must be selected from the remaining ownership inventory by cohesion and risk,
-then pass the same contract, lifecycle, browser and release gates. The shared
-document reader, main-entry PDF worker URL and PDF encryption/decryption core
-modules remain compatibility boundaries until all consumers are audited;
-native and CLI/MCP restructuring remains later-phase work.
+sequencing and compact-window workspace protection. PDF Enhance is now the
+eighth migrated PDF workspace, with its shared enhancement engine, PDF.js
+rendering, atomic native writer, browser download URLs and compact success
+dialog owned by the lazy feature. The next frontend family must be selected
+from the remaining ownership inventory by cohesion and risk, then pass the same
+contract, lifecycle, browser and release gates. The shared document reader,
+main-entry PDF worker URL, PDF enhancement core/engine and PDF
+encryption/decryption core modules remain compatibility boundaries until all
+consumers are audited; native and CLI/MCP restructuring remains later-phase
+work.
 
 ## Batch gate
 

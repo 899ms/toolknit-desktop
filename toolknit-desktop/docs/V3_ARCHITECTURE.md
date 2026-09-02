@@ -109,6 +109,13 @@ tool entry so it becomes a separate production chunk.
   encryption object URLs terminate with the owning open session. The existing
   encryption/decryption core modules remain compatibility owners for CLI
   resource staging and PDF Editor consumers.
+- PDF Enhance, split into orchestration and processing modules while reusing the
+  existing pure enhancement engine and render-plan core shared with CLI/MCP.
+  Each open owns native drag/drop, generated queue bindings, focus, progress,
+  PDF.js loading/render tasks, document handles, canvases, browser object URLs
+  and native atomic-write sessions. Operation identity blocks closed or
+  superseded sessions from publishing output or updating later UI, and the
+  feature-owned compact-height rules keep its completion dialog reachable.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

@@ -91,14 +91,15 @@ tool entry so it becomes a separate production chunk.
 
 ## Current snapshot
 
-- 50 of 65 desktop tools are migrated (**76.9%**); 12 categories, 127 Tauri
+- 51 of 65 desktop tools are migrated (**78.5%**); 12 categories, 127 Tauri
   command implementations, 46 MCP tools and the existing CLI contracts remain
   unchanged.
-- The current source footprint is 13,538 lines in `src/main.js`, 22,772 lines
-  in `src/styles.css` and 8,454 lines in `index.html`.
-- The production entry is approximately 1,423.95 kB JavaScript and 487.68 kB
-  CSS. PPT image extraction and PPT AI Draft/PPTX entries are lazy; JSZip and
-  the AI Draft editor dependencies load only when their tools open.
+- The current source footprint is 13,000 lines in `src/main.js`, 21,962 lines
+  in `src/styles.css` and 8,317 lines in `index.html`.
+- The production entry is approximately 1,405.69 kB JavaScript and 465.07 kB
+  CSS. PPT image extraction, PPT AI Draft/PPTX and Image Stitch entries are
+  lazy; JSZip, the AI Draft editor dependencies and PDF.js Image Stitch import
+  code load only when their tools open.
 
 ## Migrated ownership
 
@@ -205,6 +206,13 @@ tool entry so it becomes a separate production chunk.
   feature layout. Session revisions and AbortControllers prevent closed or
   superseded generations from writing to later UI; disposal releases timers,
   listeners and rendering resources.
+- `src/features/image-stitch/` owns long-image composition as a complete lazy
+  boundary. `template.js` and `image-stitch.css` are loaded with the feature;
+  `controller.js` owns the queue, PDF.js page import, native WebView drag/drop,
+  progress and cancellation state, temporary PDF sessions, output publication
+  and operation identity. Closing invalidates the session and destroys any
+  pending PDF.js loading task, so inspection, rendering and export results
+  cannot update a later open. The existing window bridge names remain intact.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

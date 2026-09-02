@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { isAnimatedGifBuffer, stitchImages } from '../cli/lib/image-stitch-runtime.mjs';
+import { imageStitchPageTemplate } from '../src/features/image-stitch/template.js';
 
 function solidPng(width, height, color) {
   const canvas = createCanvas(width, height);
@@ -13,16 +14,20 @@ function solidPng(width, height, color) {
   return canvas.toBuffer('image/png');
 }
 
-const [pageMarkup, stylesheet] = await Promise.all([
+const [pageMarkup, stylesheet, featureStylesheet] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles.css', import.meta.url), 'utf8')
+  readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/image-stitch/image-stitch.css', import.meta.url), 'utf8')
 ]);
-const imageStitchMarkup = pageMarkup.match(/<div[^>]*id="imageStitchOverlay"[\s\S]*?<div[^>]*id="imageStitchSuccessOverlay">/)?.[0] || '';
+const imageStitchHost = pageMarkup.match(/<div[^>]*id="imageStitchOverlay"[^>]*><\/div>/)?.[0] || '';
+const imageStitchMarkup = imageStitchPageTemplate();
+assert.match(imageStitchHost, /class="[^"]*feature-tool-overlay[^"]*image-stitch-v2/, 'image stitch must have a lazy feature host');
 assert.match(imageStitchMarkup, /id="imageStitchBack"[\s\S]*?data-lucide="arrow-left"[\s\S]*?<span[^>]*>返回首页<\/span>/, 'image stitch back button must keep its visible arrow icon');
 assert.doesNotMatch(imageStitchMarkup, /audio-convert-hero-label/, 'image stitch must not render the IMAGE STITCH eyebrow');
 for (const className of ['image-stitch-queue-empty', 'image-stitch-queue', 'image-stitch-preview-empty', 'image-stitch-preview-composition']) {
-  assert.match(stylesheet, new RegExp(`\\.${className}\\[hidden\\][^{]*\\{[^}]*display:\\s*none\\s*!important`), `${className} must stay hidden when the UI switches state`);
+  assert.match(featureStylesheet, new RegExp(`\\.${className}\\[hidden\\][^{]*\\{[^}]*display:\\s*none\\s*!important`), `${className} must stay hidden when the UI switches state`);
 }
+assert.doesNotMatch(stylesheet, /\.image-stitch-v2\s+\.image-stitch-body/, 'image stitch feature styles must not stay in the global stylesheet');
 
 async function pixelAt(imagePath, x, y) {
   const image = await loadImage(imagePath);

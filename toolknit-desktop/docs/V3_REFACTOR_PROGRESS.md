@@ -51,11 +51,12 @@ Last updated: 2026-09-02
 | `2663d2b` | Isolated PDF Editor snapshot, restore and dirty-state controller |
 | `07d2261` | Isolated teleprompter system/offline recognition lifecycle |
 | `07ebe3b` | Migrated Color Space Compare into a feature-owned module boundary |
+| `0a66263` | Migrated Background Removal into a feature-owned module boundary |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 28 of 65 desktop tools have completed migration batches (**43.1%** coverage).
+- 29 of 65 desktop tools have completed migration batches (**44.6%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -241,6 +242,11 @@ storage, both edit modes, modal cancellation and history commits.
   at the removed root core filename. The feature runtime test caught the stale
   relative import before the batch was committed; the corrected feature path
   and compatibility forwards are now covered by the architecture contract.
+- Background Removal's template, feature CSS and core path were still coupled
+  to root-level imports even though the tool was already lazy-loaded. Moving
+  those boundaries exposed the stale relative imports in the first build; the
+  feature test now checks the template delegation, core compatibility forward
+  and lazy entry together.
 - The PDF Editor snapshot extraction initially left its source contract test
   pointed at the old monolithic entry. The test now validates the dedicated
   state controller and executes a capture/restore scenario, so future moves
@@ -324,6 +330,15 @@ The tool entry now owns only markup and the shared page shell, while the
 controller owns slider, canvas, language, copy feedback and close/reopen
 cleanup. The old root JS/CSS paths remain small compatibility forwards for
 legacy consumers, and the lazy registry now imports the feature entry directly.
+
+Background Removal now lives under `src/features/bg-removal/`. Its markup is
+owned by `template.js` (175 lines), image/model state and processing remain in
+the feature `tool.js` (999 lines), pure transition/history/path helpers live in
+`core.js` (98 lines), and the 1,025-line stylesheet loads only with the lazy
+feature. The root JS/CSS/core paths remain compatibility forwards. Existing
+MODNet model gating, native drag/drop, canvas editing, export-folder behavior,
+and operation cancellation are unchanged and remain covered by the core and
+matting test contracts.
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the
@@ -514,8 +529,9 @@ legacy consumers, and the lazy registry now imports the feature entry directly.
 ## Next batches
 
 1. Continue PDF Editor document/session coordination ownership, then migrate
-   the background-removal tool as the next coherent legacy candidate by
-   lifecycle risk, dependency weight and compatibility scope.
+   the next coherent legacy candidate by lifecycle risk, dependency weight and
+   compatibility scope (image color replacement is the current small-tool
+   candidate).
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed

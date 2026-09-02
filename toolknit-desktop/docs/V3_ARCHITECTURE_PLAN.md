@@ -60,7 +60,8 @@ export, document loading/cache/destruction, pure text-layout calculations,
 content editing, page selection, page mutations, file sessions and visible
 view state, operation identity and file-access runtime outside its remaining
 compatibility orchestrator. Its DOM and native event bindings now also live in
-the feature event controller. The
+the feature event controller, while derived control state lives in a dedicated
+controls controller. The
 native AI provider command is the first
 extracted Rust boundary; the broader native split remains pending. The next
 frontend batch must continue the remaining PDF Editor document/session wiring

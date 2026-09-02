@@ -47,6 +47,7 @@ Last updated: 2026-09-02
 | `da87d8b` | Isolated PDF Editor overlay, success, drag-hint and view-label state |
 | `f3bfc5a` | Isolated PDF Editor operation identity, progress and file-access runtime |
 | `690b69f` | Isolated PDF Editor DOM, keyboard and native drag/drop event bindings |
+| `f637f5d` | Isolated PDF Editor derived control state and labels |
 
 ## Current verified counts
 
@@ -275,6 +276,12 @@ drag/drop and tool-card activation are registered through the existing abort
 signal; the native drag unlisten is released by the feature event controller.
 The event suite verifies each primary command fires once and all drop/input
 paths preserve their original callbacks.
+
+PDF Editor derived control state now lives in `src/features/pdf-editor/controls.js`.
+The controller computes availability, page boundaries, editing permissions,
+selection labels, active insertion state and thumbnail ARIA state from injected
+getters. Its state suite covers empty, busy and active document transitions,
+history buttons, editing modes and thumbnail selection synchronization.
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the

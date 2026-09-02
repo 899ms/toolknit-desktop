@@ -55,6 +55,8 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
   file reads for the editor.
 - `src/features/pdf-editor/events.js` owns editor DOM, keyboard, browser drop
   and Tauri native drag/drop bindings, releasing native listeners at dispose.
+- `src/features/pdf-editor/controls.js` owns derived control availability and
+  selected/active labels, using state getters without mutating editor data.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 - `src/core/serialized-request-session.js` owns one-at-a-time async requests,
   timeout state, request-specific cancellation and stale-result identity.

@@ -1,4 +1,3 @@
-import { PDFDocument } from 'pdf-lib';
 import * as tauriCore from '@tauri-apps/api/core';
 import * as tauriEvent from '@tauri-apps/api/event';
 
@@ -6,15 +5,11 @@ const tauriCorePromise = Promise.resolve(tauriCore);
 const tauriEventPromise = Promise.resolve(tauriEvent);
 import {
   PDF_EDITOR_LIMITS,
-  assertPdfEditorFile,
-  assertPdfEditorMergeSelection,
-  assertPdfEditorPageCount,
   normalizePageRotation,
   resolvePdfPageRotation
 } from './pdf-editor-core.js';
 import {
   compactPdfEditorComponent,
-  pdfEditorPageIdsInDocumentOrder,
   pdfEditorSnapshotsEqual
 } from './pdf-editor-state.js';
 import { createPdfEditorHistory } from './features/pdf-editor/history.js';
@@ -23,10 +18,7 @@ import {
   isPdfEditorRenderCancellation as isRenderCancellation,
   releasePdfEditorCanvas as releaseCanvas
 } from './features/pdf-editor/render-utils.js';
-import {
-  createPdfEditorExporter,
-  PdfEditorCancelledError
-} from './features/pdf-editor/exporter.js';
+import { createPdfEditorExporter } from './features/pdf-editor/exporter.js';
 import { createPdfEditorDocumentStore } from './features/pdf-editor/documents.js';
 import { createPdfEditorZoomController } from './features/pdf-editor/zoom.js';
 import { createPdfEditorComponentRenderer } from './features/pdf-editor/component-renderer.js';
@@ -34,6 +26,8 @@ import { createPdfEditorComponentModel } from './features/pdf-editor/component-m
 import { createPdfEditorComponentControls } from './features/pdf-editor/component-controls.js';
 import { createPdfEditorComponentInteraction } from './features/pdf-editor/component-interaction.js';
 import { createPdfEditorContentEditing } from './features/pdf-editor/content-editing.js';
+import { PdfEditorCancelledError } from './features/pdf-editor/errors.js';
+import { createPdfEditorFileSession } from './features/pdf-editor/file-session.js';
 import { createPdfEditorPageOperations } from './features/pdf-editor/page-operations.js';
 import { createPdfEditorPageSelection } from './features/pdf-editor/page-selection.js';
 import { createPdfEditorPreview } from './features/pdf-editor/preview.js';
@@ -222,6 +216,7 @@ export function initPdfEditorTool({
   let selectedComponent = null;
   let componentInteraction = null;
   let contentEditing = null;
+  let fileSession = null;
   let pageOperations = null;
   let pageSelection = null;
   let componentRenderFrame = 0;
@@ -1035,6 +1030,53 @@ export function initPdfEditorTool({
     renderMainPreview
   });
 
+  fileSession = createPdfEditorFileSession({
+    isTauri,
+    documentRef: document,
+    windowRef: window,
+    fileInput,
+    appendInput,
+    pageStrip,
+    t,
+    isDisposed: () => disposed,
+    getActiveOperation: () => activeOperation,
+    getIdCounter: () => idCounter,
+    setIdCounter: value => { idCounter = value; },
+    getSources: () => sources,
+    setSources: value => { sources = value; },
+    getPages: () => pages,
+    setPages: value => { pages = value; },
+    getSourceStore: () => sourceStore,
+    setSourceStore: value => { sourceStore = value; },
+    setCurrentId: value => { currentId = value; },
+    setSelectedIds: value => { selectedIds = value; },
+    setSelectionAnchorId: value => { selectionAnchorId = value; },
+    getDocuments: () => documents,
+    hasDocument,
+    confirmDiscardChanges,
+    resetDocument,
+    fileSizeFor,
+    readBytes,
+    beginOperation,
+    assertOperation,
+    endOperation,
+    showProcess,
+    setLocalizedProgress,
+    buildTiles,
+    updateFileCard,
+    syncStageVisibility,
+    renderMainPreview,
+    updateControls,
+    resetEditorHistory,
+    setBaselineSnapshot: value => { baselineSnapshot = value; },
+    setSavedSnapshot: value => { savedSnapshot = value; },
+    editorHistoryFirstSnapshot: () => editorHistory.firstSnapshot(),
+    cloneState,
+    messageForError,
+    commitEditorHistory,
+    showToast
+  });
+
   function buildTiles(shouldRender = true) {
     return thumbnails.build(shouldRender);
   }
@@ -1650,209 +1692,20 @@ export function initPdfEditorTool({
   });
 
   // ----- Load / append -----
-  async function loadMainFile(file) {
-    if (disposed || !file || activeOperation) {
-      if (activeOperation) showToast(t('home.pdfEditor.busy'));
-      return;
-    }
-    const name = String(file.name || '');
-    if (!/\.pdf$/i.test(name)) {
-      showToast(t('home.pdfEditor.pdfOnly'));
-      return;
-    }
-    if (!confirmDiscardChanges('replace')) return;
-    const operation = beginOperation('load');
-    showProcess('loadingDocument', 3);
-    let stagedDocument = null;
-    let documentCommitted = false;
-    try {
-      const size = await fileSizeFor(file);
-      assertOperation(operation);
-      assertPdfEditorFile(name, size);
-      setLocalizedProgress(12, 'loadingDocument');
-      const bytes = await readBytes(file);
-      assertOperation(operation);
-      const loaded = await documents.loadBytes(bytes, {
-        onLoadingTask: loadingTask => {
-          operation.loadingTask = loadingTask;
-        }
-      });
-      stagedDocument = loaded.document;
-      assertOperation(operation);
-      assertPdfEditorPageCount(stagedDocument.numPages);
-      setLocalizedProgress(70, 'preparingPages');
-
-      let stagedIdCounter = idCounter;
-      const source = { id: `src-${++stagedIdCounter}`, name, bytes, size, pageCount: stagedDocument.numPages };
-      const stagedPages = Array.from({ length: stagedDocument.numPages }, (_, index) => ({
-        id: `page-${++stagedIdCounter}`,
-        sourceId: source.id,
-        pageIndex: index,
-        rotation: 0
-      }));
-
-      await resetDocument();
-      assertOperation(operation);
-      idCounter = stagedIdCounter;
-      sources = [source];
-      sourceStore = new Map([[source.id, source]]);
-      documents.set(source.id, stagedDocument);
-      pages = stagedPages;
-      documentCommitted = true;
-      stagedDocument = null;
-      selectedIds = new Set(pages.length ? [pages[0].id] : []);
-      currentId = pages[0]?.id || null;
-      selectionAnchorId = pages[0]?.id || null;
-      setLocalizedProgress(90, 'preparingPages');
-      buildTiles(false);
-      updateFileCard();
-      syncStageVisibility();
-      // `buildTiles(false)` intentionally avoids a duplicate render while the
-      // thumbnail observer is being installed. Start the selected page's main
-      // canvas explicitly after the document state is committed.
-      renderMainPreview();
-      resetEditorHistory();
-      baselineSnapshot = cloneState(editorHistory.firstSnapshot());
-      savedSnapshot = cloneState(editorHistory.firstSnapshot());
-      setLocalizedProgress(100, 'loadingDocument');
-    } catch (error) {
-      const cancelled = operation.cancelled || error instanceof PdfEditorCancelledError;
-      if (stagedDocument) {
-        try { await stagedDocument.destroy(); } catch (_) {}
-      }
-      if (documentCommitted) await resetDocument();
-      if (!disposed) {
-        showToast(
-          cancelled ? t('home.pdfEditor.loadCancelled') : messageForError(error, 'load'),
-          cancelled ? 4500 : 9000
-        );
-      }
-    } finally {
-      delete operation.loadingTask;
-      endOperation(operation);
-    }
+  function loadMainFile(file) {
+    return fileSession?.loadMainFile(file);
   }
 
-  async function appendPdfBytes(bytes, name, size) {
-    if (activeOperation) {
-      showToast(t('home.pdfEditor.busy'));
-      return;
-    }
-    const operation = beginOperation('append');
-    showProcess('appending', 8);
-    try {
-      assertPdfEditorFile(name, size);
-      const appendSources = [...sources, { name, size }];
-      const totalBytes = appendSources.reduce((sum, source) => sum + Number(source.size || 0), 0);
-      assertPdfEditorMergeSelection(appendSources, totalBytes);
-      setLocalizedProgress(30, 'appending');
-      const pdfDoc = await PDFDocument.load(bytes.slice());
-      assertOperation(operation);
-      const pageCount = pdfDoc.getPageCount();
-      assertPdfEditorPageCount(pageCount);
-      if (pages.length + pageCount > PDF_EDITOR_LIMITS.maxPages) {
-        throw new Error('PDF exceeds the maximum page count');
-      }
-      const source = { id: `src-${++idCounter}`, name, bytes, size, pageCount };
-      sources.push(source);
-      sourceStore.set(source.id, source);
-      const newPages = Array.from({ length: pageCount }, (_, index) => ({
-        id: `page-${++idCounter}`,
-        sourceId: source.id,
-        pageIndex: index,
-        rotation: 0
-      }));
-      pages.push(...newPages);
-      setLocalizedProgress(80, 'preparingPages');
-      buildTiles();
-      updateFileCard();
-      if (newPages.length) {
-        currentId = newPages[newPages.length - 1].id;
-        selectedIds = new Set([currentId]);
-      }
-      updateControls();
-      renderMainPreview();
-      requestAnimationFrame(() => {
-        pageStrip?.scrollTo({ top: pageStrip.scrollHeight, behavior: 'smooth' });
-      });
-      commitEditorHistory();
-      setLocalizedProgress(100, 'appending');
-    } catch (error) {
-      const cancelled = operation.cancelled || error instanceof PdfEditorCancelledError;
-      showToast(
-        cancelled ? t('home.pdfEditor.cancelled') : messageForError(error, 'append'),
-        cancelled ? 4500 : 9000
-      );
-    } finally {
-      endOperation(operation);
-    }
+  function appendPdfBytes(bytes, name, size) {
+    return fileSession?.appendPdfBytes(bytes, name, size);
   }
 
   function chooseMainFile() {
-    if (activeOperation) {
-      showToast(t('home.pdfEditor.busy'));
-      return;
-    }
-    if (isTauri) {
-      void (async () => {
-        try {
-          const { open } = await import('@tauri-apps/plugin-dialog');
-          const selected = await open({
-            multiple: false,
-            filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
-          });
-          if (!disposed && typeof selected === 'string') {
-            await loadMainFile({
-              name: selected.split(/[\\/]/).pop() || selected,
-              path: selected,
-              size: 0
-            });
-          }
-        } catch (error) {
-          showToast(messageForError(error, 'load'));
-        }
-      })();
-      return;
-    }
-    if (fileInput) {
-      fileInput.value = '';
-      fileInput.click();
-    }
+    return fileSession?.chooseMainFile();
   }
 
   function chooseAppendFile() {
-    if (activeOperation) {
-      showToast(t('home.pdfEditor.busy'));
-      return;
-    }
-    if (!hasDocument()) {
-      showToast(t('home.pdfEditor.appendNeedsFile'));
-      return;
-    }
-    if (isTauri) {
-      void (async () => {
-        try {
-          const { open } = await import('@tauri-apps/plugin-dialog');
-          const selected = await open({
-            multiple: false,
-            filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
-          });
-          if (!disposed && typeof selected === 'string') {
-            const name = selected.split(/[\\/]/).pop() || selected;
-            const size = await fileSizeFor({ path: selected, name });
-            const bytes = await readBytes({ path: selected, name });
-            await appendPdfBytes(bytes, name, size);
-          }
-        } catch (error) {
-          showToast(messageForError(error, 'append'));
-        }
-      })();
-      return;
-    }
-    if (appendInput) {
-      appendInput.value = '';
-      appendInput.click();
-    }
+    return fileSession?.chooseAppendFile();
   }
 
   // ----- Page operations -----

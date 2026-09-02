@@ -97,6 +97,10 @@ const pageSelectionSource = await readFile(
   new URL('../src/features/pdf-editor/page-selection.js', import.meta.url),
   'utf8'
 );
+const fileSessionSource = await readFile(
+  new URL('../src/features/pdf-editor/file-session.js', import.meta.url),
+  'utf8'
+);
 
 const snapshotStart = uiSource.indexOf('function captureEditorSnapshot()');
 const snapshotEnd = uiSource.indexOf('function applyEditorSnapshot(', snapshotStart);
@@ -110,17 +114,17 @@ const applyEnd = uiSource.indexOf('function resetEditorHistory()', applyStart);
 const applySource = uiSource.slice(applyStart, applyEnd);
 assert.match(applySource, /selectedComponent = restoreSelectedComponent\(snapshot\.selectedComponent\)/);
 
-const appendStart = uiSource.indexOf('async function appendPdfBytes(');
-const appendEnd = uiSource.indexOf('function chooseMainFile()', appendStart);
-const appendSource = uiSource.slice(appendStart, appendEnd);
+const appendStart = fileSessionSource.indexOf('async function appendPdfBytes(');
+const appendEnd = fileSessionSource.indexOf('function chooseMainFile()', appendStart);
+const appendSource = fileSessionSource.slice(appendStart, appendEnd);
 const limitCheckIndex = appendSource.indexOf('assertPdfEditorMergeSelection(');
 const sourceMutationIndex = appendSource.indexOf('sources.push(source)');
 assert.ok(limitCheckIndex >= 0, 'append must enforce total PDF editor limits');
 assert.ok(sourceMutationIndex > limitCheckIndex, 'append limits must be checked before editor state changes');
 
-const loadStart = uiSource.indexOf('async function loadMainFile(');
-const loadEnd = uiSource.indexOf('async function appendPdfBytes(', loadStart);
-const loadSource = uiSource.slice(loadStart, loadEnd);
+const loadStart = fileSessionSource.indexOf('async function loadMainFile(');
+const loadEnd = fileSessionSource.indexOf('async function appendPdfBytes(', loadStart);
+const loadSource = fileSessionSource.slice(loadStart, loadEnd);
 const stagedLoadIndex = loadSource.indexOf('const loaded = await documents.loadBytes(bytes');
 const stagedDocumentIndex = loadSource.indexOf('stagedDocument = loaded.document');
 const resetDocumentIndex = loadSource.indexOf('await resetDocument()');
@@ -129,7 +133,7 @@ assert.ok(stagedDocumentIndex > stagedLoadIndex, 'replacement loading must yield
 assert.ok(resetDocumentIndex > stagedDocumentIndex, 'the current document must survive replacement validation failures');
 assert.match(loadSource, /if \(documentCommitted\) await resetDocument\(\)/);
 assert.match(uiSource, /confirmDiscardChanges\('close'\)/);
-assert.match(uiSource, /confirmDiscardChanges\('replace'\)/);
+assert.match(fileSessionSource, /confirmDiscardChanges\('replace'\)/);
 assert.match(uiSource, /confirmDiscardChanges\('reset'\)/);
 assert.match(uiSource, /savedSnapshot = captureEditorSnapshot\(\)/);
 

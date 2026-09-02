@@ -54,11 +54,12 @@ Last updated: 2026-09-02
 | `0a66263` | Migrated Background Removal into a feature-owned module boundary |
 | `1b02043` | Migrated Image Color Replace into a feature-owned module boundary |
 | `ec6ea9d` | Migrated Excel To PDF into a feature-owned module boundary |
+| `b67cff3` | Migrated Markdown Editor into a feature-owned module boundary |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 31 of 65 desktop tools have completed migration batches (**47.7%** coverage).
+- 32 of 65 desktop tools have completed migration batches (**49.2%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -382,6 +383,33 @@ a 21.09 kB JavaScript chunk and 6.21 kB CSS chunk; main JavaScript is now
 1,838.21 kB and main CSS remains 581.53 kB. Only the pre-existing crypto
 externalization and large-chunk warnings remain.
 
+Markdown Editor now lives under `src/features/markdown-editor/`. The feature
+owns a 668-line lifecycle controller, 183-line pure editor core, 50-line
+preview-security boundary, 43-line template, 13-line composition entry and
+653-line lazy stylesheet. Root core and UI imports remain compatibility
+forwards, while the lazy registry imports the feature entry directly.
+CodeMirror, Mermaid, KaTeX and DOMPurify remain independently demand-loaded.
+The former global stylesheets no longer contain Markdown selectors.
+
+Every open session now owns its editor, listeners, render timer, background
+state, image hydration and asynchronous preview work. Close and dispose
+invalidate stale Mermaid and Tauri results, so an old session cannot write into
+a reopened overlay. Outline entries are built through DOM APIs, remote images
+remain blocked, unsafe link protocols are removed and sanitized preview HTML
+continues through DOMPurify. Mermaid uses native SVG text instead of relaxing
+the strict sanitizer for `foreignObject` labels.
+
+Browser regression at 1280 x 720, 720 x 800 and 480 x 360 covered editing,
+draft recovery, math, Mermaid, safe and unsafe links, remote-image blocking,
+help navigation, all three view modes, repeated open/close, duplicate-listener
+checks and close-during-render invalidation. The compact layouts have no
+horizontal overflow and the browser console remained clear. The complete
+release gate passes 80 npm scripts and 632 security checks; `cargo check` and
+the production build pass. Markdown Editor emits a 1,004.39 kB JavaScript
+chunk and 22.60 kB CSS chunk; main JavaScript remains 1,838.21 kB and main CSS
+is now 561.29 kB. Only the pre-existing crypto externalization and large-chunk
+warnings remain.
+
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the
@@ -573,8 +601,7 @@ externalization and large-chunk warnings remain.
 
 1. Continue PDF Editor document/session coordination ownership, then migrate
    the next coherent legacy candidate by lifecycle risk, dependency weight and
-   compatibility scope (image color replacement is the current small-tool
-   candidate).
+   compatibility scope.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed

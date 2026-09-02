@@ -60,6 +60,7 @@ const releaseTests = [
   'test:developer-toolbox',
   'test:developer-toolbox-contract',
   'test:icon-gen',
+  'test:icon-gen-tool-contract',
   'test:audio-convert',
   'test:bpm-detect',
   'test:audio-extract',

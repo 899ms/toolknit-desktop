@@ -230,6 +230,20 @@ check(!imageBatchControllerSource.includes("from '@tauri-apps/api/core'"), 'Imag
 check(!imageBatchControllerSource.includes("from '@tauri-apps/api/event'"), 'Image batch tools must use the platform Tauri event boundary');
 check(imageBatchToolSource.includes('imageBatchPageTemplate(mode)'), 'Image batch tools must materialize only their trusted static templates');
 
+const iconGeneratorControllerSource = read('toolknit-desktop/src/features/icon-generator/controller.js');
+const iconGeneratorToolSource = read('toolknit-desktop/src/features/icon-generator/tool.js');
+const iconGeneratorPublisherSource = read('toolknit-desktop/src/features/icon-generator/publisher.js');
+check(!iconGeneratorControllerSource.includes('.innerHTML ='), 'Icon Generator runtime data must not be written through innerHTML');
+check(iconGeneratorControllerSource.includes('name.textContent ='), 'Icon Generator filenames must use safe text nodes');
+check(iconGeneratorControllerSource.includes('owner.use(unlisten)'), 'Icon Generator native drag listeners must be lifecycle-owned');
+check(iconGeneratorControllerSource.includes('isCurrentSourceRequest(request)'), 'Icon Generator source loads must reject stale sessions');
+check(iconGeneratorControllerSource.includes('isCurrentOperation(operation)'), 'Icon Generator output must reject stale operations');
+check(iconGeneratorControllerSource.includes('urlApi.revokeObjectURL'), 'Icon Generator must revoke preview object URLs');
+check(iconGeneratorControllerSource.includes('discardArchive(operation, tauriCore)'), 'Icon Generator cancellation must discard partial native output');
+check(!iconGeneratorControllerSource.includes("from '@tauri-apps/"), 'Icon Generator must use the platform Tauri boundary');
+check(iconGeneratorPublisherSource.includes("invoke('discard_icon_archive_write'"), 'Icon Generator publisher must discard failed native write sessions');
+check(iconGeneratorToolSource.includes('iconGeneratorPageTemplate()'), 'Icon Generator must materialize only its trusted static template');
+
 const hardwareControllerSource = read('toolknit-desktop/src/features/hardware-inspector/controller.js');
 const hardwareToolSource = read('toolknit-desktop/src/features/hardware-inspector/tool.js');
 const hardwareRendererSource = [

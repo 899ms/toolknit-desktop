@@ -1,0 +1,38 @@
+.icon-gen-v2 .pdf-merge-v2-poster::after {
+  right: 18px;
+  content: 'ICON';
+  font-size: 96px;
+}
+
+.icon-gen-v2 .pdf-merge-v2-workspace {
+  grid-template-rows: auto minmax(190px, 1fr) auto auto;
+}
+
+.icon-gen-v2 .pdf-merge-v2-queue {
+  padding-top: 18px;
+}
+
+.icon-gen-v2 .pdf-merge-v2-files {
+  max-height: 238px;
+}
+
+.icon-gen-v2 .pdf-merge-v2-files .audio-convert-file-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.icon-gen-v2 #iconGenFiles:empty::before {
+  content: '暂无图标源图 · 点击上传 PNG / JPG / WebP 文件';
+}
+
+.icon-gen-v2 .pdf-merge-v2-files .audio-convert-file-item {
+  min-height: 68px;
+}
+
+.icon-gen-v2 .pdf-merge-v2-files .audio-convert-file-thumb {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+}

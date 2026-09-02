@@ -94,6 +94,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./image-crop/tool.js'),
     init: 'initImageCropTool'
   }),
+  'icon-gen': Object.freeze({
+    overlayId: 'iconGenOverlay',
+    load: () => import('./icon-generator/tool.js'),
+    init: 'initIconGeneratorTool'
+  }),
   'hardware-overview': Object.freeze({
     overlayId: 'hardwareOverviewOverlay',
     load: () => import('./hardware-inspector/tool.js'),

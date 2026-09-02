@@ -58,11 +58,12 @@ Last updated: 2026-09-02
 | `fec2595` | Migrated Image Crop into a feature-owned module boundary |
 | `446cddc` | Migrated the first four Hardware Inspector tools and snapshot lifecycle |
 | `d86579e` | Completed the seven-tool Hardware Inspector family migration |
+| `315e8bc` | Migrated Image Format Conversion and Image Compression as one lazy tool family |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 42 of 65 desktop tools have completed migration batches (**64.6%** coverage).
+- 43 of 65 desktop tools have completed migration batches (**66.2%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -510,6 +511,35 @@ build pass. The two tools share an approximately 23.09 kB JavaScript chunk and
 `main.js` is 18,469 lines and `index.html` is 9,813 lines. Only the existing
 crypto externalization and large-chunk warnings remain.
 
+Icon Generator now owns its page, completion layers, controller, rendering
+pipeline, native/browser publisher and stylesheet under
+`src/features/icon-generator/`. Its 563-line legacy runtime and full static
+page no longer live in `main.js` and `index.html`; the compatibility core path
+now forwards to the feature core while existing consumers remain valid.
+
+Source reads and image decoding carry both open-session and request identity,
+so replacing a source or closing during decode revokes the candidate object URL
+and prevents stale preview state. Native WebView drag/drop is released by the
+owning open session. Generation, ZIP compression, the delayed completion layer
+and native chunked output share one operation identity; cancellation discards
+an active native write session and blocks old results from reaching a later
+open. Every temporary Canvas is reset to zero dimensions after encoding, and
+runtime filenames are written through text nodes.
+
+Focused core/runtime/contract checks cover ICO offsets, SVG embedding, the 19
+generated files, cancellation, all 28 Canvas releases, 5 MB native chunk order
+and discard after write failure. Browser checks covered a real `logo.png`
+source, a 1.52 MB ZIP containing the expected 16 PNG files plus ICO, SVG and
+favicon outputs, cancellation, four close/reopen cycles, one-instance portal
+ownership, and 680 by 800 and 480 by 360 layouts without horizontal overflow
+or console errors. The feature emits an approximately 23.73 kB JavaScript
+chunk and 0.68 kB CSS chunk. Main JavaScript is now 1,743.15 kB, main CSS is
+525.34 kB, `main.js` is 17,908 lines and `index.html` is 9,687 lines. Only the
+existing crypto externalization and large-chunk warnings remain. The complete
+release gate passes 82 npm scripts, including 698 security checks, CLI/MCP
+package and invocation verification, related Rust tests and the production
+build.
+
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the
@@ -696,11 +726,18 @@ crypto externalization and large-chunk warnings remain.
 - The shared PDF minimum-height rules pushed the compression action deep below
   a 480 by 360 viewport. Compact-height feature rules now bound the poster and
   workspace while preserving internal scrolling and completion-dialog access.
+- Icon Generator previously discarded the native WebView drag `unlisten`, kept
+  decoded source URLs and Canvas memory outside a lifecycle owner, and allowed
+  source decoding, ZIP compression or delayed completion state to outlive the
+  page. Request and operation identities now reject those stale paths, native
+  partial archives are discarded on cancellation/failure, and Canvas backing
+  stores are explicitly released.
 
 ## Next batches
 
-1. Select the next coherent low- or medium-risk frontend family and continue
-   batched migration under the accelerated verification protocol.
+1. Select the next coherent low- or medium-risk frontend family from the 22
+   remaining tools and continue batched migration under the accelerated
+   verification protocol.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed

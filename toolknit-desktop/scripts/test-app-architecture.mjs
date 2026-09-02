@@ -16,6 +16,8 @@ import { rgbToHex as featureImageColorRgbToHex } from '../src/features/image-col
 import { rgbToHex as compatibleImageColorRgbToHex } from '../src/image-color-replace-core.js';
 import { applyMarkdownAction as featureMarkdownAction } from '../src/features/markdown-editor/core.js';
 import { applyMarkdownAction as compatibleMarkdownAction } from '../src/markdown-editor-core.js';
+import { encodeIco as featureEncodeIco } from '../src/features/icon-generator/core.js';
+import { encodeIco as compatibleEncodeIco } from '../src/icon-gen-core.js';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
 import { toolTopbarMarkup as sharedToolTopbarMarkup } from '../src/shared/tool-page-shell.js';
 import { toolTopbarMarkup as compatibleToolTopbarMarkup } from '../src/tool-page-shell.js';
@@ -50,6 +52,12 @@ const [
   imageBatchControllerSource,
   imageBatchTemplateSource,
   imageBatchFeatureStyles,
+  iconGeneratorToolSource,
+  iconGeneratorControllerSource,
+  iconGeneratorTemplateSource,
+  iconGeneratorGeneratorSource,
+  iconGeneratorPublisherSource,
+  iconGeneratorFeatureStyles,
   excelToPdfToolSource,
   excelToPdfControllerSource,
   excelToPdfTemplateSource,
@@ -89,6 +97,12 @@ const [
   readFile(new URL('../src/features/image-batch/controller.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/image-batch/template.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/image-batch/image-batch.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/icon-generator/tool.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/icon-generator/controller.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/icon-generator/template.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/icon-generator/generator.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/icon-generator/publisher.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/icon-generator/icon-generator.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/excel-to-pdf/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/excel-to-pdf/controller.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/excel-to-pdf/template.js', import.meta.url), 'utf8'),
@@ -109,6 +123,7 @@ assert.equal(compatiblePreserveColorSpaceValues, featurePreserveColorSpaceValues
 assert.equal(compatibleSelectInstalledModels, featureSelectInstalledModels, 'the legacy background-removal core path must re-export the feature implementation');
 assert.equal(compatibleImageColorRgbToHex, featureImageColorRgbToHex, 'the legacy image-color-replace core path must re-export the feature implementation');
 assert.equal(compatibleMarkdownAction, featureMarkdownAction, 'the legacy Markdown core path must re-export the feature implementation');
+assert.equal(compatibleEncodeIco, featureEncodeIco, 'the legacy icon generator core path must re-export the feature implementation');
 assert.equal(compatibleToolTopbarMarkup, sharedToolTopbarMarkup, 'the legacy tool shell path must re-export the shared implementation');
 assert.doesNotMatch(mainSource, /from ['"]@tauri-apps\/api\/(?:core|event)['"]/, 'main.js must use the platform boundary');
 assert.match(mainSource, /from ['"]\.\/platform\/tauri-runtime\.js['"]/, 'main.js must import the Tauri platform boundary');
@@ -146,6 +161,20 @@ assert.doesNotMatch(imageBatchControllerSource, /\.innerHTML\s*=/, 'image batch 
 assert.match(imageBatchTemplateSource, /imageBatchPortalTemplate/, 'image batch modal markup must load with the feature');
 assert.match(imageBatchFeatureStyles, /\.image-convert-v2/, 'the feature stylesheet must own image conversion layout');
 assert.doesNotMatch(appStyles + finalToolStyles, /\.image-(?:convert|compress)-v2|#image(?:Convert|Compress)SuccessOverlay/, 'shared stylesheets must not retain migrated image batch selectors');
+assert.match(iconGeneratorToolSource, /from ['"]\.\/template\.js['"]/, 'the icon generator must delegate markup to its feature template');
+assert.match(iconGeneratorToolSource, /from ['"]\.\/controller\.js['"]/, 'the icon generator must delegate runtime behavior to its controller');
+assert.match(iconGeneratorToolSource, /import ['"]\.\/icon-generator\.css['"]/, 'the icon generator must own its lazy stylesheet');
+assert.match(iconGeneratorControllerSource, /createLifecycleScope\(\)/, 'the icon generator must own permanent and open-session cleanup');
+assert.match(iconGeneratorControllerSource, /owner\.use\(unlisten\)/, 'the icon generator must release native drag listeners with the owning session');
+assert.match(iconGeneratorControllerSource, /isCurrentSourceRequest\(request\)/, 'icon source decoding must reject stale sessions');
+assert.match(iconGeneratorControllerSource, /isCurrentOperation\(operation\)/, 'icon generation must reject stale operations');
+assert.match(iconGeneratorControllerSource, /name\.textContent =/, 'icon generator filenames must use safe text nodes');
+assert.doesNotMatch(iconGeneratorControllerSource, /\.innerHTML\s*=/, 'icon generator runtime values must not be written through innerHTML');
+assert.match(iconGeneratorTemplateSource, /iconGeneratorPortalTemplate/, 'icon generator modal markup must load with the feature');
+assert.match(iconGeneratorGeneratorSource, /releaseCanvas\(canvas\)/, 'icon generator canvases must release their pixel memory');
+assert.match(iconGeneratorPublisherSource, /discard_icon_archive_write/, 'icon generator native failures must discard partial archive sessions');
+assert.match(iconGeneratorFeatureStyles, /\.icon-gen-v2/, 'the feature stylesheet must own icon generator layout');
+assert.doesNotMatch(appStyles + finalToolStyles, /\.icon-gen-v2|#iconGen(?:ProcessMask|SuccessOverlay)/, 'shared stylesheets must not retain icon generator selectors');
 assert.match(excelToPdfToolSource, /from ['"]\.\/template\.js['"]/, 'the Excel to PDF tool must delegate markup to its feature template');
 assert.match(excelToPdfToolSource, /from ['"]\.\/controller\.js['"]/, 'the Excel to PDF tool must delegate runtime behavior to its controller');
 assert.match(excelToPdfToolSource, /import ['"]\.\/excel-to-pdf\.css['"]/, 'the Excel to PDF feature must own its lazy stylesheet');
@@ -214,6 +243,8 @@ assert.equal(LAZY_TOOL_SPECS['markdown-editor']?.overlayId, 'markdownEditorOverl
 assert.match(LAZY_TOOL_SPECS['markdown-editor'].load.toString(), /\.\/markdown-editor\/tool\.js/, 'Markdown Editor must load its feature entry directly');
 assert.equal(LAZY_TOOL_SPECS['image-crop']?.overlayId, 'imageCropOverlay', 'Image Crop must be lazy-registered');
 assert.match(LAZY_TOOL_SPECS['image-crop'].load.toString(), /\.\/image-crop\/tool\.js/, 'Image Crop must load its feature entry directly');
+assert.equal(LAZY_TOOL_SPECS['icon-gen']?.overlayId, 'iconGenOverlay', 'Icon Generator must be lazy-registered');
+assert.match(LAZY_TOOL_SPECS['icon-gen'].load.toString(), /\.\/icon-generator\/tool\.js/, 'Icon Generator must load its feature entry directly');
 for (const [toolId, overlayId] of Object.entries({
   'image-convert': 'imageConvertOverlay',
   'image-compress': 'imageCompressOverlay'

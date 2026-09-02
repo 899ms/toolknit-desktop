@@ -1,0 +1,11 @@
+/* PPT workflow-specific layout stays lazy with its controllers. Shared PPT primitives remain in styles.css for the still-static draft/render tools. */
+.ppt-text-v2 .ppt-text-list,
+.ppt-compress-v2 .ppt-compress-stats,
+.ppt-outline-v2 .ppt-outline-preview,
+.ppt-outline-v2 .ppt-outline-compose { contain: layout paint; }
+
+@media (max-height: 520px) {
+  .ppt-text-v2 .ppt-text-v2-workspace,
+  .ppt-compress-v2 .ppt-compress-v2-workspace,
+  .ppt-outline-v2 .ppt-outline-v2-workspace { min-height: 0; }
+}

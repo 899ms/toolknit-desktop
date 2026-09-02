@@ -59,6 +59,21 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./pdf-editor/tool.js'),
     init: 'initPdfEditorTool'
   }),
+  'ppt-text': Object.freeze({
+    overlayId: 'pptTextOverlay',
+    load: () => import('./ppt-workflows/tool.js'),
+    init: 'initPptTextTool'
+  }),
+  'ppt-compress': Object.freeze({
+    overlayId: 'pptCompressOverlay',
+    load: () => import('./ppt-workflows/tool.js'),
+    init: 'initPptCompressTool'
+  }),
+  'ppt-outline': Object.freeze({
+    overlayId: 'pptOutlineOverlay',
+    load: () => import('./ppt-workflows/tool.js'),
+    init: 'initPptOutlineTool'
+  }),
   teleprompter: Object.freeze({
     overlayId: 'teleprompterOverlay',
     load: () => import('../teleprompter-ui.js'),

@@ -439,7 +439,9 @@ export async function analyzePptxText(bytes, options = {}) {
   const analyzedSlides = [];
   let totalTextCharacters = 0;
   for (const slide of slides) {
+    if (options.signal?.aborted) fail('cancelled', 'PPT text extraction was cancelled.');
     const analyzed = await analyzeSlideText(zip, slide);
+    if (options.signal?.aborted) fail('cancelled', 'PPT text extraction was cancelled.');
     analyzedSlides.push(analyzed);
     totalTextCharacters += analyzed.text_characters;
     if (totalTextCharacters > PPT_TEXT_EXTRACT_LIMITS.maxTotalTextChars) {

@@ -68,6 +68,7 @@ assert.equal(pdfEditorSnapshotsEqual(null, cleanSnapshot), false);
 
 const uiSource = await readFile(new URL('../src/pdf-editor-ui.js', import.meta.url), 'utf8');
 const exporterSource = await readFile(new URL('../src/features/pdf-editor/exporter.js', import.meta.url), 'utf8');
+const textLayoutSource = await readFile(new URL('../src/features/pdf-editor/text-layout.js', import.meta.url), 'utf8');
 
 const snapshotStart = uiSource.indexOf('function captureEditorSnapshot()');
 const snapshotEnd = uiSource.indexOf('function applyEditorSnapshot(', snapshotStart);
@@ -110,9 +111,11 @@ assert.match(uiSource, /modalMode === 'edit-inserted-text'/);
 assert.match(exporterSource, /textBox: getEditedTextVisualBox\(edit, edit\.segment\)/);
 assert.match(uiSource, /Number\(segmentData\.rotation\) \|\| 0/);
 assert.match(uiSource, /dataset\?\.maskKey === `\$\{key\}:rotated`/);
-assert.match(uiSource, /function editedTextVisualBox\(edit, segment\)/);
-assert.match(uiSource, /function insertedTextVisualBox\(object\)/);
-assert.match(uiSource, /estimateInsertedTextWidth\(object\?\.text, fontSize\)/);
+assert.match(textLayoutSource, /export function editedTextVisualBox\(edit, segment\)/);
+assert.match(textLayoutSource, /export function insertedTextVisualBox\(object\)/);
+assert.match(textLayoutSource, /estimateInsertedTextWidth\(object\?\.text, fontSize\)/);
+assert.doesNotMatch(uiSource, /function editedTextVisualBox\(edit, segment\)/);
+assert.doesNotMatch(uiSource, /function insertedTextVisualBox\(object\)/);
 assert.match(uiSource, /IMAGE_BATCH_LIMITS\.maxBytesPerFile/);
 assert.match(uiSource, /IMAGE_BATCH_LIMITS\.maxPixelsPerFile/);
 assert.match(uiSource, /function readEncodedImageDimensions\(bytes, mimeType\)/);

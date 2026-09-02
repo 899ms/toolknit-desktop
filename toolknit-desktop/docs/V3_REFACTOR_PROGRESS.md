@@ -61,7 +61,7 @@ Last updated: 2026-09-03
 | `315e8bc` | Migrated Image Format Conversion and Image Compression as one lazy tool family |
 | `eca4b2a` | Migrated PPT text extraction, PPT compression and PPT outline as one lazy workflow family |
 | `f7bf885` | Migrated PPT To PDF and PPT To Image as a lazy renderer family |
-| `in progress` | Migrated PPT image extraction into its own lazy feature boundary |
+| `c886d85` | Migrated PPT image extraction into its own lazy feature boundary |
 
 ## Current verified counts
 

@@ -41,10 +41,12 @@ Last updated: 2026-09-02
 | `94a6b23` | Isolated PDF Editor image-insert validation and decode boundaries |
 | `3e8499f` | Isolated PDF Editor component drag, resize, rotate and pointer cleanup |
 | `478da43` | Normalized PDF Editor proxy formatting after the interaction split |
+| `1310525` | Isolated PDF Editor content editing, insertion flow and lifecycle regression coverage |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
+- 27 of 65 desktop tools have completed migration batches (**41.5%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -201,6 +203,15 @@ sessions own their pointer listeners and transient state, while a single
 The interaction suite covers snap-aware drag deltas, rotation updates,
 resize geometry, history commits and listener cleanup.
 
+PDF Editor content editing now lives in `src/features/pdf-editor/content-editing.js`.
+Text insertion, image insertion and validation, shape insertion, canvas
+placement, source-text editing, inserted-text editing and modal cancellation
+are coordinated through injected state accessors. Image backing bytes remain
+owned by the editor store and their preview URL remains alive after placement;
+shape placement writes the updated collection back through the same state
+boundary. The lifecycle suite covers text/image/shape placement, image backing
+storage, both edit modes, modal cancellation and history commits.
+
 ## Hidden issues fixed during migration
 
 - BMI validation dialogs are sibling overlays and must not be queried only from
@@ -213,6 +224,10 @@ resize geometry, history commits and listener cleanup.
   `unlisten` callbacks. Shared document drop ownership now releases them.
 - Document reads could finish after a tool closed and update stale UI. Each
   migrated text feature now invalidates pending reads on close.
+- PDF Editor shape placement previously mutated a local array without writing
+  it back through the orchestration state boundary. The content-editing
+  controller now commits the updated shape collection, with a regression test
+  covering the placement path.
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the

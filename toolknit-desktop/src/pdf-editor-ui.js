@@ -26,12 +26,12 @@ import { createPdfEditorComponentModel } from './features/pdf-editor/component-m
 import { createPdfEditorComponentControls } from './features/pdf-editor/component-controls.js';
 import { createPdfEditorComponentInteraction } from './features/pdf-editor/component-interaction.js';
 import { createPdfEditorContentEditing } from './features/pdf-editor/content-editing.js';
-import { PdfEditorCancelledError } from './features/pdf-editor/errors.js';
 import { createPdfEditorFileSession } from './features/pdf-editor/file-session.js';
 import { createPdfEditorPageOperations } from './features/pdf-editor/page-operations.js';
 import { createPdfEditorPageSelection } from './features/pdf-editor/page-selection.js';
 import { createPdfEditorPreview } from './features/pdf-editor/preview.js';
 import { createPdfEditorView } from './features/pdf-editor/view.js';
+import { createPdfEditorOperationRuntime } from './features/pdf-editor/operation.js';
 import {
   buildTextLine,
   editedTextVisualBox,
@@ -41,17 +41,6 @@ import {
 
 const ZOOM_MIN = 0.08;
 const ZOOM_MAX = 8;
-
-function asUint8Array(value) {
-  if (value instanceof Uint8Array) return value;
-  if (value instanceof ArrayBuffer) return new Uint8Array(value);
-  if (ArrayBuffer.isView(value)) {
-    return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
-  }
-  if (Array.isArray(value)) return Uint8Array.from(value);
-  if (value && typeof value.length === 'number') return Uint8Array.from(value);
-  throw new Error('Invalid binary response');
-}
 
 function clamp01(value) {
   const number = Number(value);
@@ -78,11 +67,6 @@ function rgb01ToHex(color) {
 function rgb01ToCss(color, fallback = '#111111') {
   if (!Array.isArray(color) || color.length < 3) return fallback;
   return rgb01ToHex(color);
-}
-
-function isPasswordError(error) {
-  return error?.name === 'PasswordException'
-    || /password|encrypted/i.test(String(error?.message || error || ''));
 }
 
 export function initPdfEditorTool({
@@ -189,8 +173,6 @@ export function initPdfEditorTool({
   let mainRenderTask = null;
   let mainEpoch = 0;
   let lastRenderScale = 1;
-  let activeOperation = null;
-  let operationSequence = 0;
   let idCounter = 0;
   let nativeDragUnlisten = null;
   let disposed = false;
@@ -225,6 +207,7 @@ export function initPdfEditorTool({
   let baselineSnapshot = null;
   let savedSnapshot = null;
   let pdfEditorView = null;
+  let operationRuntime = null;
   const showToast = (message, duration = 7000) => {
     if (!disposed) window.showToast?.(message, { duration, dismissible: true });
   };
@@ -606,119 +589,52 @@ export function initPdfEditorTool({
     return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
   }
 
+  function currentOperation() {
+    return operationRuntime?.getActiveOperation?.() || null;
+  }
+
   function setProgress(percent, message) {
-    const safePercent = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
-    if (processBarFill) processBarFill.style.width = safePercent + '%';
-    if (processValue) processValue.textContent = safePercent + '%';
-    if (processText && message) processText.textContent = message;
+    return operationRuntime?.setProgress(percent, message);
   }
 
   function setLocalizedProgress(percent, key, params = {}) {
-    if (activeOperation) {
-      activeOperation.progressKey = key;
-      activeOperation.progressParams = params;
-    }
-    setProgress(percent, t(`home.pdfEditor.${key}`, params));
+    return operationRuntime?.setLocalizedProgress(percent, key, params);
   }
 
   function showProcess(key, percent = 0, params = {}) {
-    setLocalizedProgress(percent, key, params);
-    processMask?.classList.add('visible');
-    if (processCancel) {
-      processCancel.disabled = false;
-      processCancel.style.display = '';
-    }
-    syncInteractiveLayers();
-    restoreFocus(processCancel);
+    return operationRuntime?.showProcess(key, percent, params);
   }
 
   function hideProcess() {
-    processMask?.classList.remove('visible');
-    if (processCancel) processCancel.disabled = false;
-    setProgress(0, t('home.pdfEditor.loadingDocument'));
-    syncInteractiveLayers();
+    return operationRuntime?.hideProcess();
   }
 
   function beginOperation(type) {
-    if (activeOperation) throw new Error('pdf-editor:busy');
-    const operation = {
-      id: ++operationSequence,
-      type,
-      cancelled: false,
-      returnFocus: focusedElement(),
-      progressKey: '',
-      progressParams: {}
-    };
-    activeOperation = operation;
-    return operation;
+    return operationRuntime?.beginOperation(type);
   }
 
   function assertOperation(operation) {
-    if (!operation || operation.cancelled || activeOperation !== operation) {
-      throw new PdfEditorCancelledError();
-    }
+    return operationRuntime?.assertOperation(operation);
   }
 
   function endOperation(operation) {
-    if (activeOperation !== operation) return;
-    activeOperation = null;
-    hideProcess();
-    updateControls();
-    if (!successOverlay?.classList.contains('visible')) {
-      restoreFocus(canReceiveFocus(operation.returnFocus) ? operation.returnFocus : exportBtn || back);
-    }
+    return operationRuntime?.endOperation(operation);
   }
 
   async function cancelActiveOperation() {
-    const operation = activeOperation;
-    if (!operation || operation.cancelled) return;
-    operation.cancelled = true;
-    if (processCancel) processCancel.disabled = true;
-    setLocalizedProgress(
-      0,
-      'cancelling'
-    );
-    if (operation.type === 'load') {
-      try { await operation.loadingTask?.destroy(); } catch (_) {}
-    }
+    return operationRuntime?.cancelActiveOperation();
   }
 
   function messageForError(error, phase) {
-    if (error instanceof PdfEditorCancelledError || isRenderCancellation(error)) {
-      return t(phase === 'load' ? 'home.pdfEditor.loadCancelled' : 'home.pdfEditor.cancelled');
-    }
-    if (isPasswordError(error)) return t('home.pdfEditor.passwordProtected');
-    const detail = String(error?.message || error || '');
-    if (/another (task|operation) is already in progress/i.test(detail)) {
-      return t('home.pdfEditor.busy');
-    }
-    if (/exceeds/.test(detail)) {
-      return /page/i.test(detail) ? t('home.pdfEditor.tooManyPages') : t('home.pdfEditor.fileTooLarge');
-    }
-    if (/required|\.pdf/i.test(detail)) return t('home.pdfEditor.pdfOnly');
-    const map = {
-      load: 'loadFailed',
-      export: 'exportFailed',
-      extract: 'extractFailed',
-      append: 'appendFailed'
-    };
-    return t(`home.pdfEditor.${map[phase] || 'exportFailed'}`, { error: detail });
+    return operationRuntime?.messageForError(error, phase);
   }
 
   async function fileSizeFor(file) {
-    if (isTauri && file.path) {
-      const invoke = await getInvoke();
-      return Number(await invoke('get_file_size', { path: file.path }));
-    }
-    return Number(file.size || 0);
+    return operationRuntime?.fileSizeFor(file);
   }
 
   async function readBytes(file) {
-    if (isTauri && file.path) {
-      const invoke = await getInvoke();
-      return asUint8Array(await invoke('read_file_bytes', { path: file.path }));
-    }
-    return new Uint8Array(await file.arrayBuffer());
+    return operationRuntime?.readBytes(file);
   }
 
   function openOverlay() {
@@ -827,7 +743,7 @@ export function initPdfEditorTool({
   }
 
   function updateControls() {
-    const busy = Boolean(activeOperation);
+    const busy = Boolean(currentOperation());
     const has = hasDocument();
     const selectedCount = selectedIds.size;
     const page = currentPage();
@@ -936,7 +852,7 @@ export function initPdfEditorTool({
     getSelectedIds: () => selectedIds,
     getCurrentId: () => currentId,
     setCurrentId: nextId => { currentId = nextId; },
-    getActiveOperation: () => activeOperation,
+    getActiveOperation: currentOperation,
     isDisposed: () => disposed,
     hasDocument,
     cacheSourceRotation,
@@ -960,7 +876,7 @@ export function initPdfEditorTool({
     getSelectionAnchorId: () => selectionAnchorId,
     setSelectionAnchorId: value => { selectionAnchorId = value; },
     getPageState: id => thumbnails.getPageState(id),
-    getActiveOperation: () => activeOperation,
+    getActiveOperation: currentOperation,
     hasDocument,
     getSelectedComponent: () => selectedComponent,
     clearSelectedComponent,
@@ -977,7 +893,7 @@ export function initPdfEditorTool({
     pageStrip,
     t,
     isDisposed: () => disposed,
-    getActiveOperation: () => activeOperation,
+    getActiveOperation: currentOperation,
     getIdCounter: () => idCounter,
     setIdCounter: value => { idCounter = value; },
     getSources: () => sources,
@@ -1163,7 +1079,7 @@ export function initPdfEditorTool({
   }
 
   function editSelectedComponent() {
-    if (!selectedComponent || activeOperation) return;
+    if (!selectedComponent || currentOperation()) return;
     if (selectedComponent.type === 'inserted-text') {
       const object = insertedTexts.find(item => item.id === selectedComponent.key);
       if (!object) {
@@ -1359,7 +1275,7 @@ export function initPdfEditorTool({
     setLastRenderScale: scale => { lastRenderScale = scale; },
     isDisposed: () => disposed,
     hasDocument,
-    hasActiveOperation: () => Boolean(activeOperation),
+    hasActiveOperation: () => Boolean(currentOperation()),
     updateZoomLabel,
     positionComponentMenu,
     renderMainPreview,
@@ -1457,7 +1373,7 @@ export function initPdfEditorTool({
     getComponentMode: () => componentMode,
     getEditMode: () => editMode,
     getInsertMode: () => insertMode,
-    getActiveOperation: () => activeOperation,
+    getActiveOperation: currentOperation,
     hasDocument,
     getSelectedComponent: () => selectedComponent,
     getCurrentPage: currentPage,
@@ -1531,7 +1447,7 @@ export function initPdfEditorTool({
     getCurrentPage: currentPage,
     getCurrentTextLayerCache: currentTextLayerCache,
     pageSupportsContentEditing,
-    getActiveOperation: () => activeOperation,
+    getActiveOperation: currentOperation,
     nextId: type => `${type}-${++idCounter}`,
     storeInsertedImage: (id, value) => { insertedImageStore.set(id, value); },
     clearPendingInsert,
@@ -1556,7 +1472,7 @@ export function initPdfEditorTool({
   pageOperations = createPdfEditorPageOperations({
     documentRef: document,
     t,
-    getActiveOperation: () => activeOperation,
+    getActiveOperation: currentOperation,
     getPages: () => pages,
     setPages: value => { pages = value; },
     getSources: () => sources,
@@ -1668,13 +1584,34 @@ export function initPdfEditorTool({
   }
 
   function resetEditorState() {
-    if (activeOperation || !hasDocument() || !baselineSnapshot) return;
+    if (currentOperation() || !hasDocument() || !baselineSnapshot) return;
     if (!confirmDiscardChanges('reset')) return;
     applyEditorSnapshot(baselineSnapshot);
     resetEditorHistory();
     baselineSnapshot = cloneState(editorHistory.firstSnapshot());
     savedSnapshot = cloneState(editorHistory.firstSnapshot());
   }
+
+  operationRuntime = createPdfEditorOperationRuntime({
+    isTauri,
+    t,
+    getInvoke,
+    processMask,
+    processBarFill,
+    processValue,
+    processText,
+    processCancel,
+    successOverlay,
+    exportBtn,
+    back,
+    isDisposed: () => disposed,
+    focusedElement,
+    restoreFocus,
+    canReceiveFocus,
+    syncInteractiveLayers,
+    updateControls,
+    isRenderCancellation
+  });
 
   pdfEditorView = createPdfEditorView({
     overlay,
@@ -1704,7 +1641,7 @@ export function initPdfEditorTool({
     getCanvasWrap: () => canvasWrap,
     getOpenFocusTarget: () => hasDocument() ? exportBtn : cta || back,
     getZoomState: () => zoom.getState(),
-    getActiveOperation: () => activeOperation,
+    getActiveOperation: currentOperation,
     hasDocument,
     confirmDiscardChanges,
     resetDocument,
@@ -1722,7 +1659,7 @@ export function initPdfEditorTool({
     t,
     isDisposed: () => disposed,
     hasDocument,
-    getActiveOperation: () => activeOperation,
+    getActiveOperation: currentOperation,
     getSources: () => sources,
     getPages: () => pages,
     getTextEdits: () => textEdits,
@@ -1877,7 +1814,7 @@ export function initPdfEditorTool({
       try {
         const { getCurrentWebview } = await import('@tauri-apps/api/webview');
         const unlisten = await getCurrentWebview().onDragDropEvent(event => {
-          if (disposed || !overlay.classList.contains('visible') || activeOperation) return;
+          if (disposed || !overlay.classList.contains('visible') || currentOperation()) return;
           const payload = event.payload || {};
           if (payload.type === 'enter' || payload.type === 'over') {
             showDropZone();
@@ -1923,8 +1860,9 @@ export function initPdfEditorTool({
   unsubscribeLangChange = onLangChange(() => {
     updateControls();
     updateFileCard();
-    if (activeOperation?.progressKey && processMask?.classList.contains('visible')) {
-      setLocalizedProgress(Number(processValue?.textContent?.replace('%', '') || 0), activeOperation.progressKey, activeOperation.progressParams);
+    const operation = currentOperation();
+    if (operation?.progressKey && processMask?.classList.contains('visible')) {
+      setLocalizedProgress(Number(processValue?.textContent?.replace('%', '') || 0), operation.progressKey, operation.progressParams);
     }
     if (pdfEditorView?.getLastSuccess() && successOverlay?.classList.contains('visible')) renderSuccess();
   }) || (() => {});
@@ -1943,9 +1881,9 @@ export function initPdfEditorTool({
     },
     dispose() {
       if (disposed) return;
-      const operation = activeOperation;
+      const operation = currentOperation();
       if (operation && !operation.cancelled) void cancelActiveOperation();
-      activeOperation = null;
+      operationRuntime?.clearActiveOperation();
       disposed = true;
       exporter.dispose();
       listenerController.abort();

@@ -73,6 +73,10 @@ const componentRendererSource = await readFile(
   new URL('../src/features/pdf-editor/component-renderer.js', import.meta.url),
   'utf8'
 );
+const componentControlsSource = await readFile(
+  new URL('../src/features/pdf-editor/component-controls.js', import.meta.url),
+  'utf8'
+);
 
 const snapshotStart = uiSource.indexOf('function captureEditorSnapshot()');
 const snapshotEnd = uiSource.indexOf('function applyEditorSnapshot(', snapshotStart);
@@ -109,7 +113,12 @@ assert.match(uiSource, /confirmDiscardChanges\('replace'\)/);
 assert.match(uiSource, /confirmDiscardChanges\('reset'\)/);
 assert.match(uiSource, /savedSnapshot = captureEditorSnapshot\(\)/);
 
-assert.match(uiSource, /\['text', 'inserted-text'\]\.includes\(selectedComponent\?\.type\)/);
+assert.match(componentControlsSource, /\['text', 'inserted-text'\]\.includes\(selectedComponent\?\.type\)/);
+assert.match(componentControlsSource, /function positionComponentMenu\(\)/);
+assert.match(componentControlsSource, /function syncShapePanel\(\)/);
+assert.match(componentControlsSource, /function appendResizeHandles\(container, component, pageId, object\)/);
+assert.doesNotMatch(uiSource, /componentMenu\.hidden = !visible;/);
+assert.doesNotMatch(uiSource, /const xmlns = 'http:\/\/www\.w3\.org\/2000\/svg';/);
 assert.match(uiSource, /openEditModal\(object\.id, object, object, 'edit-inserted-text'\)/);
 assert.match(uiSource, /modalMode === 'edit-inserted-text'/);
 assert.match(exporterSource, /textBox: getEditedTextVisualBox\(edit, edit\.segment\)/);

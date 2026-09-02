@@ -53,6 +53,8 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
 - `src/features/pdf-editor/operation.js` owns the single active operation,
   progress surface, cancellation identity, error localization and browser/Tauri
   file reads for the editor.
+- `src/features/pdf-editor/events.js` owns editor DOM, keyboard, browser drop
+  and Tauri native drag/drop bindings, releasing native listeners at dispose.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 - `src/core/serialized-request-session.js` owns one-at-a-time async requests,
   timeout state, request-specific cancellation and stale-result identity.

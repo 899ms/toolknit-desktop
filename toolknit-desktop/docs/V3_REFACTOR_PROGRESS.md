@@ -46,6 +46,7 @@ Last updated: 2026-09-02
 | `45590d2` | Isolated PDF Editor file selection, replacement and append sessions |
 | `da87d8b` | Isolated PDF Editor overlay, success, drag-hint and view-label state |
 | `f3bfc5a` | Isolated PDF Editor operation identity, progress and file-access runtime |
+| `690b69f` | Isolated PDF Editor DOM, keyboard and native drag/drop event bindings |
 
 ## Current verified counts
 
@@ -267,6 +268,13 @@ The runtime owns the active operation identity, progress surface, cancellation
 of PDF.js loading tasks, localized error mapping and browser/Tauri file reads.
 The operation suite covers stale-operation rejection, loading cancellation,
 progress metadata, password/limit/error mapping and both file-access paths.
+
+PDF Editor event wiring now lives in `src/features/pdf-editor/events.js`.
+Button/input bindings, zoom interactions, browser drag/drop, Tauri native
+drag/drop and tool-card activation are registered through the existing abort
+signal; the native drag unlisten is released by the feature event controller.
+The event suite verifies each primary command fires once and all drop/input
+paths preserve their original callbacks.
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the

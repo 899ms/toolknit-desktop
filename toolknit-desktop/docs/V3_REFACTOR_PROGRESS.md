@@ -50,11 +50,12 @@ Last updated: 2026-09-02
 | `f637f5d` | Isolated PDF Editor derived control state and labels |
 | `2663d2b` | Isolated PDF Editor snapshot, restore and dirty-state controller |
 | `07d2261` | Isolated teleprompter system/offline recognition lifecycle |
+| `07ebe3b` | Migrated Color Space Compare into a feature-owned module boundary |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 27 of 65 desktop tools have completed migration batches (**41.5%** coverage).
+- 28 of 65 desktop tools have completed migration batches (**43.1%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -234,8 +235,12 @@ storage, both edit modes, modal cancellation and history commits.
   migrated text feature now invalidates pending reads on close.
 - PDF Editor shape placement previously mutated a local array without writing
   it back through the orchestration state boundary. The content-editing
-controller now commits the updated shape collection, with a regression test
-covering the placement path.
+  controller now commits the updated shape collection, with a regression test
+  covering the placement path.
+- Color Space Compare's feature migration initially left `controls.js` pointing
+  at the removed root core filename. The feature runtime test caught the stale
+  relative import before the batch was committed; the corrected feature path
+  and compatibility forwards are now covered by the architecture contract.
 - The PDF Editor snapshot extraction initially left its source contract test
   pointed at the old monolithic entry. The test now validates the dedicated
   state controller and executes a capture/restore scenario, so future moves
@@ -311,6 +316,14 @@ entry is reduced to playback and script responsibilities; the existing runtime
 suite now executes a simulated recognition session and verifies that listening
 is not reported before `onstart`, transcripts reach the follower, and stop
 aborts the active recognizer.
+
+Color Space Compare now lives under `src/features/color-space-compare/`. The
+feature has separate `core.js` (515 lines), `controls.js` (183 lines),
+`controller.js` (579 lines), `tool.js` (88 lines) and feature CSS ownership.
+The tool entry now owns only markup and the shared page shell, while the
+controller owns slider, canvas, language, copy feedback and close/reopen
+cleanup. The old root JS/CSS paths remain small compatibility forwards for
+legacy consumers, and the lazy registry now imports the feature entry directly.
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the
@@ -500,9 +513,9 @@ aborts the active recognizer.
 
 ## Next batches
 
-1. Continue PDF Editor document/session coordination ownership, then audit the
-   remaining PDF template ownership and select the next coherent legacy
-   candidate by lifecycle risk, dependency weight and compatibility scope.
+1. Continue PDF Editor document/session coordination ownership, then migrate
+   the background-removal tool as the next coherent legacy candidate by
+   lifecycle risk, dependency weight and compatibility scope.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed

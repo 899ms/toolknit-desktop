@@ -39,6 +39,8 @@ Last updated: 2026-09-02
 | `c7b9db9` | Isolated PDF Editor main preview rendering and canvas lifecycle |
 | `3850445` | Isolated PDF Editor component controls, shape panel and resize handles |
 | `94a6b23` | Isolated PDF Editor image-insert validation and decode boundaries |
+| `3e8499f` | Isolated PDF Editor component drag, resize, rotate and pointer cleanup |
+| `478da43` | Normalized PDF Editor proxy formatting after the interaction split |
 
 ## Current verified counts
 
@@ -191,6 +193,13 @@ pixel-limit enforcement and browser decode URL cleanup are independently
 testable and are called by the existing insertion flow without changing file
 type, size or output behavior. The boundary suite covers valid and malformed
 headers, oversized dimensions and decode cleanup.
+
+PDF Editor component pointer interaction now lives in
+`src/features/pdf-editor/component-interaction.js`. Drag, resize and rotate
+sessions own their pointer listeners and transient state, while a single
+`reset()` path is used by undo/redo, mode changes, document reset and dispose.
+The interaction suite covers snap-aware drag deltas, rotation updates,
+resize geometry, history commits and listener cleanup.
 
 ## Hidden issues fixed during migration
 

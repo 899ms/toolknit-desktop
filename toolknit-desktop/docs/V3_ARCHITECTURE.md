@@ -101,6 +101,14 @@ tool entry so it becomes a separate production chunk.
   bytes. Operation identity prevents closed sessions from publishing output or
   writing progress and success state, and browser object URLs terminate at the
   exporter boundary.
+- PDF Encrypt and PDF Decrypt, sharing a PDF security shell while retaining
+  independent lazy entries and operation state. Each open owns its native
+  WebView drag registration, password and success layers, file queue, focus and
+  progress state. Registration races release `unlisten`, operation identity
+  blocks stale UI writes, generated filenames use text nodes and browser
+  encryption object URLs terminate with the owning open session. The existing
+  encryption/decryption core modules remain compatibility owners for CLI
+  resource staging and PDF Editor consumers.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

@@ -24,6 +24,7 @@ Last updated: 2026-09-02
 | `5fd1d12` | Migrated PDF To Image preview, page selection, export and cancellation lifecycle |
 | `33287cf` | Migrated PDF Page Number workspace, PDF/ZIP export and responsive lifecycle |
 | `85d87f9` | Migrated PDF Crop workspace, document, PDF/ZIP export and responsive lifecycle |
+| `9397d78` | Migrated PDF Encrypt/Decrypt shared shell, password flow and lifecycle ownership |
 
 ## Current verified counts
 
@@ -35,12 +36,12 @@ Last updated: 2026-09-02
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
@@ -78,6 +79,16 @@ four close/reopen cycles at desktop and compact window sizes. The complete gate
 now passes 77 npm scripts and 544 security checks; `cargo check` passes and 92
 Rust tests pass with the external LibreOffice QA test ignored by design.
 Production output contains no PDF Crop fixture query or fixture filename.
+PDF Encrypt and PDF Decrypt now emit separate approximately 4.47 kB and 3.31
+kB lazy entries, an 8.38 kB shared security shell chunk and a 3.97 kB shared
+feature CSS chunk. Desktop and 480 by 360 browser checks cover file loading,
+password visibility, all eight encryption permissions, internal dialog
+scrolling, Escape ownership, browser encryption output, browser-only decrypt
+feedback and repeated close/reopen cleanup without new console errors. The
+complete gate now passes 78 npm scripts and 550 security checks; `cargo check`
+passes and 92 Rust tests pass with the external LibreOffice QA test ignored by
+design. Fresh production output contains no PDF security fixture query or
+fixture filename.
 
 ## Hidden issues fixed during migration
 
@@ -235,6 +246,22 @@ Production output contains no PDF Crop fixture query or fixture filename.
   height. Compact-height rows and filmstrip sizing now preserve a scrollable
   preview, with a contract assertion and browser verification protecting the
   layout.
+- PDF Encrypt and PDF Decrypt previously registered WebView drag/drop for the
+  application lifetime and discarded the returned `unlisten`. Each open now
+  owns and releases its registration, including the race where the tool closes
+  before registration resolves.
+- Encrypt and decrypt previously duplicated file queues, password/success
+  layers, progress state and close cleanup in the global entry. A shared shell
+  now owns those lifecycle boundaries while each operation keeps independent
+  encryption or decryption state and the existing public invoke contracts.
+- The first migrated invalid-password path tried to reopen the decrypt password
+  layer before clearing the busy operation, so the shell correctly rejected
+  the reopen. Reopening now occurs after operation cleanup, and the contract
+  test protects that sequencing.
+- Generated PDF security queue rows now insert filenames with text nodes.
+  Browser encryption object URLs are revoked by the same open-session owner,
+  and operation identity prevents a closed session from writing progress or
+  success state into a later open.
 
 ## Next batches
 
@@ -250,6 +277,8 @@ Production output contains no PDF Crop fixture query or fixture filename.
 5. Split Rust ownership, then validate CLI/MCP packaging and final Windows
    behavior as defined in `V3_ARCHITECTURE_PLAN.md`.
 
-Known non-blocking warnings remain the ineffective `pdf-lib` and
-`pdf-encrypt-core` dynamic imports and chunks larger than 500 kB. No migration
-batch may add a new warning or use these warnings as evidence of completion.
+Known non-blocking warnings remain the ineffective `pdf-lib` dynamic import
+and chunks larger than 500 kB. The former ineffective `pdf-encrypt-core`
+dynamic-import warning disappeared with the PDF security migration. No
+migration batch may add a new warning or use these warnings as evidence of
+completion.

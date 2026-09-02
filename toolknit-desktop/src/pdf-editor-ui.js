@@ -29,6 +29,7 @@ import {
   PdfEditorCancelledError
 } from './features/pdf-editor/exporter.js';
 import { createPdfEditorDocumentStore } from './features/pdf-editor/documents.js';
+import { createPdfEditorZoomController } from './features/pdf-editor/zoom.js';
 import {
   buildTextLine,
   editedTextVisualBox,
@@ -41,7 +42,6 @@ import { IMAGE_BATCH_LIMITS } from './image-batch-core.js';
 
 const ZOOM_MIN = 0.08;
 const ZOOM_MAX = 8;
-const ZOOM_RENDER_DEBOUNCE_MS = 130;
 
 function asUint8Array(value) {
   if (value instanceof Uint8Array) return value;
@@ -191,8 +191,6 @@ export function initPdfEditorTool({
   let mainRenderTask = null;
   let mainEpoch = 0;
   let lastRenderScale = 1;
-  let viewMode = 'fit';
-  let zoomPercent = 1;
   let activeOperation = null;
   let operationSequence = 0;
   let idCounter = 0;
@@ -223,15 +221,6 @@ export function initPdfEditorTool({
   let componentRotateTimer = null;
   let componentRotateState = null;
   let componentRenderFrame = 0;
-  let zoomRepeatTimer = null;
-  let zoomRepeatDelayTimer = null;
-  let zoomPointerAction = false;
-  let zoomPreviewToken = 0;
-  let zoomRenderFrame = 0;
-  let zoomRenderTimer = null;
-  let zoomRequestId = 0;
-  let pendingZoomAnchor = null;
-  let pendingZoomRender = null;
   let fitResizeObserver = null;
   let fitResizeFrame = 0;
   let editingLineKey = null;
@@ -337,6 +326,7 @@ export function initPdfEditorTool({
   }
 
   function captureEditorSnapshot() {
+    const zoomState = zoom.getState();
     return cloneState({
       sourceIds: sources.map(source => source.id),
       pages: pages.map(({ sourceRotation: _sourceRotation, ...page }) => page),
@@ -346,8 +336,8 @@ export function initPdfEditorTool({
       editMode,
       componentMode,
       selectedComponent: compactPdfEditorComponent(selectedComponent),
-      viewMode,
-      zoomPercent,
+      viewMode: zoomState.viewMode,
+      zoomPercent: zoomState.zoomPercent,
       idCounter,
       textEdits: Array.from(textEdits.entries()).map(([key, value]) => [key, normalizeEditSnapshot(value)]),
       insertedTexts,
@@ -371,8 +361,7 @@ export function initPdfEditorTool({
       editMode = Boolean(snapshot.editMode);
       componentMode = Boolean(snapshot.componentMode);
       selectedComponent = null;
-      viewMode = snapshot.viewMode || 'fit';
-      zoomPercent = Number(snapshot.zoomPercent) || 1;
+      zoom.setState(snapshot);
       idCounter = Number.isFinite(Number(snapshot.idCounter)) ? Number(snapshot.idCounter) : idCounter;
       textEdits = new Map((Array.isArray(snapshot.textEdits) ? snapshot.textEdits : []).map(([key, value]) => [key, normalizeEditSnapshot(value)]));
       insertedTexts = cloneState(snapshot.insertedTexts || []);
@@ -536,11 +525,11 @@ export function initPdfEditorTool({
   }
 
   function scheduleFitPreview() {
-    if (disposed || !overlay.classList.contains('visible') || viewMode !== 'fit' || !hasDocument()) return;
+    if (disposed || !overlay.classList.contains('visible') || zoom.getState().viewMode !== 'fit' || !hasDocument()) return;
     if (fitResizeFrame) return;
     fitResizeFrame = requestAnimationFrame(() => {
       fitResizeFrame = 0;
-      if (!disposed && overlay.classList.contains('visible') && viewMode === 'fit' && hasDocument()) {
+      if (!disposed && overlay.classList.contains('visible') && zoom.getState().viewMode === 'fit' && hasDocument()) {
         renderMainPreview();
       }
     });
@@ -809,24 +798,11 @@ export function initPdfEditorTool({
   async function resetDocument() {
     stopTileObserver(true);
     cancelMainRender();
-    stopZoomRepeat();
-    if (zoomRenderFrame) {
-      cancelAnimationFrame(zoomRenderFrame);
-      zoomRenderFrame = 0;
-    }
-    if (zoomRenderTimer) {
-      clearTimeout(zoomRenderTimer);
-      zoomRenderTimer = null;
-    }
-    zoomRequestId++;
-    pendingZoomAnchor = null;
-    pendingZoomRender = null;
+    zoom.reset();
     if (componentRenderFrame) {
       cancelAnimationFrame(componentRenderFrame);
       componentRenderFrame = 0;
     }
-    zoomPointerAction = false;
-    clearZoomPreviewHint();
     stopComponentPointerSession();
     stopComponentRotate();
     closeEditModal();
@@ -909,9 +885,10 @@ export function initPdfEditorTool({
 
   function updateZoomLabel() {
     if (!zoomValueBtn) return;
-    zoomValueBtn.textContent = viewMode === 'fit'
+    const zoomState = zoom.getState();
+    zoomValueBtn.textContent = zoomState.viewMode === 'fit'
       ? t('home.pdfEditor.fitShort')
-      : `${Math.round(zoomPercent * 100)}%`;
+      : `${Math.round(zoomState.zoomPercent * 100)}%`;
   }
 
   function updateControls() {
@@ -2737,99 +2714,13 @@ export function initPdfEditorTool({
     closeEditModal();
   }
 
-  function readCanvasLayoutRect() {
-    if (!canvasWrap) return null;
-    const transform = canvasWrap.style.transform;
-    const origin = canvasWrap.style.transformOrigin;
-    if (transform) canvasWrap.style.transform = 'none';
-    const rect = canvasWrap.getBoundingClientRect();
-    if (transform) {
-      canvasWrap.style.transform = transform;
-      canvasWrap.style.transformOrigin = origin;
-    }
-    return rect;
-  }
-
-  function captureZoomAnchor(anchor = null) {
-    if (!canvasWrap || !canvasScroll) return null;
-    const layoutRect = readCanvasLayoutRect();
-    const scrollRect = canvasScroll.getBoundingClientRect();
-    if (!layoutRect || !scrollRect) return null;
-    const requestedX = Number(anchor?.clientX);
-    const requestedY = Number(anchor?.clientY);
-    const clientX = Number.isFinite(requestedX)
-      ? requestedX
-      : scrollRect.left + scrollRect.width / 2;
-    const clientY = Number.isFinite(requestedY)
-      ? requestedY
-      : scrollRect.top + scrollRect.height / 2;
-    const localX = Math.max(0, Math.min(layoutRect.width, clientX - layoutRect.left));
-    const localY = Math.max(0, Math.min(layoutRect.height, clientY - layoutRect.top));
-    const baseScale = Math.max(0.0001, Number(lastRenderScale) || 1);
-    return {
-      clientX,
-      clientY,
-      localX,
-      localY,
-      pdfX: localX / baseScale,
-      pdfY: localY / baseScale,
-      baseScale
-    };
-  }
-
-  function applyZoomAnchor(anchor, nextScale) {
-    if (!anchor || !canvasWrap || !canvasScroll || !Number.isFinite(nextScale)) return;
-    const rect = canvasWrap.getBoundingClientRect();
-    const targetX = rect.left + anchor.pdfX * nextScale;
-    const targetY = rect.top + anchor.pdfY * nextScale;
-    const maxScrollLeft = Math.max(0, canvasScroll.scrollWidth - canvasScroll.clientWidth);
-    const maxScrollTop = Math.max(0, canvasScroll.scrollHeight - canvasScroll.clientHeight);
-    const nextScrollLeft = canvasScroll.scrollLeft + (targetX - anchor.clientX);
-    const nextScrollTop = canvasScroll.scrollTop + (targetY - anchor.clientY);
-    canvasScroll.scrollLeft = Math.max(0, Math.min(maxScrollLeft, nextScrollLeft));
-    canvasScroll.scrollTop = Math.max(0, Math.min(maxScrollTop, nextScrollTop));
-  }
-
-  function showZoomPreviewHint(nextScale, anchor = null) {
-    if (!canvasWrap || !Number.isFinite(nextScale) || !Number.isFinite(lastRenderScale) || lastRenderScale <= 0) {
-      return zoomPreviewToken;
-    }
-    // Keep the preview ratio relative to the last successfully painted page.
-    // Do not compound transforms from previous wheel events.
-    const ratio = Math.max(0.02, Math.min(40, nextScale / lastRenderScale));
-    const token = ++zoomPreviewToken;
-    const originX = anchor
-      ? anchor.localX
-      : Math.max(0, canvasWrap.clientWidth / 2);
-    const originY = anchor
-      ? anchor.localY
-      : Math.max(0, canvasWrap.clientHeight / 2);
-    canvasWrap.style.transformOrigin = `${Math.round(originX)}px ${Math.round(originY)}px`;
-    canvasWrap.style.transform = `translateZ(0) scale(${ratio})`;
-    canvasWrap.dataset.zoomPreviewToken = String(token);
-    if (selectedComponent) requestAnimationFrame(positionComponentMenu);
-    return token;
-  }
-
-  function clearZoomPreviewHint(token = zoomPreviewToken) {
-    if (!canvasWrap || token !== zoomPreviewToken) return;
-    canvasWrap.style.transform = '';
-    canvasWrap.style.transformOrigin = '';
-    delete canvasWrap.dataset.zoomPreviewToken;
-    if (selectedComponent) requestAnimationFrame(positionComponentMenu);
-  }
-
-  async function renderMainPreview(zoomToken = zoomPreviewToken, zoomRequest = null) {
-    if (zoomRenderFrame) {
-      cancelAnimationFrame(zoomRenderFrame);
-      zoomRenderFrame = 0;
-    }
-    pendingZoomRender = null;
+  async function renderMainPreview(zoomToken = zoom.getPreviewToken(), zoomRequest = null) {
+    zoom.beginRender();
     cancelMainRender();
     const page = currentPage();
     if (!page || !hasDocument()) {
       if (canvasWrap) canvasWrap.style.display = 'none';
-      clearZoomPreviewHint(zoomToken);
+      zoom.clearPreviewHint(zoomToken);
       syncStageVisibility();
       return;
     }
@@ -2851,11 +2742,12 @@ export function initPdfEditorTool({
       const displayRotation = effectivePageRotation(page);
       const base = loadedPage.getViewport({ scale: 1, rotation: displayRotation });
       let scale;
-      if (viewMode === 'fit') {
+      const zoomState = zoom.getState();
+      if (zoomState.viewMode === 'fit') {
         const availWidth = Math.max(220, (canvasScroll?.clientWidth || 800) - 80);
         scale = Math.max(ZOOM_MIN, Math.min(4, availWidth / Math.max(1, base.width)));
       } else {
-        scale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoomPercent));
+        scale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoomState.zoomPercent));
       }
       updateZoomLabel();
       const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
@@ -2886,8 +2778,7 @@ export function initPdfEditorTool({
       mainRenderTask = renderTask;
       await renderTask.promise;
       if (mainRenderTask === renderTask) mainRenderTask = null;
-      if (epoch !== mainEpoch || disposed
-        || (zoomRequest && zoomRequest.requestId !== zoomRequestId)) {
+      if (epoch !== mainEpoch || disposed || !zoom.isCurrentRequest(zoomRequest)) {
         releaseCanvas(nextCanvas);
         return;
       }
@@ -2903,11 +2794,7 @@ export function initPdfEditorTool({
       canvasWrap.style.width = cssWidth + 'px';
       canvasWrap.style.height = cssHeight + 'px';
       lastRenderScale = scale;
-      if (zoomRequest?.requestId === zoomRequestId) {
-        clearZoomPreviewHint(zoomToken);
-        applyZoomAnchor(zoomRequest.anchor, scale);
-        if (pendingZoomAnchor === zoomRequest.anchor) pendingZoomAnchor = null;
-      }
+      zoom.commitRender(zoomToken, zoomRequest, scale);
       // The new frame is now committed; subsequent text geometry is measured
       // against its final CSS viewport rather than the transient preview.
       syncStageVisibility();
@@ -2945,124 +2832,27 @@ export function initPdfEditorTool({
         console.error('[PDF Editor] preview render failed:', error);
       }
     } finally {
-      clearZoomPreviewHint(zoomToken);
+      zoom.clearPreviewHint(zoomToken);
       if (mainRenderTask === renderTask) mainRenderTask = null;
       if (nextCanvas && nextCanvas !== mainCanvas) releaseCanvas(nextCanvas);
       try { loadedPage?.cleanup(); } catch (_) {}
     }
   }
 
-  function scheduleZoomRender(defer = false) {
-    if (disposed) return;
-    if (zoomRenderTimer) {
-      clearTimeout(zoomRenderTimer);
-      zoomRenderTimer = null;
-    }
-    const scheduleFrame = () => {
-      zoomRenderTimer = null;
-      if (zoomRenderFrame) return;
-      zoomRenderFrame = requestAnimationFrame(() => {
-        zoomRenderFrame = 0;
-        const request = pendingZoomRender;
-        pendingZoomRender = null;
-        if (!request || disposed) return;
-        renderMainPreview(request.zoomToken, request);
-      });
-    };
-    if (defer) {
-      zoomRenderTimer = setTimeout(scheduleFrame, ZOOM_RENDER_DEBOUNCE_MS);
-      return;
-    }
-    scheduleFrame();
-  }
-
-  function setZoom(mode, value, anchor = null, { defer = false } = {}) {
-    viewMode = mode;
-    zoomPercent = value;
-    updateZoomLabel();
-    if (mode === 'fit') {
-      zoomRequestId++;
-      pendingZoomAnchor = null;
-      clearZoomPreviewHint();
-      pendingZoomRender = { zoomToken: zoomPreviewToken, requestId: zoomRequestId, anchor: null };
-      scheduleZoomRender(false);
-      return;
-    }
-    const anchorInfo = captureZoomAnchor(anchor);
-    const requestId = ++zoomRequestId;
-    const zoomToken = showZoomPreviewHint(Number(value), anchorInfo);
-    pendingZoomAnchor = anchorInfo;
-    pendingZoomRender = { zoomToken, requestId, anchor: anchorInfo };
-    scheduleZoomRender(defer);
-  }
-
-  function handlePreviewWheel(event) {
-    if (disposed || activeOperation || !hasDocument() || !canvasScroll?.contains(event.target)) return;
-    const currentScale = viewMode === 'fit' ? lastRenderScale : zoomPercent;
-    const delta = event.deltaMode === 1
-      ? event.deltaY * 16
-      : event.deltaMode === 2
-        ? event.deltaY * Math.max(1, canvasScroll.clientHeight)
-        : event.deltaY;
-    // Trackpads emit many tiny wheel events while a mouse wheel emits larger
-    // steps. Normalize both into one smooth multiplicative zoom curve.
-    const factor = Math.max(0.88, Math.min(1.14, Math.exp(-delta * 0.0015)));
-    const nextScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, currentScale * factor));
-    if (Math.abs(nextScale - currentScale) < 0.001) return;
-    event.preventDefault();
-    setZoom('manual', nextScale, {
-      clientX: event.clientX,
-      clientY: event.clientY
-    }, { defer: true });
-  }
-
-  function changeZoomBy(factor) {
-    if (activeOperation || !hasDocument()) return;
-    const currentScale = viewMode === 'fit' ? lastRenderScale : zoomPercent;
-    const nextScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, currentScale * factor));
-    if (Math.abs(nextScale - currentScale) < 0.001) return;
-    setZoom('manual', nextScale);
-  }
-
-  function stopZoomRepeat() {
-    if (zoomRepeatDelayTimer) {
-      clearTimeout(zoomRepeatDelayTimer);
-      zoomRepeatDelayTimer = null;
-    }
-    if (zoomRepeatTimer) {
-      clearInterval(zoomRepeatTimer);
-      zoomRepeatTimer = null;
-    }
-  }
-
-  function bindZoomButton(button, factor) {
-    if (!button) return;
-    button.addEventListener('pointerdown', event => {
-      if (event.button != null && event.button !== 0) return;
-      event.preventDefault();
-      zoomPointerAction = true;
-      try { button.setPointerCapture?.(event.pointerId); } catch (_) {}
-      changeZoomBy(factor);
-      stopZoomRepeat();
-      zoomRepeatDelayTimer = setTimeout(() => {
-        if (!zoomPointerAction) return;
-        zoomRepeatTimer = setInterval(() => changeZoomBy(factor), 90);
-      }, 280);
-    }, listenerOptions);
-    button.addEventListener('pointerup', () => stopZoomRepeat(), listenerOptions);
-    button.addEventListener('pointercancel', () => {
-      stopZoomRepeat();
-      zoomPointerAction = false;
-    }, listenerOptions);
-    button.addEventListener('click', event => {
-      if (zoomPointerAction) {
-        event.preventDefault();
-        zoomPointerAction = false;
-        return;
-      }
-      changeZoomBy(factor);
-    }, listenerOptions);
-  }
+  const zoom = createPdfEditorZoomController({
+    getCanvasWrap: () => canvasWrap,
+    getCanvasScroll: () => canvasScroll,
+    getSelectedComponent: () => selectedComponent,
+    getLastRenderScale: () => lastRenderScale,
+    setLastRenderScale: scale => { lastRenderScale = scale; },
+    isDisposed: () => disposed,
+    hasDocument,
+    hasActiveOperation: () => Boolean(activeOperation),
+    updateZoomLabel,
+    positionComponentMenu,
+    renderMainPreview,
+    listenerOptions
+  });
 
   // ----- Load / append -----
   async function loadMainFile(file) {
@@ -3630,11 +3420,11 @@ export function initPdfEditorTool({
     }
   }, listenerOptions);
 
-  bindZoomButton(zoomOutBtn, 1 / 1.25);
-  bindZoomButton(zoomInBtn, 1.25);
-  fitWidthBtn?.addEventListener('click', () => setZoom('fit', zoomPercent), listenerOptions);
-  zoomValueBtn?.addEventListener('click', () => setZoom('fit', zoomPercent), listenerOptions);
-  canvasScroll?.addEventListener('wheel', handlePreviewWheel, { ...listenerOptions, passive: false });
+  zoom.bindButton(zoomOutBtn, 1 / 1.25);
+  zoom.bindButton(zoomInBtn, 1.25);
+  fitWidthBtn?.addEventListener('click', () => zoom.setZoom('fit', zoom.getState().zoomPercent), listenerOptions);
+  zoomValueBtn?.addEventListener('click', () => zoom.setZoom('fit', zoom.getState().zoomPercent), listenerOptions);
+  canvasScroll?.addEventListener('wheel', zoom.handleWheel, { ...listenerOptions, passive: false });
   canvasScroll?.addEventListener('scroll', () => {
     if (selectedComponent) requestAnimationFrame(positionComponentMenu);
   }, listenerOptions);
@@ -3786,19 +3576,7 @@ export function initPdfEditorTool({
       lastSuccess = null;
       lastOutputFolder = '';
       stopFitPreviewObserver();
-      stopZoomRepeat();
-      if (zoomRenderFrame) {
-        cancelAnimationFrame(zoomRenderFrame);
-        zoomRenderFrame = 0;
-      }
-      if (zoomRenderTimer) {
-        clearTimeout(zoomRenderTimer);
-        zoomRenderTimer = null;
-      }
-      zoomRequestId++;
-      pendingZoomAnchor = null;
-      pendingZoomRender = null;
-      zoomPointerAction = false;
+      zoom.dispose();
       stopComponentRotate();
       if (componentRenderFrame) {
         cancelAnimationFrame(componentRenderFrame);

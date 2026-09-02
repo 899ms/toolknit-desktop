@@ -92,10 +92,12 @@ assert.ok(sourceMutationIndex > limitCheckIndex, 'append limits must be checked 
 const loadStart = uiSource.indexOf('async function loadMainFile(');
 const loadEnd = uiSource.indexOf('async function appendPdfBytes(', loadStart);
 const loadSource = uiSource.slice(loadStart, loadEnd);
-const stagedLoadIndex = loadSource.indexOf('stagedDocument = await loadingTask.promise');
+const stagedLoadIndex = loadSource.indexOf('const loaded = await documents.loadBytes(bytes');
+const stagedDocumentIndex = loadSource.indexOf('stagedDocument = loaded.document');
 const resetDocumentIndex = loadSource.indexOf('await resetDocument()');
 assert.ok(stagedLoadIndex >= 0, 'replacement PDF must be opened before it is committed');
-assert.ok(resetDocumentIndex > stagedLoadIndex, 'the current document must survive replacement validation failures');
+assert.ok(stagedDocumentIndex > stagedLoadIndex, 'replacement loading must yield a validated staged document');
+assert.ok(resetDocumentIndex > stagedDocumentIndex, 'the current document must survive replacement validation failures');
 assert.match(loadSource, /if \(documentCommitted\) await resetDocument\(\)/);
 assert.match(uiSource, /confirmDiscardChanges\('close'\)/);
 assert.match(uiSource, /confirmDiscardChanges\('replace'\)/);

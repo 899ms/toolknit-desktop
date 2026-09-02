@@ -29,6 +29,7 @@ import {
   createPdfEditorExporter,
   PdfEditorCancelledError
 } from './features/pdf-editor/exporter.js';
+import { createPdfEditorDocumentStore } from './features/pdf-editor/documents.js';
 import { IMAGE_BATCH_LIMITS } from './image-batch-core.js';
 
 const ZOOM_MIN = 0.08;
@@ -179,7 +180,6 @@ export function initPdfEditorTool({
   let selectedIds = new Set();
   let currentId = null;
   let selectionAnchorId = null;
-  let pdfDocs = new Map();
   let mainCanvas = null;
   let mainRenderTask = null;
   let mainEpoch = 0;
@@ -852,11 +852,7 @@ export function initPdfEditorTool({
       editTextBtn.setAttribute('aria-pressed', 'false');
     }
     syncEditModeClass();
-    const docs = Array.from(pdfDocs.values());
-    pdfDocs = new Map();
-    for (const doc of docs) {
-      try { await doc.destroy(); } catch (_) {}
-    }
+    await documents.destroyAll();
     if (mainCanvas) {
       releaseCanvas(mainCanvas);
       mainCanvas = null;
@@ -1034,22 +1030,15 @@ export function initPdfEditorTool({
     renderMainPreview();
   }
 
+  const documents = createPdfEditorDocumentStore({
+    pdfWorkerUrl,
+    getSources: () => sources,
+    isDisposed: () => disposed
+  });
+
   // ----- Thumbnail rendering -----
-  async function getSourceDoc(sourceId) {
-    if (pdfDocs.has(sourceId)) return pdfDocs.get(sourceId);
-    const source = sources.find(item => item.id === sourceId);
-    if (!source) throw new Error('Missing PDF source');
-    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-    const wasmUrl = new URL('assets/', document.baseURI).href;
-    const loadingTask = pdfjsLib.getDocument({
-      data: source.bytes.slice(),
-      wasmUrl,
-      useWasm: true
-    });
-    const doc = await loadingTask.promise;
-    pdfDocs.set(sourceId, doc);
-    return doc;
+  function getSourceDoc(sourceId) {
+    return documents.get(sourceId);
   }
 
   const thumbnails = createPdfEditorThumbnails({
@@ -3256,12 +3245,12 @@ export function initPdfEditorTool({
       setLocalizedProgress(12, 'loadingDocument');
       const bytes = await readBytes(file);
       assertOperation(operation);
-      const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-      const wasmUrl = new URL('assets/', document.baseURI).href;
-      const loadingTask = pdfjsLib.getDocument({ data: bytes.slice(), wasmUrl, useWasm: true });
-      operation.loadingTask = loadingTask;
-      stagedDocument = await loadingTask.promise;
+      const loaded = await documents.loadBytes(bytes, {
+        onLoadingTask: loadingTask => {
+          operation.loadingTask = loadingTask;
+        }
+      });
+      stagedDocument = loaded.document;
       assertOperation(operation);
       assertPdfEditorPageCount(stagedDocument.numPages);
       setLocalizedProgress(70, 'preparingPages');
@@ -3280,7 +3269,7 @@ export function initPdfEditorTool({
       idCounter = stagedIdCounter;
       sources = [source];
       sourceStore = new Map([[source.id, source]]);
-      pdfDocs = new Map([[source.id, stagedDocument]]);
+      documents.set(source.id, stagedDocument);
       pages = stagedPages;
       documentCommitted = true;
       stagedDocument = null;
@@ -3976,7 +3965,7 @@ export function initPdfEditorTool({
       syncInteractiveLayers();
       cancelMainRender();
       stopTileObserver(true);
-      void resetDocument();
+      void resetDocument().finally(() => documents.dispose());
     }
   };
 }

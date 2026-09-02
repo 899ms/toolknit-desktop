@@ -31,6 +31,9 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
   PDF Editor load and export flows.
 - `src/features/pdf-editor/exporter.js` owns PDF assembly, font resources,
   browser/native output publication and operation-guarded completion state.
+- `src/features/pdf-editor/documents.js` owns PDF.js loading tasks, source
+  document caching, same-source load de-duplication, generation invalidation
+  and document destruction at reset/dispose boundaries.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 - `src/core/serialized-request-session.js` owns one-at-a-time async requests,
   timeout state, request-specific cancellation and stale-result identity.

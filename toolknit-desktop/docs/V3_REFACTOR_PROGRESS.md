@@ -30,6 +30,7 @@ Last updated: 2026-09-02
 | `d7a8776` | Isolated PDF Editor bounded history and transaction locking |
 | `427f11d` | Lazy-loaded PDF Editor and isolated focus, thumbnail and render-resource ownership |
 | `d63f21d` | Isolated the native AI provider command and its security tests |
+| `4bcb075` | Isolated PDF Editor document loading, caching and PDF.js cleanup ownership |
 
 ## Current verified counts
 
@@ -122,6 +123,12 @@ current PDF Editor batch moves PDF assembly, font loading, browser/native
 output publication and operation-guarded success state into a dedicated
 exporter; the existing state contract now checks the moved export-field
 construction in that module.
+
+The PDF Editor document store now owns PDF.js loading tasks, document caching,
+same-source load de-duplication, generation invalidation and close/dispose
+cleanup. Replacement loading still stages and validates the new document
+before the existing editor state is reset; the document contract test protects
+that ordering and stale-load destruction.
 
 ## Hidden issues fixed during migration
 

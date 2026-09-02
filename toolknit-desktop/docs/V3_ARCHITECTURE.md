@@ -57,6 +57,10 @@ boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
   and Tauri native drag/drop bindings, releasing native listeners at dispose.
 - `src/features/pdf-editor/controls.js` owns derived control availability and
   selected/active labels, using state getters without mutating editor data.
+- `src/features/pdf-editor/state.js` owns editor snapshot capture and restore,
+  history-facing dirty-state confirmation, mode synchronization and inserted
+  image preview URL replacement. It receives state through explicit getters and
+  setters so the UI entry remains a composition boundary.
 - `src/core/bounded-response.js` is an initial UI-independent core utility.
 - `src/core/serialized-request-session.js` owns one-at-a-time async requests,
   timeout state, request-specific cancellation and stale-result identity.
@@ -165,7 +169,8 @@ tool entry so it becomes a separate production chunk.
   thumbnail queue/observer, drag sorting, cancellation identity, export
   assembly, document loading/cache/destruction, text-item grouping, visual text
   boxes, zoom scheduling, content editing, page selection, page mutations, file
-  sessions, view state and canvas release helpers have feature-owned boundaries.
+  sessions, view state, snapshot/restore state and canvas release helpers have
+  feature-owned boundaries.
   The legacy UI orchestrator remains a compatibility owner for the remaining
   document/session wiring while later batches continue reducing it.
 

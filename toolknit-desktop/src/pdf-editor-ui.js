@@ -34,6 +34,7 @@ import { createPdfEditorView } from './features/pdf-editor/view.js';
 import { createPdfEditorOperationRuntime } from './features/pdf-editor/operation.js';
 import { createPdfEditorEvents } from './features/pdf-editor/events.js';
 import { createPdfEditorControls } from './features/pdf-editor/controls.js';
+import { createPdfEditorStateController } from './features/pdf-editor/state.js';
 import {
   buildTextLine,
   editedTextVisualBox,
@@ -211,6 +212,8 @@ export function initPdfEditorTool({
   let operationRuntime = null;
   let pdfEditorEvents = null;
   let pdfEditorControls = null;
+  let pdfEditorState = null;
+  let editorHistory = null;
   const showToast = (message, duration = 7000) => {
     if (!disposed) window.showToast?.(message, { duration, dismissible: true });
   };
@@ -234,10 +237,12 @@ export function initPdfEditorTool({
     return invoke;
   };
 
+  const cloneFallback = value => typeof structuredClone === 'function'
+    ? structuredClone(value)
+    : JSON.parse(JSON.stringify(value));
+
   function cloneState(value) {
-    return typeof structuredClone === 'function'
-      ? structuredClone(value)
-      : JSON.parse(JSON.stringify(value));
+    return pdfEditorState?.cloneState?.(value) ?? cloneFallback(value);
   }
 
   function normalizeEditSnapshot(edit) {
@@ -287,145 +292,111 @@ export function initPdfEditorTool({
   }
 
   function restoreSelectedComponent(component) {
-    const locator = compactPdfEditorComponent(component);
-    if (!locator || !pages.some(page => page.id === locator.pageId)) return null;
-    if (locator.type === 'text') {
-      const editSegment = textEdits.get(locator.key)?.segment;
-      const line = textLinesCache.get(locator.pageId)?.lines?.[locator.lineIndex];
-      const cachedSegment = Array.isArray(line?.segments) && line.segments.length
-        ? line.segments[locator.segmentIndex] || null
-        : locator.segmentIndex === 0
-          ? line
-          : null;
-      const segment = editSegment || cachedSegment;
-      return segment ? { ...locator, segment: cloneState(segment) } : null;
-    }
-
-    const collection = locator.type === 'inserted-text'
-      ? insertedTexts
-      : locator.type === 'inserted-image'
-        ? insertedImages
-        : insertedShapes;
-    return collection.some(item => item.id === locator.key) ? locator : null;
+    return pdfEditorState?.restoreSelectedComponent(component) || null;
   }
 
   function captureEditorSnapshot() {
-    const zoomState = zoom.getState();
-    return cloneState({
-      sourceIds: sources.map(source => source.id),
-      pages: pages.map(({ sourceRotation: _sourceRotation, ...page }) => page),
-      selectedIds: Array.from(selectedIds),
-      currentId,
-      selectionAnchorId,
-      editMode,
-      componentMode,
-      selectedComponent: compactPdfEditorComponent(selectedComponent),
-      viewMode: zoomState.viewMode,
-      zoomPercent: zoomState.zoomPercent,
-      idCounter,
-      textEdits: Array.from(textEdits.entries()).map(([key, value]) => [key, normalizeEditSnapshot(value)]),
-      insertedTexts,
-      insertedImages: insertedImages.map(normalizeInsertedImageSnapshot),
-      insertedShapes: insertedShapes.map(normalizeInsertedShapeSnapshot)
-    });
+    return pdfEditorState?.captureEditorSnapshot?.() || null;
   }
 
   function applyEditorSnapshot(snapshot) {
-    if (!snapshot) return;
-    editorHistory.withLock(() => {
-      if (Array.isArray(snapshot.sourceIds)) {
-        sources = snapshot.sourceIds
-          .map(id => sourceStore.get(id))
-          .filter(Boolean);
-      }
-      pages = cloneState(snapshot.pages || []);
-      selectedIds = new Set(Array.isArray(snapshot.selectedIds) ? snapshot.selectedIds : []);
-      currentId = snapshot.currentId || null;
-      selectionAnchorId = snapshot.selectionAnchorId || null;
-      editMode = Boolean(snapshot.editMode);
-      componentMode = Boolean(snapshot.componentMode);
-      selectedComponent = null;
-      zoom.setState(snapshot);
-      idCounter = Number.isFinite(Number(snapshot.idCounter)) ? Number(snapshot.idCounter) : idCounter;
-      textEdits = new Map((Array.isArray(snapshot.textEdits) ? snapshot.textEdits : []).map(([key, value]) => [key, normalizeEditSnapshot(value)]));
-      insertedTexts = cloneState(snapshot.insertedTexts || []);
-      for (const image of insertedImages) {
-        if (image?.previewUrl) URL.revokeObjectURL(image.previewUrl);
-      }
-      insertedImages = (Array.isArray(snapshot.insertedImages) ? snapshot.insertedImages : []).map(item => {
-        const stored = insertedImageStore.get(item?.id);
-        const bytes = stored?.bytes || item?.bytes;
-        return {
-          ...cloneState(item),
-          bytes,
-          previewUrl: bytes?.length ? URL.createObjectURL(new Blob([bytes], { type: item.mimeType || 'image/png' })) : ''
-        };
-      });
-      insertedShapes = (Array.isArray(snapshot.insertedShapes) ? snapshot.insertedShapes : []).map(item => normalizeInsertedShapeSnapshot(item));
-      selectedComponent = restoreSelectedComponent(snapshot.selectedComponent);
-      componentInteraction?.reset();
-      editingLineKey = null;
-      modalMode = null;
-      insertMode = null;
-      clearPendingInsert();
-      closeEditModal();
-      if (editTextBtn) {
-        editTextBtn.classList.toggle('is-active', editMode);
-        editTextBtn.setAttribute('aria-pressed', String(editMode));
-      }
-      if (selectComponentBtn) {
-        selectComponentBtn.classList.toggle('is-active', componentMode);
-        selectComponentBtn.setAttribute('aria-pressed', String(componentMode));
-      }
-      syncEditModeClass();
-      syncComponentModeClass();
-      buildTiles();
-      updateFileCard();
-      updateZoomLabel();
-      updateControls();
-    });
+    return pdfEditorState?.applyEditorSnapshot(snapshot);
   }
 
-  const editorHistory = createPdfEditorHistory({
+  pdfEditorState = createPdfEditorStateController({
+    getSources: () => sources,
+    setSources: value => { sources = value; },
+    getSourceStore: () => sourceStore,
+    getPages: () => pages,
+    setPages: value => { pages = value; },
+    getSelectedIds: () => selectedIds,
+    setSelectedIds: value => { selectedIds = value; },
+    getCurrentId: () => currentId,
+    setCurrentId: value => { currentId = value; },
+    getSelectionAnchorId: () => selectionAnchorId,
+    setSelectionAnchorId: value => { selectionAnchorId = value; },
+    getEditMode: () => editMode,
+    setEditMode: value => { editMode = Boolean(value); },
+    getComponentMode: () => componentMode,
+    setComponentMode: value => { componentMode = Boolean(value); },
+    getSelectedComponent: () => selectedComponent,
+    setSelectedComponent: value => { selectedComponent = value; },
+    getZoom: () => zoom,
+    getIdCounter: () => idCounter,
+    setIdCounter: value => { idCounter = value; },
+    getTextEdits: () => textEdits,
+    setTextEdits: value => { textEdits = value; },
+    getInsertedTexts: () => insertedTexts,
+    setInsertedTexts: value => { insertedTexts = value; },
+    getInsertedImages: () => insertedImages,
+    setInsertedImages: value => { insertedImages = value; },
+    getInsertedImageStore: () => insertedImageStore,
+    getInsertedShapes: () => insertedShapes,
+    setInsertedShapes: value => { insertedShapes = value; },
+    setEditingLineKey: value => { editingLineKey = value; },
+    setModalMode: value => { modalMode = value; },
+    setInsertMode: value => { insertMode = value; },
+    getTextLinesCache: () => textLinesCache,
+    resetComponentInteraction: () => componentInteraction?.reset(),
+    clearPendingInsert,
+    closeEditModal,
+    editTextBtn,
+    selectComponentBtn,
+    syncEditModeClass,
+    syncComponentModeClass,
+    buildTiles,
+    updateFileCard,
+    updateZoomLabel,
+    updateControls,
+    compactComponent: compactPdfEditorComponent,
+    normalizeEditSnapshot,
+    normalizeInsertedImageSnapshot,
+    normalizeInsertedShapeSnapshot,
+    hasDocument,
+    getSavedSnapshot: () => savedSnapshot,
+    t,
+    confirm: message => window.confirm(message)
+  });
+
+  editorHistory = createPdfEditorHistory({
     capture: captureEditorSnapshot,
     apply: applyEditorSnapshot,
     equals: pdfEditorSnapshotsEqual,
     hasDocument,
     onChange: () => updateControls()
   });
+  pdfEditorState.setHistory(editorHistory);
 
   function resetEditorHistory() {
-    return editorHistory.reset();
+    return pdfEditorState.resetEditorHistory();
   }
 
   function commitEditorHistory() {
-    return editorHistory.commit();
+    return pdfEditorState.commitEditorHistory();
   }
 
   function hasUnsavedChanges() {
-    return editorHistory.hasUnsavedChanges(savedSnapshot);
+    return pdfEditorState.hasUnsavedChanges();
   }
 
   function confirmDiscardChanges(action) {
-    if (!hasUnsavedChanges()) return true;
-    const messageKey = action === 'reset' ? 'confirmReset' : 'confirmDiscard';
-    return window.confirm(t(`home.pdfEditor.${messageKey}`));
+    return pdfEditorState.confirmDiscardChanges(action);
   }
 
   function canUndo() {
-    return editorHistory.canUndo();
+    return pdfEditorState.canUndo();
   }
 
   function canRedo() {
-    return editorHistory.canRedo();
+    return pdfEditorState.canRedo();
   }
 
   function undoEditorChange() {
-    editorHistory.undo();
+    return pdfEditorState.undoEditorChange();
   }
 
   function redoEditorChange() {
-    editorHistory.redo();
+    return pdfEditorState.redoEditorChange();
   }
 
   function handleDocumentKeydown(event) {

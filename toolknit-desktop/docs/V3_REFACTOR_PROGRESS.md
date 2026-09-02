@@ -234,6 +234,10 @@ storage, both edit modes, modal cancellation and history commits.
   it back through the orchestration state boundary. The content-editing
 controller now commits the updated shape collection, with a regression test
 covering the placement path.
+- The PDF Editor snapshot extraction initially left its source contract test
+  pointed at the old monolithic entry. The test now validates the dedicated
+  state controller and executes a capture/restore scenario, so future moves
+  cannot silently pass with stale coverage.
 
 PDF Editor page mutations now live in `src/features/pdf-editor/page-operations.js`.
 Rotation, ordering, page duplication, blank-page creation and deletion are
@@ -282,6 +286,19 @@ The controller computes availability, page boundaries, editing permissions,
 selection labels, active insertion state and thumbnail ARIA state from injected
 getters. Its state suite covers empty, busy and active document transitions,
 history buttons, editing modes and thumbnail selection synchronization.
+
+PDF Editor snapshot and dirty-state coordination now lives in
+`src/features/pdf-editor/state.js`, a 247-line controller. It captures only
+serializable editor state (source IDs, page layout, selection, modes, zoom and
+inserted content), restores source objects from the immutable session store,
+rebuilds inserted-image preview URLs, restores selected text components and
+locks history while applying a snapshot. The state suite now executes capture,
+restore, derived-field omission, selected-component recovery and history-lock
+regressions; the UI entry retains only injected composition and delegation.
+
+The state extraction also updated the source contract test to inspect the new
+controller directly, preventing a stale test from requiring removed snapshot
+logic in the legacy entry.
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the

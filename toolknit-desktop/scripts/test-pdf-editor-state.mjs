@@ -5,6 +5,7 @@ import {
   pdfEditorPageIdsInDocumentOrder,
   pdfEditorSnapshotsEqual
 } from '../src/pdf-editor-state.js';
+import { createPdfEditorStateController } from '../src/features/pdf-editor/state.js';
 
 const imageBytes = new Uint8Array([10, 20, 30, 40]);
 const imageLocator = compactPdfEditorComponent({
@@ -66,7 +67,91 @@ assert.equal(pdfEditorSnapshotsEqual(cleanSnapshot, {
 }), false);
 assert.equal(pdfEditorSnapshotsEqual(null, cleanSnapshot), false);
 
+const state = {
+  sources: [{ id: 'source-1', name: 'sample.pdf' }],
+  sourceStore: new Map([['source-1', { id: 'source-1', name: 'sample.pdf' }]]),
+  pages: [{ id: 'page-1', sourceRotation: 90, rotation: 0 }],
+  selectedIds: new Set(['page-1']),
+  currentId: 'page-1',
+  selectionAnchorId: 'page-1',
+  editMode: true,
+  componentMode: true,
+  selectedComponent: { type: 'text', pageId: 'page-1', key: 'page-1:0:0' },
+  zoom: { viewMode: 'manual', zoomPercent: 125 },
+  idCounter: 4,
+  textEdits: new Map(),
+  insertedTexts: [{ id: 'text-1', pageId: 'page-1', text: 'hello' }],
+  insertedImages: [],
+  insertedShapes: []
+};
+const textLinesCache = new Map([[
+  'page-1',
+  { lines: [{ segments: [{ text: 'source text', fontSize: 12 }] }] }
+]]);
+let lockCalls = 0;
+let zoomState = { ...state.zoom };
+const controller = createPdfEditorStateController({
+  getSources: () => state.sources,
+  setSources: value => { state.sources = value; },
+  getSourceStore: () => state.sourceStore,
+  getPages: () => state.pages,
+  setPages: value => { state.pages = value; },
+  getSelectedIds: () => state.selectedIds,
+  setSelectedIds: value => { state.selectedIds = value; },
+  getCurrentId: () => state.currentId,
+  setCurrentId: value => { state.currentId = value; },
+  getSelectionAnchorId: () => state.selectionAnchorId,
+  setSelectionAnchorId: value => { state.selectionAnchorId = value; },
+  getEditMode: () => state.editMode,
+  setEditMode: value => { state.editMode = value; },
+  getComponentMode: () => state.componentMode,
+  setComponentMode: value => { state.componentMode = value; },
+  getSelectedComponent: () => state.selectedComponent,
+  setSelectedComponent: value => { state.selectedComponent = value; },
+  getZoom: () => ({
+    getState: () => zoomState,
+    setState: value => { zoomState = { viewMode: value.viewMode, zoomPercent: value.zoomPercent }; }
+  }),
+  getIdCounter: () => state.idCounter,
+  setIdCounter: value => { state.idCounter = value; },
+  getTextEdits: () => state.textEdits,
+  setTextEdits: value => { state.textEdits = value; },
+  getInsertedTexts: () => state.insertedTexts,
+  setInsertedTexts: value => { state.insertedTexts = value; },
+  getInsertedImages: () => state.insertedImages,
+  setInsertedImages: value => { state.insertedImages = value; },
+  getInsertedImageStore: () => new Map(),
+  getInsertedShapes: () => state.insertedShapes,
+  setInsertedShapes: value => { state.insertedShapes = value; },
+  getTextLinesCache: () => textLinesCache,
+  compactComponent: compactPdfEditorComponent,
+  hasDocument: () => true,
+  getSavedSnapshot: () => null,
+  getHistory: () => ({ withLock(callback) { lockCalls += 1; return callback(); } })
+});
+const captured = controller.captureEditorSnapshot();
+assert.equal(captured.pages[0].sourceRotation, undefined, 'snapshots must omit derived source rotation');
+assert.deepEqual(captured.sourceIds, ['source-1']);
+assert.deepEqual(captured.selectedComponent, {
+  type: 'text', pageId: 'page-1', key: 'page-1:0:0', lineIndex: 0, segmentIndex: 0
+});
+state.pages = [{ id: 'page-2', rotation: 180 }];
+state.selectedIds = new Set();
+state.currentId = null;
+state.selectedComponent = null;
+controller.applyEditorSnapshot(captured);
+assert.equal(lockCalls, 1, 'snapshot application must lock history commits');
+assert.deepEqual(state.pages, [{ id: 'page-1', rotation: 0 }]);
+assert.deepEqual([...state.selectedIds], ['page-1']);
+assert.equal(state.currentId, 'page-1');
+assert.equal(state.selectedComponent.segment.text, 'source text');
+assert.deepEqual(zoomState, { viewMode: 'manual', zoomPercent: 125 });
+
 const uiSource = await readFile(new URL('../src/pdf-editor-ui.js', import.meta.url), 'utf8');
+const stateControllerSource = await readFile(
+  new URL('../src/features/pdf-editor/state.js', import.meta.url),
+  'utf8'
+);
 const exporterSource = await readFile(new URL('../src/features/pdf-editor/exporter.js', import.meta.url), 'utf8');
 const textLayoutSource = await readFile(new URL('../src/features/pdf-editor/text-layout.js', import.meta.url), 'utf8');
 const componentRendererSource = await readFile(
@@ -118,17 +203,20 @@ const controlsSource = await readFile(
   'utf8'
 );
 
-const snapshotStart = uiSource.indexOf('function captureEditorSnapshot()');
-const snapshotEnd = uiSource.indexOf('function applyEditorSnapshot(', snapshotStart);
-const snapshotSource = uiSource.slice(snapshotStart, snapshotEnd);
-assert.ok(snapshotStart >= 0 && snapshotEnd > snapshotStart);
-assert.match(snapshotSource, /selectedComponent:\s*compactPdfEditorComponent\(selectedComponent\)/);
-assert.match(snapshotSource, /sourceRotation:\s*_sourceRotation/);
-
-const applyStart = uiSource.indexOf('function applyEditorSnapshot(');
-const applyEnd = uiSource.indexOf('function resetEditorHistory()', applyStart);
-const applySource = uiSource.slice(applyStart, applyEnd);
-assert.match(applySource, /selectedComponent = restoreSelectedComponent\(snapshot\.selectedComponent\)/);
+assert.match(stateControllerSource, /function captureEditorSnapshot\(\)/);
+assert.match(stateControllerSource, /selectedComponent:\s*compactComponent\(getSelectedComponent\(\)\)/);
+assert.match(stateControllerSource, /sourceRotation:\s*_sourceRotation/);
+assert.match(stateControllerSource, /function applyEditorSnapshot\(snapshot\)/);
+assert.match(stateControllerSource, /setSelectedComponent\(restoreSelectedComponent\(snapshot\.selectedComponent\)\)/);
+assert.match(stateControllerSource, /URL\.revokeObjectURL\(image\.previewUrl\)/);
+assert.match(stateControllerSource, /URL\.createObjectURL\(new Blob/);
+assert.match(stateControllerSource, /if \(history\?\.withLock\) history\.withLock\(apply\); else apply\(\);/);
+assert.match(uiSource, /import \{ createPdfEditorStateController \} from '\.\/features\/pdf-editor\/state\.js';/);
+assert.match(uiSource, /pdfEditorState = createPdfEditorStateController\(/);
+assert.match(uiSource, /return pdfEditorState\?\.captureEditorSnapshot\?\.\(\) \|\| null/);
+assert.match(uiSource, /return pdfEditorState\?\.applyEditorSnapshot\(snapshot\)/);
+assert.doesNotMatch(uiSource, /selectedComponent:\s*compactPdfEditorComponent\(selectedComponent\)/);
+assert.doesNotMatch(uiSource, /sourceRotation:\s*_sourceRotation/);
 
 const appendStart = fileSessionSource.indexOf('async function appendPdfBytes(');
 const appendEnd = fileSessionSource.indexOf('function chooseMainFile()', appendStart);

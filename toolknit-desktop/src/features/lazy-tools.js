@@ -1,7 +1,7 @@
 export const LAZY_TOOL_SPECS = Object.freeze({
   'excel-to-pdf': Object.freeze({
     overlayId: 'excelToPdfOverlay',
-    load: () => import('../excel-to-pdf-ui.js'),
+    load: () => import('./excel-to-pdf/tool.js'),
     init: 'initExcelToPdfTool'
   }),
   'pdf-rotate': Object.freeze({

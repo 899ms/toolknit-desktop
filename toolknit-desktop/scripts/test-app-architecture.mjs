@@ -39,6 +39,12 @@ const [
   imageColorReplaceWorkerSource,
   imageColorReplaceCompatibilitySource,
   imageColorReplaceFeatureStyles,
+  excelToPdfToolSource,
+  excelToPdfControllerSource,
+  excelToPdfTemplateSource,
+  excelToPdfCompatibilitySource,
+  excelToPdfCompatibilityStyles,
+  excelToPdfFeatureStyles,
   appStyles,
   finalToolStyles,
   ...sharedShellConsumers
@@ -63,6 +69,12 @@ const [
   readFile(new URL('../src/features/image-color-replace/worker.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/image-color-replace-ui.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/image-color-replace/image-color-replace.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/excel-to-pdf/tool.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/excel-to-pdf/controller.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/excel-to-pdf/template.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/excel-to-pdf-ui.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/excel-to-pdf.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/excel-to-pdf/excel-to-pdf.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/tool-page-v2-final.css', import.meta.url), 'utf8'),
   ...[
@@ -103,6 +115,17 @@ assert.match(imageColorReplaceWorkerSource, /from ['"]\.\/core\.js['"]/, 'the im
 assert.match(imageColorReplaceCompatibilitySource, /from ['"]\.\/features\/image-color-replace\/tool\.js['"]/, 'the legacy image color replacement UI path must forward to the feature entry');
 assert.match(imageColorReplaceFeatureStyles, /\.color-replace-stage-section\s*\{/, 'the feature stylesheet must own image color replacement layout');
 assert.doesNotMatch(appStyles + finalToolStyles, /(?:\.color-replace|\.color-pair|\.color-swatch|\.color-target-picker)/, 'shared stylesheets must not retain image color replacement selectors');
+assert.match(excelToPdfToolSource, /from ['"]\.\/template\.js['"]/, 'the Excel to PDF tool must delegate markup to its feature template');
+assert.match(excelToPdfToolSource, /from ['"]\.\/controller\.js['"]/, 'the Excel to PDF tool must delegate runtime behavior to its controller');
+assert.match(excelToPdfToolSource, /import ['"]\.\/excel-to-pdf\.css['"]/, 'the Excel to PDF feature must own its lazy stylesheet');
+assert.match(excelToPdfControllerSource, /createLifecycleScope\(\)/, 'the Excel to PDF controller must own permanent and open-session lifecycle cleanup');
+assert.match(excelToPdfControllerSource, /owner\.use\(unlisten\)/, 'the Excel to PDF controller must release native and progress listeners with the owning session');
+assert.match(excelToPdfControllerSource, /from ['"]\.\.\/\.\.\/platform\/tauri-runtime\.js['"]/, 'the Excel to PDF controller must use the platform boundary');
+assert.doesNotMatch(excelToPdfControllerSource, /from ['"]@tauri-apps\//, 'the Excel to PDF controller must not bypass the platform boundary');
+assert.match(excelToPdfTemplateSource, /data-excel-action="convert"/, 'the Excel to PDF template must retain the conversion action contract');
+assert.match(excelToPdfCompatibilitySource, /from ['"]\.\/features\/excel-to-pdf\/tool\.js['"]/, 'the legacy Excel to PDF UI path must forward to the feature entry');
+assert.equal(excelToPdfCompatibilityStyles.trim(), "@import url('./features/excel-to-pdf/excel-to-pdf.css');", 'the legacy Excel to PDF stylesheet must forward to the feature stylesheet');
+assert.match(excelToPdfFeatureStyles, /\.excel-to-pdf-overlay\s*\{/, 'the feature stylesheet must own the Excel to PDF overlay');
 assert.match(indexSource, /href="\.\/src\/tool-custom-select\.css"/, 'the existing stylesheet position must remain stable');
 assert.equal(selectCompatibilityStyles.trim(), "@import url('./styles/components/tool-custom-select.css');", 'the legacy stylesheet must forward to the component stylesheet');
 assert.match(selectComponentStyles, /\.tool-custom-select-trigger\s*\{/, 'the component stylesheet must own custom select visuals');
@@ -142,6 +165,8 @@ assert.ok(Object.keys(LAZY_TOOL_SPECS).length > 0, 'the application must registe
 assert.equal(LAZY_TOOL_SPECS['pdf-editor']?.overlayId, 'pdfEditorOverlay', 'PDF Editor must be lazy-registered');
 assert.equal(LAZY_TOOL_SPECS['image-color-replace']?.overlayId, 'imageColorReplaceOverlay', 'Image Color Replace must be lazy-registered');
 assert.match(LAZY_TOOL_SPECS['image-color-replace'].load.toString(), /\.\/image-color-replace\/tool\.js/, 'Image Color Replace must load its feature entry directly');
+assert.equal(LAZY_TOOL_SPECS['excel-to-pdf']?.overlayId, 'excelToPdfOverlay', 'Excel to PDF must be lazy-registered');
+assert.match(LAZY_TOOL_SPECS['excel-to-pdf'].load.toString(), /\.\/excel-to-pdf\/tool\.js/, 'Excel to PDF must load its feature entry directly');
 assert.match(mainSource, /LAZY_TOOL_SPECS/, 'main must use the shared lazy registry');
 assert.doesNotMatch(mainSource, /from ['"]\.\/pdf-editor-ui\.js['"]/, 'PDF Editor must not be statically imported by main');
 assert.match(mainSource, /pdfWorkerUrl,/, 'lazy features must receive the PDF worker URL through context');

@@ -1,12 +1,11 @@
 import { createIcons, icons } from 'lucide';
-import * as tauriCore from '@tauri-apps/api/core';
 import { getLang, onLangChange, t } from './i18n.js';
 import { enhanceToolSelects } from './tool-custom-select.js';
 import { createWaveformSlider } from './tool-waveform-slider.js';
+import { createTeleprompterRecognitionController } from './features/teleprompter/recognition.js';
 import {
   TELEPROMPTER_LIMITS,
   createSpeechFollower,
-  createSystemSpeechTranscriptState,
   estimateTeleprompterDuration,
   formatTeleprompterTime,
   segmentTeleprompterScript,
@@ -15,13 +14,6 @@ import {
 
 const PREF_KEY = 'toolknit.teleprompter.preferences.v2';
 const LEGACY_PREF_KEY = 'toolknit.teleprompter.preferences.v1';
-const OFFLINE_SAMPLE_RATE = 16_000;
-// 3.2s windows keep the first transcript (and every later one) snappy while
-// still giving whisper enough context for stable Chinese output.
-const OFFLINE_WINDOW_SECONDS = 3.2;
-const OFFLINE_OVERLAP_SECONDS = 0.6;
-const SYSTEM_START_TIMEOUT_MS = 3_500;
-const SYSTEM_FIRST_RESULT_TIMEOUT_MS = 12_000;
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -59,10 +51,6 @@ function savePreferences(value) {
   localStorage.setItem(PREF_KEY, JSON.stringify(safe));
 }
 
-function systemRecognitionConstructor() {
-  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
-}
-
 function isEditableTarget(target) {
   const tag = target?.tagName?.toLowerCase();
   return ['input', 'textarea', 'select'].includes(tag)
@@ -75,22 +63,6 @@ function formatFileSize(bytes) {
   if (value >= 1024 * 1024) return `${(value / 1024 / 1024).toFixed(value >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
   if (value >= 1024) return `${Math.round(value / 1024)} KB`;
   return `${value} B`;
-}
-
-function resampleTo16Khz(input, sourceRate) {
-  if (!input?.length) return new Int16Array();
-  const ratio = sourceRate / OFFLINE_SAMPLE_RATE;
-  const length = Math.max(1, Math.floor(input.length / ratio));
-  const output = new Int16Array(length);
-  for (let index = 0; index < length; index += 1) {
-    const sourcePosition = index * ratio;
-    const left = Math.floor(sourcePosition);
-    const right = Math.min(input.length - 1, left + 1);
-    const fraction = sourcePosition - left;
-    const sample = input[left] * (1 - fraction) + input[right] * fraction;
-    output[index] = Math.round(clamp(sample, -1, 1) * (sample < 0 ? 32768 : 32767));
-  }
-  return output;
 }
 
 function htmlTemplate() {
@@ -322,21 +294,9 @@ export function initTeleprompterTool({
   let languageUnsubscribe = () => {};
   let resizeObserver = null;
   let suppressScrollSync = false;
-  let systemRecognition = null;
-  let systemRestartTimer = 0;
-  let systemStartTimer = 0;
-  let systemResultTimer = 0;
-  let recognitionGeneration = 0;
   let recognitionRuntime = 'idle';
-  let microphoneStream = null;
-  let audioContext = null;
-  let audioSource = null;
-  let audioProcessor = null;
-  let audioSink = null;
-  let offlineSessionId = '';
-  let offlineSamples = [];
-  let offlineInference = false;
   let readingProgress = 0;
+  let recognitionController = null;
 
   function copy(key, params) {
     return t(`home.teleprompter.${key}`, params);
@@ -366,11 +326,6 @@ export function initTeleprompterTool({
       lastFrameTime = 0;
       invalidateScrollSpeed();
     }
-  }
-
-  function useScrollFallback() {
-    setRecognitionRuntime('fallback');
-    setEngineStatus('error', 'engineScrollFallback');
   }
 
   function setEngineStatus(state, key = 'engineIdle') {
@@ -716,6 +671,22 @@ export function initTeleprompterTool({
     updateReadingProgress(transcript);
   }
 
+  recognitionController = createTeleprompterRecognitionController({
+    isTauri,
+    getLanguage: getLang,
+    getEngine: () => preferences.engine,
+    getVoiceFollow: () => preferences.voiceFollow,
+    isPlaying: () => playing,
+    isDisposed: () => disposed,
+    requestOfflineModel,
+    copy,
+    notify,
+    setRuntime: setRecognitionRuntime,
+    setStatus: setEngineStatus,
+    applyTranscript: applyRecognitionText,
+    getPrompt: nearbyPrompt
+  });
+
   // While following, a small white cursor bar sits under the exact character
   // the reader is on, so it is obvious where the tracking believes they are.
   function updateReadingProgress(transcript) {
@@ -757,287 +728,6 @@ export function initTeleprompterTool({
     line.hidden = false;
   }
 
-  function stopSystemRecognition() {
-    window.clearTimeout(systemRestartTimer);
-    window.clearTimeout(systemStartTimer);
-    window.clearTimeout(systemResultTimer);
-    systemRestartTimer = 0;
-    systemStartTimer = 0;
-    systemResultTimer = 0;
-    if (!systemRecognition) return;
-    const recognition = systemRecognition;
-    systemRecognition = null;
-    recognition.onstart = null;
-    recognition.onresult = null;
-    recognition.onerror = null;
-    recognition.onend = null;
-    try { recognition.abort(); } catch {}
-  }
-
-  function startSystemRecognition(generation, onUnavailable) {
-    const Recognition = systemRecognitionConstructor();
-    if (!Recognition) return false;
-    stopSystemRecognition();
-    const recognition = new Recognition();
-    const transcriptState = createSystemSpeechTranscriptState();
-    let fallingBack = false;
-    let cycleStarted = false;
-    let receivedResult = false;
-    systemRecognition = recognition;
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-    recognition.lang = getLang() === 'zh' ? 'zh-CN' : 'en-US';
-
-    const fallback = () => {
-      if (fallingBack || generation !== recognitionGeneration || systemRecognition !== recognition) return;
-      fallingBack = true;
-      stopSystemRecognition();
-      setRecognitionRuntime('starting');
-      setEngineStatus('idle', 'engineSwitchingOffline');
-      void onUnavailable?.();
-    };
-
-    const armStartWatchdog = () => {
-      window.clearTimeout(systemStartTimer);
-      systemStartTimer = window.setTimeout(fallback, SYSTEM_START_TIMEOUT_MS);
-    };
-
-    const startCycle = () => {
-      if (fallingBack || generation !== recognitionGeneration || !playing || systemRecognition !== recognition) return;
-      cycleStarted = false;
-      setEngineStatus('idle', 'engineStarting');
-      armStartWatchdog();
-      try {
-        recognition.start();
-      } catch {
-        fallback();
-      }
-    };
-
-    recognition.onstart = () => {
-      if (generation !== recognitionGeneration || systemRecognition !== recognition) return;
-      cycleStarted = true;
-      window.clearTimeout(systemStartTimer);
-      systemStartTimer = 0;
-      setRecognitionRuntime('active');
-      setEngineStatus('listening', 'engineListening');
-      if (!receivedResult && !systemResultTimer) {
-        systemResultTimer = window.setTimeout(fallback, SYSTEM_FIRST_RESULT_TIMEOUT_MS);
-      }
-    };
-    recognition.onresult = event => {
-      if (generation !== recognitionGeneration || !playing) return;
-      const state = transcriptState.push(event.results, event.resultIndex);
-      if (!state.transcript) return;
-      receivedResult = true;
-      window.clearTimeout(systemResultTimer);
-      systemResultTimer = 0;
-      setRecognitionRuntime('active');
-      applyRecognitionText(state.latest || state.transcript, state.final, {
-        context: state.transcript,
-        cumulative: true
-      });
-    };
-    recognition.onerror = event => {
-      if (generation !== recognitionGeneration) return;
-      const denied = ['not-allowed', 'audio-capture'].includes(event.error);
-      if (!denied) return fallback();
-      stopSystemRecognition();
-      setRecognitionRuntime('fallback');
-      setEngineStatus('error', 'enginePermissionDenied');
-      notify(copy('microphoneDenied'));
-    };
-    recognition.onend = () => {
-      if (generation !== recognitionGeneration || !playing || !preferences.voiceFollow || systemRecognition !== recognition) return;
-      transcriptState.endSession();
-      if (!cycleStarted && !receivedResult) return fallback();
-      systemRestartTimer = window.setTimeout(() => {
-        systemRestartTimer = 0;
-        startCycle();
-      }, 320);
-    };
-    setRecognitionRuntime('starting');
-    startCycle();
-    return true;
-  }
-
-  async function stopOfflineRecognition() {
-    const sessionId = offlineSessionId;
-    offlineSessionId = '';
-    offlineSamples = [];
-    offlineInference = false;
-    if (audioProcessor) audioProcessor.onaudioprocess = null;
-    try { audioProcessor?.disconnect(); } catch {}
-    try { audioSource?.disconnect(); } catch {}
-    try { audioSink?.disconnect(); } catch {}
-    audioProcessor = null;
-    audioSource = null;
-    audioSink = null;
-    microphoneStream?.getTracks?.().forEach(track => track.stop());
-    microphoneStream = null;
-    if (audioContext) {
-      try { await audioContext.close(); } catch {}
-      audioContext = null;
-    }
-    if (isTauri && sessionId) {
-      try { await tauriCore.invoke('stop_teleprompter_recognition', { sessionId }); } catch {}
-    }
-  }
-
-  async function processOfflineWindow(generation) {
-    if (offlineInference || !offlineSessionId || generation !== recognitionGeneration || !playing) return;
-    const sessionId = offlineSessionId;
-    const targetLength = Math.round(OFFLINE_SAMPLE_RATE * OFFLINE_WINDOW_SECONDS);
-    const overlapLength = Math.round(OFFLINE_SAMPLE_RATE * OFFLINE_OVERLAP_SECONDS);
-    if (offlineSamples.length < targetLength) return;
-    if (offlineSamples.length > targetLength * 2) offlineSamples = offlineSamples.slice(-targetLength);
-    const chunk = offlineSamples.slice(0, targetLength);
-    offlineSamples = offlineSamples.slice(Math.max(0, targetLength - overlapLength));
-    offlineInference = true;
-    setEngineStatus('listening', 'engineRecognizing');
-    try {
-      const result = await tauriCore.invoke('transcribe_teleprompter_audio', {
-        sessionId,
-        samples: chunk,
-        prompt: nearbyPrompt()
-      });
-      if (generation === recognitionGeneration && playing && result?.text) applyRecognitionText(result.text, true);
-    } catch (error) {
-      const message = String(error?.message || error || '');
-      if (generation === recognitionGeneration && !/stopped|cancelled|session-not-found/i.test(message)) {
-        console.error('[Teleprompter] offline recognition failed:', error);
-        useScrollFallback();
-        void stopOfflineRecognition();
-      }
-    } finally {
-      if (generation !== recognitionGeneration || sessionId !== offlineSessionId) return;
-      offlineInference = false;
-      if (generation === recognitionGeneration && playing && offlineSamples.length >= targetLength) {
-        void processOfflineWindow(generation);
-      }
-    }
-  }
-
-  async function startOfflineRecognition(generation) {
-    if (!isTauri) {
-      notify(copy('desktopOnly'));
-      useScrollFallback();
-      return false;
-    }
-    if (!navigator.mediaDevices?.getUserMedia) {
-      notify(copy('microphoneUnavailable'));
-      useScrollFallback();
-      return false;
-    }
-    setEngineStatus('idle', 'engineLoading');
-    try {
-      offlineSessionId = await tauriCore.invoke('start_teleprompter_recognition', {
-        language: getLang() === 'zh' ? 'zh' : 'en'
-      });
-      if (generation !== recognitionGeneration || !playing) {
-        await stopOfflineRecognition();
-        return false;
-      }
-      microphoneStream = await navigator.mediaDevices.getUserMedia({
-        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-        video: false
-      });
-      if (generation !== recognitionGeneration || !playing) {
-        await stopOfflineRecognition();
-        return false;
-      }
-      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
-      audioContext = new AudioContextCtor({ latencyHint: 'interactive' });
-      await audioContext.resume();
-      if (audioContext.state !== 'running') {
-        throw Object.assign(new Error('audio-context suspended'), { name: 'AudioContextSuspended' });
-      }
-      audioSource = audioContext.createMediaStreamSource(microphoneStream);
-      audioProcessor = audioContext.createScriptProcessor(4096, 1, 1);
-      audioSink = audioContext.createGain();
-      audioSink.gain.value = 0;
-      audioProcessor.onaudioprocess = event => {
-        if (generation !== recognitionGeneration || !playing) return;
-        const converted = resampleTo16Khz(event.inputBuffer.getChannelData(0), audioContext.sampleRate);
-        for (let index = 0; index < converted.length; index += 1) offlineSamples.push(converted[index]);
-        const maxBuffered = OFFLINE_SAMPLE_RATE * 11;
-        if (offlineSamples.length > maxBuffered) offlineSamples = offlineSamples.slice(-Math.round(OFFLINE_SAMPLE_RATE * OFFLINE_WINDOW_SECONDS));
-        void processOfflineWindow(generation);
-      };
-      audioSource.connect(audioProcessor);
-      audioProcessor.connect(audioSink);
-      audioSink.connect(audioContext.destination);
-      setRecognitionRuntime('active');
-      setEngineStatus('listening', 'engineListening');
-      return true;
-    } catch (error) {
-      console.error('[Teleprompter] recognition start failed:', error);
-      await stopOfflineRecognition();
-      const message = String(error?.message || error || '');
-      if (/model-not-installed/i.test(message)) {
-        // The model vanished or was never installed: surface the dependency
-        // gate and resume following automatically once it is ready.
-        setRecognitionRuntime('fallback');
-        setEngineStatus('idle', 'engineNeedsModel');
-        void ensureOfflineModelThen(() => {
-          if (playing && preferences.voiceFollow && !disposed) void startRecognition();
-        });
-        return false;
-      }
-      const denied = /notallowed|permission|denied|audio-capture/i.test(`${error?.name || ''} ${message}`);
-      setRecognitionRuntime('fallback');
-      setEngineStatus('error', denied ? 'enginePermissionDenied' : 'engineScrollFallback');
-      notify(copy(denied ? 'microphoneDenied' : 'recognitionFailed'));
-      return false;
-    }
-  }
-
-  async function stopRecognition({ updateStatus = true } = {}) {
-    recognitionGeneration += 1;
-    stopSystemRecognition();
-    await stopOfflineRecognition();
-    setRecognitionRuntime('idle');
-    if (updateStatus) {
-      if (!preferences.voiceFollow) setEngineStatus('idle', 'engineIdle');
-      else setEngineStatus('idle', 'enginePaused');
-    }
-  }
-
-  async function ensureOfflineModelThen(callback) {
-    if (typeof requestOfflineModel !== 'function') return false;
-    return await requestOfflineModel(callback);
-  }
-
-  async function startRecognition() {
-    await stopRecognition({ updateStatus: false });
-    if (!playing || !preferences.voiceFollow) return;
-    const generation = ++recognitionGeneration;
-    setRecognitionRuntime('starting');
-    const beginOffline = async () => {
-      if (generation !== recognitionGeneration || !playing || !preferences.voiceFollow) return;
-      await startOfflineRecognition(generation);
-    };
-    const beginOfflineWithGate = async () => {
-      const ready = await ensureOfflineModelThen(beginOffline);
-      if (ready) await beginOffline();
-      else if (generation === recognitionGeneration) {
-        setRecognitionRuntime('fallback');
-        setEngineStatus('idle', 'engineNeedsModel');
-      }
-    };
-    const systemFallback = async () => {
-      if (isTauri) await beginOfflineWithGate();
-      else useScrollFallback();
-    };
-    const shouldUseSystem = preferences.engine === 'system' || (!isTauri && preferences.engine === 'auto');
-    if (shouldUseSystem) {
-      if (!startSystemRecognition(generation, systemFallback)) await systemFallback();
-      return;
-    }
-    await beginOfflineWithGate();
-  }
-
   function startPlayback() {
     if (playing || !script.sentences.length) return;
     playing = true;
@@ -1048,7 +738,7 @@ export function initTeleprompterTool({
     animationFrame = requestAnimationFrame(animationStep);
     if (preferences.voiceFollow) {
       setRecognitionRuntime('starting');
-      void startRecognition();
+      void recognitionController?.start();
     }
   }
 
@@ -1057,7 +747,7 @@ export function initTeleprompterTool({
     playing = false;
     stopAnimation();
     commitTransformScroll();
-    void stopRecognition();
+    void recognitionController?.stop();
     renderPlaybackState();
     resumeBackgroundMotion();
   }
@@ -1113,13 +803,18 @@ export function initTeleprompterTool({
     layoutTimer = window.setTimeout(() => scrollSentenceToFocus(currentIndex, 'auto'), 80);
   }
 
+  async function ensureOfflineModelThen(callback) {
+    if (typeof requestOfflineModel !== 'function') return false;
+    return await requestOfflineModel(callback);
+  }
+
   async function chooseEngine(value) {
     preferences.engine = ['auto', 'system', 'offline'].includes(value) ? value : (isTauri ? 'offline' : 'auto');
     persistPreferences();
     updateScreenStyle();
     const shouldRestart = playing && preferences.voiceFollow;
     if (shouldRestart) {
-      await stopRecognition({ updateStatus: false });
+      await recognitionController?.stop({ updateStatus: false });
       if (!playing || !preferences.voiceFollow) return;
       setRecognitionRuntime('starting');
     }
@@ -1127,18 +822,18 @@ export function initTeleprompterTool({
       setEngineStatus('idle', 'engineChecking');
       const ready = await ensureOfflineModelThen(() => {
         setEngineStatus('idle', 'engineReady');
-        if (playing && preferences.voiceFollow) void startRecognition();
+        if (playing && preferences.voiceFollow) void recognitionController?.start();
       });
       if (ready) {
         setEngineStatus('idle', 'engineReady');
-        if (playing && preferences.voiceFollow) void startRecognition();
+        if (playing && preferences.voiceFollow) void recognitionController?.start();
       } else if (shouldRestart) {
         setRecognitionRuntime('fallback');
         setEngineStatus('idle', 'engineNeedsModel');
       }
     } else {
       setEngineStatus('idle', 'engineReady');
-      if (playing && preferences.voiceFollow) void startRecognition();
+      if (playing && preferences.voiceFollow) void recognitionController?.start();
     }
   }
 
@@ -1149,8 +844,8 @@ export function initTeleprompterTool({
     // Leaving transform mode mid-play must land the offset before the native
     // smooth scrolls used by voice following take over.
     if (playing && !isTransformScrollActive()) commitTransformScroll();
-    if (!preferences.voiceFollow) await stopRecognition();
-    else if (playing) await startRecognition();
+    if (!preferences.voiceFollow) await recognitionController?.stop();
+    else if (playing) await recognitionController?.start();
     else setEngineStatus('idle', 'engineReady');
   }
 
@@ -1271,7 +966,7 @@ export function initTeleprompterTool({
     overlay.classList.remove('visible');
     customSelects.forEach(control => control.close());
     pausePlayback();
-    void stopRecognition();
+    void recognitionController?.stop();
     focusMode = false;
     overlay.classList.remove('is-focus', 'is-running', 'drag-over');
     overlay.classList.add('is-paused');
@@ -1427,7 +1122,7 @@ export function initTeleprompterTool({
     languageUnsubscribe = () => {};
     stopNativeDragListener();
     stopAnimation();
-    void stopRecognition();
+    void recognitionController?.dispose();
     overlay.replaceChildren();
   }
 

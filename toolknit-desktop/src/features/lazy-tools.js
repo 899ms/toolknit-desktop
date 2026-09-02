@@ -84,6 +84,26 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./image-crop/tool.js'),
     init: 'initImageCropTool'
   }),
+  'hardware-overview': Object.freeze({
+    overlayId: 'hardwareOverviewOverlay',
+    load: () => import('./hardware-inspector/tool.js'),
+    init: 'initHardwareOverviewTool'
+  }),
+  'hardware-mainboard': Object.freeze({
+    overlayId: 'hardwareMainboardOverlay',
+    load: () => import('./hardware-inspector/tool.js'),
+    init: 'initHardwareMainboardTool'
+  }),
+  'hardware-storage': Object.freeze({
+    overlayId: 'hardwareStorageOverlay',
+    load: () => import('./hardware-inspector/tool.js'),
+    init: 'initHardwareStorageTool'
+  }),
+  'hardware-network-devices': Object.freeze({
+    overlayId: 'hardwareNetworkDevicesOverlay',
+    load: () => import('./hardware-inspector/tool.js'),
+    init: 'initHardwareNetworkDevicesTool'
+  }),
   'color-space-compare': Object.freeze({
     overlayId: 'colorSpaceCompareOverlay',
     load: () => import('./color-space-compare/tool.js'),

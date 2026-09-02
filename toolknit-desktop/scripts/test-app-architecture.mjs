@@ -195,6 +195,15 @@ assert.equal(LAZY_TOOL_SPECS['markdown-editor']?.overlayId, 'markdownEditorOverl
 assert.match(LAZY_TOOL_SPECS['markdown-editor'].load.toString(), /\.\/markdown-editor\/tool\.js/, 'Markdown Editor must load its feature entry directly');
 assert.equal(LAZY_TOOL_SPECS['image-crop']?.overlayId, 'imageCropOverlay', 'Image Crop must be lazy-registered');
 assert.match(LAZY_TOOL_SPECS['image-crop'].load.toString(), /\.\/image-crop\/tool\.js/, 'Image Crop must load its feature entry directly');
+for (const [toolId, overlayId] of Object.entries({
+  'hardware-overview': 'hardwareOverviewOverlay',
+  'hardware-mainboard': 'hardwareMainboardOverlay',
+  'hardware-storage': 'hardwareStorageOverlay',
+  'hardware-network-devices': 'hardwareNetworkDevicesOverlay'
+})) {
+  assert.equal(LAZY_TOOL_SPECS[toolId]?.overlayId, overlayId, `${toolId} must be lazy-registered`);
+  assert.match(LAZY_TOOL_SPECS[toolId].load.toString(), /\.\/hardware-inspector\/tool\.js/, `${toolId} must load the hardware feature entry`);
+}
 assert.match(mainSource, /LAZY_TOOL_SPECS/, 'main must use the shared lazy registry');
 assert.doesNotMatch(mainSource, /from ['"]\.\/pdf-editor-ui\.js['"]/, 'PDF Editor must not be statically imported by main');
 assert.match(mainSource, /pdfWorkerUrl,/, 'lazy features must receive the PDF worker URL through context');

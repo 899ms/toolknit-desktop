@@ -53,6 +53,7 @@
     "test:image-batch": "node scripts/test-image-batch-core.mjs",
     "test:image-native": "cargo test --manifest-path src-tauri/Cargo.toml image_conversion_tests --lib",
     "test:image-crop": "node scripts/test-image-crop-core.mjs && node scripts/test-image-crop-tool-contract.mjs && cargo test --manifest-path src-tauri/Cargo.toml image_crop_tests --lib",
+    "test:hardware-inspector": "node scripts/test-hardware-inspector-contract.mjs",
     "test:markdown-editor": "node scripts/test-markdown-editor-core.mjs && node scripts/test-markdown-editor-contract.mjs",
     "test:image-color-replace": "node scripts/test-image-color-replace-core.mjs && cargo test --manifest-path src-tauri/Cargo.toml image_color_replace_tests --lib",
     "test:crypto-tool": "node scripts/test-crypto-tool-core.mjs && cargo test --manifest-path src-tauri/Cargo.toml crypto_tool_tests --lib",

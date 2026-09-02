@@ -55,11 +55,12 @@ Last updated: 2026-09-02
 | `1b02043` | Migrated Image Color Replace into a feature-owned module boundary |
 | `ec6ea9d` | Migrated Excel To PDF into a feature-owned module boundary |
 | `b67cff3` | Migrated Markdown Editor into a feature-owned module boundary |
+| `fec2595` | Migrated Image Crop into a feature-owned module boundary |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 33 of 65 desktop tools have completed migration batches (**50.8%** coverage).
+- 37 of 65 desktop tools have completed migration batches (**56.9%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -439,6 +440,36 @@ Image Crop emits a 27.67 kB JavaScript chunk and 9.64 kB CSS chunk; main
 JavaScript is now 1,820.36 kB and main CSS is 551.67 kB. Only the pre-existing
 crypto externalization and large-chunk warnings remain.
 
+Hardware Overview, Mainboard and Firmware, Storage and Health, and Network and
+Devices now live under `src/features/hardware-inspector/`. The four read-only
+tools share a snapshot controller, a 56-line pure rendering helper,
+one composition entry and feature-owned static templates while retaining
+separate render definitions. Their full HTML and 771 lines of legacy runtime
+code no longer live in `index.html` and `main.js`. Every open session carries a
+revision guard, so results from a closed or superseded hardware query cannot
+write into a later session; loading and error states use safe DOM nodes, and
+runtime hardware values remain escaped before entering result markup.
+
+Browser regression at the normal desktop size and 680 by 900 covered first
+lazy open, refresh, close, repeated reopen, one-instance DOM ownership and the
+browser-only fallback for all four tools. The narrow layout switches to one
+column with no horizontal overflow, and the console reported no warning or
+error. The focused contract, architecture gate, 658 security checks and
+production build pass. The hardware family emits an approximately 39.48 kB
+JavaScript chunk; main JavaScript is now 1,797.57 kB and main CSS remains
+551.67 kB. Hardware CSS is split into a 922-line base and 235-line stable
+override layer, but both remain temporarily global because CPU and Memory,
+GPU and Displays, and Power and Sensors still consume the shared rules.
+`main.js` likewise retains a temporary import of the shared hardware rendering
+helper. The next hardware batch must remove both compatibility dependencies
+only after those three pages migrate.
+
+The migrated controller also fixes a legacy language-switch defect: changing
+language while a browser-only or native read-error state was visible replaced
+the error with a permanent scanning label. Explicit loading, desktop-only,
+data and error view states now redraw their own localized content, with an
+executable browser-fallback regression test.
+
 - A copy-feedback timer could restore a pre-switch language label after global
   translation completed. Language changes now cancel that stale timer.
 - AI polish and translation previously retained native drag listeners for the
@@ -628,16 +659,17 @@ crypto externalization and large-chunk warnings remain.
 
 ## Next batches
 
-1. Continue PDF Editor document/session coordination ownership, then migrate
-   the next coherent legacy candidate by lifecycle risk, dependency weight and
-   compatibility scope.
+1. Migrate CPU and Memory, GPU and Displays, and Power and Sensors into the
+   hardware feature family, then remove the temporary global hardware CSS and
+   `main.js` rendering-helper import so the complete family loads on demand.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed
    browser result.
 3. Audit the remaining text-document consumers before deciding whether the
    compatibility reader can be removed.
-4. Continue through remaining frontend families and reduce legacy entry files.
+4. Continue PDF Editor document/session coordination ownership and the
+   remaining frontend families by lifecycle risk and dependency weight.
 5. Split Rust ownership, then validate CLI/MCP packaging and final Windows
    behavior as defined in `V3_ARCHITECTURE_PLAN.md`.
 

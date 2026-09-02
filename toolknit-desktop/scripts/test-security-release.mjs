@@ -219,6 +219,17 @@ check(imageCropControllerSource.includes("invoke('crop_image'"), 'Image Crop mus
 check(!imageCropControllerSource.includes("from '@tauri-apps/"), 'Image Crop must use the platform Tauri boundary');
 check(imageCropToolSource.includes('imageCropTemplate()'), 'Image Crop must materialize only its trusted static template');
 
+const hardwareControllerSource = read('toolknit-desktop/src/features/hardware-inspector/controller.js');
+const hardwareToolSource = read('toolknit-desktop/src/features/hardware-inspector/tool.js');
+const hardwareRendererSource = [
+  'overview.js', 'mainboard.js', 'storage.js', 'network-devices.js'
+].map(file => read(`toolknit-desktop/src/features/hardware-inspector/${file}`)).join('\n');
+check(hardwareControllerSource.includes('isCurrent(operation)'), 'Hardware inspection results must reject stale sessions');
+check(hardwareControllerSource.includes('content.replaceChildren(wrapper)'), 'Hardware loading and error data must use safe DOM nodes');
+check(!hardwareControllerSource.includes("from '@tauri-apps/"), 'Hardware inspection must use the platform Tauri boundary');
+check(hardwareToolSource.includes('controller.dispose()'), 'Hardware inspection must dispose feature lifecycle state');
+check(hardwareRendererSource.includes('escapeHtml'), 'Hardware inspection result markup must escape runtime values');
+
 const mcpSource = read('toolknit-desktop/cli/lib/mcp-server.mjs');
 for (const required of [
   'const MAX_MCP_MESSAGE_BYTES = 8 * 1024 * 1024',

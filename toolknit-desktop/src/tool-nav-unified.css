@@ -8,6 +8,25 @@
   initial-value: 0deg;
 }
 
+/*
+ * Lazy tool shells are present in the static HTML so their launchers can keep
+ * stable DOM contracts. Their feature stylesheets arrive only after the first
+ * open, so the shared stylesheet must own the initial layout gate as well.
+ * Without this rule an unstyled shell falls back to a normal block/flex box
+ * and its tool header can appear above the home surface during first paint.
+ */
+:is(.feature-tool-overlay, .audio-clip-overlay, .ai-doc-edit-overlay):not(.visible) {
+  display: none !important;
+}
+
+:is(.audio-clip-overlay, .ai-doc-edit-overlay).visible {
+  display: flex !important;
+}
+
+.ai-doc-edit-overlay.ai-doc-edit-v2.visible {
+  display: grid !important;
+}
+
 :is(.settings-v2-back, .pdf-merge-v2-back, .tool-page-v2-back, .ppt-draft-editor-back) {
   --tool-back-static-outline: rgba(255, 255, 255, .34);
   position: relative;

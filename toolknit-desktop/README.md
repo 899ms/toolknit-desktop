@@ -226,7 +226,7 @@ npm ci
 npx tauri dev
 ```
 
-要求：Windows 10/11、Node.js `20.12.0` 或更高版本；从源码构建原生桌面端还需要 Rust stable 工具链。
+要求：Windows 10 1803（内部版本 17134）或更高版本 / Windows 11、Node.js `20.12.0` 或更高版本；从源码构建原生桌面端还需要 Rust stable 工具链。Windows 7、8 和 8.1，以及 1803 之前的 Windows 10 不受支持，WPS/Office 也不能替代应用启动所需的 WebView2 Runtime。
 
 ## CLI + AI Agent
 

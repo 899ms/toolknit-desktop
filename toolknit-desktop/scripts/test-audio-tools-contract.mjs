@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [main, html, lazyTools, entry, bpm, clip, bpmStyles, clipStyles, appStyles] = await Promise.all([
+const [main, html, lazyTools, entry, bpm, clip, bpmStyles, clipStyles, appStyles, navStyles] = await Promise.all([
   read('src/main.js'),
   read('index.html'),
   read('src/features/lazy-tools.js'),
@@ -12,7 +12,8 @@ const [main, html, lazyTools, entry, bpm, clip, bpmStyles, clipStyles, appStyles
   read('src/features/audio-tools/clip-controller.js'),
   read('src/features/audio-tools/bpm.css'),
   read('src/features/audio-tools/audio-clip.css'),
-  read('src/styles.css')
+  read('src/styles.css'),
+  read('src/tool-nav-unified.css')
 ]);
 
 for (const [toolId, overlayId, initializer] of [
@@ -43,6 +44,8 @@ assert.doesNotMatch(bpmStyles, /\.audio-clip-(?:overlay|v2|waveform|selection|ha
 assert.match(clipStyles, /\.audio-clip-overlay/);
 assert.match(clipStyles, /\.audio-clip-v2/);
 assert.doesNotMatch(clipStyles, /\.bpm-(?:detect|demo|result)/);
+assert.match(navStyles, /\.feature-tool-overlay, \.audio-clip-overlay, \.ai-doc-edit-overlay\):not\(\.visible\)/, 'lazy shells must be hidden before feature CSS loads');
+assert.match(navStyles, /\.ai-doc-edit-overlay\.ai-doc-edit-v2\.visible\s*\{[\s\S]*?display:\s*grid\s*!important/, 'AI Document editor must restore its grid layout when opened');
 
 for (const source of [bpm, clip]) {
   assert.match(source, /createLifecycleScope\(/);

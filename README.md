@@ -384,6 +384,8 @@ ToolKnit 2.3 采用轻量桌面容器与本地文件引擎组合，网页端、�
 
 **代码签名状态：** 2.3.1 暂未进行 Authenticode 代码签名，因此 Windows 可能显示“未知发布者”或 SmartScreen 提示。确认下载地址和 SHA-256 后再继续安装；后续签名版本将遵循[代码签名政策](CODE_SIGNING_POLICY.md)。
 
+**系统要求：** 桌面端需要 Windows 10 1803（内部版本 17134）或更高版本，或 Windows 11，并依赖 Microsoft Edge WebView2 Runtime。安装包内置 WebView2 引导程序，首次安装仍需要联网下载运行时；WPS、Office 或浏览器本身不能替代 WebView2。Windows 7、8 和 8.1，以及 1803 之前的 Windows 10 不受支持，安装器会在复制文件前直接提示原因。
+
 ### 从源码运行
 
 ```powershell

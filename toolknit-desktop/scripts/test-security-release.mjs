@@ -69,6 +69,14 @@ const releaseWorkflow = read('.github/workflows/release.yml');
 check(!releaseWorkflow.includes('$tag = "${{ github.ref_name }}"'), 'Release tags must not be interpolated directly into PowerShell');
 check(releaseWorkflow.includes('RELEASE_TAG: ${{ github.ref_name }}') && releaseWorkflow.includes('$tag = $env:RELEASE_TAG'), 'Release tags must enter PowerShell through an environment variable');
 
+const installerTemplate = read('toolknit-desktop/src-tauri/windows/installer.nsi');
+check(installerTemplate.includes('!include WinVer.nsh'), 'NSIS installer must load Windows version checks');
+check(installerTemplate.includes('${IfNot} ${AtLeastWin10}'), 'NSIS installer must reject unsupported pre-Windows 10 systems');
+check(installerTemplate.includes('${VersionCompare} "17134" "$0" $1'), 'NSIS installer must reject Windows 10 builds older than 1803');
+check(installerTemplate.includes("ExecWait '\"$6\" ${WEBVIEW2INSTALLERARGS} /install' $1"), 'WebView2 bootstrapper path must be quoted for profiles containing spaces');
+check(installerTemplate.includes('${OrIf} $1 = 3010'), 'WebView2 reboot-required success must not be reported as an installation failure');
+check(installerTemplate.includes('$(webview2AbortError)$\\n$\\n$(webview2InstallError)'), 'WebView2 failures must expose the bootstrapper exit code to users');
+
 const trackedFiles = execFileSync('git', ['ls-files', '-z'], { cwd: repositoryRoot })
   .toString('utf8')
   .split('\0')

@@ -1,8 +1,8 @@
 # ToolKnit Desktop V3 Architecture
 
 This document describes the architecture that currently exists on the V3
-branch. It is updated as migration batches land; planned but unimplemented
-boundaries remain in `V3_ARCHITECTURE_PLAN.md`.
+branch. The target desktop-tool migration is complete; the companion plan is
+kept as the historical execution record and final acceptance checklist.
 
 ## Current foundations
 
@@ -95,17 +95,16 @@ tool entry so it becomes a separate production chunk.
 
 ## Current snapshot
 
-- 56 of 65 desktop tools are migrated (**86.2%**); 12 categories, 127 Tauri
-  command implementations, 46 MCP tools and the existing CLI contracts remain
-  unchanged.
-- The current source footprint is 10,796 lines in `src/main.js`, 20,802 lines
-  in `src/styles.css` and 8,002 lines in `index.html`.
-- The production entry is approximately 1,350.13 kB JavaScript and 441.86 kB
-  CSS. PPT image extraction, PPT AI Draft/PPTX, Image Stitch, Audio Extract,
-  Audio Convert and the Video Convert/Frame/GIF family are lazy; JSZip, the AI Draft editor dependencies,
-  PDF.js Image Stitch import code and FFmpeg conversion/extraction dependencies
-  load only when their tools open. Video Convert, Video Frame and Video GIF
-  share a 31.79 kB lazy JavaScript entry and 31.37 kB feature CSS entry.
+- All 65 desktop tools are migrated (**100%**) across 12 categories; 127 Tauri
+  command implementations, 126 unique command names, 46 MCP tools and the
+  existing CLI contracts remain unchanged.
+- The current source footprint is 5,796 lines in `src/main.js`, 15,942 lines
+  in `src/styles.css`, 8,001 lines in `index.html` and 18,335 lines in the
+  Rust source tree's `lib.rs` entry.
+- The production entry is approximately 1,240.91 kB JavaScript and 344.07 kB
+  CSS. Heavy PDF, editor, AI, chart, media, PPT and picker dependencies are
+  emitted as lazy chunks and loaded only when their tools open. The remaining
+  chunks over 500 kB are known non-blocking warnings.
 
 ## Migrated ownership
 
@@ -191,14 +190,14 @@ tool entry so it becomes a separate production chunk.
   thumbnail queue/observer, drag sorting, cancellation identity, export
   assembly, document loading/cache/destruction, text-item grouping, visual text
   boxes, zoom scheduling, content editing, page selection, page mutations, file
-  sessions, view state, snapshot/restore state and canvas release helpers have
-  feature-owned boundaries.
-  The legacy UI orchestrator remains a compatibility owner for the remaining
-  document/session wiring while later batches continue reducing it.
-- Teleprompter recognition is now an explicit feature-owned boundary. System
-  and offline recognition resources are released through one controller, while
-  the legacy teleprompter entry retains script rendering and playback UI until
-  later batches split those responsibilities.
+  sessions, view state, snapshot/restore state, canvas release helpers, DOM
+  events and native drag/drop have feature-owned boundaries. The historical UI
+  orchestrator is a compatibility forward only.
+- Teleprompter recognition and presentation are complete feature-owned
+  boundaries. System and offline recognition resources, playback, sentence
+  matching, document loading, native drag/drop and close/reopen cleanup are
+  released through one lifecycle controller; historical root paths remain
+  compatibility forwards.
 - `src/features/ppt-images/` owns PPT image extraction as a complete lazy
   boundary. `template.js` builds the existing portal, `controller.js` owns the
   browser/Tauri input queue, native drop registration, JSZip loading, previews,
@@ -242,9 +241,10 @@ tool entry so it becomes a separate production chunk.
   preview media, timers, native `unlisten` callbacks and stale operation
   results while preserving the legacy DOM IDs and output-folder behavior.
 
-All other tool implementations remain legacy-owned until their batch is
-validated. Presence in the lazy registry alone must never be interpreted as
-proof that the overall migration is complete.
+Every desktop tool is now covered by a validated lazy feature boundary or a
+shared feature-family boundary. Historical root modules remain only where
+existing consumers need a compatibility forward; registry presence is backed
+by focused tests and the final release gate.
 
 ## Compatibility boundary
 

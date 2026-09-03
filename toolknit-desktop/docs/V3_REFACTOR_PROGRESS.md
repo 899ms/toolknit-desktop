@@ -71,7 +71,8 @@ Last updated: 2026-09-03
 | `4037c83` | Migrated Teleprompter template and runtime into a feature-owned lazy boundary |
 | `a20a8af` | Migrated Hash & Crypto into a feature-owned lazy boundary with platform adapters |
 | `0f1d579` | Migrated Transcription into a feature-owned lazy boundary with lifecycle-safe native drag/drop |
-| `bce0f89` | Moved PDF Editor orchestration into its feature boundary and platform adapters |
+| `d9926ed` | Moved PDF Editor orchestration into its feature boundary and platform adapters |
+| `7543592` | Added clean-worktree CLI tarball install and MCP smoke verification |
 
 ## Current verified counts
 
@@ -84,12 +85,12 @@ Last updated: 2026-09-03
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security | After PDF Enhance | After PDF Compress | After PDF Editor | After PPT workflows | After PPT render | After PPT images | After PPT Draft | After Image Stitch | After Audio Extract | After Audio Convert | After Video Tools | After Audio Tools | After Cleanup Tools | After Color Extractor |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security | After PDF Enhance | After PDF Compress | After PDF Editor | After PPT workflows | After PPT render | After PPT images | After PPT Draft | After Image Stitch | After Audio Extract | After Audio Convert | After Video Tools | After Audio Tools | After Cleanup Tools | After Color Extractor | Final V3.0 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 | 21,708 | 21,250 | 21,241 | 16,184 | 15,709 | 15,019 | 13,538 | 13,000 | 12,511 | 12,084 | 10,796 | 9,176 | 7,651 | 6,211 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 | 27,059 | 24,975 | 24,644 | 24,644 | 24,093 | 22,772 | 21,962 | 21,408 | 21,349 | 20,802 | 18,627 | 17,205 | 15,941 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB | 2,288.63 kB | 1,839.13 kB | 1,603.72 kB | 1,591.36 kB | 1,531.34 kB | 1,423.95 kB | 1,405.69 kB | 1,395.57 kB | 1,385.48 kB | 1,350.13 kB | 1,307.20 kB | 1,273.59 kB | 1,252.00 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB | 597.52 kB | 525.34 kB | 520.27 kB | 520.27 kB | 499.11 kB | 487.68 kB | 465.07 kB | 455.39 kB | 454.30 kB | 441.86 kB | 406.98 kB | 383.98 kB | 362.81 kB |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 | 21,708 | 21,250 | 21,241 | 16,184 | 15,709 | 15,019 | 13,538 | 13,000 | 12,511 | 12,084 | 10,796 | 9,176 | 7,651 | 6,211 | 5,796 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 | 27,059 | 24,975 | 24,644 | 24,644 | 24,093 | 22,772 | 21,962 | 21,408 | 21,349 | 20,802 | 18,627 | 17,205 | 15,941 | 15,942 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB | 2,288.63 kB | 1,839.13 kB | 1,603.72 kB | 1,591.36 kB | 1,531.34 kB | 1,423.95 kB | 1,405.69 kB | 1,395.57 kB | 1,385.48 kB | 1,350.13 kB | 1,307.20 kB | 1,273.59 kB | 1,252.00 kB | 1,240.91 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB | 597.52 kB | 525.34 kB | 520.27 kB | 520.27 kB | 499.11 kB | 487.68 kB | 465.07 kB | 455.39 kB | 454.30 kB | 441.86 kB | 406.98 kB | 383.98 kB | 362.81 kB | 344.07 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
@@ -1032,17 +1033,28 @@ directly at the feature controller, while existing consumers retain the legacy
 path without reintroducing eager loading. This completes the verified desktop
 tool migration at 65 of 65 tools (**100%**).
 
-## Next batches
+## Final verification
 
-1. Run the final architecture, security, CLI/MCP, Rust and packaging gates.
-2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
-   Windows WebView build; browser pointer automation did not reproduce a queue
-   move, so this remains an explicit manual parity check rather than a claimed
-   browser result.
-3. Audit the remaining text-document consumers before deciding whether the
-   compatibility reader can be removed.
-4. Validate CLI/MCP packaging and final Windows behavior as defined in
-   `V3_ARCHITECTURE_PLAN.md`.
+- `npm run test:release` passed all 87 registered npm gates, including the
+  architecture, security, every migrated-tool contract, CLI/MCP and production
+  build checks. The security gate reported 791 passing assertions.
+- `cargo test --manifest-path src-tauri/Cargo.toml --lib` passed 92 tests with
+  one intentional LibreOffice-dependent test ignored and zero failures.
+- `npm run test:cli-clean-worktree` created a detached clean Git worktree,
+  staged all CLI resources from tracked sources, packed and installed
+  `@toolknit/cli@2.3.1`, then invoked the CLI and MCP server. The installed MCP
+  server listed all 46 tools and the temporary worktree was removed afterward.
+- `npm run tauri build -- --ci` produced the unsigned NSIS installer at
+  `src-tauri/target/release/bundle/nsis/toolknit-desktop_2.3.1_x64-setup.exe`.
+  The installer is 50,386,777 bytes and its SHA-256 is
+  `734B6220254045BB816FDB9BF5EA8BB1E8BB3F6E24EF933531F6B06E525D4DFB`.
+  The bundled application is 46,417,408 bytes with SHA-256
+  `41B03F4422DCE93509347F7AADF368C8F12DCA384E47CCBB2597F306DFD3B381`.
+
+The remaining PDF Merge pointer-sort/native-drop parity check is a manual
+Windows WebView item, not an unverified automated claim. It does not block the
+local architecture and release gates, and no source or public contract change
+was made for it in this refactor batch.
 
 Known non-blocking warnings remain the browser externalization notice for the
 `crypto` import inside `pdf-lib-plus-encrypt` and chunks larger than 500 kB.

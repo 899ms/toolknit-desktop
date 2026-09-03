@@ -1,8 +1,9 @@
 # ToolKnit Desktop V3 Architecture Plan
 
-This plan complements `v3-architecture-baseline.md`. The migration preserves
-the V2.3.1 product and public contracts while replacing monolithic ownership
-with independently testable, lazy-loaded feature boundaries.
+This plan complements `v3-architecture-baseline.md`. The completed V3.0
+migration preserved the V2.3.1 product and public contracts while replacing
+monolithic ownership with independently testable, lazy-loaded feature
+boundaries. The phase descriptions below are retained as the execution record.
 
 ## Invariants
 
@@ -41,48 +42,30 @@ through the lifecycle scope and returns `open`, `close` and `dispose` methods.
 
 ## Current execution checkpoint
 
-The foundation and the first reversible frontend batches are complete:
-developer toolbox, password generator, timestamp, calculator family, typing
-test, text statistics, text formatting, AI polish, AI translation and AI
-Document. AI Table is now migrated with isolated editor, chart, export, PDF,
-request and CSS ownership; shared AI workbench rules and serialized requests
-have explicit reusable owners. PDF Rotate, PDF Split, PDF Merge, PDF To Image,
-PDF Page Number, PDF Crop and the PDF Encrypt/Decrypt security family now
-complete seven legacy PDF workspace migrations, including PDF.js task cleanup,
-generated control ownership, native drag/drop release, sortable queue ownership,
-PDF/ZIP export cancellation, stale document/result guards, password-layer
-sequencing and compact-window workspace protection. PDF Enhance is now the
-eighth migrated PDF workspace, with its shared enhancement engine, PDF.js
-rendering, atomic native writer, browser download URLs and compact success
-dialog owned by the lazy feature. PDF Compress is also migrated, and PDF
-Editor now owns bounded history, focus, thumbnails, rendering cancellation,
-export, document loading/cache/destruction, pure text-layout calculations,
-content editing, page selection, page mutations, file sessions and visible
-view state, operation identity and file-access runtime outside its remaining
-compatibility orchestrator. Its DOM and native event bindings now also live in
-the feature event controller, while derived control state lives in a dedicated
-controls controller. The
-native AI provider command is the first
-extracted Rust boundary; the broader native split remains pending. The next
-frontend batch must continue the remaining PDF Editor document/session wiring
-or be selected from the remaining ownership inventory by cohesion and risk,
-then pass the same
-contract, lifecycle, browser and release gates. The shared document reader,
-main-entry PDF worker URL, PDF enhancement core/engine and PDF
-encryption/decryption core modules remain compatibility boundaries until all
-consumers are audited; broader native and CLI/MCP restructuring remains
-later-phase work.
+All 65 desktop tools are now migrated into validated lazy feature boundaries or
+shared feature-family boundaries. The app, platform, shared, core, feature and
+style layers are in place; PDF Editor is a composition root over independently
+owned document, preview, page, component, editing, export, event and lifecycle
+modules. The native AI provider boundary, security checks, CLI/MCP staging and
+clean-worktree package verification are complete. Compatibility forwards remain
+only for existing import paths, while the public DOM, Tauri, storage, CLI and
+MCP contracts are unchanged. The final release gate, full Rust suite, Vite
+production build and unsigned Tauri bundle all pass.
 
 ## Batch gate
 
 Each batch requires focused core and contract tests, architecture checks, a
 production build, real open/close/reopen behavior, console inspection,
 `git diff --check`, diff review and one local semantic commit. Full release
-tests run after every tool-family batch and at final delivery.
+tests run at shared/platform/security boundaries and at final delivery; simple
+tool batches use their focused gates unless evidence expands the impact area.
 
 ## Completion rule
 
-The migration is not complete until all feature families, native boundaries
-and CLI/MCP packaging have been audited, all final gates pass, the initial
-bundle is materially smaller and the final report accounts for every remaining
-warning and manual Windows check.
+The completion rule is satisfied on the local `codex/v3.0` branch: all feature
+families and native boundaries are audited, the CLI/MCP package is installed and
+called from a clean temporary Git worktree, all final gates pass, the initial
+bundle is materially smaller, and the remaining build warnings plus manual
+Windows checks are explicitly recorded in `V3_REFACTOR_PROGRESS.md`. No remote
+publish, version change, signature or branch deletion is part of this local
+checkpoint.

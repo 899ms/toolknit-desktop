@@ -1,6 +1,6 @@
 # ToolKnit Desktop V3 Refactor Progress
 
-Last updated: 2026-09-03
+Last updated: 2026-09-04
 
 ## Local checkpoints
 
@@ -73,6 +73,11 @@ Last updated: 2026-09-03
 | `0f1d579` | Migrated Transcription into a feature-owned lazy boundary with lifecycle-safe native drag/drop |
 | `d9926ed` | Moved PDF Editor orchestration into its feature boundary and platform adapters |
 | `7543592` | Added clean-worktree CLI tarball install and MCP smoke verification |
+| `5b2d65a` | Finalized lazy template mounting boundaries and lifecycle contract coverage |
+| `87d33df` | Split application services into AI settings, external links and home explorer runtimes |
+| `3ff273e` | Isolated local font settings and FontFace lifecycle |
+| `ff9c4d1` | Annotated intentional native compatibility seams to keep Cargo output clean |
+| `77426f2` | Updated release-version contract for the lazy feedback template |
 
 ## Current verified counts
 
@@ -82,6 +87,14 @@ Last updated: 2026-09-03
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
 - No duplicate IDs in the static application HTML.
+
+The current V3 branch also verifies 95 Rust tests (94 passed, one intentional
+LibreOffice-dependent test ignored), 1,312 HTML ids with no duplicates, and a
+2,632-line application runtime. The homepage, AI settings, external-link and
+font settings domains now have independent lifecycle-owned modules with
+focused runtime contract coverage. Help opened from Settings closes the
+Settings modal first, and homepage tool lookup no longer depends on
+`CSS.escape`, preserving compatibility with older supported WebView2 builds.
 
 ## Current source and bundle trend
 

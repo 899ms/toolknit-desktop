@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+// Kept as a small compatibility helper for command-level consumers and tests.
+#[allow(dead_code)]
 pub fn output_file(root: &Path, name: &str) -> Result<PathBuf, String> {
     if name.is_empty() || name.chars().any(|character| character == '/' || character == '\\') || name == "." || name == ".." {
         return Err("Invalid output filename".to_string());

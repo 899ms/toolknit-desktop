@@ -77,7 +77,7 @@ feature 不得导入 `main.js`，不得直接构造 Tauri API；所有 native �
 - 重复打开共享实例不会重复挂载模板或初始化；关闭工具会失效旧 revision，阻止过期异步结果写入新工具。
 - feature 生命周期统一回收事件、计时器、AbortController、原生 Tauri listener、PDF.js 任务和 object URL。
 - 当前生产构建主入口约 1,308.94 kB JavaScript、344.52 kB CSS；PDF、编辑器、AI、图表、PPT 和媒体依赖继续以懒加载 chunk 输出。
-- 已知非阻断警告：`pdf-lib-plus-encrypt` 的浏览器 `crypto` externalization，以及若干超过 500 kB 的 chunk。它们已记录，暂不阻塞功能开发。
+- 已知非阻断提示：`pdf-lib-plus-encrypt` 的浏览器 `crypto` externalization、若干超过 500 kB 的 chunk，以及 Windows 链接器将导入库生成信息标记为 `linker_messages`。它们均不改变功能；前两项暂不阻塞开发，链接器提示属于工具链信息输出。
 
 ## 6. 验证结果
 
@@ -98,4 +98,3 @@ feature 不得导入 `main.js`，不得直接构造 Tauri API；所有 native �
 - `c737520`、`e962681`、`37be412`、`556860d`：同步进度、架构快照和注入修复。
 
 所有 checkpoint 仅存在本地 `codex/v3.0`，没有推送 GitHub、发布 npm、创建 Release 或修改版本号。
-

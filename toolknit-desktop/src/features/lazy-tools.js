@@ -231,7 +231,7 @@ export const LAZY_TOOL_SPECS = Object.freeze({
   }),
   'hash-crypto': Object.freeze({
     overlayId: 'cryptoToolOverlay',
-    load: () => import('../crypto-tool-ui.js'),
+    load: () => import('./crypto/tool.js'),
     init: 'initCryptoTool'
   }),
   'password-gen': Object.freeze({

@@ -1,0 +1,10 @@
+/* Hash & Crypto feature-owned state and responsive refinements. The shared
+   workbench shell stays in the global v2 layer; these rules only cover the
+   controls created when the lazy feature mounts. */
+.crypto-shell [data-crypto-warning][hidden] { display: none !important; }
+.crypto-shell [data-crypto-panel] [hidden] { display: none !important; }
+.crypto-shell [data-crypto-panel] textarea { field-sizing: content; }
+.crypto-shell [data-crypto-panel] .crypto-file-progress i { will-change: width; }
+@media (prefers-reduced-motion: reduce) {
+  .crypto-shell [data-crypto-panel] .crypto-file-progress i { transition: none; }
+}

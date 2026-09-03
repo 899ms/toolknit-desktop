@@ -57,7 +57,7 @@
     "test:hardware-inspector": "node scripts/test-hardware-inspector-contract.mjs",
     "test:markdown-editor": "node scripts/test-markdown-editor-core.mjs && node scripts/test-markdown-editor-contract.mjs",
     "test:image-color-replace": "node scripts/test-image-color-replace-core.mjs && cargo test --manifest-path src-tauri/Cargo.toml image_color_replace_tests --lib",
-    "test:crypto-tool": "node scripts/test-crypto-tool-core.mjs && cargo test --manifest-path src-tauri/Cargo.toml crypto_tool_tests --lib",
+    "test:crypto-tool": "node scripts/test-crypto-tool-core.mjs && node scripts/test-crypto-tool-contract.mjs && cargo test --manifest-path src-tauri/Cargo.toml crypto_tool_tests --lib",
     "test:developer-toolbox": "node scripts/test-developer-toolbox-core.mjs",
     "test:developer-toolbox-contract": "node scripts/test-developer-toolbox-contract.mjs",
     "test:icon-gen": "node scripts/test-icon-gen-core.mjs && node scripts/test-icon-gen-runtime.mjs",

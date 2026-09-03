@@ -64,6 +64,10 @@ const [
   excelToPdfCompatibilitySource,
   excelToPdfCompatibilityStyles,
   excelToPdfFeatureStyles,
+  cryptoControllerSource,
+  cryptoToolSource,
+  cryptoFeatureStyles,
+  cryptoCompatibilitySource,
   appStyles,
   finalToolStyles,
   ...sharedShellConsumers
@@ -109,11 +113,13 @@ const [
   readFile(new URL('../src/excel-to-pdf-ui.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/excel-to-pdf.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/excel-to-pdf/excel-to-pdf.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/crypto/controller.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/crypto/tool.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/crypto/crypto.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/crypto-tool-ui.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/tool-page-v2-final.css', import.meta.url), 'utf8'),
-  ...[
-    'crypto-tool-ui.js'
-  ].map(file => readFile(new URL(`../src/${file}`, import.meta.url), 'utf8'))
+  ...[]
 ]);
 
 assert.equal(readCompatibleResponse, readCoreResponse, 'the legacy bounded-response path must re-export the core implementation');
@@ -125,6 +131,13 @@ assert.equal(compatibleImageColorRgbToHex, featureImageColorRgbToHex, 'the legac
 assert.equal(compatibleMarkdownAction, featureMarkdownAction, 'the legacy Markdown core path must re-export the feature implementation');
 assert.equal(compatibleEncodeIco, featureEncodeIco, 'the legacy icon generator core path must re-export the feature implementation');
 assert.equal(compatibleToolTopbarMarkup, sharedToolTopbarMarkup, 'the legacy tool shell path must re-export the shared implementation');
+assert.match(cryptoControllerSource, /from ['"]\.\.\/\.\.\/shared\/tool-page-shell\.js['"]/, 'crypto must consume the shared tool shell');
+assert.match(cryptoControllerSource, /from ['"]\.\.\/\.\.\/platform\/tauri-runtime\.js['"]/, 'crypto must consume the platform boundary');
+assert.doesNotMatch(cryptoControllerSource, /from ['"]@tauri-apps\//, 'crypto must not bypass the platform boundary');
+assert.match(cryptoToolSource, /from ['"]\.\/controller\.js['"]/, 'crypto tool must delegate behavior to its controller');
+assert.match(cryptoToolSource, /import ['"]\.\/crypto\.css['"]/, 'crypto tool must own its lazy stylesheet');
+assert.match(cryptoCompatibilitySource, /from ['"]\.\/features\/crypto\/tool\.js['"]/, 'legacy crypto UI path must forward to the feature entry');
+assert.match(cryptoFeatureStyles, /data-crypto-panel/, 'crypto feature stylesheet must own dynamic panel state');
 assert.doesNotMatch(mainSource, /from ['"]@tauri-apps\/api\/(?:core|event)['"]/, 'main.js must use the platform boundary');
 assert.match(mainSource, /from ['"]\.\/platform\/tauri-runtime\.js['"]/, 'main.js must import the Tauri platform boundary');
 assert.match(platformSource, /from ['"]@tauri-apps\/api\/core['"]/, 'the platform boundary must own the Tauri core import');

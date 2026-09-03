@@ -68,12 +68,13 @@ Last updated: 2026-09-03
 | `823a926` | Migrated BPM Detect and Audio Clip into a shared lazy audio feature boundary |
 | `ba12dbd` | Migrated AI Large File Cleanup and C-Drive Cleanup into a shared lazy cleanup feature boundary |
 | `c0ce6a4` | Migrated Color Extractor and isolated the reusable screen-picker window lifecycle |
-| `pending` | Migrated Teleprompter template and runtime into a feature-owned lazy boundary |
+| `4037c83` | Migrated Teleprompter template and runtime into a feature-owned lazy boundary |
+| `pending` | Migrated Hash & Crypto into a feature-owned lazy boundary with platform adapters |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 62 of 65 desktop tools have completed migration batches (**95.4%** coverage).
+- 63 of 65 desktop tools have completed migration batches (**96.9%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -979,6 +980,20 @@ contracts to the feature controller; the lazy registry now imports the feature
 entry directly and the static HTML no longer preloads its stylesheet. Production
 build and `git diff --check` pass with no new warnings. This batch raises the
 verified migration count to 62 of 65 tools (**95.4%**).
+
+Hash & Crypto now loads from the lazy `src/features/crypto/` boundary. Its
+controller owns the worker, operation identity, file hashing/encryption
+progress, secret cleanup and close/dispose lifecycle. Tauri core, event and
+dialog access now flow through `src/platform/tauri-runtime.js`; the old
+`src/crypto-tool-ui.js` path remains a compatibility forward and no longer
+pulls the workbench into the initial application. Dynamic state refinements are
+owned by the feature stylesheet.
+
+The crypto core, native crypto tests, feature contract, architecture gate,
+production build and `git diff --check` pass. The worker is terminated on close,
+file-operation cancellation remains operation-ID scoped, and sensitive fields
+are cleared before the overlay is hidden. This batch raises the verified
+migration count to 63 of 65 tools (**96.9%**).
 
 ## Next batches
 

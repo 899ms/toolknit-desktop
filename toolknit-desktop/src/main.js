@@ -2,6 +2,7 @@
 import { tauriCorePromise, tauriEventPromise } from './platform/tauri-runtime.js';
 import { LAZY_TOOL_SPECS } from './features/lazy-tools.js';
 import { createAppComposition } from './app/app-composition.js';
+import './app/static-template-bootstrap.js';
 import './application.js';
 
 export const appComposition = createAppComposition({ tauriCorePromise, tauriEventPromise, specs: LAZY_TOOL_SPECS });

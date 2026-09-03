@@ -9,6 +9,7 @@
       import { readResponseTextLimited } from './core/bounded-response.js';
       import { createLazyToolRegistry } from './app/lazy-tool-registry.js';
       import { initUiSoundController } from './app/ui-sound-controller.js';
+      import { createAiKeyStore } from './app/ai-key-store.js';
       import { LAZY_TOOL_SPECS } from './features/lazy-tools.js';
       import { joinPath, uniqueOutputDirectory, writeUniqueFile } from './features/ppt-workflows/shared.js';
       import { tauriCorePromise, tauriEventPromise } from './platform/tauri-runtime.js';
@@ -78,71 +79,12 @@
         && new URLSearchParams(window.location.search).get('screen-picker') === '1';
       const appWindow = isTauri ? getCurrentWindow() : null;
 
-      const LEGACY_AI_API_KEY_NAMES = ['ai_api_key', 'deepseek_api_key'];
-
-      function readLegacyAiApiKey() {
-        try {
-          for (const name of LEGACY_AI_API_KEY_NAMES) {
-            const value = localStorage.getItem(name)?.trim();
-            if (value) return value;
-          }
-        } catch {
-          // Continue without migration when WebView storage is unavailable.
-        }
-        return '';
-      }
-
-      function clearLegacyAiApiKeys() {
-        try {
-          LEGACY_AI_API_KEY_NAMES.forEach(name => localStorage.removeItem(name));
-        } catch {
-          // The DPAPI copy is already durable, so storage cleanup is best-effort.
-        }
-      }
-
-      let aiApiKeyCache = readLegacyAiApiKey();
-      const aiApiKeyReady = (async () => {
-        if (!isTauri) return aiApiKeyCache;
-        try {
-          const { invoke } = await tauriCorePromise;
-          const protectedKey = await invoke('load_ai_api_key');
-          if (typeof protectedKey === 'string' && protectedKey) {
-            aiApiKeyCache = protectedKey;
-            clearLegacyAiApiKeys();
-          } else if (aiApiKeyCache) {
-            await invoke('store_ai_api_key', { apiKey: aiApiKeyCache });
-            clearLegacyAiApiKeys();
-          }
-        } catch {
-          // Preserve the legacy key until a later run can complete migration.
-        }
-        return aiApiKeyCache;
-      })();
-
-      async function getAiApiKey() {
-        await aiApiKeyReady;
-        return aiApiKeyCache;
-      }
-
-      async function persistAiApiKey(apiKey) {
-        await aiApiKeyReady;
-        if (isTauri) {
-          const { invoke } = await tauriCorePromise;
-          await invoke('store_ai_api_key', { apiKey });
-        }
-        aiApiKeyCache = apiKey;
-        clearLegacyAiApiKeys();
-      }
-
-      async function removeAiApiKey() {
-        await aiApiKeyReady;
-        if (isTauri) {
-          const { invoke } = await tauriCorePromise;
-          await invoke('clear_ai_api_key');
-        }
-        aiApiKeyCache = '';
-        clearLegacyAiApiKeys();
-      }
+      const aiKeyStore = createAiKeyStore({ isTauri, tauriCorePromise });
+      const aiApiKeyReady = aiKeyStore.ready;
+      const getAiApiKey = aiKeyStore.get;
+      const persistAiApiKey = aiKeyStore.set;
+      const removeAiApiKey = aiKeyStore.remove;
+      const clearLegacyAiApiKeys = aiKeyStore.clearLegacy;
 
       // Global UI feedback is intentionally kept separate from tool audio
       // contexts (BPM, typing and audio clipping). It is synthesized locally,
@@ -3589,7 +3531,7 @@
       }
 
       function hasAiApiKey() {
-        return Boolean(aiApiKeyCache);
+        return aiKeyStore.hasKey();
       }
 
       function setApiKeyPlatform(value) {

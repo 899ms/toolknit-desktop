@@ -10,6 +10,7 @@
       import { createLazyToolRegistry } from './app/lazy-tool-registry.js';
       import { initUiSoundController } from './app/ui-sound-controller.js';
       import { createAiKeyStore } from './app/ai-key-store.js';
+      import { createWindowRuntime } from './app/window-runtime.js';
       import { LAZY_TOOL_SPECS } from './features/lazy-tools.js';
       import { joinPath, uniqueOutputDirectory, writeUniqueFile } from './features/ppt-workflows/shared.js';
       import { tauriCorePromise, tauriEventPromise } from './platform/tauri-runtime.js';
@@ -48,7 +49,6 @@
         e.preventDefault();
       });
 
-      const WINDOW_RADIUS_KEY = 'toolknit.window-radius.v1';
       const WINDOW_RESIZE_KEY = 'toolknit.window-resizable.v1';
       // Keep the native constraint low enough for compact and high-DPI laptop
       // work areas. Individual pages already switch to their compact layouts
@@ -59,13 +59,6 @@
       const WINDOW_ABSOLUTE_MIN_WIDTH = 480;
       const WINDOW_ABSOLUTE_MIN_HEIGHT = 360;
       const WINDOW_SAFE_MARGIN = 32;
-      const WINDOW_RADIUS_PRESETS = {
-        none: 0,
-        small: 10,
-        large: 18
-      };
-      const WINDOW_RADIUS_CUSTOM_DEFAULT = 10;
-      const WINDOW_RADIUS_MAX = 32;
       const isTauri = typeof window !== 'undefined' && !!window.__TAURI_INTERNALS__;
 
       function readTextStatsDocument(file) {
@@ -97,256 +90,6 @@
             .catch(error => console.error('[screen-picker] bootstrap failed:', error));
         }, 0);
       }
-      let nativeWindowRadiusQueue = Promise.resolve();
-      let nativeWindowChromeRepairQueue = Promise.resolve();
-
-      function clampWindowRadius(value) {
-        const numeric = Number(value);
-        if (!Number.isFinite(numeric)) return WINDOW_RADIUS_CUSTOM_DEFAULT;
-        return Math.max(0, Math.min(WINDOW_RADIUS_MAX, Math.round(numeric)));
-      }
-
-      function readWindowRadiusSetting() {
-        try {
-          const parsed = JSON.parse(localStorage.getItem(WINDOW_RADIUS_KEY) || 'null');
-          const mode = ['none', 'small', 'large', 'custom'].includes(parsed?.mode) ? parsed.mode : 'none';
-          const custom = clampWindowRadius(parsed?.custom ?? WINDOW_RADIUS_CUSTOM_DEFAULT);
-          return { mode, custom };
-        } catch {
-          return { mode: 'none', custom: WINDOW_RADIUS_CUSTOM_DEFAULT };
-        }
-      }
-
-      function windowRadiusPixels(setting = readWindowRadiusSetting()) {
-        if (setting.mode === 'custom') return clampWindowRadius(setting.custom);
-        return WINDOW_RADIUS_PRESETS[setting.mode] ?? 0;
-      }
-
-      function clearLegacyWindowRadiusStyles() {
-        document.querySelectorAll('html, body, .app, .settings-overlay, .global-window-controls, .transition-mask').forEach(layer => {
-          layer.style.removeProperty('border-radius');
-          layer.style.removeProperty('clip-path');
-          layer.style.removeProperty('-webkit-clip-path');
-          layer.style.removeProperty('overflow');
-        });
-      }
-
-      function applyNativeWindowRadius(radius) {
-        if (!isTauri) return;
-
-        // Queue updates so a quick custom-radius edit cannot finish out of order.
-        nativeWindowRadiusQueue = nativeWindowRadiusQueue
-          .catch(() => undefined)
-          .then(async () => {
-            const { invoke } = await tauriCorePromise;
-            await invoke('set_window_corner_radius', { radius });
-          })
-          .catch(error => {
-            // Browser preview and older desktop builds simply keep the CSS fallback.
-            console.warn('Native window corner radius is unavailable:', error);
-          });
-      }
-
-      function repairNativeWindowChrome() {
-        if (!isTauri || !appWindow || isScreenPickerWindow) return Promise.resolve();
-
-        // Do not repeatedly rewrite the native window style. Apart from being
-        // unnecessary for a normally frameless window, that can race a resize
-        // or a title-bar click on WebView2. Repair only if decoration really
-        // returned after a Windows state transition.
-        nativeWindowChromeRepairQueue = nativeWindowChromeRepairQueue
-          .catch(() => undefined)
-          .then(async () => {
-            const hasNativeDecorations = typeof appWindow.isDecorated === 'function'
-              ? await appWindow.isDecorated()
-              : true;
-            if (hasNativeDecorations && typeof appWindow.setDecorations === 'function') {
-              await appWindow.setDecorations(false);
-            }
-          })
-          .catch(error => {
-            console.warn('Native frameless chrome repair failed:', error);
-          });
-
-        return nativeWindowChromeRepairQueue;
-      }
-
-      let nativeWindowChromeRepairTimer = 0;
-      function scheduleNativeWindowChromeRepair({ reapplyRadius = true } = {}) {
-        if (!isTauri || !appWindow || isScreenPickerWindow) return;
-        clearTimeout(nativeWindowChromeRepairTimer);
-        nativeWindowChromeRepairTimer = window.setTimeout(() => {
-          nativeWindowChromeRepairTimer = 0;
-          repairNativeWindowChrome().finally(() => {
-            if (reapplyRadius) applyWindowRadiusSetting(readWindowRadiusSetting());
-          });
-        }, 140);
-      }
-
-      function applyWindowRadiusSetting(setting = readWindowRadiusSetting()) {
-        if (isScreenPickerWindow) return 0;
-        const radius = windowRadiusPixels(setting);
-        const value = `${radius}px`;
-        const root = document.documentElement;
-        root.style.setProperty('--toolknit-window-radius', value);
-        root.dataset.windowRadius = setting.mode;
-        const body = document.body;
-        body?.classList.remove('use-native-window-radius');
-        body?.classList.toggle('use-css-window-radius', radius > 0);
-        body?.style.setProperty('--toolknit-window-radius', value);
-        body?.setAttribute('data-window-radius', setting.mode);
-        document.querySelectorAll('.app, .settings-overlay, .global-window-controls, .transition-mask').forEach(layer => {
-          layer.style.setProperty('--toolknit-window-radius', value);
-        });
-
-        clearLegacyWindowRadiusStyles();
-
-        if (isTauri) {
-          // The native command clears the old binary GDI region. The body is
-          // the single alpha-antialiased clipping surface for every page.
-          applyNativeWindowRadius(radius);
-        } else if (body) {
-          // Preview fallback: one clipping boundary only, without reintroducing
-          // the stacked overlay clips that make the desktop window look square.
-          root.style.setProperty('border-radius', value, 'important');
-          root.style.setProperty('overflow', 'hidden', 'important');
-          root.style.setProperty('clip-path', `inset(0 round ${value})`, 'important');
-          root.style.setProperty('-webkit-clip-path', `inset(0 round ${value})`, 'important');
-        }
-        return radius;
-      }
-
-      let windowRadiusSyncTimer = null;
-      function syncWindowRadiusAfterLayoutChange() {
-        if (!isTauri || !appWindow || isScreenPickerWindow) return;
-        clearTimeout(windowRadiusSyncTimer);
-        windowRadiusSyncTimer = setTimeout(() => {
-          applyWindowRadiusSetting(readWindowRadiusSetting());
-        }, 80);
-      }
-
-      function setWindowFrameMaximizedState(enabled) {
-        const maximized = Boolean(enabled);
-        document.documentElement?.classList.toggle('window-is-maximized', maximized);
-        document.body?.classList.toggle('window-is-maximized', maximized);
-
-        // Keep every page's shared title-bar control honest. The same button
-        // toggles maximize/restore, so its icon and accessible label must
-        // follow the native state instead of remaining a permanent square.
-        const iconName = maximized ? 'copy' : 'square';
-        const labelKey = maximized ? 'common.restore' : 'common.maximize';
-        const label = t(labelKey);
-        let iconChanged = false;
-        document.querySelectorAll('.ctrl-btn[data-action="maximize"]').forEach(button => {
-          const icon = button.querySelector('[data-lucide]');
-          if (icon && icon.getAttribute('data-lucide') !== iconName) {
-            icon.setAttribute('data-lucide', iconName);
-            iconChanged = true;
-          }
-          button.dataset.i18nTitle = labelKey;
-          button.dataset.i18nAriaLabel = labelKey;
-          button.title = label;
-          button.setAttribute('aria-label', label);
-          button.setAttribute('aria-pressed', maximized ? 'true' : 'false');
-        });
-        if (iconChanged) {
-          try { createIcons({ icons }); } catch (error) {
-            console.warn('Window control icon refresh failed:', error);
-          }
-        }
-      }
-
-      async function readWindowFrameMaximizedState() {
-        if (!isTauri || !appWindow || isScreenPickerWindow) return false;
-        try {
-          const maximized = await appWindow.isMaximized();
-          const fullscreen = typeof appWindow.isFullscreen === 'function'
-            ? await appWindow.isFullscreen().catch(() => false)
-            : false;
-          return Boolean(maximized || fullscreen);
-        } catch {
-          return false;
-        }
-      }
-
-      async function syncWindowFrameState() {
-        if (!isTauri || !appWindow || isScreenPickerWindow || !document?.body) return;
-        setWindowFrameMaximizedState(await readWindowFrameMaximizedState());
-      }
-
-      function syncWindowFrameAfterLayoutChange() {
-        if (!isTauri || !appWindow || isScreenPickerWindow) return;
-        [0, 180].forEach(delay => {
-          setTimeout(async () => {
-            await syncWindowFrameState();
-            applyWindowRadiusSetting(readWindowRadiusSetting());
-          }, delay);
-        });
-      }
-
-      let nativeWindowFrameStateTimer = 0;
-
-      function scheduleNativeWindowFrameStateSync() {
-        if (!isTauri || !appWindow || isScreenPickerWindow) return;
-        clearTimeout(nativeWindowFrameStateTimer);
-        nativeWindowFrameStateTimer = setTimeout(async () => {
-          nativeWindowFrameStateTimer = 0;
-          await syncWindowFrameState();
-          applyWindowRadiusSetting(readWindowRadiusSetting());
-        }, 120);
-      }
-
-      function observeNativeWindowFrameState() {
-        if (!isTauri || !appWindow || isScreenPickerWindow) return;
-        ['onResized', 'onScaleChanged'].forEach(method => {
-          if (typeof appWindow[method] !== 'function') return;
-          appWindow[method](scheduleNativeWindowFrameStateSync).catch(error => {
-            console.warn(`Native window ${method} listener failed:`, error);
-          });
-        });
-      }
-
-      let windowMaximizeQueue = Promise.resolve();
-      function toggleWindowFrameMaximize() {
-        if (!isTauri || !appWindow || isScreenPickerWindow) return Promise.resolve();
-        windowMaximizeQueue = windowMaximizeQueue
-          .catch(() => undefined)
-          .then(async () => {
-            await appWindow.toggleMaximize();
-            // Read the native state after the command completes. This avoids
-            // a stale optimistic icon when Windows is still changing bounds.
-            await syncWindowFrameState();
-            scheduleNativeWindowChromeRepair();
-            syncWindowFrameAfterLayoutChange();
-          });
-        return windowMaximizeQueue;
-      }
-
-      async function handleWindowControlAction(action) {
-        if (!isTauri || !appWindow || isScreenPickerWindow || !action) return;
-        try {
-          if (action === 'minimize') {
-            await appWindow.minimize();
-          } else if (action === 'maximize') {
-            await toggleWindowFrameMaximize();
-          } else if (action === 'close') {
-            await appWindow.hide();
-          }
-        } catch (e) {
-          console.error('Window control failed:', e);
-        }
-      }
-
-      function saveWindowRadiusSetting(setting) {
-        const normalized = {
-          mode: ['none', 'small', 'large', 'custom'].includes(setting?.mode) ? setting.mode : 'none',
-          custom: clampWindowRadius(setting?.custom ?? WINDOW_RADIUS_CUSTOM_DEFAULT)
-        };
-        try { localStorage.setItem(WINDOW_RADIUS_KEY, JSON.stringify(normalized)); } catch {}
-        applyWindowRadiusSetting(normalized);
-        return normalized;
-      }
-
       function readWindowResizeSetting() {
         try { return localStorage.getItem(WINDOW_RESIZE_KEY) === '1'; } catch { return false; }
       }
@@ -355,6 +98,30 @@
         try { localStorage.setItem(WINDOW_RESIZE_KEY, enabled ? '1' : '0'); } catch {}
         return Boolean(enabled);
       }
+
+      const windowRuntime = createWindowRuntime({
+        appWindow,
+        isTauri,
+        isScreenPickerWindow,
+        tauriCorePromise,
+        translate: t,
+        refreshIcons: () => createIcons({ icons })
+      });
+      const {
+        apply: applyWindowRadiusSetting,
+        clampRadius: clampWindowRadius,
+        handleControl: handleWindowControlAction,
+        observeFrame: observeNativeWindowFrameState,
+        pixels: windowRadiusPixels,
+        read: readWindowRadiusSetting,
+        repairChrome: repairNativeWindowChrome,
+        save: saveWindowRadiusSetting,
+        scheduleChromeRepair: scheduleNativeWindowChromeRepair,
+        syncAfterLayout: syncWindowFrameAfterLayoutChange,
+        syncFrame: syncWindowFrameState,
+        syncRadiusAfterLayout: syncWindowRadiusAfterLayoutChange,
+        toggleMaximize: toggleWindowFrameMaximize
+      } = windowRuntime;
 
       applyWindowRadiusSetting();
       scheduleNativeWindowChromeRepair();

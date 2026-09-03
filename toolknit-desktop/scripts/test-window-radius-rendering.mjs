@@ -1,14 +1,16 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [main, styles, navigation, native] = await Promise.all([
+const [main, windowRuntime, styles, navigation, native] = await Promise.all([
   readFile(new URL('../src/main.js', import.meta.url), 'utf8').then(async main => `${main}\n${await readFile(new URL('../src/application.js', import.meta.url), 'utf8')}`),
+  readFile(new URL('../src/app/window-runtime.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/tool-nav-unified.css', import.meta.url), 'utf8'),
   readFile(new URL('../src-tauri/src/lib.rs', import.meta.url), 'utf8')
 ]);
 
-assert.match(main, /classList\.toggle\('use-css-window-radius', radius > 0\)/);
+assert.match(windowRuntime, /classList\.toggle\('use-css-window-radius', radius > 0\)/);
+assert.match(main, /createWindowRuntime\(/);
 assert.doesNotMatch(main, /classList\.toggle\('use-native-window-radius'/);
 assert.match(styles, /body\.use-css-window-radius:not\(\.window-is-maximized\)[\s\S]*clip-path:\s*inset\(0 round var\(--toolknit-window-radius\)\)/);
 assert.match(styles, /html\s*\{[\s\S]*background:\s*transparent\s*!important/);

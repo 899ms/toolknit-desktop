@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createAiSettingsRuntime } from '../src/app/ai-settings-runtime.js';
 import { createExternalLinksRuntime } from '../src/app/external-links-runtime.js';
 import { createHomeExplorerRuntime } from '../src/app/home-explorer-runtime.js';
+import { createFontSettingsRuntime } from '../src/app/font-settings-runtime.js';
 
 class FakeElement extends EventTarget {
   constructor(id = '') {
@@ -67,6 +68,8 @@ const emptyLinks = createExternalLinksRuntime({ root: emptyRoot, storage: null, 
 emptyLinks.dispose();
 const emptyHome = createHomeExplorerRuntime({ root: emptyRoot, storage: null });
 emptyHome.dispose();
+const emptyFonts = createFontSettingsRuntime({ root: emptyRoot, windowRef: {}, normalizeDesktopBytes: value => value });
+emptyFonts.dispose();
 
 const blocked = [];
 const opened = [];

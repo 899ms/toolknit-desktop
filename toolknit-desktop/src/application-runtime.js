@@ -12,6 +12,7 @@
       import { createAiSettingsRuntime } from './app/ai-settings-runtime.js';
       import { createExternalLinksRuntime } from './app/external-links-runtime.js';
       import { createHomeExplorerRuntime } from './app/home-explorer-runtime.js';
+      import { createFontSettingsRuntime } from './app/font-settings-runtime.js';
       import { createWindowRuntime } from './app/window-runtime.js';
       import { createUpdateRuntime } from './app/update-runtime.js';
       import { createModalRuntime } from './app/modal-runtime.js';
@@ -29,7 +30,7 @@
         CUSTOM_BACKGROUND_STORAGE_KEY
       } from './app/background-runtime.js';
       import { LAZY_TOOL_SPECS } from './features/lazy-tools.js';
-      import { joinPath, uniqueOutputDirectory, writeUniqueFile } from './features/ppt-workflows/shared.js';
+      import { joinPath, normalizeDesktopBytes, uniqueOutputDirectory, writeUniqueFile } from './features/ppt-workflows/shared.js';
       import { currentMonitor, getCurrentWindow, LogicalSize, tauriCorePromise, tauriEventPromise, loadTauriApp } from './platform/tauri-runtime.js';
       import { readTextDocument } from './shared/text-document-reader.js';
       import { formatFileSize } from './shared/file-size.js';
@@ -913,204 +914,14 @@
       onLangChange(() => setCustomBackgroundSummary(readCustomBackgroundMetadata()));
 
       // ===== Local interface font overrides =====
-      // The four slots are always loaded as a coherent family pair. This lets
-      // a user replace only one slot while all other weights keep their bundled
-      // counterparts, without relying on browser-generated faux bold text.
-      const CUSTOM_FONT_DEFAULTS = Object.freeze({
-        'cn-medium': Object.freeze({ family: 'ToolKnitRuntimeCn', weight: '100 500', path: '/assets/fonts/Alibaba-PuHuiTi-Medium.ttf', name: 'Alibaba PuHuiTi Medium' }),
-        'cn-bold': Object.freeze({ family: 'ToolKnitRuntimeCn', weight: '600 900', path: '/assets/fonts/Alibaba-PuHuiTi-Bold.ttf', name: 'Alibaba PuHuiTi Bold' }),
-        'en-regular': Object.freeze({ family: 'ToolKnitRuntimeEn', weight: '100 500', path: '/assets/fonts/Fonarto-Regular.otf', name: 'Fonarto Regular' }),
-        'en-bold': Object.freeze({ family: 'ToolKnitRuntimeEn', weight: '600 900', path: '/assets/fonts/Fonarto-Bold.otf', name: 'Fonarto Bold' })
+      const fontSettingsRuntime = createFontSettingsRuntime({
+        root: document,
+        windowRef: window,
+        isTauri,
+        tauriCorePromise,
+        normalizeDesktopBytes,
+        translate: t
       });
-      const customFontSlots = [...document.querySelectorAll('[data-font-slot]')];
-      const customFontAssets = new Map();
-      let customFontMetadataParserPromise = null;
-      let activeRuntimeFontFaces = [];
-      let customFontBusySlot = '';
-
-      function setInterfaceFontFamilies(useRuntimeFonts) {
-        const root = document.documentElement;
-        root.style.setProperty('--tk-font-ui-cn', useRuntimeFonts ? "'ToolKnitRuntimeCn'" : "'ToolKnitBuiltinCn'");
-        root.style.setProperty('--tk-font-display-cn', useRuntimeFonts ? "'ToolKnitRuntimeCnHeading'" : "'ToolKnitBuiltinCnHeading'");
-        root.style.setProperty('--tk-font-ui-en', useRuntimeFonts ? "'ToolKnitRuntimeEn'" : "'ToolKnitBuiltinEn'");
-        root.style.setProperty('--tk-font-display-en', useRuntimeFonts
-          ? "'ToolKnitRuntimeEnHeading', 'ToolKnitRuntimeCnHeading'"
-          : "'ToolKnitBuiltinEnHeading', 'ToolKnitBuiltinCnHeading'");
-      }
-
-      function renderCustomFontSlots() {
-        customFontSlots.forEach(slotElement => {
-          const slot = slotElement.dataset.fontSlot;
-          const asset = customFontAssets.get(slot);
-          const summary = slotElement.querySelector('[data-font-slot-summary]');
-          const upload = slotElement.querySelector('[data-font-upload]');
-          const reset = slotElement.querySelector('[data-font-reset]');
-          const busy = customFontBusySlot === slot;
-          if (summary) summary.textContent = asset?.displayName || asset?.fileName || CUSTOM_FONT_DEFAULTS[slot]?.name || '';
-          slotElement.classList.toggle('is-custom', Boolean(asset));
-          slotElement.classList.toggle('is-busy', busy);
-          if (upload) upload.disabled = Boolean(customFontBusySlot);
-          if (reset) reset.disabled = Boolean(customFontBusySlot) || !asset;
-        });
-      }
-
-      function removeRuntimeFontFaces() {
-        activeRuntimeFontFaces.forEach(face => {
-          try { document.fonts.delete(face); } catch {}
-        });
-        activeRuntimeFontFaces = [];
-      }
-
-      async function resolveCustomFontSource(asset) {
-        if (!asset?.path) return '';
-        const { convertFileSrc } = await tauriCorePromise;
-        return convertFileSrc(asset.path);
-      }
-
-      async function enrichCustomFontAsset(asset, invoke) {
-        if (!asset?.path || typeof invoke !== 'function') return asset;
-        try {
-          if (!customFontMetadataParserPromise) {
-            customFontMetadataParserPromise = import('./font-metadata.js').then(module => module.default || module.parseFontMetadata);
-          }
-          const parseFontMetadata = await customFontMetadataParserPromise;
-          if (typeof parseFontMetadata !== 'function') return asset;
-          const rawBytes = await invoke('read_file_bytes_limited', {
-            path: asset.path,
-            maxBytes: 40 * 1024 * 1024
-          });
-          const metadata = await parseFontMetadata(normalizeDesktopBytes(rawBytes));
-          if (!metadata?.displayName) return asset;
-          return { ...asset, ...metadata };
-        } catch (error) {
-          console.warn('Unable to read custom font metadata:', error);
-          return asset;
-        }
-      }
-
-      async function applyCustomInterfaceFonts(fontAssets = customFontAssets) {
-        if (!fontAssets.size) {
-          removeRuntimeFontFaces();
-          setInterfaceFontFamilies(false);
-          window.dispatchEvent(new Event('toolknit-interface-font-change'));
-          return;
-        }
-        const loadedFaces = [];
-        for (const [slot, defaults] of Object.entries(CUSTOM_FONT_DEFAULTS)) {
-          const source = fontAssets.has(slot)
-            ? await resolveCustomFontSource(fontAssets.get(slot))
-            : defaults.path;
-          if (!source) throw new Error('Custom font source is unavailable');
-          const face = new FontFace(
-            defaults.family,
-            `url(${JSON.stringify(source)})`,
-            { style: 'normal', weight: defaults.weight, display: 'swap' }
-          );
-          await face.load();
-          loadedFaces.push(face);
-        }
-        for (const slot of ['cn-bold', 'en-bold']) {
-          const defaults = CUSTOM_FONT_DEFAULTS[slot];
-          const source = fontAssets.has(slot)
-            ? await resolveCustomFontSource(fontAssets.get(slot))
-            : defaults.path;
-          const face = new FontFace(
-            slot === 'cn-bold' ? 'ToolKnitRuntimeCnHeading' : 'ToolKnitRuntimeEnHeading',
-            `url(${JSON.stringify(source)})`,
-            { style: 'normal', weight: '100 900', display: 'swap' }
-          );
-          await face.load();
-          loadedFaces.push(face);
-        }
-        removeRuntimeFontFaces();
-        loadedFaces.forEach(face => document.fonts.add(face));
-        activeRuntimeFontFaces = loadedFaces;
-        setInterfaceFontFamilies(true);
-        await document.fonts.ready;
-        window.dispatchEvent(new Event('toolknit-interface-font-change'));
-      }
-
-      async function refreshCustomFonts() {
-        if (!isTauri) {
-          await applyCustomInterfaceFonts(new Map());
-          customFontAssets.clear();
-          renderCustomFontSlots();
-          return;
-        }
-        const { invoke } = await tauriCorePromise;
-        const assets = await invoke('list_custom_fonts');
-        const validAssets = (Array.isArray(assets) ? assets : []).filter(asset => CUSTOM_FONT_DEFAULTS[String(asset?.slot || '')]);
-        const enrichedAssets = await Promise.all(validAssets.map(asset => enrichCustomFontAsset(asset, invoke)));
-        const nextAssets = new Map();
-        enrichedAssets.forEach(asset => {
-          const slot = String(asset?.slot || '');
-          if (CUSTOM_FONT_DEFAULTS[slot]) nextAssets.set(slot, asset);
-        });
-        await applyCustomInterfaceFonts(nextAssets);
-        customFontAssets.clear();
-        nextAssets.forEach((asset, slot) => customFontAssets.set(slot, asset));
-        renderCustomFontSlots();
-      }
-
-      async function chooseCustomFont(slot) {
-        if (!CUSTOM_FONT_DEFAULTS[slot] || customFontBusySlot) return;
-        if (!isTauri) {
-          window.showToast?.(t('settings.fontDesktopOnly'));
-          return;
-        }
-        customFontBusySlot = slot;
-        renderCustomFontSlots();
-        try {
-          const { open } = await import('@tauri-apps/plugin-dialog');
-          const selected = await open({
-            multiple: false,
-            directory: false,
-            title: t('settings.fontUpload'),
-            filters: [{ name: 'Font', extensions: ['ttf', 'otf', 'woff', 'woff2'] }]
-          });
-          if (!selected || Array.isArray(selected)) return;
-          const { invoke } = await tauriCorePromise;
-          await invoke('import_custom_font', { slot, sourcePath: selected });
-          await refreshCustomFonts();
-          window.showToast?.(t('settings.fontUploadSuccess'));
-        } catch (error) {
-          console.error('Unable to apply custom font:', error);
-          window.showToast?.(t('settings.fontUploadFailed'));
-        } finally {
-          customFontBusySlot = '';
-          renderCustomFontSlots();
-        }
-      }
-
-      async function restoreDefaultFont(slot) {
-        if (!customFontAssets.has(slot) || customFontBusySlot) return;
-        customFontBusySlot = slot;
-        renderCustomFontSlots();
-        try {
-          const { invoke } = await tauriCorePromise;
-          await invoke('reset_custom_font', { slot });
-          await refreshCustomFonts();
-          window.showToast?.(t('settings.fontRestoreSuccess'));
-        } catch (error) {
-          console.error('Unable to restore default font:', error);
-          window.showToast?.(t('settings.fontUploadFailed'));
-        } finally {
-          customFontBusySlot = '';
-          renderCustomFontSlots();
-        }
-      }
-
-      customFontSlots.forEach(slotElement => {
-        const slot = slotElement.dataset.fontSlot;
-        slotElement.querySelector('[data-font-upload]')?.addEventListener('click', () => void chooseCustomFont(slot));
-        slotElement.querySelector('[data-font-reset]')?.addEventListener('click', () => void restoreDefaultFont(slot));
-      });
-      void refreshCustomFonts().catch(error => {
-        console.error('Unable to initialize custom fonts:', error);
-        setInterfaceFontFamilies(false);
-        renderCustomFontSlots();
-      });
-      onLangChange(renderCustomFontSlots);
 
       // ===== Version update check =====
       const versionUpdateStatus = document.getElementById('versionUpdateStatus');

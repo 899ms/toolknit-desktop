@@ -92,7 +92,7 @@ const report = {
   generatedAt: new Date().toISOString(),
   gitBaseline: {
     branch: 'codex/v3.0',
-    checkpoint: '51bad26'
+    checkpoint: '203b7c9'
   },
   sourceFiles,
   architectureModules,

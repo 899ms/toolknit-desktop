@@ -109,6 +109,16 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./audio-convert/tool.js'),
     init: 'initAudioConvertTool'
   }),
+  'audio-clip': Object.freeze({
+    overlayId: 'audioClipOverlay',
+    load: () => import('./audio-tools/tool.js'),
+    init: 'initAudioClipTool'
+  }),
+  'bpm-detect': Object.freeze({
+    overlayId: 'bpmDetectOverlay',
+    load: () => import('./audio-tools/tool.js'),
+    init: 'initBpmDetectTool'
+  }),
   'video-convert': Object.freeze({
     overlayId: 'videoConvertOverlay',
     load: () => import('./video-tools/tool.js'),

@@ -67,6 +67,7 @@
     "test:bpm-detect": "node scripts/test-bpm-detect-core.mjs && node scripts/test-bpm-runtime.mjs",
     "test:audio-extract": "node scripts/test-audio-extract-core.mjs && node scripts/test-audio-extract-runtime.mjs && node scripts/test-audio-extract-tool-contract.mjs",
     "test:audio-clip": "node scripts/test-audio-clip-core.mjs && node scripts/test-audio-clip-runtime.mjs",
+    "test:audio-tools-contract": "node scripts/test-audio-tools-contract.mjs",
     "test:video-convert": "node scripts/test-video-convert-core.mjs && node scripts/test-video-convert-runtime.mjs",
     "test:video-frame": "node scripts/test-video-frame-core.mjs",
     "test:video-gif": "node scripts/test-video-gif-core.mjs",

@@ -64,12 +64,13 @@ Last updated: 2026-09-03
 | `c886d85` | Migrated PPT image extraction into its own lazy feature boundary |
 | `900b6c9` | Migrated Audio Extract into its own lazy feature boundary |
 | `bbecf87` | Migrated Audio Convert into its own lazy feature boundary and restored shared HTML escaping |
-| (this batch) | Migrated Video Convert, Video Frame and Video GIF into a shared lazy feature boundary |
+| `2736fe5` | Migrated Video Convert, Video Frame and Video GIF into a shared lazy feature boundary |
+| (this batch) | Migrated BPM Detect and Audio Clip into a shared lazy audio feature boundary |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 56 of 65 desktop tools have completed migration batches (**86.2%** coverage).
+- 58 of 65 desktop tools have completed migration batches (**89.2%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -77,12 +78,12 @@ Last updated: 2026-09-03
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security | After PDF Enhance | After PDF Compress | After PDF Editor | After PPT workflows | After PPT render | After PPT images | After PPT Draft | After Image Stitch | After Audio Extract | After Audio Convert | After Video Tools |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 | 21,708 | 21,250 | 21,241 | 16,184 | 15,709 | 15,019 | 13,538 | 13,000 | 12,511 | 12,084 | 10,796 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 | 27,059 | 24,975 | 24,644 | 24,644 | 24,093 | 22,772 | 21,962 | 21,408 | 21,349 | 20,802 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB | 2,288.63 kB | 1,839.13 kB | 1,603.72 kB | 1,591.36 kB | 1,531.34 kB | 1,423.95 kB | 1,405.69 kB | 1,395.57 kB | 1,385.48 kB | 1,350.13 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB | 597.52 kB | 525.34 kB | 520.27 kB | 520.27 kB | 499.11 kB | 487.68 kB | 465.07 kB | 455.39 kB | 454.30 kB | 441.86 kB |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security | After PDF Enhance | After PDF Compress | After PDF Editor | After PPT workflows | After PPT render | After PPT images | After PPT Draft | After Image Stitch | After Audio Extract | After Audio Convert | After Video Tools | After Audio Tools |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 | 21,708 | 21,250 | 21,241 | 16,184 | 15,709 | 15,019 | 13,538 | 13,000 | 12,511 | 12,084 | 10,796 | 9,176 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 | 27,059 | 24,975 | 24,644 | 24,644 | 24,093 | 22,772 | 21,962 | 21,408 | 21,349 | 20,802 | 18,627 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB | 2,288.63 kB | 1,839.13 kB | 1,603.72 kB | 1,591.36 kB | 1,531.34 kB | 1,423.95 kB | 1,405.69 kB | 1,395.57 kB | 1,385.48 kB | 1,350.13 kB | 1,307.20 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB | 597.52 kB | 525.34 kB | 520.27 kB | 520.27 kB | 499.11 kB | 487.68 kB | 465.07 kB | 455.39 kB | 454.30 kB | 441.86 kB | 406.98 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
@@ -893,9 +894,29 @@ emits an approximately 31.79 kB shared video JavaScript chunk and a 31.37 kB
 feature CSS chunk; main JavaScript is 1,350.13 kB and main CSS is 441.86 kB.
 This batch raises the verified migration count to 56 of 65 tools (**86.2%**).
 
+BPM Detect and Audio Clip now share the lazy `src/features/audio-tools/`
+boundary while retaining separate lifecycle controllers and feature styles.
+BPM owns analysis request identity, dynamic tempo dependencies, native drop
+registration, demo playback nodes and AudioContext cleanup. Audio Clip owns
+file decoding, high-DPI waveform rendering, pointer-handle drag scopes,
+playback, FFmpeg export identity, native drop registration and output-dialog
+state. Closing either page releases its listeners and asynchronous resources;
+stale work cannot update a later open. The former 2,188-line aggregate feature
+stylesheet is split by tool responsibility into `bpm.css` and
+`audio-clip.css`, both below the 1,200-line review limit.
+
+The BPM core/runtime suites, Audio Clip core/runtime suites, audio lazy and
+lifecycle contract, architecture gate, production build and `git diff
+--check` pass. A fresh page load at 1280 by 720 covers both lazy imports,
+first open, close, reopen and hidden-state ownership; no console or page error
+was observed. The build emits an approximately 43.16 kB shared audio JavaScript
+chunk, a 34.87 kB feature CSS chunk and a separately loaded 14.23 kB BPM
+analysis dependency. Main JavaScript is 1,307.20 kB and main CSS is 406.98 kB.
+This batch raises the verified migration count to 58 of 65 tools (**89.2%**).
+
 ## Next batches
 
-1. Select the next coherent low- or medium-risk frontend family from the 9
+1. Select the next coherent low- or medium-risk frontend family from the 7
    remaining tools and continue batched migration under the accelerated
    verification protocol.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local

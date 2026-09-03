@@ -65,6 +65,7 @@ const releaseTests = [
   'test:bpm-detect',
   'test:audio-extract',
   'test:audio-clip',
+  'test:audio-tools-contract',
   'test:video-convert',
   'test:video-frame',
   'test:video-gif',

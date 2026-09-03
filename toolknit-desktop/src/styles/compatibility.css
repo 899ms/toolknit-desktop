@@ -1,1 +1,437 @@
-/* Compatibility aliases for older feature imports. */
+/* ===== ToolKnit 2.1 feature workspaces ===== */
+.feature-tool-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3300;
+  display: none;
+  overflow: hidden;
+  color: #f5f7f5;
+  background: #0b0d0c;
+}
+
+.feature-tool-overlay.visible { display: block; }
+.feature-tool-overlay button,
+.feature-tool-overlay input,
+.feature-tool-overlay select,
+.feature-tool-overlay textarea { font: inherit; letter-spacing: 0; }
+.feature-tool-overlay button { color: inherit; }
+.feature-tool-overlay svg { width: 17px; height: 17px; }
+
+/* Markdown editor */
+
+/* Smart color replacement */
+
+/* Hash & Crypto */
+.crypto-shell { height: 100%; background: radial-gradient(circle at 88% 0,rgba(107,62,47,.16),transparent 28%), #090b0a; }
+.crypto-topbar { height: 70px; display: grid; grid-template-columns: 210px 1fr auto; align-items: center; gap: 20px; padding: 0 22px; border-bottom: 1px solid rgba(255,255,255,.1); }.crypto-topbar>button { width: 126px; height: 38px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(255,255,255,.14); border-radius: 5px; background: rgba(255,255,255,.05); cursor: pointer; }.crypto-topbar>div:nth-child(2) { display: grid; gap: 3px; }.crypto-topbar>div:nth-child(2) span { color: rgba(255,255,255,.38); font-size: 10px; font-weight: 800; }.crypto-topbar>div:nth-child(2) strong { font-size: 17px; }.crypto-security { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.48); font-size: 11px; }.crypto-security svg { color: #8ad3be; }
+.crypto-main { height: calc(100% - 70px); display: grid; grid-template-columns: 220px minmax(0,1fr); }.crypto-sidebar { min-height: 0; overflow: hidden; border-right: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.018); }.crypto-sidebar-head { height: 58px; display: grid; align-content: center; gap: 3px; padding: 0 16px; border-bottom: 1px solid rgba(255,255,255,.08); }.crypto-sidebar-head span,.crypto-workspace-head>div>span,.crypto-session-log>div>span { color: rgba(255,255,255,.35); font-size: 9px; font-weight: 800; }.crypto-sidebar-head strong { font-size: 13px; }.crypto-sidebar nav { height: calc(100% - 58px); overflow-y: auto; padding: 8px; }.crypto-nav-group { padding: 14px 9px 6px; color: rgba(255,255,255,.3); font-size: 9px; font-weight: 800; text-transform: uppercase; }.crypto-sidebar nav button { width: 100%; height: 37px; display: grid; grid-template-columns: 21px 1fr auto; align-items: center; gap: 7px; padding: 0 9px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: rgba(255,255,255,.56); text-align: left; cursor: pointer; }.crypto-sidebar nav button:hover { background: rgba(255,255,255,.05); color: #fff; }.crypto-sidebar nav button.is-active { border-color: rgba(154,225,205,.25); background: rgba(154,225,205,.09); color: #effff9; }.crypto-sidebar nav em { color: #d1a36f; font-size: 7px; font-style: normal; }
+.crypto-workspace { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto auto minmax(0,1fr) auto; overflow: hidden; }.crypto-workspace-head { min-height: 84px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 15px 24px; border-bottom: 1px solid rgba(255,255,255,.08); }.crypto-workspace-head h1 { margin: 3px 0; font-size: 22px; }.crypto-workspace-head p { margin: 0; color: rgba(255,255,255,.43); font-size: 11px; }.crypto-status { display: flex; align-items: center; gap: 7px; color: rgba(255,255,255,.44); font-size: 10px; }.crypto-status svg { color: #87cdb9; }.crypto-status.is-busy svg { animation: tk-spin .8s linear infinite; }
+.crypto-legacy-warning { display: flex; gap: 11px; padding: 10px 24px; border-bottom: 1px solid rgba(208,144,86,.2); background: rgba(142,81,37,.1); color: #e0b384; }.crypto-legacy-warning strong { font-size: 11px; }.crypto-legacy-warning p { margin: 2px 0 0; color: rgba(234,190,145,.65); font-size: 9px; }
+.crypto-panel { min-height: 0; overflow-y: auto; padding: 20px 24px 28px; }.crypto-config-row { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin-bottom: 14px; }.crypto-config-row>label,.crypto-field { display: grid; gap: 6px; color: rgba(255,255,255,.48); font-size: 10px; }.crypto-panel select,.crypto-panel input,.crypto-panel textarea { border: 1px solid rgba(255,255,255,.12); border-radius: 4px; outline: none; background: rgba(255,255,255,.035); color: #edf3f0; }.crypto-panel select:focus,.crypto-panel input:focus,.crypto-panel textarea:focus { border-color: rgba(151,222,202,.5); }.crypto-panel select { height: 34px; padding: 0 28px 0 9px; }.crypto-panel option { background: #151816; }.crypto-panel input { height: 36px; padding: 0 10px; }
+.crypto-operation,.crypto-mode-tabs { display: inline-flex; padding: 3px; border: 1px solid rgba(255,255,255,.12); border-radius: 5px; background: rgba(0,0,0,.16); }.crypto-operation button,.crypto-mode-tabs button { height: 28px; padding: 0 12px; border: 0; border-radius: 3px; background: transparent; color: rgba(255,255,255,.48); cursor: pointer; }.crypto-operation button.is-active,.crypto-mode-tabs button.is-active { background: #e8fbf5; color: #10201b; font-weight: 800; }.crypto-mode-tabs { margin-bottom: 14px; }
+.crypto-field { margin-bottom: 14px; }.crypto-field>div { display: flex; }.crypto-field>div input { min-width: 0; flex: 1; border-radius: 4px 0 0 4px; }.crypto-field>div select { border-radius: 0; }.crypto-field>div button { width: 36px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.12); border-left: 0; border-radius: 0 4px 4px 0; background: rgba(255,255,255,.05); cursor: pointer; }.crypto-secret-grid,.crypto-key-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }.crypto-key-grid label { display: grid; gap: 6px; color: rgba(255,255,255,.48); font-size: 10px; }.crypto-key-grid textarea { height: 105px; padding: 9px; resize: vertical; font: 10px/1.45 Consolas,monospace; }
+.crypto-io-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; }.crypto-io { min-width: 0; display: grid; grid-template-rows: 30px minmax(160px,1fr); }.crypto-io>span { display: flex; align-items: center; justify-content: space-between; color: rgba(255,255,255,.48); font-size: 10px; }.crypto-io>span select { height: 27px; margin-left: auto; }.crypto-io>span button { width: 28px; height: 27px; display: grid; place-items: center; margin-left: 6px; border: 1px solid rgba(255,255,255,.1); border-radius: 3px; background: transparent; cursor: pointer; }.crypto-io textarea { min-height: 160px; padding: 12px; resize: vertical; font: 12px/1.6 Consolas,"Cascadia Code",monospace; }.crypto-io textarea[readonly] { background: rgba(131,201,181,.035); color: #cde9e0; }
+.crypto-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }.crypto-actions button,.crypto-generate-key { height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border: 1px solid rgba(255,255,255,.13); border-radius: 4px; background: rgba(255,255,255,.04); cursor: pointer; }.crypto-actions button.is-primary { border-color: #d9fff4; background: #d9fff4; color: #10211c; font-weight: 800; }.crypto-actions button:disabled { opacity: .35; }
+.crypto-file-picker { width: 100%; min-height: 82px; display: flex; align-items: center; gap: 13px; padding: 13px 16px; border: 1px dashed rgba(255,255,255,.22); border-radius: 5px; background: rgba(255,255,255,.025); text-align: left; cursor: pointer; }.crypto-file-picker>svg { width: 25px; height: 25px; color: #8bd3bf; }.crypto-file-picker>span { min-width: 0; display: grid; gap: 5px; }.crypto-file-picker strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.crypto-file-picker small { color: rgba(255,255,255,.38); }.crypto-file-mode>.crypto-operation { margin: 14px 0; }.crypto-file-progress { display: grid; gap: 7px; margin-top: 14px; }.crypto-file-progress>span { height: 3px; overflow: hidden; background: rgba(255,255,255,.1); }.crypto-file-progress i { display: block; width: 0; height: 100%; background: #8bd3bf; transition: width .15s linear; }.crypto-file-progress small { color: rgba(255,255,255,.4); font-size: 9px; }.crypto-hash-checks { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0; }.crypto-hash-checks label { display: flex; align-items: center; gap: 6px; padding: 7px 9px; border: 1px solid rgba(255,255,255,.1); border-radius: 4px; font-size: 10px; }.crypto-hash-checks input { width: 13px; height: 13px; accent-color: #72bba7; }.crypto-file-results { margin-top: 12px; }.crypto-file-results textarea { min-height: 140px; }
+.crypto-session-log { min-height: 66px; display: grid; grid-template-columns: 130px minmax(0,1fr); gap: 16px; align-items: center; padding: 10px 24px; border-top: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.018); }.crypto-session-log>div { display: grid; gap: 3px; }.crypto-session-log>div strong { font-size: 11px; }.crypto-session-log ol { min-width: 0; display: flex; gap: 8px; margin: 0; padding: 0; overflow-x: auto; list-style: none; }.crypto-session-log li { min-width: 150px; display: grid; grid-template-columns: 8px 1fr auto; align-items: center; gap: 7px; padding: 7px 9px; border-left: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.5); font-size: 9px; }.crypto-session-log li i { width: 5px; height: 5px; border-radius: 50%; background: #89cdb9; }.crypto-session-log li i.is-error { background: #d47c70; }.crypto-session-log time { color: rgba(255,255,255,.25); }
+
+@keyframes tk-spin { to { transform: rotate(360deg); } }
+@media (max-width: 1100px) {
+  .crypto-main { grid-template-columns: 190px minmax(0,1fr); }
+}
+@media (max-width: 760px) {
+  .crypto-topbar { grid-template-columns: auto 1fr; height: 60px; padding: 0 12px; }.crypto-security { display: none!important; }
+  .crypto-main { height: calc(100% - 60px); grid-template-columns: 1fr; }.crypto-sidebar { height: 58px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.1); }.crypto-sidebar-head,.crypto-nav-group { display: none; }.crypto-sidebar nav { height: 58px; display: flex; overflow-x: auto; padding: 8px; }.crypto-sidebar nav button { min-width: 120px; }.crypto-workspace { height: calc(100vh - 118px); }.crypto-io-grid,.crypto-secret-grid,.crypto-key-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion:reduce){.crypto-status.is-busy svg{animation:none}.crypto-file-progress i{transition:none}}
+
+/* ===== Shared Tool Page 2.0 shell =====
+   The lazy 2.1 workspaces use the same chrome as the approved v2 pages. Keep
+   the background as a separate composited layer so a custom wallpaper is
+   visible through every glass panel without competing with controls. */
+.feature-tool-overlay {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.feature-tool-overlay.pdf-merge-overlay.pdf-merge-v2 {
+  background: #060607 !important;
+}
+.feature-tool-overlay.visible { display: block; }
+.tool-page-v2-shell {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 68px minmax(0, 1fr);
+  overflow: hidden;
+  color: var(--ink, #f5f5f5);
+  background: #060607;
+  font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.tool-page-v2-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 16% 12%, rgba(255,255,255,.075), transparent 25%),
+    radial-gradient(circle at 84% 14%, rgba(255,255,255,.05), transparent 26%),
+    linear-gradient(180deg, rgba(5,5,6,.28), rgba(5,5,6,.08) 36%, rgba(0,0,0,.58));
+}
+.tool-page-v2-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #060607;
+}
+.tool-page-v2-bg > canvas,
+.tool-page-v2-bg > .toolknit-custom-background-media {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.tool-page-v2-bg > canvas { opacity: .28; }
+.tool-page-v2-bg > .toolknit-custom-background-media {
+  opacity: .72;
+  filter: brightness(.58) saturate(.9) contrast(1.06);
+}
+.tool-page-v2-bg.has-custom-background > canvas { display: none; }
+.tool-page-v2-topbar,
+.tool-page-v2-body { position: relative; z-index: 2; }
+.tool-page-v2-topbar {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 28px;
+  background: rgba(8,8,9,.92);
+  -webkit-app-region: drag;
+}
+.tool-page-v2-topbar-left,
+.tool-page-v2-top-actions,
+.tool-page-v2-window-controls { display: flex; align-items: center; }
+.tool-page-v2-topbar-left { min-width: 0; gap: 12px; }
+.tool-page-v2-top-actions { flex: 0 0 auto; gap: 7px; }
+.tool-page-v2-back,
+.tool-page-v2-nav-link,
+.tool-page-v2-support,
+.tool-page-v2-icon {
+  -webkit-app-region: no-drag;
+  font: inherit;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+.tool-page-v2-back {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong, rgba(255,255,255,.2));
+  border-radius: 10px;
+  color: var(--ink, #f5f5f5);
+  background: rgba(255,255,255,.03);
+}
+.tool-page-v2-back:hover { transform: translateY(-1px); background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.32); }
+.tool-page-v2-tag {
+  min-width: 0;
+  max-width: 420px;
+  overflow: hidden;
+  padding: 5px 11px;
+  border: 1px solid var(--line, rgba(255,255,255,.12));
+  border-radius: 999px;
+  color: var(--muted, rgba(255,255,255,.55));
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tool-page-v2-nav-link,
+.tool-page-v2-support { min-height: 34px; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 6px; }
+.tool-page-v2-nav-link { border: 0; color: var(--muted, rgba(255,255,255,.56)); background: transparent; }
+.tool-page-v2-nav-link:hover { color: var(--ink, #fff); background: #171717; }
+.tool-page-v2-support { border: 1px solid #fff; color: #050506; background: #fff; font-weight: 800; }
+.tool-page-v2-support:hover { transform: translateY(-1px); background: #fff; }
+.tool-page-v2-icon { width: 34px; height: 34px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 6px; color: var(--muted, rgba(255,255,255,.56)); background: transparent; }
+.tool-page-v2-icon:hover { color: #fff; background: #171717; }
+.tool-page-v2-window-controls { gap: 2px; margin-left: 2px; }
+.tool-page-v2-topbar svg { width: 15px; height: 15px; }
+.tool-page-v2-title { display: none; }
+.tool-page-v2-body {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  align-items: stretch;
+  gap: 20px;
+  padding: 22px 28px 30px;
+  overflow: hidden;
+}
+.tool-page-v2-rail,
+.tool-page-v2-workspace,
+.crypto-sidebar,
+.crypto-workspace {
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018)), rgba(10,10,11,.72);
+  box-shadow: 0 24px 80px rgba(0,0,0,.3);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  overflow: hidden;
+}
+.tool-page-v2-rail { display: flex; flex-direction: column; padding: 28px; }
+.tool-page-v2-rail-kicker { color: rgba(255,255,255,.5); font-family: var(--tk-font-display-en), sans-serif; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.tool-page-v2-rail h1 { position: relative; z-index: 1; margin: 17px 0 13px; color: #fff; font-size: clamp(38px, 4vw, 58px); font-weight: 900; letter-spacing: -.04em; line-height: .97; }
+.tool-page-v2-rail > p { max-width: 286px; margin: 0; color: rgba(255,255,255,.58); font-size: 12px; font-weight: 600; line-height: 1.75; }
+.tool-page-v2-rail-note { display: grid; gap: 8px; margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.1); }
+.tool-page-v2-rail-note span { color: rgba(255,255,255,.45); font-family: var(--tk-font-display-en), sans-serif; font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+.tool-page-v2-rail-note strong { color: rgba(255,255,255,.68); font-size: 11px; line-height: 1.65; }
+.tool-page-v2-steps { display: grid; gap: 14px; margin-top: auto; padding-top: 24px; }
+.tool-page-v2-steps > div { display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 10px; align-items: start; color: rgba(255,255,255,.5); }
+.tool-page-v2-steps b { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; font-family: var(--tk-font-display-en), sans-serif; font-size: 10px; }
+.tool-page-v2-steps > .is-active b { color: #090909; border-color: #fff; background: #fff; }
+.tool-page-v2-steps span { display: grid; gap: 3px; padding-top: 2px; }
+.tool-page-v2-steps strong { color: rgba(255,255,255,.82); font-size: 12px; }
+.tool-page-v2-steps small { color: rgba(255,255,255,.43); font-size: 10px; line-height: 1.5; }
+
+/* Markdown */
+
+/* Smart color replacement */
+
+/* Developer toolbox and Hash & Crypto */
+.crypto-main { grid-template-columns: minmax(286px, 330px) minmax(0,1fr); }
+.crypto-sidebar { gap: 0; }
+.crypto-sidebar-index { min-height: 0; margin-top: auto; padding-top: 18px; }
+.crypto-sidebar-head { height: auto; padding: 14px 0 8px; border: 0; }
+.crypto-sidebar nav { height: auto; max-height: 232px; overflow-y: auto; padding: 0; }
+.crypto-sidebar nav button { min-height: 32px; }
+.crypto-workspace { display: grid; grid-template-rows: auto auto minmax(0,1fr) auto; overflow: hidden; }
+.crypto-workspace-head { padding: 22px 28px; }
+.crypto-panel { padding: 20px 28px 28px; }
+.crypto-session-log { padding: 10px 28px; }
+.crypto-session-log li { white-space: nowrap; }
+
+@media (max-width: 1180px) {
+  .tool-page-v2-body { grid-template-columns: 250px minmax(0,1fr) !important; overflow-y: auto; }
+  .tool-page-v2-rail { padding: 22px; }
+  .tool-page-v2-rail h1 { font-size: 40px; }
+}
+@media (max-width: 760px) {
+  .tool-page-v2-shell { grid-template-rows: 60px minmax(0,1fr); overflow: auto; }
+  .tool-page-v2-topbar { min-height: 60px; padding: 0 12px; }
+  .tool-page-v2-tag { max-width: 42vw; font-size: 9px; }
+  .tool-page-v2-nav-link span, .tool-page-v2-support span { display: none; }
+  .tool-page-v2-nav-link, .tool-page-v2-support { width: 34px; justify-content: center; padding: 0; }
+  .tool-page-v2-body { display: flex !important; flex-direction: column; overflow: visible; padding: 12px; }
+  .tool-page-v2-rail { min-height: auto; }
+  .tool-page-v2-rail h1 { font-size: 38px; }
+  .tool-page-v2-steps { grid-template-columns: repeat(2,minmax(0,1fr)); margin-top: 22px; }
+  .crypto-io-grid,
+.crypto-secret-grid,
+.crypto-key-grid { grid-template-columns: 1fr; }
+  .crypto-workspace { min-height: 700px; }
+}
+
+/* The legacy toolbox rules live below the first shared block; keep these
+   final selectors last so the five-tool workbench cannot fall back to its old
+   two-column modal geometry. */
+
+/* EOF layout precedence for Tool Page 2.1. */
+.crypto-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) !important; }
+.crypto-workspace { grid-template-rows:auto auto minmax(0,1fr) auto; min-height:0; overflow:hidden !important; }
+.crypto-panel { min-height:0; height:100%; overflow:auto; padding:22px 28px 28px; }
+.crypto-io textarea { min-height:0; height:100%; resize:none; }
+@media (min-width:1560px) { .crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } }
+@media (max-width:1180px) { .crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } }
+@media (max-width:760px) {
+  .crypto-workspace { min-height:760px !important; overflow:visible !important; }
+  .crypto-panel { height:auto; min-height:560px; }
+  .crypto-io textarea { min-height:220px; height:220px; }
+}
+
+/* 2.1 unified workbench geometry. Keep this as the single authoritative
+   layer after legacy feature rules: every new page uses the same shell while
+   each tool keeps its own internal work surface. */
+.tool-page-v2-shell {
+  background: #08090a;
+}
+.tool-page-v2-shell::after {
+  background:
+    linear-gradient(180deg, rgba(5, 6, 7, .16), rgba(5, 6, 7, .08) 42%, rgba(0, 0, 0, .42));
+}
+.tool-page-v2-bg > .toolknit-custom-background-media { opacity: .82; filter: brightness(.62) saturate(.92) contrast(1.04); }
+.tool-page-v2-topbar { background: rgba(8, 8, 9, .88); }
+.tool-page-v2-body { height: auto !important; min-height: 0 !important; }
+.tool-page-v2-rail,
+.tool-page-v2-workspace,
+.crypto-sidebar,
+.crypto-workspace {
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.018)), rgba(10,10,11,.56);
+  border-color: rgba(255,255,255,.13);
+  box-shadow: 0 22px 70px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+/* Markdown: one framed workbench, two equal inner surfaces. */
+
+/* Image replacement: stage and controls stay as two sibling glass cards on
+   wide screens, then stack without changing control order on narrow screens. */
+
+/* Developer toolbox and crypto keep a framed workspace and let the active
+   editor consume the remaining height instead of leaving a dead lower strip. */
+.crypto-workspace { grid-template-rows: auto auto minmax(0,1fr) auto; min-height: 0; overflow: hidden !important; }
+.crypto-panel { min-height: 0; height: 100%; overflow: auto; padding: 22px 28px 28px; }
+.crypto-panel > .crypto-editor,
+.crypto-panel > .crypto-file-mode,
+.crypto-panel > .crypto-file-hash,
+.crypto-panel > .crypto-single { min-height: 100%; }
+.crypto-io-grid { min-height: 0; }
+.crypto-io textarea { min-height: 0; height: 100%; resize: none; }
+
+@media (min-width: 1560px) {
+  .crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
+}
+@media (max-width: 1180px) {
+  .crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
+}
+@media (max-width: 760px) {
+  .tool-page-v2-body { overflow: visible; }
+  .crypto-workspace { min-height: 760px !important; overflow: visible !important; }
+  .crypto-panel { height: auto; min-height: 560px; }
+  .crypto-io textarea { min-height: 220px; height: 220px; }
+}
+
+/* Last cascade layer: these selectors intentionally come after the legacy
+   toolbox stylesheet so all 2.1 pages use the shared shell geometry. */
+.crypto-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) !important; }
+.crypto-workspace { grid-template-rows:auto auto minmax(0,1fr) auto; min-height:0; overflow:hidden !important; }
+.crypto-panel { min-height:0; height:100%; overflow:auto; padding:22px 28px 28px; }
+.crypto-io textarea { min-height:0; height:100%; resize:none; }
+@media (min-width:1560px) { .crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } }
+@media (max-width:1180px) { .crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } }
+@media (max-width:760px) {
+  .crypto-workspace { min-height:760px !important; overflow:visible !important; }
+  .crypto-panel { height:auto; min-height:560px; }
+  .crypto-io textarea { min-height:220px; height:220px; }
+}
+
+/* Final precedence for the 2.1 workbench layout. Keep this after the legacy
+   feature rules above so the shared shell always wins. */
+.crypto-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) !important; }
+.crypto-workspace { grid-template-rows: auto auto minmax(0,1fr) auto; min-height: 0; overflow: hidden !important; }
+.crypto-panel { min-height: 0; height: 100%; overflow: auto; padding: 22px 28px 28px; }
+.crypto-io textarea { min-height: 0; height: 100%; resize: none; }
+.crypto-io-grid { min-height: 0; }
+@media (min-width:1560px) {
+  .crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
+}
+@media (max-width:1180px) {
+  .crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
+}
+@media (max-width:760px) {
+  .crypto-workspace { min-height: 760px !important; overflow: visible !important; }
+  .crypto-panel { height: auto; min-height: 560px; }
+  .crypto-io textarea { min-height: 220px; height: 220px; }
+}
+
+/* -------------------------------------------------------------------------
+   Tool Page 2.1 layout pass
+   The feature pages share the same chrome, but their work areas are not
+   interchangeable. Keep the reference geometry: a stable information rail,
+   glass work surfaces, and controls that consume the available height.
+   ------------------------------------------------------------------------- */
+.crypto-main {
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) !important;
+}
+
+/* Markdown follows the two-surface editor pattern used by the reference
+   text tools. The wrapper becomes layout-only so each surface can keep its
+   own scroll container and glass boundary. */
+
+/* The color stage is a fixed work surface; only the control column scrolls.
+   This keeps the export controls reachable at every desktop height. */
+
+/* Developer tools: the panel and its fields stretch with the reference
+   workspace instead of ending after their intrinsic textarea height. */
+
+/* Crypto uses the same fill rule, while retaining its persistent session log. */
+.crypto-workspace {
+  grid-template-rows: auto auto minmax(0,1fr) auto;
+  min-height: 0;
+  overflow: hidden !important;
+}
+.crypto-panel { min-height: 0; height: 100%; overflow: auto; padding: 22px 28px 28px; }
+.crypto-panel > .crypto-editor,
+.crypto-panel > .crypto-file-mode,
+.crypto-panel > .crypto-file-hash,
+.crypto-panel > .crypto-single { min-height: 100%; }
+.crypto-io textarea { min-height: 0; height: 100%; resize: none; }
+.crypto-io-grid { min-height: 0; }
+
+@media (min-width: 1560px) {
+  .crypto-main { grid-template-columns: minmax(320px, 356px) minmax(0,1fr) !important; }
+}
+@media (max-width: 1180px) {
+  .crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
+}
+@media (max-width: 760px) {
+  .crypto-workspace { min-height: 760px !important; overflow: visible !important; }
+  .crypto-panel { height: auto; min-height: 560px; }
+  .crypto-io textarea { min-height: 220px; height: 220px; }
+}
+
+/* Final Tool Page 2.0 geometry.
+   The original feature workspaces declared their own viewport-height math.
+   Inside the shared shell that subtracts the top bar a second time, leaving
+   an unused strip below every new tool. Grid owns the row height here; inner
+   panels own their scrolling. */
+.tool-page-v2-body,
+.crypto-main {
+  height: auto !important;
+  min-height: 0 !important;
+}
+.tool-page-v2-body { overflow: hidden; }
+.crypto-sidebar,
+.crypto-workspace { min-height: 0; }
+.crypto-workspace { overflow: hidden; }
+.crypto-sidebar,
+.crypto-panel { overflow-y: auto; overscroll-behavior: contain; }
+.tool-page-v2-support,
+.tool-page-v2-support:hover { color: #050506 !important; }
+
+@media (max-width: 1180px) {
+  .tool-page-v2-body { overflow-y: auto; }
+}
+
+@media (max-width: 760px) {
+  .tool-page-v2-body { overflow: visible; }
+  .tool-page-v2-rail { flex: 0 0 auto; }
+  .crypto-workspace { min-height: 700px !important; flex: 0 0 auto; }
+  .crypto-workspace { overflow: visible; }
+}
+.developer-tool-quicklist { margin: 0 auto 26px; max-width: 1180px; }
+
+/* Final shared-shell precedence for the legacy toolbox block above. */
+/* EOF layout precedence for Tool Page 2.1. */
+.crypto-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) !important; }
+.crypto-workspace { grid-template-rows:auto auto minmax(0,1fr) auto; min-height:0; overflow:hidden !important; }
+.crypto-panel { min-height:0; height:100%; overflow:auto; padding:22px 28px 28px; }
+.crypto-io textarea { min-height:0; height:100%; resize:none; }
+@media (min-width:1560px) { .crypto-main { grid-template-columns:minmax(320px,356px) minmax(0,1fr) !important; } }
+@media (max-width:1180px) { .crypto-main { grid-template-columns:250px minmax(0,1fr) !important; } }
+@media (max-width:760px) {
+  .crypto-workspace { min-height:760px !important; overflow:visible !important; }
+  .crypto-panel { height:auto; min-height:560px; }
+  .crypto-io textarea { min-height:220px; height:220px; }
+}

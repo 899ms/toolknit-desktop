@@ -1,3 +1,4 @@
+import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createLazyToolRegistry, validateLazyToolSpecs } from '../src/app/lazy-tool-registry.js';
@@ -117,7 +118,7 @@ const [
   readFile(new URL('../src/features/crypto/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/crypto/crypto.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/crypto-tool-ui.js', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
+  readGlobalStyles(import.meta.url),
   readFile(new URL('../src/tool-page-v2-final.css', import.meta.url), 'utf8'),
   ...[]
 ]);

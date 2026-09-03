@@ -1,10 +1,11 @@
+import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const [main, windowRuntime, styles, navigation, native] = await Promise.all([
   readFile(new URL('../src/main.js', import.meta.url), 'utf8').then(async main => `${main}\n${await readFile(new URL('../src/application-runtime.js', import.meta.url), 'utf8')}`),
   readFile(new URL('../src/app/window-runtime.js', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
+  readGlobalStyles(import.meta.url),
   readFile(new URL('../src/tool-nav-unified.css', import.meta.url), 'utf8'),
   readFile(new URL('../src-tauri/src/lib.rs', import.meta.url), 'utf8')
 ]);

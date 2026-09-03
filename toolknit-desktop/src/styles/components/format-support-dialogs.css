@@ -1,0 +1,923 @@
+      /* Format Support Section (replaces marquee) */
+      .audio-convert-formats {
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 32px 16px;
+        gap: 10px;
+        -webkit-app-region: no-drag;
+      }
+
+      .audio-convert-formats-title {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.45);
+        margin: 0;
+      }
+
+      .audio-convert-formats-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        max-width: 640px;
+      }
+
+      .audio-convert-format-chip {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 13px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.75);
+        transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        cursor: default;
+      }
+
+      .audio-convert-format-chip:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+      }
+
+      .audio-convert-format-chip .format-type {
+        font-size: 10px;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.4);
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .audio-convert-format-chip.src-only .format-name {
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .audio-convert-format-chip.src-only {
+        border-style: dashed;
+      }
+
+      .audio-convert-conversion-map {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 4px;
+      }
+
+      .audio-convert-conversion-map .map-arrow {
+        color: rgba(255, 255, 255, 0.3);
+        font-size: 14px;
+      }
+
+      .audio-convert-conversion-map .map-text {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.4);
+      }
+
+      .audio-convert-drop-zone {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        background: rgba(0, 0, 0, 0.8);
+        transition: opacity 0.25s ease;
+      }
+
+      .audio-convert-drop-zone.visible {
+        opacity: 1;
+      }
+
+      .drop-hint, .bpm-drop-hint {
+        font-size: 18px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.9);
+        letter-spacing: 0.05em;
+        text-align: center;
+      }
+
+      .audio-convert-overlay.drag-over .audio-convert-body {
+        animation: dragShake 0.35s ease-in-out;
+      }
+
+      .audio-convert-overlay.drag-over .video-frame-body {
+        animation: dragShake 0.35s ease-in-out;
+      }
+
+      @keyframes dragShake {
+        0%, 100% { transform: translateX(0); }
+        20% { transform: translateX(-4px) rotate(-0.3deg); }
+        40% { transform: translateX(4px) rotate(0.3deg); }
+        60% { transform: translateX(-3px) rotate(-0.2deg); }
+        80% { transform: translateX(3px) rotate(0.2deg); }
+      }
+
+      .audio-convert-files {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        max-width: 420px;
+        width: 100%;
+        flex: 1;
+        min-height: 0;
+        max-height: 220px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(180, 151, 207, 0.3) transparent;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+        padding-right: 4px;
+      }
+
+      .audio-convert-files::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      .audio-convert-files::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .audio-convert-files::-webkit-scrollbar-thumb {
+        background: rgba(180, 151, 207, 0.3);
+        border-radius: 2px;
+      }
+
+      .audio-convert-files.has-files {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .audio-convert-file-item {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: background 0.2s ease, border-color 0.2s ease;
+      }
+
+      .audio-convert-file-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.18);
+      }
+
+      .audio-convert-file-item.dragging {
+        opacity: 0.5;
+        border-color: rgba(255, 255, 255, 0.4);
+      }
+
+      .audio-convert-file-item.is-sortable {
+        cursor: grab;
+      }
+
+      .audio-convert-file-item.is-sortable:active {
+        cursor: grabbing;
+      }
+
+      .audio-convert-file-item.drag-target::before {
+        content: '';
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        top: -1px;
+        height: 2px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.95);
+      }
+
+      .audio-convert-file-thumb {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
+
+      .audio-convert-file-size {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.45);
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .audio-convert-file-index {
+        font-size: 13px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.4);
+        min-width: 20px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+
+      .audio-convert-file-name {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.85);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 320px;
+      }
+
+      .audio-convert-file-remove {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        transition: background 0.2s ease, color 0.2s ease;
+        -webkit-app-region: no-drag;
+      }
+
+      .audio-convert-file-remove:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .audio-convert-file-remove svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .audio-convert-process-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 32px;
+        border-radius: 9999px;
+        background: #ffffff;
+        color: #0a0a0f;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        -webkit-app-region: no-drag;
+        opacity: 0;
+        transform: translateY(12px) scale(0.95);
+        transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, box-shadow 0.2s ease;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+        align-self: center;
+        border: none;
+        box-shadow: 0 8px 32px rgba(255, 255, 255, 0.12);
+      }
+
+      .audio-convert-process-btn.visible {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      .audio-convert-process-btn:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 12px 40px rgba(255, 255, 255, 0.18);
+        background: #f0f0f0;
+      }
+
+      .audio-convert-process-btn:active {
+        transform: translateY(0) scale(0.98);
+      }
+
+      #pptOutlineGenerateBtn {
+        opacity: 1;
+        transform: none;
+        box-shadow: 0 8px 32px rgba(255, 255, 255, 0.12);
+      }
+
+      #pptOutlineGenerateBtn:hover,
+      #pptOutlineGenerateBtn:active {
+        transform: none;
+      }
+
+      #pptOutlineGenerateBtn:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
+
+      .audio-convert-format-selector {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 4px;
+      }
+
+      .audio-convert-format-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.6);
+        letter-spacing: 0.05em;
+      }
+
+      .audio-convert-format-options {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .audio-convert-format-option {
+        padding: 6px 16px;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        -webkit-app-region: no-drag;
+        transition: all 0.2s ease;
+      }
+
+      .audio-convert-format-option:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .audio-convert-format-option.active {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.6);
+        color: #ffffff;
+      }
+
+      .audio-convert-success-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1004;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(10, 10, 15, 0.5);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .audio-convert-success-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      .audio-convert-success-dialog {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 32px 36px;
+        max-width: 380px;
+        width: 90%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        transform: scale(0.9) translateY(20px);
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      .audio-convert-success-overlay.visible .audio-convert-success-dialog {
+        transform: scale(1) translateY(0);
+      }
+
+      .audio-convert-success-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4ade80, #22c55e);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+      }
+
+      .audio-convert-success-icon svg {
+        width: 28px;
+        height: 28px;
+      }
+
+      .audio-convert-success-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0;
+      }
+
+      .audio-convert-success-meta {
+        font-size: 14px;
+        color: #666;
+        text-align: center;
+        line-height: 1.5;
+        margin: 0;
+        padding: 0 8px;
+      }
+
+      .audio-convert-success-detail {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+        padding: 12px;
+        background: #f5f5f7;
+        border-radius: 12px;
+        box-sizing: border-box;
+      }
+
+      .image-batch-failure-summary {
+        box-sizing: border-box;
+        width: 100%;
+        max-height: 112px;
+        overflow-y: auto;
+        padding: 10px 12px;
+        border: 1px solid #edc6c1;
+        border-radius: 8px;
+        background: #fff7f5;
+        color: #7a2920;
+        font-size: 12px;
+        line-height: 1.5;
+        text-align: left;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .image-batch-failure-summary[hidden] {
+        display: none;
+      }
+
+      .audio-convert-success-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .audio-convert-success-key {
+        color: #888;
+        flex-shrink: 0;
+      }
+
+      .audio-convert-success-value {
+        color: #1a1a2e;
+        text-align: right;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        font-weight: 500;
+      }
+
+      .audio-convert-success-path {
+        font-size: 13px;
+        color: #666;
+        text-align: center;
+        word-break: break-all;
+        line-height: 1.5;
+        margin: 0;
+        padding: 8px 12px;
+        background: #f5f5f7;
+        border-radius: 8px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .audio-convert-success-actions {
+        display: flex;
+        gap: 12px;
+        width: 100%;
+        margin-top: 4px;
+      }
+
+      #pdfCompressSuccessOverlay .audio-convert-success-dialog {
+        max-width: 560px;
+        width: min(92vw, 560px);
+      }
+
+      #pdfCompressSuccessOverlay .audio-convert-success-meta {
+        max-width: 460px;
+      }
+
+      #pdfCompressSuccessOverlay .audio-convert-success-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #pptOutlineSuccessOverlay .audio-convert-success-dialog {
+        max-width: 560px;
+      }
+
+      #pptOutlineSuccessOverlay .audio-convert-success-actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      #pptOutlineSuccessOverlay .audio-clip-success-dialog {
+        max-width: 640px;
+        width: min(92vw, 640px);
+      }
+
+      #pptOutlineSuccessOverlay .audio-clip-success-meta {
+        max-width: 500px;
+      }
+
+      #pptOutlineSuccessOverlay .audio-clip-success-actions {
+        display: grid;
+        grid-template-columns: minmax(126px, 1fr) minmax(170px, 1.25fr) minmax(108px, 0.82fr);
+        gap: 10px;
+      }
+
+      #pptOutlineSuccessOverlay .audio-clip-success-btn {
+        min-height: 44px;
+        padding: 0 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.15;
+        overflow: visible;
+        text-overflow: clip;
+      }
+
+      .audio-convert-success-btn {
+        flex: 1;
+        min-width: 0;
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .audio-convert-success-btn-secondary {
+        background: #f0f0f3;
+        color: #333;
+      }
+
+      .audio-convert-success-btn-secondary:hover {
+        background: #e5e5e8;
+      }
+
+      .audio-convert-success-btn-primary {
+        background: linear-gradient(135deg, #2a2a2a, #0a0a0f);
+        color: #f5f5f5;
+      }
+
+      .audio-convert-success-btn-primary:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      }
+
+      .dependency-gate-overlay {
+        z-index: 1400;
+      }
+
+      .dependency-gate-dialog {
+        max-width: 420px;
+      }
+
+      .dependency-gate-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #151519;
+        color: #ffffff;
+      }
+
+      .dependency-gate-icon svg {
+        width: 26px;
+        height: 26px;
+      }
+
+      .dependency-gate-list {
+        gap: 10px;
+      }
+
+      .dependency-gate-row {
+        align-items: center;
+      }
+
+      .dependency-gate-row .audio-convert-success-value[data-state="active"] {
+        color: #111118;
+        font-weight: 700;
+      }
+
+      .dependency-gate-row .audio-convert-success-value[data-state="ready"] {
+        color: #16854c;
+      }
+
+      .dependency-gate-progress {
+        width: 100%;
+        display: grid;
+        gap: 8px;
+        color: #666;
+        font-size: 12px;
+        text-align: center;
+      }
+
+      .dependency-gate-progress[hidden],
+      .dependency-gate-error[hidden] {
+        display: none !important;
+      }
+
+      .dependency-gate-progress-track {
+        width: 100%;
+        height: 5px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e8e8ec;
+      }
+
+      .dependency-gate-progress-track > span {
+        display: block;
+        width: 0;
+        height: 100%;
+        border-radius: inherit;
+        background: #151519;
+        transition: width 180ms ease;
+      }
+
+      .dependency-gate-progress[data-indeterminate="true"] .dependency-gate-progress-track > span {
+        animation: dependency-gate-progress-wait 1.15s ease-in-out infinite;
+        transition: none;
+      }
+
+      @keyframes dependency-gate-progress-wait {
+        0% { transform: translateX(-115%); }
+        55% { transform: translateX(115%); }
+        100% { transform: translateX(290%); }
+      }
+
+      .dependency-gate-error {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 9px 11px;
+        border-radius: 8px;
+        background: #fff0f0;
+        color: #a12828;
+        font-size: 12px;
+        line-height: 1.5;
+        word-break: break-word;
+      }
+
+      .dependency-gate-dialog .audio-convert-success-btn:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
+
+      .audio-convert-process-mask {
+        position: fixed;
+        inset: 0;
+        z-index: 1006;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        background: rgba(10, 10, 15, 0.92);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+      }
+
+      .audio-convert-process-mask.visible {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transition-delay: 0s;
+      }
+
+      .audio-convert-process-mask .tk-mascot-lg {
+        width: 76.5px;
+        height: 120px;
+        background: url('/assets/spider.png') 0 0 / 306px 120px no-repeat;
+        image-rendering: pixelated;
+        animation: tkSpiderFramesLg 0.7s steps(3, end) infinite alternate;
+      }
+
+      .audio-convert-process-bar {
+        width: 280px;
+        height: 6px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+      }
+
+      .audio-convert-process-bar-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 3px;
+        background: #ffffff;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+        transition: width 0.2s ease;
+      }
+
+      .audio-convert-process-text {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .audio-convert-cancel-btn {
+        margin-top: 16px;
+        padding: 8px 24px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .audio-convert-cancel-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      /* Success dialog reuse */
+      .audio-clip-success-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1010;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(10, 15, 10, 0.85);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .audio-clip-success-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      .audio-clip-success-dialog {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 32px 36px;
+        max-width: 420px;
+        width: 90%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        transform: scale(0.9) translateY(20px);
+        transition: transform 0.3s ease;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      .audio-clip-success-overlay.visible .audio-clip-success-dialog {
+        transform: scale(1) translateY(0);
+      }
+
+      .audio-clip-success-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4ade80, #22c55e);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+      }
+
+      .audio-clip-success-icon svg {
+        width: 28px;
+        height: 28px;
+      }
+
+      .audio-clip-success-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0;
+      }
+
+      .audio-clip-success-meta {
+        font-size: 14px;
+        color: #666;
+        text-align: center;
+        margin: 4px 0 12px;
+        max-width: 320px;
+        padding: 0 8px;
+      }
+
+      .audio-clip-success-path {
+        font-size: 13px;
+        color: #666;
+        text-align: center;
+        word-break: break-all;
+        padding: 8px 16px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .audio-clip-success-actions {
+        display: flex;
+        gap: 12px;
+        width: 100%;
+        margin-top: 4px;
+      }
+
+      .audio-clip-success-btn {
+        flex: 1;
+        min-width: 0;
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .audio-clip-success-btn-secondary {
+        background: #f0f0f3;
+        color: #333;
+      }
+
+      .audio-clip-success-btn-secondary:hover {
+        background: #e5e5e8;
+      }
+
+      .audio-clip-success-btn-primary {
+        background: linear-gradient(135deg, #2a2a2a, #0a0a0f);
+        color: #f5f5f5;
+      }
+
+      .audio-clip-success-btn-primary:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      }
+
+      #pptOutlineSummary {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 6px;
+        align-items: start;
+      }
+
+      #pptOutlineSummary span {
+        min-width: 0;
+      }
+
+      #pptOutlineSummary strong {
+        white-space: normal;
+        line-height: 1.55;
+      }
+
+      #pptOutlineSummary span {
+        color: rgba(255, 255, 255, 0.66);
+        line-height: 1.5;
+        word-break: break-word;
+      }
+
+

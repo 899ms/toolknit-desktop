@@ -1,3 +1,4 @@
+import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
@@ -8,7 +9,7 @@ const [html, main, lazyTools, lazyRegistry, ui, core, styles, finalStyles, featu
   readFile(new URL('../src/app/lazy-tool-registry.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/developer-toolbox/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/developer-toolbox/core.js', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
+  readGlobalStyles(import.meta.url),
   readFile(new URL('../src/tool-page-v2-final.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/developer-toolbox/developer-toolbox.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/developer-toolbox-ui.js', import.meta.url), 'utf8'),

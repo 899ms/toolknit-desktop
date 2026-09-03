@@ -1,0 +1,131 @@
+      /* ===== Toast ===== */
+      #favToast.toast {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: rgba(255, 255, 255, 0.95);
+        color: #1a1a1a;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 10px 24px;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        z-index: 10001;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        white-space: nowrap;
+      }
+      #favToast.toast.visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* ===== Favorites Card ===== */
+      .favorites-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 8px;
+        overflow-y: auto;
+        max-height: 100%;
+      }
+      .fav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.8);
+        flex-shrink: 0;
+      }
+      .fav-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateX(3px);
+      }
+      .fav-item .fav-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .fav-item .fav-icon i,
+      .fav-item .fav-icon svg {
+        width: 15px;
+        height: 15px;
+        color: #ffffff;
+      }
+      .fav-item .fav-name {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .fav-item .fav-remove {
+        width: 20px;
+        height: 20px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease, background 0.2s ease;
+        flex-shrink: 0;
+      }
+      .fav-item:hover .fav-remove {
+        opacity: 1;
+      }
+      .fav-item .fav-remove:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .fav-item .fav-remove i,
+      .fav-item .fav-remove svg {
+        width: 13px;
+        height: 13px;
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .fav-empty-guide {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px dashed rgba(255, 255, 255, 0.12);
+        padding: 16px;
+        text-align: center;
+        margin-top: 8px;
+      }
+      .fav-empty-guide .fav-empty-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .fav-empty-guide .fav-empty-icon i,
+      .fav-empty-guide .fav-empty-icon svg {
+        width: 18px;
+        height: 18px;
+        color: rgba(255, 255, 255, 0.4);
+      }
+      .fav-empty-guide .fav-empty-text {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.4);
+        line-height: 1.6;
+      }
+

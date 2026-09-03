@@ -1,0 +1,277 @@
+/* ===== v2 offline model manager =====
+   The manager is opened from the approved settings poster. Keep its visual
+   language local to this overlay so the existing transcription tool remains
+   untouched. */
+#transcriptionModelOverlay {
+  padding: clamp(18px, 4vw, 56px);
+  background: rgba(4, 4, 5, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+#transcriptionModelOverlay .v2-transcription-model-panel {
+  width: min(780px, 100%);
+  max-height: min(720px, calc(100vh - 48px));
+  overflow: auto;
+  padding: clamp(22px, 3vw, 32px);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.07), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.018)),
+    rgba(9, 9, 10, 0.96);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.62);
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  scrollbar-width: thin;
+  transform: translateY(10px) scale(0.985);
+  transition: transform 220ms ease;
+}
+
+#transcriptionModelOverlay.visible .v2-transcription-model-panel {
+  transform: translateY(0) scale(1);
+}
+
+#transcriptionModelOverlay .transcription-model-header {
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 2px;
+}
+
+#transcriptionModelOverlay .transcription-model-header > div {
+  min-width: 0;
+}
+
+#transcriptionModelOverlay .transcription-model-header .tools-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  max-width: 100%;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.045);
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+#transcriptionModelOverlay .transcription-model-header h2 {
+  margin: 12px 0 0;
+  color: var(--ink);
+  font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 400;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+#transcriptionModelOverlay .pdf-page-workspace-close {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+#transcriptionModelOverlay .pdf-page-workspace-close:hover,
+#transcriptionModelOverlay .pdf-page-workspace-close:focus-visible {
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.09);
+  outline: none;
+}
+
+#transcriptionModelOverlay .transcription-model-intro {
+  max-width: 640px;
+  margin: 14px 0 24px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+#transcriptionModelOverlay .transcription-source-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  border-top-color: rgba(255, 255, 255, 0.11);
+  border-bottom-color: rgba(255, 255, 255, 0.11);
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+#transcriptionModelOverlay #transcriptionSourceOptions {
+  min-width: 0;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#transcriptionModelOverlay .audio-convert-format-option {
+  min-height: 36px;
+  padding: 0 15px;
+  border-color: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.025);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#transcriptionModelOverlay .audio-convert-format-option:hover,
+#transcriptionModelOverlay .audio-convert-format-option:focus-visible {
+  border-color: rgba(255, 255, 255, 0.34);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.07);
+  outline: none;
+}
+
+#transcriptionModelOverlay .audio-convert-format-option.active {
+  border-color: var(--white);
+  color: var(--black);
+  background: var(--white);
+}
+
+#transcriptionModelOverlay .transcription-model-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+#transcriptionModelOverlay .transcription-model-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.025);
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+#transcriptionModelOverlay .transcription-model-row:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.045);
+  transform: translateY(-1px);
+}
+
+#transcriptionModelOverlay .transcription-model-row:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+#transcriptionModelOverlay .transcription-model-name {
+  min-width: 0;
+  color: var(--ink);
+  font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+#transcriptionModelOverlay .transcription-model-meta {
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+#transcriptionModelOverlay .transcription-model-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+#transcriptionModelOverlay .transcription-model-actions .settings-btn {
+  min-height: 34px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.045);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#transcriptionModelOverlay .transcription-model-actions .settings-btn:hover:not(:disabled),
+#transcriptionModelOverlay .transcription-model-actions .settings-btn:focus-visible {
+  border-color: rgba(255, 255, 255, 0.36);
+  color: var(--black);
+  background: var(--white);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+#transcriptionModelOverlay .transcription-model-current {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.08);
+  font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#transcriptionModelOverlay .transcription-model-progress {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
+}
+
+#transcriptionModelOverlay .transcription-model-progress > span {
+  border-radius: inherit;
+  background: var(--white);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.32);
+}
+
+@media (max-width: 680px) {
+  #transcriptionModelOverlay { padding: 16px; }
+  #transcriptionModelOverlay .v2-transcription-model-panel {
+    max-height: calc(100vh - 32px);
+    padding: 22px 18px;
+    border-radius: 22px;
+  }
+  #transcriptionModelOverlay .transcription-source-row {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  #transcriptionModelOverlay #transcriptionSourceOptions { justify-content: flex-start; }
+  #transcriptionModelOverlay .transcription-model-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 15px;
+  }
+  #transcriptionModelOverlay .transcription-model-actions { justify-content: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #transcriptionModelOverlay .v2-transcription-model-panel,
+  #transcriptionModelOverlay .transcription-model-row,
+  #transcriptionModelOverlay .transcription-model-actions .settings-btn { transition: none; }
+}
+

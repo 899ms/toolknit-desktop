@@ -1,3 +1,4 @@
+import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
@@ -12,7 +13,7 @@ const [main, html, lazyTools, entry, bpm, clip, bpmStyles, clipStyles, appStyles
   read('src/features/audio-tools/clip-controller.js'),
   read('src/features/audio-tools/bpm.css'),
   read('src/features/audio-tools/audio-clip.css'),
-  read('src/styles/legacy.css'),
+  readGlobalStyles(import.meta.url),
   read('src/tool-nav-unified.css')
 ]);
 

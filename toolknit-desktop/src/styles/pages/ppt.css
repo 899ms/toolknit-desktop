@@ -1,0 +1,898 @@
+      /* ===== PPT AI Text Extractor · Tool Page 2.0 ===== */
+      .ppt-text-v2 .pdf-merge-v2-body {
+        grid-template-columns: minmax(286px, 340px) minmax(0, 1fr);
+      }
+
+      .ppt-text-v2 .pdf-merge-v2-poster::after {
+        content: 'AI TEXT';
+        right: 18px;
+        bottom: -8px;
+        font-size: 66px;
+        letter-spacing: 0;
+      }
+
+      .ppt-text-v2 .ppt-text-v2-workspace {
+        grid-template-rows: auto auto minmax(0, 1fr);
+        gap: 16px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-color: rgba(255, 255, 255, 0.34) transparent;
+        scrollbar-width: thin;
+      }
+
+      .ppt-text-v2 .ppt-text-v2-workspace::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .ppt-text-v2 .ppt-text-v2-workspace::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.34);
+        border-radius: 999px;
+      }
+
+      .ppt-text-v2-upload {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 22px;
+        padding-bottom: 22px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .ppt-text-v2-upload h2 {
+        margin: 8px 0 0;
+        color: var(--ink);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1.08;
+        letter-spacing: -0.045em;
+      }
+
+      .ppt-text-v2-upload p {
+        max-width: 520px;
+        margin: 10px 0 0;
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      .ppt-text-v2-cta {
+        flex: 0 0 auto;
+        min-height: 44px;
+      }
+
+      .ppt-text-v2-file {
+        margin: -4px 0 0;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      .ppt-text-v2-file.visible {
+        opacity: 1;
+      }
+
+      .ppt-text-v2-empty {
+        min-height: 240px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        background:
+          radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.08), transparent 34%),
+          rgba(255, 255, 255, 0.018);
+      }
+
+      .ppt-text-v2 .ppt-images-panel {
+        width: 100%;
+        margin: 0;
+      }
+
+      .ppt-text-v2 .ppt-images-results {
+        gap: 16px;
+      }
+
+      .ppt-text-v2 .ppt-text-toolbar {
+        grid-template-columns: minmax(150px, 210px) minmax(140px, 190px) minmax(180px, 230px) auto;
+        align-items: end;
+        gap: 14px;
+      }
+
+      .ppt-text-v2 .ppt-images-summary {
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      /* ===== PPT Compressor · Tool Page 2.0 ===== */
+      .ppt-compress-v2 .pdf-merge-v2-body {
+        grid-template-columns: minmax(286px, 340px) minmax(0, 1fr);
+      }
+
+      .ppt-compress-v2 .pdf-merge-v2-poster::after {
+        content: 'OPTIMIZE';
+        right: 18px;
+        bottom: -8px;
+        font-size: 58px;
+        letter-spacing: 0;
+      }
+
+      .ppt-compress-v2 .ppt-compress-v2-workspace {
+        grid-template-rows: auto auto minmax(0, 1fr);
+        gap: 16px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-color: rgba(255, 255, 255, 0.34) transparent;
+        scrollbar-width: thin;
+      }
+
+      .ppt-compress-v2 .ppt-compress-v2-workspace::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .ppt-compress-v2 .ppt-compress-v2-workspace::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.34);
+        border-radius: 999px;
+      }
+
+      .ppt-compress-v2-upload {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 22px;
+        padding-bottom: 22px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .ppt-compress-v2-upload h2 {
+        margin: 8px 0 0;
+        color: var(--ink);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1.08;
+        letter-spacing: -0.045em;
+      }
+
+      .ppt-compress-v2-upload p {
+        max-width: 520px;
+        margin: 10px 0 0;
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      .ppt-compress-v2-cta {
+        flex: 0 0 auto;
+        min-height: 44px;
+      }
+
+      .ppt-compress-v2-file {
+        margin: -4px 0 0;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      .ppt-compress-v2-file.visible {
+        opacity: 1;
+      }
+
+      .ppt-compress-v2-empty {
+        min-height: 240px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        background:
+          radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.08), transparent 34%),
+          rgba(255, 255, 255, 0.018);
+      }
+
+      .ppt-compress-v2 .ppt-images-panel {
+        width: 100%;
+        margin: 0;
+      }
+
+      .ppt-compress-v2 .ppt-images-results {
+        gap: 16px;
+      }
+
+      .ppt-compress-v2 .ppt-compress-toolbar {
+        grid-template-columns: minmax(240px, 380px) auto;
+        align-items: end;
+        gap: 14px;
+      }
+
+      .ppt-compress-v2 .ppt-images-summary {
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      /* ===== PPT AI Outline · Tool Page 2.0 ===== */
+      .ppt-outline-v2 .pdf-merge-v2-body {
+        grid-template-columns: minmax(286px, 340px) minmax(0, 1fr);
+      }
+
+      .ppt-outline-v2 .pdf-merge-v2-poster::after {
+        content: 'OUTLINE';
+        right: 18px;
+        bottom: -8px;
+        font-size: 54px;
+        letter-spacing: 0;
+      }
+
+      .ppt-outline-v2 .ppt-outline-v2-workspace {
+        display: grid;
+        grid-template-rows: minmax(0, 1fr);
+        overflow: hidden;
+      }
+
+      .ppt-outline-v2 .ppt-outline-grid {
+        height: 100%;
+        min-height: 0;
+        align-items: stretch;
+        grid-template-columns: minmax(340px, 0.92fr) minmax(360px, 1.08fr);
+        gap: 22px;
+        padding: 0;
+        border-top: 0;
+        border-bottom: 0;
+        overflow: hidden;
+      }
+
+      .ppt-outline-v2 .ppt-outline-compose,
+      .ppt-outline-v2 .ppt-outline-preview {
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-right: 4px;
+      }
+
+      .ppt-outline-v2 .ppt-outline-compose::-webkit-scrollbar,
+      .ppt-outline-v2 .ppt-outline-preview::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .ppt-outline-v2 .ppt-outline-compose::-webkit-scrollbar-thumb,
+      .ppt-outline-v2 .ppt-outline-preview::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.16);
+        border-radius: 999px;
+      }
+
+      .ppt-outline-v2 .ppt-outline-empty {
+        height: 100%;
+        min-height: 0;
+        border: 1px dashed rgba(255, 255, 255, 0.16);
+        border-radius: 20px;
+        background:
+          radial-gradient(circle at 50% 26%, rgba(255, 255, 255, 0.09), transparent 44%),
+          rgba(255, 255, 255, 0.018);
+      }
+
+      .ppt-outline-v2 .ppt-outline-empty svg {
+        width: 60px;
+        height: 60px;
+        padding: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+      }
+
+      .ppt-outline-v2 .ppt-outline-empty strong {
+        margin-top: 4px;
+        font-size: 19px;
+      }
+
+      .ppt-outline-v2 .ppt-outline-empty span {
+        max-width: 380px;
+        color: rgba(255, 255, 255, 0.52);
+      }
+
+      .ppt-outline-v2-empty-hints {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 6px;
+      }
+
+      .ppt-outline-v2 .ppt-outline-v2-empty-hints span {
+        display: inline-flex;
+        align-items: center;
+        max-width: none;
+        padding: 5px 11px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.56);
+        font-size: 11px;
+        line-height: 1;
+      }
+
+      @media (max-width: 980px) {
+        .ppt-outline-v2 .ppt-outline-grid {
+          grid-template-columns: 1fr;
+        }
+        .ppt-outline-v2 .ppt-outline-row {
+          grid-template-columns: 1fr;
+        }
+        .ppt-outline-v2 .ppt-outline-compose,
+        .ppt-outline-v2 .ppt-outline-preview {
+          overflow: visible;
+          padding-right: 0;
+        }
+      }
+
+      .pdf-merge-v2-poster,
+      .pdf-merge-v2-workspace {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+          rgba(9, 9, 10, 0.84);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+        overflow: hidden;
+      }
+
+      .pdf-merge-v2-poster {
+        display: flex;
+        flex-direction: column;
+        padding: 34px 30px 28px;
+      }
+
+      .pdf-merge-v2-poster::before {
+        content: '';
+        position: absolute;
+        width: 190px;
+        height: 190px;
+        right: -56px;
+        top: -64px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 50%;
+        opacity: 0.5;
+      }
+
+      .pdf-merge-v2-poster::after {
+        content: 'PDF';
+        position: absolute;
+        right: 24px;
+        bottom: 18px;
+        color: rgba(255, 255, 255, 0.035);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+        font-size: 116px;
+        letter-spacing: 0.02em;
+        line-height: 0.8;
+        pointer-events: none;
+      }
+
+      .pdf-merge-v2-poster-kicker,
+      .pdf-merge-v2-upload-eyebrow,
+      .pdf-merge-v2-section-kicker,
+      .pdf-merge-v2-poster-note span {
+        color: var(--muted);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .pdf-merge-v2-title {
+        position: relative;
+        z-index: 1;
+        margin: 18px 0 14px;
+        color: var(--ink);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: clamp(42px, 5vw, 66px);
+        font-weight: 900;
+        line-height: 0.94;
+        letter-spacing: -0.06em;
+      }
+
+      .pdf-merge-v2-subtitle {
+        position: relative;
+        z-index: 1;
+        max-width: 300px;
+        color: rgba(255, 255, 255, 0.58);
+        font-size: 14px;
+        line-height: 1.85;
+      }
+
+      .pdf-merge-v2-poster-note {
+        position: relative;
+        z-index: 1;
+        margin-top: 24px;
+        padding: 14px 0 0;
+        border-top: 1px solid var(--line);
+        display: grid;
+        gap: 8px;
+      }
+
+      .pdf-merge-v2-poster-note strong {
+        color: rgba(255, 255, 255, 0.84);
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.55;
+      }
+
+      .pdf-merge-v2-steps {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 14px;
+        margin-top: auto;
+        padding-top: 28px;
+      }
+
+      .pdf-merge-v2-step {
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr);
+        gap: 13px;
+        align-items: start;
+      }
+
+      .pdf-merge-v2-step > span {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        color: rgba(255, 255, 255, 0.52);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+        font-size: 12px;
+      }
+
+      .pdf-merge-v2-step.is-active > span {
+        border-color: var(--white);
+        color: var(--black);
+        background: var(--white);
+      }
+
+      .pdf-merge-v2-step strong {
+        display: block;
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .pdf-merge-v2-step p {
+        margin-top: 4px;
+        color: rgba(255, 255, 255, 0.44);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .pdf-merge-v2-workspace {
+        display: grid;
+        grid-template-rows: auto minmax(210px, 1fr) auto auto;
+        padding: 28px;
+        transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+      }
+
+      .pdf-merge-v2-upload {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 22px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .pdf-merge-v2-upload-copy {
+        min-width: 0;
+      }
+
+      .pdf-merge-v2-upload h2,
+      .pdf-merge-v2-section-head h2 {
+        margin: 8px 0 0;
+        color: var(--ink);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1.08;
+        letter-spacing: -0.045em;
+      }
+
+      .pdf-merge-v2-upload p,
+      .pdf-merge-v2-section-head p,
+      .pdf-merge-v2-actions span {
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      .pdf-merge-v2-upload p {
+        max-width: 520px;
+        margin-top: 10px;
+      }
+
+      .pdf-merge-v2 .pdf-merge-v2-cta {
+        flex: 0 0 auto;
+        min-width: 172px;
+        min-height: 44px;
+        margin: 0;
+        padding: 0 20px;
+        border-radius: 10px;
+        background: var(--white);
+        color: var(--black);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        box-shadow: none;
+        animation: none;
+      }
+
+      .pdf-merge-v2 .pdf-merge-v2-cta::before {
+        display: none;
+      }
+
+      .pdf-merge-v2 .pdf-merge-v2-cta:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 34px rgba(255, 255, 255, 0.08);
+        background: #ffffff;
+      }
+
+      .pdf-merge-v2-queue {
+        min-height: 0;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 18px;
+        padding: 24px 0 22px;
+      }
+
+      .pdf-merge-v2-section-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .pdf-merge-v2-section-head p {
+        max-width: 240px;
+        margin: 0;
+        text-align: right;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles,
+      .pdf-merge-v2 .pdf-merge-v2-files {
+        width: 100%;
+        max-width: none;
+        max-height: none;
+        min-height: 0;
+        opacity: 1;
+        transform: none;
+        padding: 0;
+        gap: 10px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.026);
+        scrollbar-color: rgba(255, 255, 255, 0.72) transparent;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles:empty,
+      .pdf-merge-v2 .pdf-merge-v2-files:empty {
+        display: grid;
+        place-items: center;
+        min-height: 192px;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles:empty::before,
+      .pdf-merge-v2 .pdf-merge-v2-files:empty::before {
+        content: '暂无 PDF 文件 · 点击上传或拖入文件后会显示在这里';
+        max-width: 320px;
+        color: rgba(255, 255, 255, 0.38);
+        font-size: 13px;
+        line-height: 1.7;
+        text-align: center;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles.has-files,
+      .pdf-merge-v2 .pdf-merge-v2-files.has-files {
+        display: flex;
+        padding: 12px;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles::-webkit-scrollbar,
+      .pdf-merge-v2 .pdf-merge-v2-files::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles::-webkit-scrollbar-thumb,
+      .pdf-merge-v2 .pdf-merge-v2-files::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.68);
+        border-radius: 999px;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-item,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-item {
+        min-height: 52px;
+        padding: 12px 12px 12px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.075);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.035);
+        transition: opacity 160ms ease, transform 160ms ease, background 180ms ease, border-color 180ms ease;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-item.is-sortable,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-item.is-sortable {
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-item.is-sortable:active,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-item.is-sortable:active {
+        cursor: grabbing;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .pdf-merge-file-grip,
+      .pdf-merge-v2 .pdf-merge-v2-files .pdf-merge-file-grip {
+        display: grid;
+        place-items: center;
+        flex: 0 0 18px;
+        width: 18px;
+        height: 28px;
+        color: rgba(255, 255, 255, 0.3);
+        pointer-events: none;
+        transition: color 160ms ease;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .pdf-merge-file-grip svg,
+      .pdf-merge-v2 .pdf-merge-v2-files .pdf-merge-file-grip svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-item.is-sortable:hover .pdf-merge-file-grip,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-item.is-sortable:hover .pdf-merge-file-grip {
+        color: rgba(255, 255, 255, 0.86);
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-item.dragging,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-item.dragging {
+        opacity: 0.38;
+        transform: scale(0.992);
+        border-color: rgba(255, 255, 255, 0.42);
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-item.drag-target::before,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-item.drag-target::before {
+        top: -7px;
+        left: 12px;
+        right: 12px;
+        height: 2px;
+        background: #fff;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.34);
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-item.drag-target-after::before,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-item.drag-target-after::before {
+        top: auto;
+        bottom: -7px;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-item:last-child,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-item:last-child {
+        border-bottom-color: rgba(255, 255, 255, 0.075);
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-item:hover,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-item:hover {
+        border-color: rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.055);
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-index,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-index {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        color: rgba(255, 255, 255, 0.55);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 1;
+        padding: 0;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-index > span,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-index > span {
+        display: block;
+        line-height: 1;
+        transform: translateY(1px);
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-name,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-name {
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 14px;
+        max-width: none;
+        text-align: left;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-remove,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-remove {
+        width: 30px;
+        height: 30px;
+        border: 1px solid transparent;
+        border-radius: 9px;
+      }
+
+      .pdf-merge-v2 #pdfMergeFiles .audio-convert-file-remove:hover,
+      .pdf-merge-v2 .pdf-merge-v2-files .audio-convert-file-remove:hover {
+        border-color: rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .pdf-merge-v2-info {
+        align-items: stretch;
+        padding: 0 0 22px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .pdf-merge-v2-info .audio-convert-formats-title {
+        text-align: left;
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+      }
+
+      .pdf-merge-v2 .pdf-merge-info-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        padding: 0;
+      }
+
+      .pdf-merge-v2 .pdf-merge-info-item {
+        min-height: 72px;
+        align-items: flex-start;
+        padding: 14px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.028);
+        border-color: var(--line);
+        color: rgba(255, 255, 255, 0.56);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .pdf-merge-v2 .pdf-merge-info-item svg {
+        width: 17px;
+        height: 17px;
+        color: rgba(255, 255, 255, 0.68);
+      }
+
+      .pdf-merge-v2-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding-top: 20px;
+      }
+
+      .pdf-merge-v2-actions span {
+        margin: 0;
+      }
+
+      .pdf-merge-v2 .pdf-merge-v2-process {
+        flex: 0 0 auto;
+        min-width: 146px;
+        min-height: 44px;
+        margin: 0;
+        padding: 0 22px;
+        border-radius: 10px;
+        background: var(--white);
+        color: var(--black);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 14px;
+        box-shadow: none;
+      }
+
+      .pdf-merge-v2 .pdf-merge-v2-process:hover {
+        background: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 12px 34px rgba(255, 255, 255, 0.08);
+      }
+
+      .pdf-merge-v2 .pdf-merge-v2-drop-zone {
+        z-index: 40;
+        background: rgba(0, 0, 0, 0.76);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+
+      .pdf-merge-v2 .pdf-merge-v2-drop-zone .drop-hint {
+        min-width: 260px;
+        padding: 18px 26px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .pdf-merge-v2.drag-over .pdf-merge-v2-body {
+        animation: none;
+      }
+
+      .pdf-merge-v2.drag-over .pdf-merge-v2-workspace {
+        border-color: rgba(255, 255, 255, 0.34);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.025)),
+          rgba(12, 12, 13, 0.9);
+        transform: translateY(-1px);
+      }
+
+      .pdf-compress-v2 .pdf-merge-v2-poster::after {
+        content: 'ZIP';
+      }
+
+      .pdf-compress-v2 .pdf-merge-v2-workspace {
+        grid-template-rows: auto auto minmax(150px, 1fr) auto auto;
+      }
+
+      .pdf-merge-v2-options {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 18px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .pdf-merge-v2-options .audio-convert-format-selector {
+        align-items: flex-start;
+        gap: 10px;
+        margin: 0;
+      }
+
+      .pdf-merge-v2-options .audio-convert-format-label {
+        color: var(--muted);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .pdf-merge-v2-options .audio-convert-format-options {
+        justify-content: flex-start;
+        gap: 10px;
+      }
+
+      .pdf-merge-v2-options .audio-convert-format-option {
+        min-height: 36px;
+        padding: 0 16px;
+        border-radius: 10px;
+        color: rgba(255, 255, 255, 0.68);
+        background: rgba(255, 255, 255, 0.035);
+        border-color: rgba(255, 255, 255, 0.09);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      .pdf-merge-v2-options .audio-convert-format-option:hover {
+        color: rgba(255, 255, 255, 0.92);
+        background: rgba(255, 255, 255, 0.07);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .pdf-merge-v2-options .audio-convert-format-option.active {
+        color: var(--black);
+        background: var(--white);
+        border-color: var(--white);
+      }
+
+      .pdf-merge-v2-options-hint {
+        max-width: 390px;
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 13px;
+        line-height: 1.65;
+        text-align: right;
+      }
+
+      .pdf-compress-v2 .pdf-merge-v2-files {
+        max-height: 220px;
+      }
+
+      .pdf-compress-v2 #pdfCompressFiles:empty::before {
+        content: '暂无待压缩 PDF · 点击上传或拖入文件后会显示在这里';
+      }
+

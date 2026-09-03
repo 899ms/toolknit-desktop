@@ -1,3 +1,4 @@
+import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
@@ -21,7 +22,7 @@ const [
   read('../src/markdown-editor-ui.js'),
   read('../src/markdown-editor-core.js'),
   read('../src/features/markdown-editor/markdown-editor.css'),
-  read('../src/styles/legacy.css'),
+  readGlobalStyles(import.meta.url),
   read('../src/tool-page-v2-final.css')
 ]);
 

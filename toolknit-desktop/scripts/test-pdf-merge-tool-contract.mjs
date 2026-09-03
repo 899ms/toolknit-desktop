@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { readGlobalStyles } from './lib/global-styles.mjs';
 
-const [html, main, specs, tool, preview, exporter, featureCss, sortable] = await Promise.all([
+const [html, main, specs, tool, preview, exporter, featureCss, sortable, globalStyles] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
@@ -9,7 +10,8 @@ const [html, main, specs, tool, preview, exporter, featureCss, sortable] = await
   readFile(new URL('../src/features/pdf-merge/preview.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/pdf-merge/exporter.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/pdf-merge/pdf-merge.css', import.meta.url), 'utf8'),
-  readFile(new URL('../src/shared/sortable-file-list.js', import.meta.url), 'utf8')
+  readFile(new URL('../src/shared/sortable-file-list.js', import.meta.url), 'utf8'),
+  readGlobalStyles(import.meta.url)
 ]);
 
 for (const id of [
@@ -50,6 +52,11 @@ assert.match(exporter, /waitForOwner/);
 assert.match(sortable, /bindPointerSortableFileList/);
 assert.match(sortable, /scope\.event\(row, 'pointerdown'/);
 assert.match(featureCss, /pdf-merge-v2/);
+assert.match(
+  globalStyles,
+  /\.feature-tool-overlay\.pdf-merge-overlay\.pdf-merge-v2\s*\{[^}]*background:\s*#060607\s*!important/,
+  'the PDF merge workspace must fully cover the home surface'
+);
 
 for (const [name, source] of [['tool', tool], ['preview', preview], ['exporter', exporter]]) {
   assert.ok(source.split(/\r?\n/).length <= 800, `PDF Merge ${name} module exceeds the oversized-module limit`);

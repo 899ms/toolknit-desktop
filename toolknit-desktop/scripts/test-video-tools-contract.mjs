@@ -1,3 +1,4 @@
+import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
@@ -12,7 +13,7 @@ const [main, html, lazyTools, shared, convert, frame, gif, featureStyles, appSty
   read('src/features/video-tools/frame-controller.js'),
   read('src/features/video-tools/gif-controller.js'),
   read('src/features/video-tools/video-tools.css'),
-  read('src/styles/legacy.css')
+  readGlobalStyles(import.meta.url)
 ]);
 
 for (const [toolId, overlayId, initializer] of [

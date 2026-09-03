@@ -1,3 +1,4 @@
+import { readGlobalStyles } from './lib/global-styles.mjs';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
@@ -47,7 +48,7 @@ const [htmlParts, mainSource, css, rustFiles, frontendFiles, mcpRegistry] = awai
     read('src/app/templates/update-preview.html')
   ]),
   read('src/main.js'),
-  read('src/styles/legacy.css'),
+  readGlobalStyles(import.meta.url),
   collectFiles('src-tauri/src', new Set(['.rs'])),
   collectFiles('src', new Set(['.js', '.mjs'])),
   read('cli/lib/tool-registry.mjs')
@@ -60,7 +61,7 @@ const [rustSources, frontendSources, sourceFiles] = await Promise.all([
   Promise.all([
     sourceMetric('src/main.js'),
     sourceMetric('src/styles.css'),
-    sourceMetric('src/styles/legacy.css'),
+    sourceMetric('src/styles/index.css'),
     sourceMetric('index.html'),
     sourceMetric('src-tauri/src/lib.rs')
   ])

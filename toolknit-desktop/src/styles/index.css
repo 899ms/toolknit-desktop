@@ -1,4 +1,4 @@
-/* Global style entry point. Import order is intentional and preserves the V2 visual cascade. */
+/* Global style entry point. Order preserves the former legacy.css cascade. */
 @import url('./tokens.css');
 @import url('./base.css');
 @import url('./layout.css');
@@ -10,9 +10,30 @@
 @import url('./components/progress.css');
 @import url('./components/window-controls.css');
 @import url('./components/dependency-overlays.css');
-@import url('./pages/home.css');
 @import url('./pages/settings.css');
+@import url('./pages/account-feedback.css');
+@import url('./components/tool-pages.css');
+@import url('./pages/audio.css');
+@import url('./pages/audio-convert.css');
+@import url('./components/format-support-dialogs.css');
+@import url('./pages/pdf-common.css');
+@import url('./pages/ppt.css');
+@import url('./pages/transcription.css');
+@import url('./components/toast-favorites.css');
 @import url('./pages/help.css');
+@import url('./pages/home-v13.css');
+@import url('./pages/home-typography.css');
+@import url('./pages/home-monochrome.css');
+@import url('./pages/home-composition.css');
+@import url('./pages/home-preview.css');
+@import url('./pages/home-favorites.css');
+@import url('./pages/home-v2.css');
+@import url('./pages/settings-v2.css');
+@import url('./components/window-surface.css');
+@import url('./components/model-manager.css');
+@import url('./pages/pdf-editor-legacy.css');
+@import url('./pages/home-manifesto.css');
+@import url('./pages/home-refinement.css');
 @import url('./compatibility.css');
 @import url('./legacy.css');
 @import url('./pages/donation.css');

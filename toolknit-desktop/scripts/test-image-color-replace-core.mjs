@@ -1,3 +1,4 @@
+import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { deltaE76, hexToRgb, replaceImageColors, rgbToHex, sampleRgbaPixel } from '../src/features/image-color-replace/core.js';
@@ -31,7 +32,7 @@ const workerSource = await readFile(new URL('../src/features/image-color-replace
 const uiStyles = await readFile(new URL('../src/features/image-color-replace/image-color-replace.css', import.meta.url), 'utf8');
 const lazyToolsSource = await readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8');
 const compatibilitySource = await readFile(new URL('../src/image-color-replace-ui.js', import.meta.url), 'utf8');
-const globalStyles = await readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8');
+const globalStyles = await readGlobalStyles(import.meta.url);
 const finalToolStyles = await readFile(new URL('../src/tool-page-v2-final.css', import.meta.url), 'utf8');
 
 assert.match(uiSource, /from ['"]\.\/template\.js['"]/, 'the tool must delegate its markup to the feature template');

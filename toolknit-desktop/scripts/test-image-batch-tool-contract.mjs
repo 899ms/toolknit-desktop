@@ -1,3 +1,4 @@
+import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
@@ -7,7 +8,7 @@ const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [main, html, styles, controller, tool, featureStyles] = await Promise.all([
   read('src/main.js'),
   read('index.html'),
-  read('src/styles/legacy.css'),
+  readGlobalStyles(import.meta.url),
   read('src/features/image-batch/controller.js'),
   read('src/features/image-batch/tool.js'),
   read('src/features/image-batch/image-batch.css')

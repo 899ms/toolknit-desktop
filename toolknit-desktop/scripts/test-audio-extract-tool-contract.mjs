@@ -1,3 +1,4 @@
+import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
@@ -12,7 +13,7 @@ const [main, html, lazyTools, tool, controller, template, featureStyles, appStyl
   read('src/features/audio-extract/controller.js'),
   read('src/features/audio-extract/template.js'),
   read('src/features/audio-extract/audio-extract.css'),
-  read('src/styles/legacy.css')
+  readGlobalStyles(import.meta.url)
 ]);
 
 assert.equal(LAZY_TOOL_SPECS['audio-extract']?.overlayId, 'audioExtractFeatureOverlay');

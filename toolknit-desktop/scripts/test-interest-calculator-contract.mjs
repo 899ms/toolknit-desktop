@@ -1,3 +1,4 @@
+import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
@@ -6,7 +7,7 @@ const [html, main, lazy, tool, styles] = await Promise.all([
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/interest-calculator/tool.js', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8')
+  readGlobalStyles(import.meta.url)
 ]);
 
 for (const id of ['interestCalcOverlay', 'interestCalcBack', 'interestCalcModeTabs', 'interestCalcFreqTabs', 'interestCalcBtn', 'interestCalcScheduleBody']) {

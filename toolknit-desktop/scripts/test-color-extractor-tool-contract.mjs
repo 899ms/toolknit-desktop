@@ -1,3 +1,4 @@
+import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
@@ -7,7 +8,7 @@ const [tool, controller, picker, featureStyles, appStyles, main] = await Promise
   readFile(new URL('../src/features/color-extractor/controller.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/color-extractor/screen-picker.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/color-extractor/color-extractor.css', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
+  readGlobalStyles(import.meta.url),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8')
 ]);
 

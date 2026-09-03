@@ -1,0 +1,490 @@
+.manage-favorites {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.manage-favorites:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.manage-favorites.is-active {
+  border-color: var(--white);
+  color: var(--black);
+  background: var(--white);
+}
+
+.manage-favorites svg {
+  width: 14px;
+  height: 14px;
+}
+
+.favorite-grid {
+  display: block;
+}
+
+.favorites-content {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.fav-item {
+  position: relative;
+  min-height: 138px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  color: inherit;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+    rgba(255, 255, 255, 0.02);
+  text-align: left;
+  cursor: pointer;
+  transition: background 170ms ease, border-color 170ms ease, transform 170ms ease;
+}
+
+.fav-item:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.13);
+  transform: translateY(-1px);
+}
+
+.fav-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+}
+
+.fav-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.fav-name {
+  display: block;
+  margin: 1px 0 0;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.fav-desc {
+  display: block;
+  max-width: 260px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.fav-category {
+  display: block;
+  margin-top: 14px;
+  color: var(--quiet);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.fav-remove {
+  color: #62625f;
+  transition: color 150ms ease, transform 150ms ease;
+}
+
+.fav-remove svg {
+  width: 16px;
+  height: 16px;
+}
+
+.fav-item:hover .fav-remove {
+  color: var(--ink);
+  transform: translate(2px, -2px);
+}
+
+.fav-empty-guide {
+  grid-column: 1 / -1;
+  min-height: 132px;
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.fav-empty-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tool-explorer {
+  margin-top: 18px;
+  padding-top: 4px;
+}
+
+.tool-finder-head {
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(360px, 1.28fr);
+  align-items: end;
+  gap: 42px;
+}
+
+.tool-finder-title {
+  margin: 0;
+  color: var(--white);
+  font-size: 27px;
+  font-weight: 400;
+  line-height: 1.08;
+}
+
+.tool-finder-subtitle {
+  max-width: 420px;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.72;
+}
+
+.home-search-field {
+  position: relative;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+    rgba(255, 255, 255, 0.025);
+  overflow: hidden;
+}
+
+.home-search-field::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  opacity: 0;
+  transform: translateX(-40%);
+  transition: opacity 180ms ease, transform 280ms ease;
+}
+
+.home-search-field:focus-within {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.home-search-field:focus-within::after {
+  opacity: 1;
+  transform: translateX(40%);
+}
+
+.home-search-field svg {
+  position: relative;
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+  color: #d5d5d1;
+}
+
+.home-search-field input {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 56px;
+  border: 0;
+  outline: 0;
+  color: var(--ink);
+  background: transparent;
+  font-size: 16px;
+}
+
+.home-search-field input::placeholder {
+  color: #696965;
+}
+
+.category-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.category-chip {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.category-chip:hover,
+.category-chip.is-active {
+  color: var(--black);
+  border-color: var(--white);
+  background: var(--white);
+  transform: translateY(-1px);
+}
+
+.category-chip svg {
+  width: 14px;
+  height: 14px;
+}
+
+.tool-result-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.tool-result-card {
+  min-height: 126px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 21px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 18px;
+  color: var(--ink);
+  background:
+    linear-gradient(122deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.028) 31%, transparent 58%),
+    linear-gradient(180deg, rgba(20, 22, 23, 0.58), rgba(10, 11, 12, 0.38));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), inset 0 -1px 0 rgba(0, 0, 0, 0.25), 0 12px 25px rgba(0, 0, 0, 0.09);
+  -webkit-backdrop-filter: blur(18px) saturate(128%);
+  backdrop-filter: blur(18px) saturate(128%);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.tool-result-card:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(122deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.045) 31%, transparent 60%),
+    linear-gradient(180deg, rgba(30, 32, 34, 0.72), rgba(12, 13, 14, 0.48));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 -1px 0 rgba(0, 0, 0, 0.28), 0 16px 36px rgba(0, 0, 0, 0.25);
+  transform: translateY(-1px);
+}
+
+.tool-result-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.tool-result-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #e7e7e3;
+}
+
+.tool-result-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.tool-result-tag {
+  min-height: 25px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 999px;
+  color: #101110;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  font-family: var(--tk-font-display-cn), var(--tk-font-display-en), "Segoe UI Symbol", sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tool-result-name {
+  display: block;
+  margin-top: 18px;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.tool-result-desc {
+  display: block;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.tool-result-empty {
+  grid-column: 1 / -1;
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.footer-note {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding-top: 6px;
+  color: #494946;
+  font-size: 11px;
+}
+
+.back-to-top {
+  position: fixed;
+  right: 15px;
+  bottom: 15px;
+  z-index: 80;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  color: var(--black);
+  background: var(--white);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.34);
+  opacity: 0;
+  transform: translateY(12px) scale(0.94);
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.back-to-top.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.back-to-top:hover {
+  background: #ffffff;
+}
+
+.back-to-top svg {
+  width: 17px;
+  height: 17px;
+}
+
+@media (max-width: 1280px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .weave-stage {
+    order: -1;
+    min-height: 360px;
+  }
+
+  .tool-finder-head {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .tool-result-grid,
+  .favorites-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .github-strip {
+    grid-template-columns: minmax(0, 1fr) minmax(140px, 0.3fr) auto;
+  }
+}
+
+@media (max-width: 960px) {
+  .home-v2-shell {
+    padding-inline: 0;
+  }
+
+  .hero {
+    min-height: auto;
+    gap: 20px;
+  }
+
+  .hero-copy {
+    padding-top: 24px;
+  }
+
+  .github-strip {
+    grid-template-columns: 1fr auto;
+    row-gap: 22px;
+    padding: 22px;
+  }
+
+  .github-open {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .github-mini-status {
+    bottom: 14px;
+  }
+
+  .tool-result-grid,
+  .favorites-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .hero-title-brand {
+    font-size: clamp(42px, 12vw, 58px);
+  }
+
+  .github-strip {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 20px;
+  }
+
+  .github-stat { border-left: 0; padding: 0; }
+
+  .back-to-top {
+    right: 12px;
+    bottom: 12px;
+  }
+}
+
+/* The picker is a separate native window; keep its static markup hidden in the main app
+   until the lazy color-extractor entry loads it. */
+html:not([data-screen-picker]) #screenPickerOverlay { display: none !important; }
+

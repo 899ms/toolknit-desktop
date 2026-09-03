@@ -1,3 +1,4 @@
+import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
@@ -12,7 +13,7 @@ const [main, html, lazyTools, tool, controller, template, featureStyles, appStyl
   read('src/features/audio-convert/controller.js'),
   read('src/features/audio-convert/template.js'),
   read('src/features/audio-convert/audio-convert.css'),
-  read('src/styles/legacy.css')
+  readGlobalStyles(import.meta.url)
 ]);
 
 const spec = LAZY_TOOL_SPECS.convert;

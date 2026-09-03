@@ -70,6 +70,7 @@ feature 不得导入 `main.js`，不得直接构造 Tauri API；所有 native �
 4. 版本契约测试改为读取懒加载反馈模板，修复模板迁移后的错误失败。
 5. AI 设置定时器改为注入窗口对象，浏览器测试和非窗口运行环境不再依赖隐式全局。
 6. Rust 中明确的兼容入口和领域标记增加 `dead_code` 语义标注，Cargo 输出不再产生无意义 warning。
+7. 修复 PDF 编辑器拆分后控制器遗漏 `createPdfEditorThumbnails` import 导致的懒加载 `ReferenceError`，并在缩略图契约测试中加入导入链断裂检查。
 
 ## 5. 性能与资源生命周期
 

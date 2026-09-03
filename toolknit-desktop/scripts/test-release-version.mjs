@@ -9,6 +9,7 @@ const readJson = async filePath => JSON.parse(await readText(filePath));
 const readStaticHtml = async () => (await Promise.all([
   'index.html',
   'src/app/templates/settings.html',
+  'src/app/templates/feedback.html',
   'src/app/templates/donation.html',
   'src/app/templates/update-preview.html'
 ].map(readText))).join('\n');

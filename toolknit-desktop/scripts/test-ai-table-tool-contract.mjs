@@ -8,7 +8,7 @@ import { AI_TABLE_DEMO_DATA } from '../src/features/ai-table/prompts.js';
 const [html, main, styles, specs, tool, editor, charts, exporter, pdf, prompts, sharedCss, featureCss, fontBytes] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-table/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-table/editor.js', import.meta.url), 'utf8'),

@@ -5,7 +5,7 @@ import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
 const [main, index, styles, tool, controller, template, featureStyles, generator, publisher] = await Promise.all([
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/icon-generator/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/icon-generator/controller.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/icon-generator/template.js', import.meta.url), 'utf8'),

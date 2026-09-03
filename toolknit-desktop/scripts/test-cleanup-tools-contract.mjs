@@ -22,7 +22,7 @@ const [main, html, lazyTools, entry, largeFiles, cDrive, largeFileStyles, cDrive
   read('src/features/cleanup-tools/c-drive-controller.js'),
   read('src/features/cleanup-tools/large-file.css'),
   read('src/features/cleanup-tools/c-drive.css'),
-  read('src/styles.css')
+  read('src/styles/legacy.css')
 ]);
 
 for (const [toolId, overlayId, initializer] of [

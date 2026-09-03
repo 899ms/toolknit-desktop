@@ -12,7 +12,7 @@ const [main, html, lazyTools, tool, controller, template, featureStyles, appStyl
   read('src/features/audio-extract/controller.js'),
   read('src/features/audio-extract/template.js'),
   read('src/features/audio-extract/audio-extract.css'),
-  read('src/styles.css')
+  read('src/styles/legacy.css')
 ]);
 
 assert.equal(LAZY_TOOL_SPECS['audio-extract']?.overlayId, 'audioExtractFeatureOverlay');

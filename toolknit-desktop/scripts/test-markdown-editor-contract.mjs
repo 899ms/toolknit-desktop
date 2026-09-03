@@ -21,7 +21,7 @@ const [
   read('../src/markdown-editor-ui.js'),
   read('../src/markdown-editor-core.js'),
   read('../src/features/markdown-editor/markdown-editor.css'),
-  read('../src/styles.css'),
+  read('../src/styles/legacy.css'),
   read('../src/tool-page-v2-final.css')
 ]);
 

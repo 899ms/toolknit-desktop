@@ -117,7 +117,7 @@ const [
   readFile(new URL('../src/features/crypto/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/crypto/crypto.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/crypto-tool-ui.js', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/tool-page-v2-final.css', import.meta.url), 'utf8'),
   ...[]
 ]);

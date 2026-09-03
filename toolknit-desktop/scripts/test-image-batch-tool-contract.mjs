@@ -7,7 +7,7 @@ const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [main, html, styles, controller, tool, featureStyles] = await Promise.all([
   read('src/main.js'),
   read('index.html'),
-  read('src/styles.css'),
+  read('src/styles/legacy.css'),
   read('src/features/image-batch/controller.js'),
   read('src/features/image-batch/tool.js'),
   read('src/features/image-batch/image-batch.css')

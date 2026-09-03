@@ -12,7 +12,7 @@ const [main, html, lazyTools, shared, convert, frame, gif, featureStyles, appSty
   read('src/features/video-tools/frame-controller.js'),
   read('src/features/video-tools/gif-controller.js'),
   read('src/features/video-tools/video-tools.css'),
-  read('src/styles.css')
+  read('src/styles/legacy.css')
 ]);
 
 for (const [toolId, overlayId, initializer] of [

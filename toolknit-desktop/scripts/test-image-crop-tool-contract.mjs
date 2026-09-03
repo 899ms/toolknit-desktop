@@ -7,7 +7,7 @@ import { imageCropSuccessTemplate, imageCropTemplate } from '../src/features/ima
 const root = resolve(import.meta.dirname, '..');
 const read = relativePath => readFileSync(resolve(root, relativePath), 'utf8');
 const main = read('src/main.js');
-const globalStyles = read('src/styles.css');
+const globalStyles = read('src/styles/legacy.css');
 const html = read('index.html');
 const controller = read('src/features/image-crop/controller.js');
 const tool = read('src/features/image-crop/tool.js');

@@ -155,7 +155,7 @@ const cleanupSource = read('toolknit-desktop/src-tauri/src/system_cleanup.rs');
 check(cleanupSource.includes('fn normalize_system_drive'), 'SystemDrive must pass through a strict normalizer');
 check(cleanupSource.includes('bytes.len() == 2'), 'SystemDrive must only accept a drive letter and colon');
 
-const mainSource = read('toolknit-desktop/src/main.js');
+const mainSource = `${read('toolknit-desktop/src/main.js')}\n${read('toolknit-desktop/src/application.js')}`;
 const i18nSource = read('toolknit-desktop/src/i18n.js');
 check(mainSource.includes("window.open(parsedUrl.href, '_blank', 'noopener,noreferrer')"), 'Browser external links must isolate the opener');
 check(!mainSource.includes("window.open(url, '_blank')"), 'Tauri external-link failures must not bypass native validation');

@@ -3,9 +3,9 @@ import { readFile } from 'node:fs/promises';
 
 const [html, main, styles, rust, zh, en] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
-  readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
-  readFile(new URL('../src-tauri/src/lib.rs', import.meta.url), 'utf8'),
+  readFile(new URL('../src/main.js', import.meta.url), 'utf8').then(async main => `${main}\n${await readFile(new URL('../src/application.js', import.meta.url), 'utf8')}`),
+  readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src-tauri/src/native_runtime.rs', import.meta.url), 'utf8'),
   readFile(new URL('../src/locales/zh.json', import.meta.url), 'utf8').then(JSON.parse),
   readFile(new URL('../src/locales/en.json', import.meta.url), 'utf8').then(JSON.parse)
 ]);

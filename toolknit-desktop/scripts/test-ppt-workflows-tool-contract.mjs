@@ -6,7 +6,7 @@ import { createOperationGuard } from '../src/features/ppt-workflows/shared.js';
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [main, html, styles, tool, textController, compressController, outlineController, shared, featureStyles] = await Promise.all([
-  read('src/main.js'), read('index.html'), read('src/styles.css'), read('src/features/ppt-workflows/tool.js'),
+  read('src/main.js'), read('index.html'), read('src/styles/legacy.css'), read('src/features/ppt-workflows/tool.js'),
   read('src/features/ppt-workflows/text-controller.js'), read('src/features/ppt-workflows/compress-controller.js'),
   read('src/features/ppt-workflows/outline-controller.js'), read('src/features/ppt-workflows/shared.js'), read('src/features/ppt-workflows/ppt-workflows.css')
 ]);

@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 const [cleanupController, nativeCleanup, nativeEntry, cargo] = await Promise.all([
   readFile(new URL('../src/features/cleanup-tools/c-drive-controller.js', import.meta.url), 'utf8'),
   readFile(new URL('../src-tauri/src/system_cleanup.rs', import.meta.url), 'utf8'),
-  readFile(new URL('../src-tauri/src/lib.rs', import.meta.url), 'utf8'),
+  readFile(new URL('../src-tauri/src/native_runtime.rs', import.meta.url), 'utf8'),
   readFile(new URL('../src-tauri/Cargo.toml', import.meta.url), 'utf8')
 ]);
 

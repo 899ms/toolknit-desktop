@@ -25,7 +25,7 @@ const [
   en
 ] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
-  readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/main.js', import.meta.url), 'utf8').then(async main => `${main}\n${await readFile(new URL('../src/application.js', import.meta.url), 'utf8')}`),
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/excel-to-pdf/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/excel-to-pdf/controller.js', import.meta.url), 'utf8'),
@@ -33,7 +33,7 @@ const [
   readFile(new URL('../src/excel-to-pdf-ui.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/excel-to-pdf.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/excel-to-pdf/excel-to-pdf.css', import.meta.url), 'utf8'),
-  readFile(new URL('../src-tauri/src/lib.rs', import.meta.url), 'utf8'),
+  readFile(new URL('../src-tauri/src/native_runtime.rs', import.meta.url), 'utf8'),
   readFile(new URL('../src/locales/zh.json', import.meta.url), 'utf8'),
   readFile(new URL('../src/locales/en.json', import.meta.url), 'utf8')
 ]);

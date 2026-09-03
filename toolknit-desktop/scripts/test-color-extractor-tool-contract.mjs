@@ -7,7 +7,7 @@ const [tool, controller, picker, featureStyles, appStyles, main] = await Promise
   readFile(new URL('../src/features/color-extractor/controller.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/color-extractor/screen-picker.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/color-extractor/color-extractor.css', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8')
 ]);
 

@@ -16,7 +16,7 @@ function solidPng(width, height, color) {
 
 const [pageMarkup, stylesheet, featureStylesheet] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/image-stitch/image-stitch.css', import.meta.url), 'utf8')
 ]);
 const imageStitchHost = pageMarkup.match(/<div[^>]*id="imageStitchOverlay"[^>]*><\/div>/)?.[0] || '';

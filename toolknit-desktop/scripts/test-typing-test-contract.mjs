@@ -6,7 +6,7 @@ const [html, main, lazy, tool, styles, featureStyles] = await Promise.all([
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/typing-test/tool.js', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/typing-test/typing-test.css', import.meta.url), 'utf8')
 ]);
 

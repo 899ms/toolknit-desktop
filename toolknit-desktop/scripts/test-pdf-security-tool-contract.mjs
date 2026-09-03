@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 const [html, main, styles, specs, shell, encrypt, decrypt, featureCss] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
-  readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/pdf-security/shell.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/pdf-security/encrypt-tool.js', import.meta.url), 'utf8'),

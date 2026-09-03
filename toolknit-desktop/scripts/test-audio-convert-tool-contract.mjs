@@ -12,7 +12,7 @@ const [main, html, lazyTools, tool, controller, template, featureStyles, appStyl
   read('src/features/audio-convert/controller.js'),
   read('src/features/audio-convert/template.js'),
   read('src/features/audio-convert/audio-convert.css'),
-  read('src/styles.css')
+  read('src/styles/legacy.css')
 ]);
 
 const spec = LAZY_TOOL_SPECS.convert;

@@ -42,7 +42,7 @@ async function sourceMetric(relativePath) {
 const [html, mainSource, css, rustFiles, frontendFiles, mcpRegistry] = await Promise.all([
   read('index.html'),
   read('src/main.js'),
-  read('src/styles.css'),
+  read('src/styles/legacy.css'),
   collectFiles('src-tauri/src', new Set(['.rs'])),
   collectFiles('src', new Set(['.js', '.mjs'])),
   read('cli/lib/tool-registry.mjs')
@@ -54,10 +54,22 @@ const [rustSources, frontendSources, sourceFiles] = await Promise.all([
   Promise.all([
     sourceMetric('src/main.js'),
     sourceMetric('src/styles.css'),
+    sourceMetric('src/styles/legacy.css'),
     sourceMetric('index.html'),
     sourceMetric('src-tauri/src/lib.rs')
   ])
 ]);
+
+const architectureModulePaths = [
+  'src/application.js',
+  'src-tauri/src/native_runtime.rs',
+  ...(await collectFiles('src/app', new Set(['.js']))),
+  ...(await collectFiles('src/styles', new Set(['.css']))),
+  ...(await collectFiles('src-tauri/src/commands', new Set(['.rs']))),
+  ...(await collectFiles('src-tauri/src/platform', new Set(['.rs']))),
+  ...(await collectFiles('src-tauri/src/runtime', new Set(['.rs'])))
+];
+const architectureModules = await Promise.all(architectureModulePaths.map(sourceMetric));
 
 const tauriCommands = unique(rustSources.flatMap(({ source }) =>
   matches(source, /#\[tauri::command\][\s\S]{0,500}?\b(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?fn\s+([A-Za-z0-9_]+)/g)
@@ -80,9 +92,10 @@ const report = {
   generatedAt: new Date().toISOString(),
   gitBaseline: {
     branch: 'codex/v3.0',
-    checkpoint: 'bae3c98'
+    checkpoint: '51bad26'
   },
   sourceFiles,
+  architectureModules,
   desktopCatalog: {
     count: toolIds.length,
     toolIds

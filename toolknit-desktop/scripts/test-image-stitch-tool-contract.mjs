@@ -12,7 +12,7 @@ const [main, html, lazyTools, tool, controller, template, featureStyles, appStyl
   read('src/features/image-stitch/controller.js'),
   read('src/features/image-stitch/template.js'),
   read('src/features/image-stitch/image-stitch.css'),
-  read('src/styles.css')
+  read('src/styles/legacy.css')
 ]);
 
 assert.equal(LAZY_TOOL_SPECS['image-stitch']?.overlayId, 'imageStitchOverlay');

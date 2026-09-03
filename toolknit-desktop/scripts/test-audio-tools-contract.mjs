@@ -12,7 +12,7 @@ const [main, html, lazyTools, entry, bpm, clip, bpmStyles, clipStyles, appStyles
   read('src/features/audio-tools/clip-controller.js'),
   read('src/features/audio-tools/bpm.css'),
   read('src/features/audio-tools/audio-clip.css'),
-  read('src/styles.css'),
+  read('src/styles/legacy.css'),
   read('src/tool-nav-unified.css')
 ]);
 

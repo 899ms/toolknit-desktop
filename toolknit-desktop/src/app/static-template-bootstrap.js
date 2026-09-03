@@ -1,10 +1,16 @@
 import donationTemplate from './templates/donation.html?raw';
+import updatePreviewTemplate from './templates/update-preview.html?raw';
 
 const STATIC_TEMPLATE_SPECS = Object.freeze([
   Object.freeze({
     name: 'donation',
     markup: donationTemplate,
     rootSelector: '#donationOverlay'
+  }),
+  Object.freeze({
+    name: 'update-preview',
+    markup: updatePreviewTemplate,
+    rootSelector: '#updatePreviewOverlay'
   })
 ]);
 
@@ -31,4 +37,3 @@ export function bootstrapStaticTemplates(host = document.body) {
 // main.js is loaded at the end of body, so synchronous mounting avoids a
 // race with application initialization and keeps all template DOM contracts.
 if (typeof document !== 'undefined' && document.body) bootstrapStaticTemplates();
-

@@ -25,6 +25,7 @@ import { createPdfEditorContentEditing } from './content-editing.js';
 import { createPdfEditorFileSession } from './file-session.js';
 import { createPdfEditorPageOperations } from './page-operations.js';
 import { createPdfEditorPageSelection } from './page-selection.js';
+import { createPdfEditorThumbnails } from './thumbnails.js';
 import { createPdfEditorPreview } from './preview.js';
 import { createPdfEditorView } from './view.js';
 import { createPdfEditorOperationRuntime } from './operation.js';

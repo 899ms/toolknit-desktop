@@ -10,6 +10,7 @@ const [uiSource, thumbnailSource] = await Promise.all([
 ]);
 
 assert.match(thumbnailSource, /export function createPdfEditorThumbnails/);
+assert.match(uiSource, /import \{ createPdfEditorThumbnails \} from ['"]\.\/thumbnails\.js['"]/);
 assert.match(thumbnailSource, /IntersectionObserver/);
 assert.match(thumbnailSource, /renderTask/);
 assert.match(thumbnailSource, /releasePdfEditorCanvas/);

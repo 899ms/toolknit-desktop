@@ -68,11 +68,12 @@ Last updated: 2026-09-03
 | `823a926` | Migrated BPM Detect and Audio Clip into a shared lazy audio feature boundary |
 | `ba12dbd` | Migrated AI Large File Cleanup and C-Drive Cleanup into a shared lazy cleanup feature boundary |
 | `c0ce6a4` | Migrated Color Extractor and isolated the reusable screen-picker window lifecycle |
+| `pending` | Migrated Teleprompter template and runtime into a feature-owned lazy boundary |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 61 of 65 desktop tools have completed migration batches (**93.8%** coverage).
+- 62 of 65 desktop tools have completed migration batches (**95.4%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -963,6 +964,21 @@ The architecture gate, production build and `git diff --check` pass. The full
 release gate passes 85 npm scripts, 770 security checks, `cargo check`, and 93
 Rust tests with the external LibreOffice QA test ignored by design. This batch
 raises the verified migration count to 61 of 65 tools (**93.8%**).
+
+Teleprompter now loads from the lazy `src/features/teleprompter/` boundary.
+Its presentation markup is isolated in `template.js`, while the controller owns
+playback, sentence matching, focus mode, document loading, native drag/drop,
+speech-engine selection and resource cleanup. The existing recognition module
+remains the dedicated owner of microphone, SpeechRecognition and offline model
+sessions. The former root `teleprompter-ui.js` and `teleprompter.css` paths are
+compatibility forwards, so legacy consumers keep their imports without putting
+the feature back in the initial page.
+
+The teleprompter core and runtime suites pass after switching their source
+contracts to the feature controller; the lazy registry now imports the feature
+entry directly and the static HTML no longer preloads its stylesheet. Production
+build and `git diff --check` pass with no new warnings. This batch raises the
+verified migration count to 62 of 65 tools (**95.4%**).
 
 ## Next batches
 

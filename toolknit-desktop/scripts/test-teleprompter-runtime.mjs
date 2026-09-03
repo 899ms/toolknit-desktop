@@ -5,7 +5,9 @@ import {
   resampleTeleprompterAudio
 } from '../src/features/teleprompter/recognition.js';
 
-const source = await readFile(new URL('../src/teleprompter-ui.js', import.meta.url), 'utf8');
+const source = await readFile(new URL('../src/features/teleprompter/controller.js', import.meta.url), 'utf8');
+const templateSource = await readFile(new URL('../src/features/teleprompter/template.js', import.meta.url), 'utf8');
+const toolSource = await readFile(new URL('../src/features/teleprompter/tool.js', import.meta.url), 'utf8');
 const recognitionSource = await readFile(
   new URL('../src/features/teleprompter/recognition.js', import.meta.url),
   'utf8'
@@ -37,6 +39,10 @@ assert.match(source, /async function chooseEngine[\s\S]*await recognitionControl
   'switching engines during playback must release the previous microphone session first');
 assert.match(source, /createTeleprompterRecognitionController\(/,
   'the UI entry must inject playback and transcript callbacks into recognition');
+assert.match(toolSource, /from ['"]\.\/controller\.js['"]/, 'the feature entry must delegate behavior to its controller');
+assert.match(toolSource, /import ['"]\.\/teleprompter\.css['"]/, 'the teleprompter feature must own its lazy stylesheet');
+assert.match(templateSource, /data-tele-action="play"/, 'the feature template must retain playback controls');
+assert.match(templateSource, /data-tele-engine/, 'the feature template must retain engine controls');
 assert.doesNotMatch(source, /let audioContext = null/,
   'AudioContext must be owned by the recognition controller');
 assert.match(recognitionSource, /audioProcessor\.onaudioprocess = event =>/);

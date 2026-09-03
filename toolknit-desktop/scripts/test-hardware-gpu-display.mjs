@@ -3,7 +3,10 @@ import { spawnSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 
 const [rustSource, cliSource] = await Promise.all([
-  readFile(new URL('../src-tauri/src/native_runtime.rs', import.meta.url), 'utf8'),
+  Promise.all([
+    readFile(new URL('../src-tauri/src/native_runtime.rs', import.meta.url), 'utf8'),
+    readFile(new URL('../src-tauri/src/native_runtime/system.rs', import.meta.url), 'utf8')
+  ]).then(parts => parts.join('\n')),
   readFile(new URL('../cli/lib/hardware-runtime.mjs', import.meta.url), 'utf8')
 ]);
 

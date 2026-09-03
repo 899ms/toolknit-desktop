@@ -5,7 +5,20 @@ const [html, main, styles, rust, zh, en] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8').then(async main => `${main}\n${await readFile(new URL('../src/application.js', import.meta.url), 'utf8')}`),
   readFile(new URL('../src/styles/legacy.css', import.meta.url), 'utf8'),
-  readFile(new URL('../src-tauri/src/native_runtime.rs', import.meta.url), 'utf8'),
+  Promise.all([
+    'native_runtime.rs',
+    'native_runtime/core.rs',
+    'native_runtime/dependencies.rs',
+    'native_runtime/transcription.rs',
+    'native_runtime/pdf.rs',
+    'native_runtime/image.rs',
+    'native_runtime/media.rs',
+    'native_runtime/system.rs',
+    'native_runtime/office.rs',
+    'native_runtime/runner.rs',
+    'native_runtime/tests.rs'
+  ].map(relativePath => readFile(new URL(`../src-tauri/src/${relativePath}`, import.meta.url), 'utf8')))
+    .then(parts => parts.join('\n')),
   readFile(new URL('../src/locales/zh.json', import.meta.url), 'utf8').then(JSON.parse),
   readFile(new URL('../src/locales/en.json', import.meta.url), 'utf8').then(JSON.parse)
 ]);

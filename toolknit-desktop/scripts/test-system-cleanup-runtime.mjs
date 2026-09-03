@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [cleanupController, nativeCleanup, nativeEntry, cargo] = await Promise.all([
+const [cleanupController, nativeCleanup, nativeEntry, nativeRunner, cargo] = await Promise.all([
   readFile(new URL('../src/features/cleanup-tools/c-drive-controller.js', import.meta.url), 'utf8'),
   readFile(new URL('../src-tauri/src/system_cleanup.rs', import.meta.url), 'utf8'),
   readFile(new URL('../src-tauri/src/native_runtime.rs', import.meta.url), 'utf8'),
+  readFile(new URL('../src-tauri/src/native_runtime/runner.rs', import.meta.url), 'utf8'),
   readFile(new URL('../src-tauri/Cargo.toml', import.meta.url), 'utf8')
 ]);
 
@@ -32,7 +33,7 @@ assert.match(nativeCleanup, /ELEVATED_RELAUNCH_PARENT_PREFIX/);
 assert.match(nativeCleanup, /OpenProcess\(PROCESS_SYNCHRONIZE, false, parent_pid\)/);
 assert.match(nativeCleanup, /if !query_admin_status\(\)\? \{[\s\S]*system-cleanup:admin-required/);
 
-const runEntry = nativeEntry.slice(nativeEntry.indexOf('pub fn run()'));
+const runEntry = nativeRunner;
 assert.ok(
   runEntry.indexOf('await_previous_instance_for_elevated_relaunch()')
     < runEntry.indexOf('tauri::Builder::default()'),

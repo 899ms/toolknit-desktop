@@ -2149,6 +2149,7 @@
       const aiSettingsRuntime = createAiSettingsRuntime({
         root: document,
         storage: localStorage,
+        windowRef: window,
         aiKeyStore,
         aiApiKeyReady,
         translate: t,

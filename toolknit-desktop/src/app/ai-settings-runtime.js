@@ -18,6 +18,7 @@ const AI_PRIVATE_HTTP_KEY = 'ai_custom_allow_private_http';
 export function createAiSettingsRuntime({
   root = globalThis.document,
   storage = globalThis.localStorage,
+  windowRef = globalThis.window,
   aiKeyStore,
   aiApiKeyReady = Promise.resolve(),
   translate = key => key,
@@ -180,7 +181,7 @@ export function createAiSettingsRuntime({
       }
       setStatus(translate('apiKey.saved'), 'success');
       root?.dispatchEvent?.(new Event('toolknit:ai-key-change'));
-      window.setTimeout(closeApiKeySettings, 800);
+      (windowRef?.setTimeout || setTimeout)(closeApiKeySettings, 800);
     } catch (error) {
       onError(error);
       setStatus(translate('apiKey.errStorage'), 'error');
@@ -198,7 +199,7 @@ export function createAiSettingsRuntime({
       setPrivateHttpPermission(false);
       setStatus(translate('apiKey.cleared'), 'success');
       root?.dispatchEvent?.(new Event('toolknit:ai-key-change'));
-      window.setTimeout(closeApiKeySettings, 800);
+      (windowRef?.setTimeout || setTimeout)(closeApiKeySettings, 800);
     } catch (error) {
       onError(error);
       setStatus(translate('apiKey.errStorage'), 'error');

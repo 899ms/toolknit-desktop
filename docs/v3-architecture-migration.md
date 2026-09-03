@@ -21,6 +21,7 @@
 - `src/app/settings-controller.js`：带命名空间的存储读写，避免业务散落 key。
 - `src/app/update-controller.js`：更新检查去重、释放与错误处理。
 - `src/app/home-controller.js`：首页搜索和工具打开协调。
+- `src/app/ui-sound-controller.js`：全局音效状态、AudioContext 与页面生命周期。
 - `src/app/app-lifecycle.js`：统一 listener 注册和幂等销毁。
 - `src/styles/index.css`：全局样式入口；`legacy.css` 是迁移期间的兼容层。
 - `src-tauri/src/platform/security.rs`：外部 URL 与 WebView 导航校验。

@@ -7,6 +7,7 @@ const releaseTests = [
   'test:window-radius',
   'test:architecture',
   'test:system-cleanup',
+  'test:cleanup-tools-contract',
   'test:excel-to-pdf',
   'test:pdf-merge',
   'test:pdf-merge-tool-contract',

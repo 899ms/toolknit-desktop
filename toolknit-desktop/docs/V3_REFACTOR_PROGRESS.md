@@ -65,12 +65,13 @@ Last updated: 2026-09-03
 | `900b6c9` | Migrated Audio Extract into its own lazy feature boundary |
 | `bbecf87` | Migrated Audio Convert into its own lazy feature boundary and restored shared HTML escaping |
 | `2736fe5` | Migrated Video Convert, Video Frame and Video GIF into a shared lazy feature boundary |
-| (this batch) | Migrated BPM Detect and Audio Clip into a shared lazy audio feature boundary |
+| `823a926` | Migrated BPM Detect and Audio Clip into a shared lazy audio feature boundary |
+| (this batch) | Migrated AI Large File Cleanup and C-Drive Cleanup into a shared lazy cleanup feature boundary |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 58 of 65 desktop tools have completed migration batches (**89.2%** coverage).
+- 60 of 65 desktop tools have completed migration batches (**92.3%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -78,12 +79,12 @@ Last updated: 2026-09-03
 
 ## Current source and bundle trend
 
-| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security | After PDF Enhance | After PDF Compress | After PDF Editor | After PPT workflows | After PPT render | After PPT images | After PPT Draft | After Image Stitch | After Audio Extract | After Audio Convert | After Video Tools | After Audio Tools |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 | 21,708 | 21,250 | 21,241 | 16,184 | 15,709 | 15,019 | 13,538 | 13,000 | 12,511 | 12,084 | 10,796 | 9,176 |
-| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 | 27,059 | 24,975 | 24,644 | 24,644 | 24,093 | 22,772 | 21,962 | 21,408 | 21,349 | 20,802 | 18,627 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB | 2,288.63 kB | 1,839.13 kB | 1,603.72 kB | 1,591.36 kB | 1,531.34 kB | 1,423.95 kB | 1,405.69 kB | 1,395.57 kB | 1,385.48 kB | 1,350.13 kB | 1,307.20 kB |
-| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB | 597.52 kB | 525.34 kB | 520.27 kB | 520.27 kB | 499.11 kB | 487.68 kB | 465.07 kB | 455.39 kB | 454.30 kB | 441.86 kB | 406.98 kB |
+| Metric | V2.3.1 baseline | After calculator family | After typing | After text tools | After AI text tools | After AI Document | After AI Table | After PDF Rotate | After PDF Split | After PDF Merge | After PDF To Image | After PDF Page Number | After PDF Crop | After PDF Security | After PDF Enhance | After PDF Compress | After PDF Editor | After PPT workflows | After PPT render | After PPT images | After PPT Draft | After Image Stitch | After Audio Extract | After Audio Convert | After Video Tools | After Audio Tools | After Cleanup Tools |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 | 21,708 | 21,250 | 21,241 | 16,184 | 15,709 | 15,019 | 13,538 | 13,000 | 12,511 | 12,084 | 10,796 | 9,176 | 7,651 |
+| `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 | 27,059 | 24,975 | 24,644 | 24,644 | 24,093 | 22,772 | 21,962 | 21,408 | 21,349 | 20,802 | 18,627 | 17,205 |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB | 2,288.63 kB | 1,839.13 kB | 1,603.72 kB | 1,591.36 kB | 1,531.34 kB | 1,423.95 kB | 1,405.69 kB | 1,395.57 kB | 1,385.48 kB | 1,350.13 kB | 1,307.20 kB | 1,273.59 kB |
+| Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB | 597.52 kB | 525.34 kB | 520.27 kB | 520.27 kB | 499.11 kB | 487.68 kB | 465.07 kB | 455.39 kB | 454.30 kB | 441.86 kB | 406.98 kB | 383.98 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
 CSS chunk. Text formatting emits a 7.18 kB JavaScript chunk and an 8.55 kB CSS
@@ -914,9 +915,37 @@ chunk, a 34.87 kB feature CSS chunk and a separately loaded 14.23 kB BPM
 analysis dependency. Main JavaScript is 1,307.20 kB and main CSS is 406.98 kB.
 This batch raises the verified migration count to 58 of 65 tools (**89.2%**).
 
+AI Large File Cleanup and C-Drive Cleanup now share the lazy
+`src/features/cleanup-tools/` family. `large-file-controller.js` owns folder
+selection, scan sessions, metadata-only AI analysis, sorting, context actions,
+Recycle Bin publication and result state; `c-drive-controller.js` owns the
+administrator gate, risk-tier scan, countdown confirmation and relaunch flow.
+The small `large-file-core.js` module contains drive/path, JSON and error
+classification helpers. Feature CSS is split into `large-file.css` and
+`c-drive.css`; neither is loaded by the main stylesheet.
+
+Both controllers use lifecycle scopes and independent owner/run IDs. Closing
+or disposing a page invalidates scan, AI, drive-space, delete and relaunch
+work, so old results cannot update a later open. C-Drive checks
+`system_cleanup_is_admin` before the expensive scan, and the native elevation
+contract remains unchanged. AI requests receive only file metadata and
+relative folder hints; absolute paths and file contents are withheld, and
+high-risk files are forced to manual review even if an AI response says delete.
+The web preview now skips desktop-only auto-scans, keeping its console clean.
+
+The cleanup runtime and new lazy-tool contract tests pass, covering registry
+IDs, shared feature imports, Tauri command names, lifecycle disposal, admin
+ordering, run-ID guards, metadata privacy, high-risk decisions and CSS
+ownership. The architecture gate, production build and `git diff --check`
+also pass. Fresh-browser checks at 1280 by 720 and 900 by 650 cover both
+tools' first open, back, reopen, one visible overlay and horizontal overflow;
+the fresh web page reported no console errors. The production output emits an
+approximately 33.50 kB cleanup JavaScript chunk and 22.47 kB cleanup CSS chunk.
+This batch raises the verified migration count to 60 of 65 tools (**92.3%**).
+
 ## Next batches
 
-1. Select the next coherent low- or medium-risk frontend family from the 7
+1. Select the next coherent low- or medium-risk frontend family from the 5
    remaining tools and continue batched migration under the accelerated
    verification protocol.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local

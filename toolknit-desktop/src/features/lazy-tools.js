@@ -119,6 +119,16 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./audio-tools/tool.js'),
     init: 'initBpmDetectTool'
   }),
+  'large-file-cleanup': Object.freeze({
+    overlayId: 'largeFileCleanupOverlay',
+    load: () => import('./cleanup-tools/tool.js'),
+    init: 'initLargeFileCleanupTool'
+  }),
+  'c-drive-cleanup': Object.freeze({
+    overlayId: 'cDriveCleanupOverlay',
+    load: () => import('./cleanup-tools/tool.js'),
+    init: 'initCDriveCleanupTool'
+  }),
   'video-convert': Object.freeze({
     overlayId: 'videoConvertOverlay',
     load: () => import('./video-tools/tool.js'),

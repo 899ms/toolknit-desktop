@@ -67,7 +67,7 @@ Last updated: 2026-09-03
 | `2736fe5` | Migrated Video Convert, Video Frame and Video GIF into a shared lazy feature boundary |
 | `823a926` | Migrated BPM Detect and Audio Clip into a shared lazy audio feature boundary |
 | `ba12dbd` | Migrated AI Large File Cleanup and C-Drive Cleanup into a shared lazy cleanup feature boundary |
-| `8abd283` | Migrated Color Extractor and isolated the reusable screen-picker window lifecycle |
+| `c0ce6a4` | Migrated Color Extractor and isolated the reusable screen-picker window lifecycle |
 
 ## Current verified counts
 

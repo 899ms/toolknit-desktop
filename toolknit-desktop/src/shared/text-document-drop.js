@@ -1,3 +1,5 @@
+import { loadTauriWebview } from '../platform/tauri-runtime.js';
+
 export function bindTextDocumentDrop({
   lifecycle,
   overlay,
@@ -23,7 +25,7 @@ export function bindTextDocumentDrop({
   lifecycle.use(leave);
 
   if (isTauri) {
-    void import('@tauri-apps/api/webview').then(async ({ getCurrentWebview }) => {
+    void loadTauriWebview().then(async ({ getCurrentWebview }) => {
       const unlisten = await getCurrentWebview().onDragDropEvent(event => {
         if (!overlay.classList.contains('visible')) return;
         const payload = event.payload;

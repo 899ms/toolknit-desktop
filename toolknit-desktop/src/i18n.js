@@ -1,8 +1,6 @@
 import en from './locales/en.json' with { type: 'json' };
 import zh from './locales/zh.json' with { type: 'json' };
-import * as tauriCore from '@tauri-apps/api/core';
-
-const tauriCorePromise = Promise.resolve(tauriCore);
+import { tauriCorePromise } from './platform/tauri-runtime.js';
 
 const locales = { en, zh };
 const BUILTIN_TRANSLATIONS = {

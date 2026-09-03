@@ -1,4 +1,3 @@
-      import { LogicalSize, currentMonitor, getCurrentWindow } from '@tauri-apps/api/window';
       import { createElement as createLucideElement, createIcons, icons } from 'lucide';
       import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.mjs?url';
       import { initLightRays } from './lightrays.js';
@@ -28,14 +27,16 @@
       } from './app/background-runtime.js';
       import { LAZY_TOOL_SPECS } from './features/lazy-tools.js';
       import { joinPath, uniqueOutputDirectory, writeUniqueFile } from './features/ppt-workflows/shared.js';
-      import { tauriCorePromise, tauriEventPromise, loadTauriApp } from './platform/tauri-runtime.js';
+      import { currentMonitor, getCurrentWindow, LogicalSize, tauriCorePromise, tauriEventPromise, loadTauriApp } from './platform/tauri-runtime.js';
       import { readTextDocument } from './shared/text-document-reader.js';
       import { formatFileSize } from './shared/file-size.js';
       import { escapeHtml, escapeAttr } from './shared/html.js';
       import { HELP_CONTENT, getHelpContent } from './help-data.js';
       import { createDonationController } from './app/donation-controller.js';
       import { getLegalContent } from './legal-data.js';
-      import { AiProviderError, normalizeAiProviderConfig, requestAiCompletion } from './ai-provider-core.js';
+      import { normalizeAiProviderConfig } from './ai-provider-core.js';
+      import { createAiRequestRuntime } from './app/ai-request-runtime.js';
+      import { extractJson } from './app/json-extractor.js';
       import {
         PPT_TEXT_EXTRACT_LIMITS,
         analyzePptxText,
@@ -3400,168 +3401,11 @@
       window.openPdfToolTemplateOverlay = openPdfToolTemplateOverlay;
       pdfToolTemplateBack?.addEventListener('click', closePdfToolTemplateOverlay);
 
-      // Robust JSON extraction: strip markdown code blocks and use balanced brace matching
-      function extractJson(str) {
-        if (!str || typeof str !== 'string') return null;
-
-        // 0. Try direct JSON.parse first (in case the entire string is valid JSON)
-        try {
-          JSON.parse(str.trim());
-          return str.trim();
-        } catch (e) {}
-
-        // 1. Try to extract content from markdown code blocks (```json ... ``` or ``` ... ```)
-        const codeBlockRegex = /```(?:json|javascript|js)?\s*\n([\s\S]*?)\n```/g;
-        let matches = [];
-        let match;
-        while ((match = codeBlockRegex.exec(str)) !== null) {
-          matches.push(match[1]);
-        }
-        for (const blockContent of matches) {
-          const trimmed = cleanJsonString(blockContent.trim());
-          // Try direct parse
-          try { JSON.parse(trimmed); return trimmed; } catch (e) {}
-          const start = trimmed.indexOf('{');
-          if (start !== -1) {
-            const result = extractBalancedJson(trimmed, start);
-            if (result) {
-              try { JSON.parse(result); return result; } catch (e) {}
-            }
-          }
-        }
-
-        // 2. Remove any stray code fence markers and surrounding explanation text
-        let cleaned = cleanJsonString(str
-          .replace(/```(?:json|javascript|js)?\s*/g, '')
-          .replace(/```\s*/g, '')
-          .trim());
-
-        // 3. Try direct parse on cleaned string
-        try { JSON.parse(cleaned); return cleaned; } catch (e) {}
-
-        // 4. Find the first '{' and extract balanced JSON
-        const start = cleaned.indexOf('{');
-        if (start === -1) return null;
-        const balanced = extractBalancedJson(cleaned, start);
-        if (balanced) {
-          try { JSON.parse(balanced); return balanced; } catch (e) {}
-        }
-
-        // 5. Fallback: find first '{' and last '}' — try to parse the substring
-        const lastClose = cleaned.lastIndexOf('}');
-        if (start !== -1 && lastClose > start) {
-          const candidate = cleaned.substring(start, lastClose + 1);
-          try { JSON.parse(candidate); return candidate; } catch (e) {}
-        }
-
-        // 6. Repair truncated JSON (DeepSeek output hit the 8K token limit and got cut off)
-        const repaired = repairTruncatedJson(cleaned);
-        if (repaired) {
-          try { JSON.parse(repaired); return repaired; } catch (e) {}
-        }
-
-        // 7. Last resort: return the balanced result even if JSON.parse fails (caller will handle)
-        if (balanced) return balanced;
-
-        return null;
-      }
-
-      // Repairs a truncated JSON object by discarding the incomplete trailing portion
-      // and closing all open brackets. Used when the model output is cut off mid-region.
-      function repairTruncatedJson(str) {
-        const start = str.indexOf('{');
-        if (start === -1) return null;
-        const candidates = []; // each: { pos, stack: remaining open brackets after this close }
-        let stack = [];
-        let inString = false;
-        let escape = false;
-        for (let i = start; i < str.length; i++) {
-          const ch = str[i];
-          if (escape) { escape = false; continue; }
-          if (ch === '\\') { if (inString) escape = true; continue; }
-          if (ch === '"') { inString = !inString; continue; }
-          if (inString) continue;
-          if (ch === '{' || ch === '[') {
-            stack.push(ch);
-          } else if (ch === '}' || ch === ']') {
-            stack.pop();
-            candidates.push({ pos: i, stack: stack.slice() });
-          }
-        }
-        // Try from the last complete closing bracket backwards, closing the remaining stack
-        for (let k = candidates.length - 1; k >= 0; k--) {
-          const { pos, stack: rem } = candidates[k];
-          let closing = '';
-          for (let j = rem.length - 1; j >= 0; j--) {
-            closing += rem[j] === '{' ? '}' : ']';
-          }
-          const candidate = str.substring(start, pos + 1) + closing;
-          try {
-            JSON.parse(candidate);
-            console.warn('[AI Doc] Repaired truncated JSON, discarded trailing incomplete content. Recovered length:', candidate.length);
-            return candidate;
-          } catch (e) {}
-        }
-        return null;
-      }
-
-      function cleanJsonString(str) {
-        // Remove BOM and control characters that are invalid in JSON strings
-        return str.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFEFF\uFFFD]/g, '');
-      }
-
-      function extractBalancedJson(str, start) {
-        let depth = 0;
-        let inString = false;
-        let escape = false;
-        for (let i = start; i < str.length; i++) {
-          const ch = str[i];
-          if (escape) { escape = false; continue; }
-          if (ch === '\\' && inString) { escape = true; continue; }
-          if (ch === '"') { inString = !inString; continue; }
-          if (inString) continue;
-          if (ch === '{') depth++;
-          else if (ch === '}') {
-            depth--;
-            if (depth === 0) return str.substring(start, i + 1);
-          }
-        }
-        return null;
-      }
-
-      async function callDeepSeek(messages, signal, maxTokens) {
-        const apiKey = await getAiApiKey();
-        if (!apiKey) {
-          throw new Error(t('home.aiPolish.noApiKey'));
-        }
-        const { url: apiUrl, model, allowPrivateHttp } = getAiPlatformConfig();
-        if (!apiUrl || !model) {
-          throw new Error(t('home.aiPolish.noApiKey'));
-        }
-        try {
-          return await requestAiCompletion({
-            url: apiUrl,
-            apiKey,
-            model,
-            messages,
-            maxTokens,
-            signal,
-            allowPrivateHttp,
-            nativeRequestImpl: async request => {
-              const { invoke } = await tauriCorePromise;
-              return invoke('request_private_ai_completion', { request });
-            }
-          });
-        } catch (error) {
-          if (error instanceof AiProviderError) {
-            const suffix = error.code === 'http_error' && error.status !== null
-              ? `: ${error.status}`
-              : '';
-            throw new Error(`${t('home.aiPolish.apiError')}${suffix}`);
-          }
-          throw error;
-        }
-      }
+      const callDeepSeek = createAiRequestRuntime({
+        getApiKey: getAiApiKey,
+        getConfig: getAiPlatformConfig,
+        translate: t
+      });
 
 
 

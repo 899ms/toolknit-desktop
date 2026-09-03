@@ -1,5 +1,5 @@
 import { createIcons, icons } from 'lucide';
-import * as tauriCore from '@tauri-apps/api/core';
+import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 import { onLangChange, t } from '../../i18n.js';
 import { enhanceToolSelects } from '../../tool-custom-select.js';
 import {
@@ -18,6 +18,7 @@ import './bg-removal.css';
 
 const PREF_KEY = 'toolknit.bgremoval.preferences.v2';
 const MAX_PREVIEW_EDGE = 4096;
+const tauriCore = { invoke: (...args) => tauriCorePromise.then(api => api.invoke(...args)) };
 
 function readPreferences() {
   try {

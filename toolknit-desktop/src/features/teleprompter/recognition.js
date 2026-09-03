@@ -1,4 +1,4 @@
-import * as tauriCore from '@tauri-apps/api/core';
+import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 import { createSystemSpeechTranscriptState } from '../../teleprompter-core.js';
 
 export const TELEPROMPTER_RECOGNITION_TIMING = Object.freeze({
@@ -33,7 +33,7 @@ export function createTeleprompterRecognitionController({
   isTauri = false,
   windowRef = globalThis.window,
   navigatorRef = globalThis.navigator,
-  invoke = tauriCore.invoke,
+  invoke = (...args) => tauriCorePromise.then(api => api.invoke(...args)),
   getLanguage = () => 'en',
   getEngine = () => 'auto',
   getVoiceFollow = () => false,

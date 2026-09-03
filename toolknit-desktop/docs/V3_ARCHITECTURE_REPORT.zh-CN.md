@@ -84,8 +84,10 @@ feature 不得导入 `main.js`，不得直接构造 Tauri API；所有 native �
 - `npm run test:architecture`：通过，包含懒加载、生命周期、运行时模块契约和架构基线。
 - `npm run test:release`：87 个 npm 发布门禁全部通过。
 - `cargo test --manifest-path src-tauri/Cargo.toml --lib`：94 passed、1 ignored、0 failed。
+- `cargo test --manifest-path src-tauri/Cargo.toml`：94 passed、1 ignored、0 failed；仅有 Windows 链接器 `linker_messages` 信息提示。
 - CLI clean worktree：打包并安装 `toolknit-cli@2.3.1`，46 个 MCP 工具枚举和调用契约通过。
 - `npm run build`：通过；只保留上述已知非阻断 warning。
+- `npm run tauri build -- --bundles nsis`：通过，生成 Windows x64 本地 NSIS 安装包；未签名、未上传。
 - 浏览器回归：首页搜索/分类、设置到帮助弹层链路和控制台检查通过，错误/警告数为 0。
 
 ## 7. 本地 checkpoint

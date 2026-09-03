@@ -69,12 +69,13 @@ Last updated: 2026-09-03
 | `ba12dbd` | Migrated AI Large File Cleanup and C-Drive Cleanup into a shared lazy cleanup feature boundary |
 | `c0ce6a4` | Migrated Color Extractor and isolated the reusable screen-picker window lifecycle |
 | `4037c83` | Migrated Teleprompter template and runtime into a feature-owned lazy boundary |
-| `pending` | Migrated Hash & Crypto into a feature-owned lazy boundary with platform adapters |
+| `a20a8af` | Migrated Hash & Crypto into a feature-owned lazy boundary with platform adapters |
+| `0414b1c` | Migrated Transcription into a feature-owned lazy boundary with lifecycle-safe native drag/drop |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 63 of 65 desktop tools have completed migration batches (**96.9%** coverage).
+- 64 of 65 desktop tools have completed migration batches (**98.5%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -995,20 +996,34 @@ file-operation cancellation remains operation-ID scoped, and sensitive fields
 are cleared before the overlay is hidden. This batch raises the verified
 migration count to 63 of 65 tools (**96.9%**).
 
+Transcription now loads from the lazy `src/features/transcription/` boundary.
+The controller owns upload and native drag/drop, language selection, progress,
+subtitle preview, copy/open-folder actions, AI refinement, result dialogs and
+all close/dispose cleanup. Pure SRT parsing and strict AI response validation
+live in `core.js`; the feature stylesheet is loaded only with the lazy entry.
+The native WebView listener is retained and released with the feature lifecycle,
+and success-dialog visibility is explicitly synchronized with `aria-hidden` and
+`inert` state.
+
+The transcription contract suite covers SRT parsing, fenced JSON refinement,
+strict segment identity validation, lifecycle ownership, lazy registration,
+platform-boundary imports and the static DOM contract. It caught and fixed a
+Set cardinality validation bug that would reject every valid AI refinement and
+an inherited success dialog that never became visible. The dedicated suite,
+architecture gate, production build and `git diff --check` pass. The current
+verified migration count is 64 of 65 tools (**98.5%**).
+
 ## Next batches
 
-1. Select the next coherent low- or medium-risk frontend family from the 5
-   remaining tools and continue batched migration under the accelerated
-   verification protocol.
+1. Finish the remaining PDF Editor compatibility orchestration boundary, then
+   run the final architecture, security, CLI/MCP, Rust and packaging gates.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed
    browser result.
 3. Audit the remaining text-document consumers before deciding whether the
    compatibility reader can be removed.
-4. Continue PDF Editor document/session coordination ownership and the
-   remaining frontend families by lifecycle risk and dependency weight.
-5. Split Rust ownership, then validate CLI/MCP packaging and final Windows
+4. Split Rust ownership, then validate CLI/MCP packaging and final Windows
    behavior as defined in `V3_ARCHITECTURE_PLAN.md`.
 
 Known non-blocking warnings remain the browser externalization notice for the

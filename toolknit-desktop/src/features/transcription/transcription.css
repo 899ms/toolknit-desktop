@@ -1,0 +1,9 @@
+/* Transcription-specific state is loaded with the lazy tool. The shared v2
+   workspace and legacy visual language remain in the global stylesheet. */
+.transcription-v2-process-mask[aria-hidden="true"] { pointer-events: none; }
+.transcription-v2-preview:not(.is-empty) { content-visibility: auto; contain: layout paint; }
+.transcription-v2-files.has-files { contain: layout paint; }
+@media (prefers-reduced-motion: reduce) {
+  .transcription-v2-process-mask,
+  .transcription-v2-process-mask * { animation: none !important; transition: none !important; }
+}

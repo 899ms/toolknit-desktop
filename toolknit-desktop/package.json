@@ -41,6 +41,7 @@
     "test:text-stats": "node scripts/test-text-stats-core.mjs && node scripts/test-text-stats-runtime.mjs",
     "test:text-tools-contract": "node scripts/test-text-tools-contract.mjs",
     "test:teleprompter": "node scripts/test-teleprompter-core.mjs && node scripts/test-teleprompter-runtime.mjs",
+    "test:transcription": "node scripts/test-transcription-tool-contract.mjs",
     "test:bg-removal": "node scripts/test-bg-removal-core.mjs && cargo test --manifest-path src-tauri/Cargo.toml matting_tests --lib",
     "test:password": "node scripts/test-password-core.mjs && node scripts/test-password-generator-contract.mjs",
     "test:timestamp": "node scripts/test-timestamp-calculator-core.mjs && node scripts/test-timestamp-calculator-contract.mjs",

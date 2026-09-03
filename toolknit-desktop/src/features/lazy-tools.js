@@ -99,6 +99,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./teleprompter/tool.js'),
     init: 'initTeleprompterTool'
   }),
+  transcription: Object.freeze({
+    overlayId: 'transcriptionOverlay',
+    load: () => import('./transcription/tool.js'),
+    init: 'initTranscriptionTool'
+  }),
   'audio-extract': Object.freeze({
     overlayId: 'audioExtractFeatureOverlay',
     load: () => import('./audio-extract/tool.js'),

@@ -2637,24 +2637,6 @@
       const transcriptionModelClose = document.getElementById('transcriptionModelClose');
       const transcriptionModelList = document.getElementById('transcriptionModelList');
       const transcriptionSourceOptions = document.getElementById('transcriptionSourceOptions');
-      const transcriptionOverlay = document.getElementById('transcriptionOverlay');
-      const transcriptionBack = document.getElementById('transcriptionBack');
-      const transcriptionCta = document.getElementById('transcriptionCta');
-      const transcriptionCtaText = document.getElementById('transcriptionCtaText');
-      const transcriptionInput = document.getElementById('transcriptionInput');
-      const transcriptionFiles = document.getElementById('transcriptionFiles');
-      const transcriptionPreview = document.getElementById('transcriptionPreview');
-      const transcriptionCopyTextBtn = document.getElementById('transcriptionCopyTextBtn');
-      const transcriptionOpenFolderBtn = document.getElementById('transcriptionOpenFolderBtn');
-      const transcriptionSelectedFile = document.getElementById('transcriptionSelectedFile');
-      const transcriptionSelectedFileName = document.getElementById('transcriptionSelectedFileName');
-      const transcriptionProcessBtn = document.getElementById('transcriptionProcessBtn');
-      const transcriptionProcessMask = document.getElementById('transcriptionProcessMask');
-      const transcriptionProcessText = document.getElementById('transcriptionProcessText');
-      const transcriptionProcessBarFill = document.getElementById('transcriptionProcessBarFill');
-      const transcriptionLanguageOptions = document.getElementById('transcriptionLanguageOptions');
-      const transcriptionRefine = document.getElementById('transcriptionRefine');
-      const transcriptionDropZone = document.getElementById('transcriptionDropZone');
       const dependencyGateOverlay = document.getElementById('dependencyGateOverlay');
       const dependencyGateTitle = document.getElementById('dependencyGateTitle');
       const dependencyGateDesc = document.getElementById('dependencyGateDesc');
@@ -2665,40 +2647,10 @@
       const dependencyGateError = document.getElementById('dependencyGateError');
       const dependencyGateCancel = document.getElementById('dependencyGateCancel');
       const dependencyGateInstall = document.getElementById('dependencyGateInstall');
-      const transcriptionPlasmaBg = document.getElementById('transcriptionPlasmaBg');
-      const transcriptionSuccessOverlay = document.getElementById('transcriptionSuccessOverlay');
-      const transcriptionSuccessMeta = document.getElementById('transcriptionSuccessMeta');
-      const transcriptionSuccessCount = document.getElementById('transcriptionSuccessCount');
-      const transcriptionSuccessPath = document.getElementById('transcriptionSuccessPath');
-      const transcriptionSuccessOpenFolder = document.getElementById('transcriptionSuccessOpenFolder');
-      const transcriptionSuccessOk = document.getElementById('transcriptionSuccessOk');
       let transcriptionModels = [];
       let transcriptionModelProgress = new Map();
       let transcriptionDownloadSource = localStorage.getItem(MODEL_SOURCE_KEY) || 'auto';
-      let transcriptionFile = null;
-      let transcriptionLanguage = 'auto';
-      let transcriptionProcessing = false;
-      let transcriptionPlasmaDispose = null;
-      let transcriptionOutputDir = '';
-      let transcriptionPreviewText = '';
       let dependencyGateState = null;
-
-      function setTranscriptionOutputDir(outputDir = '') {
-        transcriptionOutputDir = String(outputDir || '');
-        if (transcriptionOpenFolderBtn) transcriptionOpenFolderBtn.disabled = !transcriptionOutputDir;
-      }
-
-      function setTranscriptionCopyButtonState(copied = false) {
-        if (!transcriptionCopyTextBtn) return;
-        const label = transcriptionCopyTextBtn.querySelector('span');
-        if (label) label.textContent = copied ? t('home.transcription.copiedText') : t('home.transcription.copyText');
-        transcriptionCopyTextBtn.disabled = !transcriptionPreviewText;
-      }
-
-      function syncTranscriptionInlineLabels() {
-        if (transcriptionFiles) transcriptionFiles.dataset.empty = t('home.transcription.emptyOutputs');
-        setTranscriptionCopyButtonState(false);
-      }
 
       function formatTranscriptionBytes(bytes) {
         if (!Number.isFinite(bytes) || bytes < 1) return '--';
@@ -2717,11 +2669,6 @@
         offlineModelSummary.textContent = current
           ? t('settings.offlineModelsCurrent', { model: current.display_name })
           : t('settings.offlineModelsEmpty');
-      }
-
-      function setTranscriptionProgress(progress, message) {
-        if (transcriptionProcessBarFill) transcriptionProcessBarFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
-        if (message && transcriptionProcessText) transcriptionProcessText.textContent = message;
       }
 
       function renderTranscriptionModels() {
@@ -3423,404 +3370,16 @@
         await state.runner?.cancel(t('home.dependencies.cancelling'));
       });
 
-      function updateTranscriptionUploadState() {
-        const hasFile = Boolean(transcriptionFile?.name);
-        const ctaLabel = hasFile ? t('home.transcription.reupload') : t('home.transcription.cta');
-        if (transcriptionCtaText) transcriptionCtaText.textContent = ctaLabel;
-        if (transcriptionCta) transcriptionCta.setAttribute('aria-label', ctaLabel);
-        if (transcriptionSelectedFile) transcriptionSelectedFile.hidden = !hasFile;
-        if (transcriptionSelectedFileName) {
-          transcriptionSelectedFileName.textContent = hasFile ? transcriptionFile.name : '';
-          transcriptionSelectedFileName.title = hasFile ? transcriptionFile.name : '';
-        }
-      }
-
-      function renderTranscriptionFile() {
-        transcriptionOverlay?.classList.remove('has-result');
-        if (transcriptionFiles) {
-          transcriptionFiles.replaceChildren();
-          transcriptionFiles.classList.remove('has-files');
-        }
-        setTranscriptionOutputDir('');
-        renderTranscriptionPreviewEmpty();
-        updateTranscriptionUploadState();
-      }
-
-      function renderTranscriptionPreviewEmpty() {
-        transcriptionPreviewText = '';
-        setTranscriptionCopyButtonState(false);
-        if (!transcriptionPreview) return;
-        transcriptionPreview.classList.add('is-empty');
-        transcriptionPreview.replaceChildren();
-        const empty = document.createElement('div');
-        empty.className = 'transcription-v2-preview-empty';
-        empty.innerHTML = `
-          <i data-lucide="subtitles"></i>
-          <strong>${escapeHtml(t('home.transcription.previewEmptyTitle'))}</strong>
-          <span>${escapeHtml(t('home.transcription.previewEmptyDesc'))}</span>
-        `;
-        transcriptionPreview.append(empty);
-        createIcons?.({ icons });
-      }
-
-      function updateTranscriptionProcessButton() {
-        if (!transcriptionProcessBtn) return;
-        transcriptionProcessBtn.style.display = transcriptionFile ? '' : 'none';
-        transcriptionProcessBtn.classList.toggle('visible', Boolean(transcriptionFile));
-        transcriptionProcessBtn.disabled = transcriptionProcessing;
-      }
-
-      function addTranscriptionFile(file) {
-        if (!file || transcriptionProcessing) return;
-        transcriptionFile = file;
-        renderTranscriptionFile();
-        updateTranscriptionProcessButton();
-      }
-
-      function showTranscriptionTool() {
-        transcriptionOverlay?.classList.add('visible');
-        if (transcriptionPlasmaBg && !transcriptionPlasmaDispose) transcriptionPlasmaDispose = initStandardToolPlasma(transcriptionPlasmaBg);
-      }
-
-      async function openTranscriptionTool() {
-        if (!isTauri) { window.showToast?.(t('home.transcription.desktopOnly')); return; }
-        const { invoke } = await tauriCorePromise;
-        const [engineReady, ffmpegReady] = await Promise.all([invoke('check_transcription_engine'), ensureFfmpegAvailable()]);
-        if (!engineReady) { window.showToast?.(t('home.transcription.engineUnavailable')); return; }
-        await refreshTranscriptionModels();
-        const modelReady = Boolean(activeTranscriptionModel());
-        if (!ffmpegReady || !modelReady) {
-          showDependencyGate({ openFn: showTranscriptionTool, needsFfmpeg: !ffmpegReady, needsModel: !modelReady });
-          return;
-        }
-        showTranscriptionTool();
-      }
-
-      function closeTranscriptionTool() {
-        if (transcriptionProcessing) return;
-        transcriptionOverlay?.classList.remove('visible');
-        transcriptionFile = null;
-        renderTranscriptionFile();
-        updateTranscriptionProcessButton();
-        if (transcriptionPlasmaDispose) { transcriptionPlasmaDispose(); transcriptionPlasmaDispose = null; }
-      }
-
-      transcriptionBack?.addEventListener('click', closeTranscriptionTool);
-      transcriptionCta?.addEventListener('click', async () => {
-        if (isTauri) {
-          const { open } = await import('@tauri-apps/plugin-dialog');
-          const selected = await open({ multiple: false, filters: [{ name: 'Audio and video', extensions: ['mp3', 'aac', 'm4a', 'wav', 'flac', 'alac', 'ogg', 'wma', 'mp4', 'mkv', 'avi', 'mov', 'webm', 'flv', 'wmv', 'ts'] }] });
-          if (typeof selected === 'string') addTranscriptionFile({ path: selected, name: selected.split(/[\\/]/).pop() || selected });
-        } else transcriptionInput?.click();
+      // The model/runtime managers stay in the settings surface and therefore
+      // remain global; keep their labels synchronized even while transcription
+      // itself is lazy-loaded.
+      onLangChange(() => {
+        updateOfflineModelSummary();
+        renderTranscriptionModels();
+        updateFfmpegRuntimeSummary();
+        renderFfmpegRuntime();
+        renderDependencyGate();
       });
-      transcriptionInput?.addEventListener('change', () => { const file = transcriptionInput.files?.[0]; if (file) addTranscriptionFile(file); transcriptionInput.value = ''; });
-      transcriptionLanguageOptions?.querySelectorAll('[data-language]').forEach(button => button.addEventListener('click', () => {
-        transcriptionLanguage = button.dataset.language || 'auto';
-        transcriptionLanguageOptions.querySelectorAll('[data-language]').forEach(item => item.classList.toggle('active', item === button));
-      }));
-      updateTranscriptionUploadState();
-      syncTranscriptionInlineLabels();
-      document.querySelectorAll('.audio-list-item[data-tool="transcription"]').forEach(item => {
-        item.addEventListener('click', () => { void openTranscriptionTool(); });
-        item.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); void openTranscriptionTool(); } });
-      });
-
-      if (isTauri && transcriptionOverlay) {
-        (async () => {
-          const { getCurrentWebview } = await import('@tauri-apps/api/webview');
-          const webview = getCurrentWebview();
-          await webview.onDragDropEvent(event => {
-            if (!transcriptionOverlay.classList.contains('visible') || transcriptionProcessing) return;
-            const payload = event.payload;
-            if (payload.type === 'enter' || payload.type === 'over') transcriptionDropZone?.classList.add('visible');
-            else if (payload.type === 'leave') transcriptionDropZone?.classList.remove('visible');
-            else if (payload.type === 'drop') {
-              transcriptionDropZone?.classList.remove('visible');
-              const path = payload.paths?.[0];
-              if (path) addTranscriptionFile({ path, name: path.split(/[\\/]/).pop() || path });
-            }
-          });
-        })().catch(error => console.error('Cannot register transcription drag and drop:', error));
-      }
-
-      function transcriptionProgressLabel(phase) {
-        const labels = {
-          preparing: 'home.transcription.preparing',
-          transcribing: 'home.transcription.transcribing',
-          publishing: 'home.transcription.publishing',
-          refining: 'home.transcription.refining',
-          complete: 'home.transcription.complete'
-        };
-        return t(labels[phase] || 'home.transcription.preparing');
-      }
-
-      async function readTranscriptionText(path) {
-        const { invoke } = await tauriCorePromise;
-        const bytes = await invoke('read_file_bytes_limited', { path, maxBytes: 10 * 1024 * 1024 });
-        return new TextDecoder('utf-8').decode(Uint8Array.from(bytes));
-      }
-
-      function parseTranscriptionSrt(value) {
-        return String(value || '').replace(/^\uFEFF/, '').trim().split(/\r?\n\s*\r?\n/).map(block => {
-          const lines = block.split(/\r?\n/).map(line => line.trimEnd()).filter(line => line.trim());
-          if (!lines.length) return null;
-          let id = Number(lines[0]);
-          let timingIndex = 1;
-          if (!Number.isInteger(id)) {
-            id = 0;
-            timingIndex = 0;
-          }
-          const timing = lines[timingIndex] || '';
-          const match = /^(.+?)\s+-->\s+(.+?)(?:\s+.*)?$/.exec(timing.trim());
-          const textLines = lines.slice(timingIndex + 1);
-          if (!match || textLines.length === 0) return null;
-          return { id, start: match[1], end: match[2], text: textLines.join('\n').trim() };
-        }).filter(Boolean);
-      }
-
-      function renderTranscriptionPreview(segments, textValue = '') {
-        const normalizedText = String(textValue || '').trim();
-        transcriptionPreviewText = normalizedText || segments.map(segment => segment.text.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
-        setTranscriptionCopyButtonState(false);
-        if (!transcriptionPreview) return;
-        transcriptionPreview.replaceChildren();
-        transcriptionPreview.classList.remove('is-empty');
-        if (!segments.length && !transcriptionPreviewText) {
-          renderTranscriptionPreviewEmpty();
-          return;
-        }
-        if (segments.length) {
-          const fragment = document.createDocumentFragment();
-          segments.slice(0, 500).forEach(segment => {
-            const row = document.createElement('div');
-            row.className = 'transcription-v2-segment';
-            row.innerHTML = `
-              <span class="transcription-v2-segment-time">${escapeHtml(segment.start)} → ${escapeHtml(segment.end)}</span>
-              <p>${escapeHtml(segment.text)}</p>
-            `;
-            fragment.append(row);
-          });
-          if (segments.length > 500) {
-            const more = document.createElement('div');
-            more.className = 'transcription-v2-preview-more';
-            more.textContent = t('home.transcription.previewLimit', { count: 500 });
-            fragment.append(more);
-          }
-          transcriptionPreview.append(fragment);
-          return;
-        }
-        const textBlock = document.createElement('div');
-        textBlock.className = 'transcription-v2-text-preview';
-        textBlock.textContent = transcriptionPreviewText;
-        transcriptionPreview.append(textBlock);
-      }
-
-      function parseRefinedTranscriptionResponse(value, expectedIds) {
-        const source = String(value || '').replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
-        const start = source.indexOf('{');
-        const json = start >= 0 ? extractBalancedJson(source, start) : null;
-        const parsed = JSON.parse(json || source);
-        if (!Array.isArray(parsed?.segments) || parsed.segments.length !== expectedIds.length) throw new Error('Invalid refinement response');
-        const updated = new Map();
-        for (const segment of parsed.segments) {
-          const id = Number(segment?.id);
-          const text = typeof segment?.text === 'string' ? segment.text.trim() : '';
-          if (!expectedIds.has(id) || updated.has(id) || !text || text.length > 1200) throw new Error('Invalid refinement response');
-          updated.set(id, text);
-        }
-        if (updated.size !== expectedIds.size) throw new Error('Invalid refinement response');
-        return updated;
-      }
-
-      async function refineTranscriptionSegments(segments) {
-        const updated = new Map();
-        const chunkSize = 42;
-        for (let offset = 0; offset < segments.length; offset += chunkSize) {
-          const chunk = segments.slice(offset, offset + chunkSize);
-          const payload = chunk.map(({ id, text }) => ({ id, text }));
-          const response = await callDeepSeek([
-            {
-              role: 'system',
-              content: 'You proofread speech-recognition subtitles. Return JSON only: {"segments":[{"id":number,"text":string}]}. Keep exactly the supplied IDs, one item per ID, in the same order. Do not add, remove, merge, or split segments. Do not invent names, numbers, facts, or missing speech. Correct punctuation, obvious grammar, and clearly contextual recognition errors only. Preserve the language of each segment.'
-            },
-            { role: 'user', content: JSON.stringify({ segments: payload }) }
-          ], undefined, 4000);
-          const edits = parseRefinedTranscriptionResponse(response, new Set(chunk.map(segment => segment.id)));
-          edits.forEach((text, id) => updated.set(id, text));
-        }
-        return updated;
-      }
-
-      async function writeRefinedTranscription(result) {
-        const rawSrt = await readTranscriptionText(result.raw_srt_path);
-        const segments = parseTranscriptionSrt(rawSrt);
-        if (segments.length === 0) throw new Error('No subtitle segments were produced');
-        setTranscriptionProgress(97, transcriptionProgressLabel('refining'));
-        const refined = await refineTranscriptionSegments(segments);
-        const finalSegments = segments.map(segment => ({ ...segment, text: refined.get(segment.id) || segment.text }));
-        const srt = finalSegments.map((segment, index) => `${index + 1}\n${segment.start} --> ${segment.end}\n${segment.text}`).join('\n\n') + '\n';
-        const txt = finalSegments.map(segment => segment.text.replace(/\n/g, ' ')).join('\n') + '\n';
-        const outputDir = result.raw_srt_path.replace(/[/\\][^/\\]+$/, '');
-        const rawSrtName = result.raw_srt_path.split(/[\\/]/).pop() || 'transcript.srt';
-        const rawTxtName = result.raw_txt_path.split(/[\\/]/).pop() || 'transcript.txt';
-        const srtName = rawSrtName.replace(/\.srt$/i, '_refined.srt');
-        const txtName = rawTxtName.replace(/\.txt$/i, '_refined.txt');
-        const { invoke } = await tauriCorePromise;
-        const written = await invoke('write_unique_file_pair', {
-          directory: outputDir,
-          firstFileName: srtName,
-          firstBytes: Array.from(new TextEncoder().encode(srt)),
-          secondFileName: txtName,
-          secondBytes: Array.from(new TextEncoder().encode(txt))
-        });
-        return { srtPath: written.first_path, txtPath: written.second_path };
-      }
-
-      async function showTranscriptionResult(result, refined = null) {
-        transcriptionOverlay?.classList.add('has-result');
-        if (transcriptionFiles) {
-          transcriptionFiles.replaceChildren();
-          transcriptionFiles.classList.add('has-files');
-        }
-        const outputDir = String(result?.raw_srt_path || result?.raw_txt_path || '').replace(/[/\\][^/\\]+$/, '');
-        setTranscriptionOutputDir(outputDir);
-        const previewSrtPath = refined?.srtPath || result.raw_srt_path;
-        const previewTxtPath = refined?.txtPath || result.raw_txt_path;
-        try {
-          const [srtValue, txtValue] = await Promise.all([
-            previewSrtPath ? readTranscriptionText(previewSrtPath) : Promise.resolve(''),
-            previewTxtPath ? readTranscriptionText(previewTxtPath) : Promise.resolve('')
-          ]);
-          renderTranscriptionPreview(parseTranscriptionSrt(srtValue), txtValue);
-        } catch (error) {
-          console.error('Cannot preview transcription result:', error);
-          renderTranscriptionPreview([], '');
-        }
-        const paths = [
-          [t('home.transcription.rawJson'), result.raw_json_path],
-          [t('home.transcription.rawSrt'), result.raw_srt_path],
-          [t('home.transcription.rawTxt'), result.raw_txt_path],
-          ...(refined ? [[t('home.transcription.refinedSrt'), refined.srtPath], [t('home.transcription.refinedTxt'), refined.txtPath]] : [])
-        ];
-        paths.forEach(([label, path], index) => {
-          if (!transcriptionFiles) return;
-          const filePath = String(path || '');
-          const item = document.createElement('div');
-          item.className = 'audio-convert-file-item';
-          item.title = displayFilesystemPath(filePath);
-          item.innerHTML = `
-            <span class="audio-convert-file-index">${index + 1}</span>
-            <span class="audio-convert-file-name">${escapeHtml(filePath.split(/[\\/]/).pop() || label)}</span>
-            <span class="transcription-result-type">${escapeHtml(label)}</span>
-          `;
-          item.addEventListener('dblclick', async () => {
-            if (!isTauri || !filePath) return;
-            try {
-              const { invoke } = await tauriCorePromise;
-              await invoke('open_path', { path: filePath });
-            } catch (error) {
-              console.error('Cannot open transcription output file:', error);
-            }
-          });
-          transcriptionFiles.append(item);
-        });
-      }
-
-      transcriptionCopyTextBtn?.addEventListener('click', async () => {
-        if (!transcriptionPreviewText || !navigator.clipboard?.writeText) return;
-        try {
-          await navigator.clipboard.writeText(transcriptionPreviewText);
-          setTranscriptionCopyButtonState(true);
-          window.showToast?.(t('home.transcription.copyDone'));
-          setTimeout(() => setTranscriptionCopyButtonState(false), 1200);
-        } catch (error) {
-          console.error('Cannot copy transcription text:', error);
-        }
-      });
-
-      transcriptionOpenFolderBtn?.addEventListener('click', async () => {
-        if (!isTauri || !transcriptionOutputDir) return;
-        try {
-          const { invoke } = await tauriCorePromise;
-          await invoke('open_path', { path: transcriptionOutputDir });
-        } catch (error) {
-          console.error('Cannot open transcription output folder:', error);
-        }
-      });
-
-      function showTranscriptionSuccess(result, refined = null, refineFailed = false) {
-        const outputDir = String(result.raw_srt_path || '').replace(/[/\\][^/\\]+$/, '');
-        setTranscriptionOutputDir(outputDir);
-        if (transcriptionSuccessMeta) {
-          transcriptionSuccessMeta.textContent = refineFailed
-            ? t('home.transcription.refineFailed')
-            : t('home.transcription.success');
-        }
-        if (transcriptionSuccessCount) transcriptionSuccessCount.textContent = String(refined ? 5 : 3);
-        if (transcriptionSuccessPath) transcriptionSuccessPath.textContent = displayFilesystemPath(outputDir);
-        window.showToast?.(refineFailed ? t('home.transcription.refineFailed') : t('home.transcription.doneInline'));
-      }
-
-      transcriptionSuccessOk?.addEventListener('click', () => transcriptionSuccessOverlay?.classList.remove('visible'));
-      transcriptionSuccessOpenFolder?.addEventListener('click', async () => {
-        if (!isTauri || !transcriptionOutputDir) return;
-        try {
-          const { invoke } = await tauriCorePromise;
-          await invoke('open_path', { path: transcriptionOutputDir });
-        } catch (error) {
-          console.error('Cannot open transcription output folder:', error);
-        }
-      });
-
-      transcriptionProcessBtn?.addEventListener('click', async () => {
-        if (!transcriptionFile || transcriptionProcessing || !isTauri) return;
-        if (!transcriptionFile.path) { window.showToast?.(t('home.transcription.desktopOnly')); return; }
-        transcriptionProcessing = true;
-        updateTranscriptionProcessButton();
-        transcriptionProcessMask?.classList.add('visible');
-        setTranscriptionProgress(2, transcriptionProgressLabel('preparing'));
-        let unlisten = null;
-        let completion = null;
-        try {
-          const { invoke } = await tauriCorePromise;
-          const { listen } = await tauriEventPromise;
-          unlisten = await listen('transcription-progress', event => {
-            const progress = event.payload;
-            if (!progress) return;
-            setTranscriptionProgress(progress.progress || 0, transcriptionProgressLabel(progress.phase));
-          });
-          const result = await invoke('transcribe_media', {
-            inputPath: transcriptionFile.path,
-            outputDir: await getOutputDir('Transcripts'),
-            language: transcriptionLanguage
-          });
-          let refined = null;
-          let refineFailed = false;
-          if (transcriptionRefine?.checked) {
-            try {
-              refined = await writeRefinedTranscription(result);
-            } catch (error) {
-              console.error('Transcription refinement failed:', error);
-              refineFailed = true;
-            }
-          }
-          await showTranscriptionResult(result, refined);
-          completion = { result, refined, refineFailed };
-          setTranscriptionProgress(100, transcriptionProgressLabel('complete'));
-        } catch (error) {
-          console.error('Transcription failed:', error);
-          window.showToast?.(t('common.errorOccurred', { error: String(error?.message || error) }));
-        } finally {
-          unlisten?.();
-          transcriptionProcessing = false;
-          transcriptionProcessMask?.classList.remove('visible');
-          updateTranscriptionProcessButton();
-          setTranscriptionProgress(0, transcriptionProgressLabel('preparing'));
-          if (completion) showTranscriptionSuccess(completion.result, completion.refined, completion.refineFailed);
-        }
-      });
-
-      onLangChange(() => { updateTranscriptionUploadState(); syncTranscriptionInlineLabels(); updateOfflineModelSummary(); renderTranscriptionModels(); updateFfmpegRuntimeSummary(); renderFfmpegRuntime(); renderDependencyGate(); });
 
       const helpBtn = document.getElementById('helpBtn');
       function openSettingsOverlay() {
@@ -6089,6 +5648,28 @@ March 18, 2026|Launch Day
               return false;
             }
           }
+          if (toolId === 'transcription' && isTauri) {
+            const { invoke } = await tauriCorePromise;
+            const [engineReady, ffmpegReady] = await Promise.all([
+              invoke('check_transcription_engine'),
+              ensureFfmpegAvailable()
+            ]);
+            if (!engineReady) {
+              window.showToast?.(t('home.transcription.engineUnavailable'));
+              return false;
+            }
+            await refreshTranscriptionModels();
+            const modelReady = Boolean(activeTranscriptionModel());
+            if (!ffmpegReady || !modelReady) {
+              showDependencyGate({
+                openFn: retryOpen,
+                needsFfmpeg: !ffmpegReady,
+                needsModel: !modelReady,
+                needsLibreOffice: false
+              });
+              return false;
+            }
+          }
           if ((toolId === 'teleprompter' || toolId === 'bg-removal') && isTauri) {
             // AI tools that depend on on-demand models gate at the home card:
             // no model, no tool page (dependencies install, then entry resumes).
@@ -6131,6 +5712,9 @@ March 18, 2026|Launch Day
            getAiApiKey,
            requestAiKeyConfiguration: showAiKeyRequiredOverlay,
            extractJson,
+           refreshTranscriptionModels,
+           activeTranscriptionModel,
+           showDependencyGate,
           refreshIcons: () => createIcons({ icons }),
           openHelp: openHelpOverlay,
           initStandardToolPlasma,

@@ -42,6 +42,7 @@ const releaseTests = [
   'test:text-stats',
   'test:text-tools-contract',
   'test:teleprompter',
+  'test:transcription',
   'test:bg-removal',
   'test:password',
   'test:timestamp',

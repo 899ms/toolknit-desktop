@@ -70,12 +70,13 @@ Last updated: 2026-09-03
 | `c0ce6a4` | Migrated Color Extractor and isolated the reusable screen-picker window lifecycle |
 | `4037c83` | Migrated Teleprompter template and runtime into a feature-owned lazy boundary |
 | `a20a8af` | Migrated Hash & Crypto into a feature-owned lazy boundary with platform adapters |
-| `0414b1c` | Migrated Transcription into a feature-owned lazy boundary with lifecycle-safe native drag/drop |
+| `0f1d579` | Migrated Transcription into a feature-owned lazy boundary with lifecycle-safe native drag/drop |
+| `bce0f89` | Moved PDF Editor orchestration into its feature boundary and platform adapters |
 
 ## Current verified counts
 
 - 65 desktop tools in 12 visible categories.
-- 64 of 65 desktop tools have completed migration batches (**98.5%** coverage).
+- 65 of 65 desktop tools have completed migration batches (**100%** coverage).
 - 127 Tauri command implementations and 126 unique command names.
 - At least 93 Rust tests in `src-tauri/src`.
 - 46 MCP tool definitions.
@@ -1013,18 +1014,35 @@ an inherited success dialog that never became visible. The dedicated suite,
 architecture gate, production build and `git diff --check` pass. The current
 verified migration count is 64 of 65 tools (**98.5%**).
 
+PDF Editor is now implemented from `src/features/pdf-editor/controller.js` and
+the historical `src/pdf-editor-ui.js` path is a three-line compatibility
+forward. The controller is intentionally a composition root: it wires the
+state, document store, thumbnails, preview, zoom, page operations, component
+model/rendering, editing, export, operation runtime and event modules. Those
+modules remain independently owned and tested; the controller contains no
+large PDF algorithm or rendering implementation. Its 1,807 lines therefore
+represent dependency assembly and compatibility coordination rather than a
+second monolith. PDF Editor file selection and native drag/drop now consume
+`src/platform/tauri-runtime.js` through their feature modules.
+
+The full PDF Editor regression suite passes, including document loading and
+destruction, preview cancellation, page operations, editing, export, focus,
+keyboard/native events and repeated lifecycle cleanup. The lazy entry points
+directly at the feature controller, while existing consumers retain the legacy
+path without reintroducing eager loading. This completes the verified desktop
+tool migration at 65 of 65 tools (**100%**).
+
 ## Next batches
 
-1. Finish the remaining PDF Editor compatibility orchestration boundary, then
-   run the final architecture, security, CLI/MCP, Rust and packaging gates.
+1. Run the final architecture, security, CLI/MCP, Rust and packaging gates.
 2. Recheck PDF Merge pointer sorting and native-drop suppression in the local
    Windows WebView build; browser pointer automation did not reproduce a queue
    move, so this remains an explicit manual parity check rather than a claimed
    browser result.
 3. Audit the remaining text-document consumers before deciding whether the
    compatibility reader can be removed.
-4. Split Rust ownership, then validate CLI/MCP packaging and final Windows
-   behavior as defined in `V3_ARCHITECTURE_PLAN.md`.
+4. Validate CLI/MCP packaging and final Windows behavior as defined in
+   `V3_ARCHITECTURE_PLAN.md`.
 
 Known non-blocking warnings remain the browser externalization notice for the
 `crypto` import inside `pdf-lib-plus-encrypt` and chunks larger than 500 kB.

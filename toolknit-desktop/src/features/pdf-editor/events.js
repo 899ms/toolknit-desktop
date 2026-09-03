@@ -1,3 +1,5 @@
+import { loadTauriWebview } from '../../platform/tauri-runtime.js';
+
 /**
  * Binds the PDF Editor's DOM and native drag/drop events. The callbacks are
  * injected so this module owns listener wiring without owning editor state.
@@ -231,7 +233,7 @@ export function createPdfEditorEvents({
   if (isTauri) {
     void (async () => {
       try {
-        const { getCurrentWebview } = await import('@tauri-apps/api/webview');
+        const { getCurrentWebview } = await loadTauriWebview();
         const unlisten = await getCurrentWebview().onDragDropEvent(event => {
           if (isDisposed() || !overlay.classList.contains('visible') || getCurrentOperation()) return;
           const payload = event.payload || {};

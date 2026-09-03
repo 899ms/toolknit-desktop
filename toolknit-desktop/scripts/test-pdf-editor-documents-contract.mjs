@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const [uiSource, documentsSource, fileSessionSource] = await Promise.all([
-  readFile(new URL('../src/pdf-editor-ui.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/pdf-editor/controller.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/pdf-editor/documents.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/pdf-editor/file-session.js', import.meta.url), 'utf8')
 ]);

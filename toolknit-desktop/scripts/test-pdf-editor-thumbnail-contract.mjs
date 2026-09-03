@@ -5,7 +5,7 @@ import { createPdfEditorThumbnails } from '../src/features/pdf-editor/thumbnails
 assert.throws(() => createPdfEditorThumbnails(), /page state accessors/);
 
 const [uiSource, thumbnailSource] = await Promise.all([
-  readFile(new URL('../src/pdf-editor-ui.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/pdf-editor/controller.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/pdf-editor/thumbnails.js', import.meta.url), 'utf8')
 ]);
 

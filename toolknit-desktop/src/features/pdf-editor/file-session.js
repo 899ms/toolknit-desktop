@@ -5,6 +5,7 @@ import {
   assertPdfEditorMergeSelection,
   assertPdfEditorPageCount
 } from '../../pdf-editor-core.js';
+import { loadTauriDialog } from '../../platform/tauri-runtime.js';
 import { PdfEditorCancelledError } from './errors.js';
 
 /**
@@ -226,7 +227,7 @@ export function createPdfEditorFileSession({
     if (isTauri) {
       void (async () => {
         try {
-          const { open } = await import('@tauri-apps/plugin-dialog');
+          const { open } = await loadTauriDialog();
           const selected = await open({
             multiple: false,
             filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
@@ -262,7 +263,7 @@ export function createPdfEditorFileSession({
     if (isTauri) {
       void (async () => {
         try {
-          const { open } = await import('@tauri-apps/plugin-dialog');
+          const { open } = await loadTauriDialog();
           const selected = await open({
             multiple: false,
             filters: [{ name: 'PDF Files', extensions: ['pdf'] }]

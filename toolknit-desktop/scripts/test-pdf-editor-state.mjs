@@ -147,7 +147,8 @@ assert.equal(state.currentId, 'page-1');
 assert.equal(state.selectedComponent.segment.text, 'source text');
 assert.deepEqual(zoomState, { viewMode: 'manual', zoomPercent: 125 });
 
-const uiSource = await readFile(new URL('../src/pdf-editor-ui.js', import.meta.url), 'utf8');
+const uiSource = await readFile(new URL('../src/features/pdf-editor/controller.js', import.meta.url), 'utf8');
+const compatibilitySource = await readFile(new URL('../src/pdf-editor-ui.js', import.meta.url), 'utf8');
 const stateControllerSource = await readFile(
   new URL('../src/features/pdf-editor/state.js', import.meta.url),
   'utf8'
@@ -211,12 +212,17 @@ assert.match(stateControllerSource, /setSelectedComponent\(restoreSelectedCompon
 assert.match(stateControllerSource, /URL\.revokeObjectURL\(image\.previewUrl\)/);
 assert.match(stateControllerSource, /URL\.createObjectURL\(new Blob/);
 assert.match(stateControllerSource, /if \(history\?\.withLock\) history\.withLock\(apply\); else apply\(\);/);
-assert.match(uiSource, /import \{ createPdfEditorStateController \} from '\.\/features\/pdf-editor\/state\.js';/);
+assert.match(uiSource, /import \{ createPdfEditorStateController \} from '\.\/state\.js';/);
 assert.match(uiSource, /pdfEditorState = createPdfEditorStateController\(/);
 assert.match(uiSource, /return pdfEditorState\?\.captureEditorSnapshot\?\.\(\) \|\| null/);
 assert.match(uiSource, /return pdfEditorState\?\.applyEditorSnapshot\(snapshot\)/);
 assert.doesNotMatch(uiSource, /selectedComponent:\s*compactPdfEditorComponent\(selectedComponent\)/);
 assert.doesNotMatch(uiSource, /sourceRotation:\s*_sourceRotation/);
+assert.match(compatibilitySource, /from ['"]\.\/features\/pdf-editor\/controller\.js['"]/);
+assert.match(uiSource, /from ['"]\.\.\/\.\.\/platform\/tauri-runtime\.js['"]/);
+assert.doesNotMatch(uiSource, /@tauri-apps\//);
+assert.doesNotMatch(fileSessionSource, /@tauri-apps\//);
+assert.doesNotMatch(eventsSource, /@tauri-apps\//);
 
 const appendStart = fileSessionSource.indexOf('async function appendPdfBytes(');
 const appendEnd = fileSessionSource.indexOf('function chooseMainFile()', appendStart);

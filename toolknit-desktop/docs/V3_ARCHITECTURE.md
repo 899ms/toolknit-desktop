@@ -95,16 +95,17 @@ tool entry so it becomes a separate production chunk.
 
 ## Current snapshot
 
-- 53 of 65 desktop tools are migrated (**81.5%**); 12 categories, 127 Tauri
+- 56 of 65 desktop tools are migrated (**86.2%**); 12 categories, 127 Tauri
   command implementations, 46 MCP tools and the existing CLI contracts remain
   unchanged.
-- The current source footprint is 12,084 lines in `src/main.js`, 21,349 lines
+- The current source footprint is 10,796 lines in `src/main.js`, 20,802 lines
   in `src/styles.css` and 8,002 lines in `index.html`.
-- The production entry is approximately 1,385.48 kB JavaScript and 454.30 kB
-  CSS. PPT image extraction, PPT AI Draft/PPTX, Image Stitch, Audio Extract and
-  Audio Convert entries are lazy; JSZip, the AI Draft editor dependencies,
+- The production entry is approximately 1,350.13 kB JavaScript and 441.86 kB
+  CSS. PPT image extraction, PPT AI Draft/PPTX, Image Stitch, Audio Extract,
+  Audio Convert and the Video Convert/Frame/GIF family are lazy; JSZip, the AI Draft editor dependencies,
   PDF.js Image Stitch import code and FFmpeg conversion/extraction dependencies
-  load only when their tools open.
+  load only when their tools open. Video Convert, Video Frame and Video GIF
+  share a 31.79 kB lazy JavaScript entry and 31.37 kB feature CSS entry.
 
 ## Migrated ownership
 
@@ -233,6 +234,13 @@ tool entry so it becomes a separate production chunk.
   registry directly; queue listeners, native `unlisten` callbacks and timers
   are released on close/dispose, while the existing `convert_audio_batch`,
   `convert-progress` and `cancel_convert` contracts remain unchanged.
+- `src/features/video-tools/` owns Video Convert, Video Frame and Video GIF as
+  one shared lazy family. `shared.js` owns supported extensions, preview queue,
+  filesystem naming and native WebView drop registration; the three
+  controllers own their existing static DOM controls, FFmpeg commands and
+  progress events. Open-session lifecycle scopes release sortable rows,
+  preview media, timers, native `unlisten` callbacks and stale operation
+  results while preserving the legacy DOM IDs and output-folder behavior.
 
 All other tool implementations remain legacy-owned until their batch is
 validated. Presence in the lazy registry alone must never be interpreted as

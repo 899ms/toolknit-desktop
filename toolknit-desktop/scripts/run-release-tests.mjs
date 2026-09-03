@@ -68,6 +68,7 @@ const releaseTests = [
   'test:video-convert',
   'test:video-frame',
   'test:video-gif',
+  'test:video-tools-contract',
   'test:image-stitch',
   'test:ppt-image-extract',
   'test:ppt-text-extract',

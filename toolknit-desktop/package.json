@@ -70,6 +70,7 @@
     "test:video-convert": "node scripts/test-video-convert-core.mjs && node scripts/test-video-convert-runtime.mjs",
     "test:video-frame": "node scripts/test-video-frame-core.mjs",
     "test:video-gif": "node scripts/test-video-gif-core.mjs",
+    "test:video-tools-contract": "node scripts/test-video-tools-contract.mjs",
     "test:image-stitch": "node scripts/test-image-stitch-core.mjs && node scripts/test-image-stitch-runtime.mjs && node scripts/test-image-stitch-tool-contract.mjs",
     "test:ppt-image-extract": "node scripts/test-ppt-image-extract-core.mjs && node scripts/test-ppt-image-extract-runtime.mjs",
     "test:ppt-images-tool-contract": "node scripts/test-ppt-images-tool-contract.mjs",

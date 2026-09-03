@@ -109,6 +109,21 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./audio-convert/tool.js'),
     init: 'initAudioConvertTool'
   }),
+  'video-convert': Object.freeze({
+    overlayId: 'videoConvertOverlay',
+    load: () => import('./video-tools/tool.js'),
+    init: 'initVideoConvertTool'
+  }),
+  'video-frame': Object.freeze({
+    overlayId: 'videoFrameOverlay',
+    load: () => import('./video-tools/tool.js'),
+    init: 'initVideoFrameTool'
+  }),
+  'video-gif': Object.freeze({
+    overlayId: 'videoGifOverlay',
+    load: () => import('./video-tools/tool.js'),
+    init: 'initVideoGifTool'
+  }),
   'bg-removal': Object.freeze({
     overlayId: 'bgRemovalOverlay',
     load: () => import('./bg-removal/tool.js'),

@@ -98,6 +98,7 @@
     "test:cleanup-tools-contract": "node scripts/test-cleanup-tools-contract.mjs",
     "test:excel-to-pdf": "node scripts/test-excel-to-pdf-shell.mjs && cargo test --manifest-path src-tauri/Cargo.toml excel_to_pdf --lib",
     "test:cli-package": "npm run stage:cli-resources && node scripts/test-cli-package.mjs",
+    "test:cli-clean-worktree": "node scripts/test-cli-clean-worktree.mjs",
     "test:cli": "npm run test:cli-package && npm run test:cli-agent",
     "test:release": "node scripts/run-release-tests.mjs",
     "qa:image-stitch-native": "node scripts/qa-image-stitch-native.mjs",

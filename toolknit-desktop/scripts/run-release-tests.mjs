@@ -85,6 +85,7 @@ const releaseTests = [
   'test:task-runtime',
   'test:help',
   'test:cli-package',
+  'test:cli-clean-worktree',
   'test:cli-agent',
   'build'
 ];

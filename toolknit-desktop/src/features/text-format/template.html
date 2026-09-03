@@ -1,0 +1,136 @@
+<div class="pdf-merge-overlay pdf-merge-v2 text-format-v2" id="textFormatOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="textFormatBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="textFormatDropZone">
+        <span class="drop-hint" data-i18n="home.textFormat.dropHint">松手即可读取文档</span>
+      </div>
+      <header class="pdf-merge-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="textFormatBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">TEXT FORMAT · TOOL PAGE 2.3</span>
+        </div>
+        <div class="pdf-merge-v2-top-actions home-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span data-i18n="home.webVersion">网页版本</span>
+          </button>
+          <button class="home-v2-support-top" id="textFormatSupport" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span data-i18n="home.supportAuthor">支持作者</span>
+          </button>
+           <div class="home-v2-window-cluster" aria-label="窗口与设置">
+             <button class="home-v2-icon-button" id="textFormatV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+               <i data-lucide="settings"></i>
+             </button>
+             <div class="home-v2-window-controls" aria-label="窗口控制">
+               <button class="home-v2-window-button ctrl-btn" data-action="minimize" type="button" data-i18n-title="common.minimize" title="最小化" aria-label="最小化"><i data-lucide="minus"></i></button>
+               <button class="home-v2-window-button ctrl-btn" data-action="maximize" type="button" data-i18n-title="common.maximize" title="最大化" aria-label="最大化"><i data-lucide="square"></i></button>
+               <button class="home-v2-window-button ctrl-btn" data-action="close" type="button" data-i18n-title="common.close" title="关闭" aria-label="关闭"><i data-lucide="x"></i></button>
+             </div>
+           </div>
+        </div>
+      </header>
+
+      <div class="pdf-merge-v2-body text-format-v2-body" id="textFormatBody">
+        <aside class="pdf-merge-v2-poster text-format-v2-poster" aria-label="文本格式化说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.textFormat.heroLabel">Text Tool</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.textFormat.title">文本格式化</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.textFormat.subtitle">大小写转换、清理空行空格、排序去重、添加行号，一键处理文本。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong data-i18n="home.textFormat.localNote">文档只在本机读取，格式化结果不会上传服务器；适合名单、日志、文案、代码片段和资料清洗。</strong>
+          </div>
+          <input id="textFormatFileInput" type="file" accept=".txt,.md,.markdown,.csv,.tsv,.json,.html,.htm,.docx,.pdf,text/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+          <button class="audio-convert-cta pdf-merge-v2-cta text-format-v2-upload-btn" id="textFormatCta" type="button">
+            <i data-lucide="file-up"></i>
+            <span data-i18n="home.textFormat.uploadDoc">上传文档格式化</span>
+          </button>
+          <div class="pdf-merge-v2-steps" aria-label="文本格式化流程">
+            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong data-i18n="home.textFormat.step1Title">输入或上传</strong><p data-i18n="home.textFormat.step1Desc">直接粘贴文本，或读取 TXT / Markdown / DOCX / PDF 等文档。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>02</span><div><strong data-i18n="home.textFormat.step2Title">选择动作</strong><p data-i18n="home.textFormat.step2Desc">从大小写、空格、行处理、排序和全半角中选择一种处理。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>03</span><div><strong data-i18n="home.textFormat.step3Title">检查结果</strong><p data-i18n="home.textFormat.step3Desc">右侧实时展示处理结果，确认后复制或继续作为输入。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>04</span><div><strong data-i18n="home.textFormat.step4Title">连续处理</strong><p data-i18n="home.textFormat.step4Desc">把结果作为下一轮输入，可叠加多种文本清洗步骤。</p></div></div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace text-format-v2-workspace">
+          <section class="text-format-v2-input-card" aria-label="文本输入区">
+            <div class="text-format-v2-card-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">INPUT SOURCE</span>
+                <h2 data-i18n="home.textFormat.inputTitle">文本来源</h2>
+              </div>
+              <div class="text-format-v2-source" id="textFormatFileInfo">
+                <i data-lucide="file-text"></i>
+                <div>
+                  <strong id="textFormatFileName" data-i18n="home.textFormat.manualInput">手动输入</strong>
+                  <span id="textFormatFileMeta" data-i18n="home.textFormat.manualMeta">当前文本框内容</span>
+                </div>
+                <div class="text-format-v2-source-mark" aria-hidden="true">
+                  <i data-lucide="text"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-format-v2-drop-card" id="textFormatDropCard">
+              <div>
+                <span>DROP OR SELECT</span>
+                <p data-i18n="home.textFormat.dropCopy">拖入文档，或继续在下方粘贴文字。支持 TXT / MD / CSV / JSON / HTML / DOCX / PDF。</p>
+              </div>
+              <button class="text-format-btn text-format-v2-select-btn" id="textFormatSelectFileBtn" type="button">
+                <i data-lucide="upload"></i>
+                <span data-i18n="home.textFormat.selectFile">选择文档</span>
+              </button>
+            </div>
+
+            <textarea class="text-format-textarea text-format-v2-textarea" id="textFormatInput" data-i18n-placeholder="home.textFormat.placeholder" placeholder="在此输入或粘贴文本..."></textarea>
+          </section>
+
+          <section class="text-format-v2-actions-card" aria-label="格式化动作">
+            <div class="text-format-v2-card-head is-compact">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">FORMAT ACTIONS</span>
+                <h2 data-i18n="home.textFormat.actionsTitle">处理动作</h2>
+              </div>
+              <p data-i18n="home.textFormat.actionsHint">点击任意动作后，结果会显示在右侧。</p>
+            </div>
+            <div class="text-format-actions text-format-v2-actions" id="textFormatActions">
+              <button class="text-format-btn" data-action="uppercase" data-i18n="home.textFormat.uppercase">全大写</button>
+              <button class="text-format-btn" data-action="lowercase" data-i18n="home.textFormat.lowercase">全小写</button>
+              <button class="text-format-btn" data-action="titlecase" data-i18n="home.textFormat.titlecase">首字母大写</button>
+              <button class="text-format-btn" data-action="capitalize" data-i18n="home.textFormat.capitalize">每句首字母大写</button>
+              <button class="text-format-btn" data-action="trimSpaces" data-i18n="home.textFormat.trimSpaces">去多余空格</button>
+              <button class="text-format-btn" data-action="trimLines" data-i18n="home.textFormat.trimLines">去行首尾空格</button>
+              <button class="text-format-btn" data-action="removeEmptyLines" data-i18n="home.textFormat.removeEmptyLines">去空行</button>
+              <button class="text-format-btn" data-action="removeDuplicateLines" data-i18n="home.textFormat.removeDuplicateLines">去重复行</button>
+              <button class="text-format-btn" data-action="sortAsc" data-i18n="home.textFormat.sortAsc">升序排序</button>
+              <button class="text-format-btn" data-action="sortDesc" data-i18n="home.textFormat.sortDesc">降序排序</button>
+              <button class="text-format-btn" data-action="addLineNumbers" data-i18n="home.textFormat.addLineNumbers">添加行号</button>
+              <button class="text-format-btn" data-action="removeLineNumbers" data-i18n="home.textFormat.removeLineNumbers">移除行号</button>
+              <button class="text-format-btn" data-action="reverseLines" data-i18n="home.textFormat.reverseLines">反转行序</button>
+              <button class="text-format-btn" data-action="reverseText" data-i18n="home.textFormat.reverseText">反转字符</button>
+              <button class="text-format-btn" data-action="toHalfWidth" data-i18n="home.textFormat.toHalfWidth">全角转半角</button>
+              <button class="text-format-btn" data-action="toFullWidth" data-i18n="home.textFormat.toFullWidth">半角转全角</button>
+            </div>
+          </section>
+
+          <section class="text-format-v2-output-card" aria-label="处理结果">
+            <div class="text-format-v2-card-head is-compact">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">OUTPUT</span>
+                <h2 data-i18n="home.textFormat.outputTitle">处理结果</h2>
+              </div>
+              <p data-i18n="home.textFormat.outputHint">复制结果，或作为输入继续叠加处理。</p>
+            </div>
+            <textarea class="text-format-textarea text-format-output text-format-v2-output" id="textFormatOutput" data-i18n-placeholder="home.textFormat.outputPlaceholder" placeholder="处理结果..." readonly></textarea>
+            <div class="text-format-toolbar text-format-v2-toolbar">
+              <button class="text-format-btn text-format-clear-btn" id="textFormatClearBtn" data-i18n="home.textFormat.clear">清空</button>
+              <button class="text-format-btn text-format-use-as-input-btn" id="textFormatUseAsInputBtn" data-i18n="home.textFormat.useAsInput">结果作为输入</button>
+              <button class="text-format-btn text-format-copy-btn" id="textFormatCopyBtn" data-i18n="home.textFormat.copy">复制结果</button>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>

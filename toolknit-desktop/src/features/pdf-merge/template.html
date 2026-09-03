@@ -1,0 +1,197 @@
+<div class="pdf-merge-overlay pdf-merge-v2" id="pdfMergeOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="pdfMergePlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="pdfMergeDropZone">
+        <span class="drop-hint" data-i18n="home.pdfMerge.dropHint">松手即可上传</span>
+      </div>
+      <header class="pdf-merge-v2-topbar">
+        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="pdfMergeBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">PDF MERGER · TOOL PAGE 2.3</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="pdfMergeV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="audio-convert-body pdf-merge-v2-body" id="pdfMergeBody">
+        <aside class="pdf-merge-v2-poster" aria-label="PDF 合并说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.pdfMerge.heroLabel">PDF Merger</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.pdfMerge.title">PDF 文件合并</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.pdfMerge.subtitle">将多个 PDF 文件按顺序合并为一个文档，支持拖拽排序、批量添加，一键完成。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>文件只在本机处理，不上传服务器。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="合并流程">
+            <div class="pdf-merge-v2-step is-active">
+              <span>01</span>
+              <div>
+                <strong>添加文件</strong>
+                <p>点击上传或直接拖入多个 PDF。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>02</span>
+              <div>
+                <strong>调整顺序</strong>
+                <p>拖拽队列中的文件即可改变合并顺序。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>03</span>
+              <div>
+                <strong>选择页面</strong>
+                <p>遇到多页 PDF 时，可选择部分页面再合并。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>04</span>
+              <div>
+                <strong>导出结果</strong>
+                <p>生成标准 PDF，尽量保留原页面内容。</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace">
+          <section class="pdf-merge-v2-upload" aria-label="上传 PDF 文件">
+            <div class="pdf-merge-v2-upload-copy">
+              <span class="pdf-merge-v2-upload-eyebrow">DROP OR SELECT</span>
+              <h2>把要合并的 PDF 放到这里</h2>
+              <p>建议按最终阅读顺序添加文件；添加后仍可在队列中拖拽排序。</p>
+            </div>
+            <button class="audio-convert-cta pdf-merge-v2-cta" id="pdfMergeCta" type="button">
+              <i data-lucide="upload"></i>
+              <span data-i18n="home.pdfMerge.cta">上传 PDF 文件</span>
+            </button>
+          </section>
+
+          <section class="pdf-merge-v2-queue" aria-label="PDF 合并队列">
+            <div class="pdf-merge-v2-section-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">MERGE QUEUE</span>
+                <h2>合并队列</h2>
+              </div>
+              <p>至少添加 2 个 PDF 后才能开始合并。</p>
+            </div>
+            <div class="audio-convert-files pdf-merge-v2-files" id="pdfMergeFiles" aria-live="polite"></div>
+          </section>
+
+          <section class="audio-convert-formats pdf-merge-v2-info" aria-label="合并说明">
+            <h3 class="audio-convert-formats-title" data-i18n="home.pdfMerge.infoTitle">合并说明</h3>
+            <div class="pdf-merge-info-grid">
+              <div class="pdf-merge-info-item">
+                <i data-lucide="files"></i>
+                <span data-i18n="home.pdfMerge.info1">支持多个 PDF 文件按顺序合并为一个</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="move"></i>
+                <span data-i18n="home.pdfMerge.info2">拖拽文件可调整合并顺序</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="file-text"></i>
+                <span data-i18n="home.pdfMerge.info3">输出为标准 PDF 格式，保留原始页面内容</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="lock"></i>
+                <span data-i18n="home.pdfMerge.info4">纯本地处理，文件不上传服务器</span>
+              </div>
+            </div>
+          </section>
+
+          <footer class="pdf-merge-v2-actions">
+            <span>准备好后，ToolKnit 会先检查页面，再进入合并。</span>
+            <button class="audio-convert-process-btn pdf-merge-v2-process" id="pdfMergeProcessBtn" data-i18n="home.pdfMerge.processBtn" style="display:none;">开始合并</button>
+          </footer>
+        </main>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask" id="pdfMergeProcessMask">
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="audio-convert-process-bar">
+        <div class="audio-convert-process-bar-fill" id="pdfMergeProcessBarFill"></div>
+      </div>
+      <div class="audio-convert-process-text" id="pdfMergeProcessText" data-i18n="home.pdfMerge.processing">正在合并...</div>
+    </div>
+
+<div class="audio-clip-success-overlay" id="pdfMergeSuccessOverlay">
+      <div class="audio-clip-success-dialog">
+        <div class="audio-clip-success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <h3 class="audio-clip-success-title" data-i18n="home.pdfMerge.successTitle">合并完成</h3>
+        <div class="audio-clip-success-meta" id="pdfMergeSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfMerge.successCount">合并文件数</span>
+            <span class="audio-convert-success-value" id="pdfMergeSuccessCount"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfMerge.successPath">保存路径</span>
+            <span class="audio-convert-success-value" id="pdfMergeSuccessPath"></span>
+          </div>
+        </div>
+        <div class="audio-clip-success-actions">
+          <button class="audio-clip-success-btn audio-clip-success-btn-secondary" id="pdfMergeSuccessOpenFolder" data-i18n="home.pdfMerge.openFolder">打开文件夹</button>
+          <button class="audio-clip-success-btn audio-clip-success-btn-primary" id="pdfMergeSuccessOk" data-i18n="home.pdfMerge.ok">确定</button>
+        </div>
+      </div>
+    </div>
+
+<section class="pdf-merge-selection" id="pdfMergeSelection" aria-hidden="true">
+      <div class="pdf-merge-selection-notice" id="pdfMergeSelectionNotice">
+        <div class="pdf-merge-selection-notice-content">
+          <p class="pdf-merge-selection-eyebrow" id="pdfMergeSelectionEyebrow"></p>
+          <h2 class="pdf-merge-selection-title" data-i18n="home.pdfMerge.multiPageTitle">检测到多页 PDF</h2>
+          <p class="pdf-merge-selection-copy" data-i18n="home.pdfMerge.multiPageDescription">这些文件包含多个页面。你可以逐份选择需要合并的页面，也可以直接保留全部页面。</p>
+          <div class="pdf-merge-selection-notice-actions">
+            <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary" id="pdfMergeChoosePagesBtn" data-i18n="home.pdfMerge.choosePages">选择页面</button>
+            <button class="pdf-merge-selection-btn pdf-merge-selection-btn-primary" id="pdfMergeUseAllPagesBtn" data-i18n="home.pdfMerge.useAllPages">全部选择</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pdf-merge-page-picker" id="pdfMergePagePicker">
+        <header class="pdf-merge-page-picker-header">
+          <div>
+            <p class="pdf-merge-selection-eyebrow" id="pdfMergePickerProgress"></p>
+            <h2 class="pdf-merge-page-picker-title" data-i18n="home.pdfMerge.pickerTitle">选择要合并的页面</h2>
+            <p class="pdf-merge-page-picker-file" id="pdfMergePickerFileName"></p>
+          </div>
+          <span class="pdf-merge-page-picker-count" id="pdfMergePickerSelectedCount"></span>
+        </header>
+        <div class="pdf-merge-page-stage" id="pdfMergePageStage">
+          <div class="pdf-merge-page-strip" id="pdfMergePageStrip" aria-live="polite"></div>
+        </div>
+        <footer class="pdf-merge-page-picker-footer">
+          <div class="pdf-merge-page-picker-status">
+            <span id="pdfMergePickerInputStatus"></span>
+          </div>
+          <div class="pdf-merge-page-picker-actions">
+            <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary" id="pdfMergeSelectAllPagesBtn" data-i18n="home.pdfMerge.selectAllPages">全部选择</button>
+            <button class="pdf-merge-selection-btn pdf-merge-selection-btn-primary" id="pdfMergeSelectionNextBtn"></button>
+          </div>
+        </footer>
+      </div>
+    </section>

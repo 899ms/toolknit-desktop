@@ -1,0 +1,187 @@
+<div class="pdf-merge-overlay pdf-merge-v2 pdf-rotate-v2" id="pdfRotateOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="pdfRotatePlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="pdfRotateDropZone">
+        <span class="drop-hint" data-i18n="home.pdfRotate.dropHint">松手即可上传</span>
+      </div>
+      <header class="pdf-merge-v2-topbar pdf-rotate-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left pdf-rotate-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="pdfRotateBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag pdf-rotate-v2-top-tag">PDF ROTATOR · TOOL PAGE 2.3</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="pdfRotateV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="pdf-merge-v2-body pdf-rotate-v2-body" id="pdfRotateBody">
+        <aside class="pdf-merge-v2-poster pdf-rotate-v2-poster" aria-label="PDF 旋转说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.pdfRotate.heroLabel">PDF Rotator</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.pdfRotate.title">PDF 页面旋转</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.pdfRotate.subtitle">旋转 PDF 页面方向，支持单页旋转和整体旋转，预览可见，一键导出。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>文件只在本机处理，不上传服务器。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="旋转流程">
+            <div class="pdf-merge-v2-step is-active">
+              <span>01</span>
+              <div>
+                <strong>添加文件</strong>
+                <p>选择一个 PDF 文件，进入页面旋转预览。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>02</span>
+              <div>
+                <strong>预览页面</strong>
+                <p>每页会渲染成缩略图，方向变化可见。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>03</span>
+              <div>
+                <strong>调整角度</strong>
+                <p>支持单页旋转，也可以一键整体旋转 90°。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>04</span>
+              <div>
+                <strong>导出 PDF</strong>
+                <p>保留全部页面和旋转角度，输出为新 PDF。</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace pdf-rotate-v2-workspace">
+          <section class="pdf-merge-v2-upload pdf-rotate-v2-upload" aria-label="上传 PDF 文件">
+            <div class="pdf-merge-v2-upload-copy">
+              <span class="pdf-merge-v2-upload-eyebrow">DROP OR SELECT</span>
+              <h2>把要旋转的 PDF 放到这里</h2>
+              <p>上传后进入旋转预览，可逐页旋转，也可以统一调整所有页面方向。</p>
+            </div>
+            <button class="audio-convert-cta pdf-merge-v2-cta" id="pdfRotateCta" type="button">
+              <i data-lucide="upload"></i>
+              <span data-i18n="home.pdfRotate.cta">上传 PDF 文件</span>
+            </button>
+            <input id="pdfRotateInput" type="file" accept=".pdf,application/pdf" hidden tabindex="-1">
+          </section>
+
+          <section class="pdf-merge-v2-queue pdf-rotate-v2-queue" aria-label="待旋转文件">
+            <div class="pdf-merge-v2-section-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">ROTATE QUEUE</span>
+                <h2>待旋转文件</h2>
+              </div>
+              <p>旋转工具一次处理一个 PDF，替换文件不会影响源文件。</p>
+            </div>
+            <div class="audio-convert-files pdf-merge-v2-files pdf-rotate-v2-files" id="pdfRotateFiles" aria-live="polite"></div>
+          </section>
+
+          <section class="audio-convert-formats pdf-merge-v2-info pdf-rotate-v2-info" aria-label="旋转说明">
+            <h3 class="audio-convert-formats-title" data-i18n="home.pdfRotate.infoTitle">旋转说明</h3>
+            <div class="pdf-merge-info-grid">
+              <div class="pdf-merge-info-item">
+                <i data-lucide="rotate-cw"></i>
+                <span data-i18n="home.pdfRotate.info1">支持单页旋转 90° 和整体旋转 90°</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="eye"></i>
+                <span data-i18n="home.pdfRotate.info2">预览抽屉实时显示旋转效果</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="file-output"></i>
+                <span data-i18n="home.pdfRotate.info3">全部导出为单个 PDF 文件，保留所有旋转角度</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="lock"></i>
+                <span data-i18n="home.pdfRotate.info4">纯本地处理，文件不上传服务器</span>
+              </div>
+            </div>
+          </section>
+
+          <footer class="pdf-merge-v2-actions pdf-rotate-v2-actions">
+            <span>上传完成后先进入预览，再决定单页旋转或整体导出。</span>
+            <button class="audio-convert-process-btn pdf-merge-v2-process" id="pdfRotateProcessBtn" data-i18n="home.pdfRotate.processBtn" style="display:none;">开始处理</button>
+          </footer>
+        </main>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask" id="pdfRotateProcessMask">
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="audio-convert-process-bar">
+        <div class="audio-convert-process-bar-fill" id="pdfRotateProcessBarFill"></div>
+      </div>
+      <div class="audio-convert-process-text" id="pdfRotateProcessText" data-i18n="home.pdfRotate.processing">正在加载...</div>
+    </div>
+
+<div class="audio-clip-success-overlay" id="pdfRotateSuccessOverlay">
+      <div class="audio-clip-success-dialog">
+        <div class="audio-clip-success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <h3 class="audio-clip-success-title" data-i18n="home.pdfRotate.successTitle">旋转完成</h3>
+        <div class="audio-clip-success-meta" id="pdfRotateSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfRotate.successCount">处理页数</span>
+            <span class="audio-convert-success-value" id="pdfRotateSuccessCount"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfRotate.successPath">保存路径</span>
+            <span class="audio-convert-success-value" id="pdfRotateSuccessPath"></span>
+          </div>
+        </div>
+        <div class="audio-clip-success-actions">
+          <button class="audio-clip-success-btn audio-clip-success-btn-secondary" id="pdfRotateSuccessOpenFolder" data-i18n="home.pdfRotate.openFolder">打开文件夹</button>
+          <button class="audio-clip-success-btn audio-clip-success-btn-primary" id="pdfRotateSuccessOk" data-i18n="home.pdfRotate.ok">确定</button>
+        </div>
+      </div>
+    </div>
+
+<section class="pdf-page-workspace" id="pdfRotateWorkspace" aria-hidden="true">
+      <header class="pdf-page-workspace-header">
+        <div>
+          <p class="pdf-merge-selection-eyebrow" id="pdfRotateWorkspaceStatus"></p>
+          <h2 class="pdf-page-workspace-title" data-i18n="home.pdfRotate.resultTitle">旋转预览</h2>
+          <p class="pdf-page-workspace-file" id="pdfRotateWorkspaceFileName"></p>
+        </div>
+        <div class="pdf-page-workspace-header-actions">
+          <span class="pdf-page-workspace-count" id="pdfRotatePageCount"></span>
+          <button class="pdf-page-workspace-close" id="pdfRotateWorkspaceClose" type="button" aria-label="Close">
+            <i data-lucide="x" aria-hidden="true"></i>
+          </button>
+        </div>
+      </header>
+      <div class="pdf-merge-page-stage" id="pdfRotatePageStage">
+        <div class="pdf-merge-page-strip" id="pdfRotatePageStrip" aria-live="polite"></div>
+      </div>
+      <footer class="pdf-page-workspace-footer">
+        <div class="pdf-page-workspace-status" id="pdfRotateWorkspaceFooterStatus"></div>
+        <div class="pdf-page-workspace-footer-actions">
+          <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary" id="pdfRotateRotateAllBtn" data-i18n="home.pdfRotate.rotateAll">整体旋转 90°</button>
+          <button class="pdf-merge-selection-btn pdf-merge-selection-btn-primary" id="pdfRotateDownloadAllBtn" data-i18n="home.pdfRotate.downloadAll">导出全部</button>
+        </div>
+      </footer>
+    </section>

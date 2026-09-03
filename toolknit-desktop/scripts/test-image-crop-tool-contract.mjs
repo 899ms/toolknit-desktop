@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -9,7 +10,7 @@ const root = resolve(import.meta.dirname, '..');
 const read = relativePath => readFileSync(resolve(root, relativePath), 'utf8');
 const main = read('src/main.js');
 const globalStyles = readGlobalStyles(import.meta.url);
-const html = read('index.html');
+const html = readAppMarkup(import.meta.url);
 const controller = read('src/features/image-crop/controller.js');
 const tool = read('src/features/image-crop/tool.js');
 const compatibilityCore = read('src/image-crop-core.js').trim();

@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
@@ -6,7 +7,7 @@ import { pptDraftPageTemplate, pptDraftPortalTemplate } from '../src/features/pp
 const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [main, html, tool, controller, preview, template, featureStyles] = await Promise.all([
   read('src/main.js'),
-  read('index.html'),
+  readAppMarkup(import.meta.url),
   read('src/features/ppt-draft/tool.js'),
   read('src/features/ppt-draft/controller.js'),
   read('src/features/ppt-draft/preview.js'),

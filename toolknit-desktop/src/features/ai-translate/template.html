@@ -1,0 +1,134 @@
+<div class="pdf-merge-overlay pdf-merge-v2 ai-translate-v2 ai-polish-overlay" id="aiTranslateOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="aiTranslateBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="aiTranslateDropZone">
+        <span class="drop-hint" data-i18n="home.aiTranslate.dropHint">松手即可读取文档</span>
+      </div>
+      <header class="pdf-merge-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="aiTranslateBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">AI TRANSLATE · TOOL PAGE 2.3</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span data-i18n="home.webVersion">网页版</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span data-i18n="home.supportAuthor">支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="aiTranslateV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="pdf-merge-v2-body ai-translate-v2-body" id="aiTranslateBody">
+        <aside class="pdf-merge-v2-poster ai-translate-v2-poster" aria-label="AI 智能翻译说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.aiTranslate.heroLabel">AI Translate</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.aiTranslate.title">AI 智能翻译</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.aiTranslate.subtitle">智能分析语境，逐句对照翻译，高亮对应关系，精准传达原意。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>AI REQUEST</span>
+            <strong data-i18n="home.aiTranslate.localNote">文档先在本机解析；点击翻译后，会按你配置的模型服务发送文本并生成译文。</strong>
+          </div>
+          <input id="aiTranslateFileInput" type="file" accept=".txt,.md,.markdown,.csv,.tsv,.json,.html,.htm,.docx,.pdf,text/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+          <button class="audio-convert-cta pdf-merge-v2-cta ai-translate-v2-upload-btn" id="aiTranslateCta" type="button">
+            <i data-lucide="file-up"></i>
+            <span data-i18n="home.aiTranslate.uploadDoc">导入文档翻译</span>
+          </button>
+          <div class="pdf-merge-v2-steps" aria-label="AI 智能翻译流程">
+            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong data-i18n="home.aiTranslate.step1Title">输入或导入</strong><p data-i18n="home.aiTranslate.step1Desc">粘贴文本，或读取 TXT / Markdown / DOCX / PDF 等文档。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>02</span><div><strong data-i18n="home.aiTranslate.step2Title">选择语言</strong><p data-i18n="home.aiTranslate.step2Desc">自动识别原文主语言，并隐藏相同目标语言。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>03</span><div><strong data-i18n="home.aiTranslate.step3Title">逐句翻译</strong><p data-i18n="home.aiTranslate.step3Desc">AI 以句子/意群为单位输出原文与译文对应关系。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>04</span><div><strong data-i18n="home.aiTranslate.step4Title">对照复制</strong><p data-i18n="home.aiTranslate.step4Desc">左右高亮对照预览，点击单句或一键复制全部译文。</p></div></div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace ai-translate-v2-workspace" id="aiTranslateDrawer">
+          <section class="ai-translate-v2-input-card" aria-label="待翻译文本输入区">
+            <div class="ai-translate-v2-card-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">INPUT SOURCE</span>
+                <h2 data-i18n="home.aiTranslate.inputTitle">文本来源</h2>
+              </div>
+              <div class="ai-translate-v2-source" id="aiTranslateFileInfo">
+                <i data-lucide="file-text"></i>
+                <div>
+                  <strong id="aiTranslateFileName" data-i18n="home.aiTranslate.manualInput">手动输入</strong>
+                  <span id="aiTranslateFileMeta" data-i18n="home.aiTranslate.manualMeta">当前文本框内容</span>
+                </div>
+                <div class="ai-translate-v2-source-mark" aria-hidden="true">
+                  <i data-lucide="languages"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="ai-translate-v2-drop-card" id="aiTranslateDropCard">
+              <div>
+                <span>DROP OR SELECT</span>
+                <p data-i18n="home.aiTranslate.dropCopy">拖入文档，或继续在下方粘贴文字。支持 TXT / MD / CSV / JSON / HTML / DOCX / PDF。</p>
+              </div>
+              <button class="ai-translate-v2-select-btn" id="aiTranslateSelectFileBtn" type="button">
+                <i data-lucide="upload"></i>
+                <span data-i18n="home.aiTranslate.selectFile">选择文档</span>
+              </button>
+            </div>
+
+            <textarea class="ai-polish-textarea ai-translate-v2-textarea" id="aiTranslateInput" data-i18n-placeholder="home.aiTranslate.inputPlaceholder" placeholder="在此输入或粘贴需要翻译的文字..."></textarea>
+            <div class="ai-polish-polished ai-translate-highlight ai-translate-v2-original" id="aiTranslateOriginalPreview" style="display:none;"></div>
+            <div class="ai-translate-v2-actions">
+              <button class="audio-convert-cta pdf-merge-v2-cta ai-translate-v2-start-btn disabled" id="aiTranslateStartBtn" type="button">
+                <i data-lucide="languages"></i>
+                <span data-i18n="home.aiTranslate.cta">开始 AI 翻译</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="ai-translate-v2-result-card" aria-label="AI 翻译结果区">
+            <div class="ai-translate-v2-card-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">AI OUTPUT</span>
+                <h2 data-i18n="home.aiTranslate.resultTitle">翻译工作台</h2>
+              </div>
+              <p data-i18n="home.aiTranslate.resultHint">选择目标语言后生成逐句对照结果，色块一一对应。</p>
+            </div>
+
+            <div class="ai-polish-right-empty" id="aiTranslateRightEmpty">
+              <div class="ai-polish-empty-icon-wrap">
+                <i data-lucide="languages" class="ai-polish-empty-icon"></i>
+              </div>
+              <p data-i18n="home.aiTranslate.rightEmptyHint">输入文字后点击「开始 AI 翻译」</p>
+            </div>
+
+            <div class="ai-polish-directions" id="aiTranslateLangSelect" style="display:none;">
+              <div class="ai-polish-directions-title" data-i18n="home.aiTranslate.langTitle">请选择目标语言</div>
+              <div class="ai-polish-direction-list" id="aiTranslateLangList"></div>
+              <button class="ai-polish-direction-cancel" id="aiTranslateCancelBtn" type="button" data-i18n="home.aiTranslate.cancel">取消</button>
+            </div>
+
+            <div class="ai-polish-result" id="aiTranslateComparison" style="display:none;">
+              <div class="ai-polish-polished" id="aiTranslateResult"></div>
+              <button class="ai-polish-copy-fab" id="aiTranslateCopyBtn" type="button" data-i18n-aria-label="home.aiTranslate.copyResult" aria-label="复制翻译结果">
+                <i data-lucide="copy"></i>
+              </button>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask" id="aiTranslateMask">
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="audio-convert-process-text" id="aiTranslateMaskText" data-i18n="home.aiTranslate.translating">AI 正在翻译中...</div>
+    </div>

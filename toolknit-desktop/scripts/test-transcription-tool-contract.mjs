@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { parseRefinedTranscriptionResponse, parseTranscriptionSrt } from '../src/features/transcription/core.js';
@@ -8,7 +9,7 @@ const [controller, tool, featureStyles, lazy, main, index] = await Promise.all([
   readFile(new URL('../src/features/transcription/transcription.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
-  readFile(new URL('../index.html', import.meta.url), 'utf8')
+  readAppMarkup(import.meta.url)
 ]);
 
 const parsed = parseTranscriptionSrt('1\n00:00:00,000 --> 00:00:01,000\n你好\n\n2\n00:00:01,000 --> 00:00:02,000\n世界');

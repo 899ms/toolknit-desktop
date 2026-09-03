@@ -1,8 +1,10 @@
 import { createLifecycleScope, normalizeToolInstance } from './tool-lifecycle.js';
+import { mountTrustedTemplate } from './trusted-template-runtime.js';
 
 function validateSpec(toolId, spec) {
   if (!spec || typeof spec !== 'object') throw new TypeError(`Missing lazy tool spec for ${toolId}`);
   if (typeof spec.load !== 'function') throw new TypeError(`Lazy tool ${toolId} must provide load()`);
+  if (spec.markup && typeof spec.markup !== 'function') throw new TypeError(`Lazy tool ${toolId} markup must be a loader`);
   if (!spec.overlayId || typeof spec.overlayId !== 'string') throw new TypeError(`Lazy tool ${toolId} must provide overlayId`);
   if (!spec.init || typeof spec.init !== 'string') throw new TypeError(`Lazy tool ${toolId} must provide init`);
 }
@@ -63,11 +65,20 @@ export function createLazyToolRegistry({
 
     let pending = pendingLoads.get(instanceKey);
     if (!pending) {
-      pending = Promise.resolve(spec.load()).then(async module => {
+      pending = Promise.resolve().then(async () => {
+        let overlay = root?.getElementById?.(spec.overlayId) || null;
+        if (!overlay && spec.markup) {
+          const templateModule = await spec.markup();
+          if (disposed) return null;
+          const markup = templateModule?.default ?? templateModule;
+          mountTrustedTemplate(markup, { root, host: root?.body });
+          overlay = root?.getElementById?.(spec.overlayId) || null;
+        }
+        if (!overlay) throw new Error(`Missing overlay ${spec.overlayId}`);
+        const module = await spec.load();
         if (disposed) return null;
         const initializer = module?.[spec.init];
         if (typeof initializer !== 'function') throw new Error(`Missing ${spec.init}`);
-        const overlay = root?.getElementById?.(spec.overlayId) || null;
         const context = await createContext({ toolId, spec, overlay });
         if (disposed) return null;
         const created = normalizeToolInstance(initializer({ ...context, overlay }), toolId);

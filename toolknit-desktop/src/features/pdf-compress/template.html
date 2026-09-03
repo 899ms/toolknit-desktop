@@ -1,0 +1,184 @@
+<div class="pdf-merge-overlay pdf-merge-v2 pdf-compress-v2" id="pdfCompressOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="pdfCompressPlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="pdfCompressDropZone">
+        <span class="drop-hint" data-i18n="home.pdfCompress.dropHint">松手即可上传</span>
+      </div>
+      <header class="pdf-merge-v2-topbar pdf-compress-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left pdf-compress-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="pdfCompressBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag pdf-compress-v2-top-tag">PDF COMPRESSOR · TOOL PAGE 2.3</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="pdfCompressV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="pdf-merge-v2-body pdf-compress-v2-body" id="pdfCompressBody">
+        <aside class="pdf-merge-v2-poster pdf-compress-v2-poster" aria-label="PDF 压缩说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.pdfCompress.heroLabel">PDF Compressor</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.pdfCompress.title">PDF 文件压缩</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.pdfCompress.subtitle">压缩 PDF 文件体积，支持低中高三种压缩等级，批量处理一键完成。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>适合批量压缩 PDF，按需要在清晰度和体积之间选择更合适的平衡。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="压缩流程">
+            <div class="pdf-merge-v2-step is-active">
+              <span>01</span>
+              <div>
+                <strong>添加文件</strong>
+                <p>上传一个或多个 PDF，可以拖拽排序和删除。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>02</span>
+              <div>
+                <strong>选择等级</strong>
+                <p>低、中、高三档压缩策略，按用途选择。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>03</span>
+              <div>
+                <strong>批量压缩</strong>
+                <p>逐个处理队列中的文件并汇总压缩结果。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>04</span>
+              <div>
+                <strong>查看结果</strong>
+                <p>在完成弹框中查看体积变化并打开输出目录。</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace pdf-compress-v2-workspace">
+          <section class="pdf-merge-v2-upload pdf-compress-v2-upload" aria-label="上传 PDF 文件">
+            <div class="pdf-merge-v2-upload-copy">
+              <span class="pdf-merge-v2-upload-eyebrow">DROP OR SELECT</span>
+              <h2>把要压缩的 PDF 放到这里</h2>
+              <p>支持多文件批量压缩，上传后会进入队列，处理完成后可查看每个文件的体积变化。</p>
+            </div>
+            <button class="audio-convert-cta pdf-merge-v2-cta" id="pdfCompressCta" type="button">
+              <i data-lucide="upload"></i>
+              <span data-i18n="home.pdfCompress.cta">上传 PDF 文件</span>
+            </button>
+          </section>
+
+          <section class="pdf-merge-v2-options pdf-compress-v2-options" aria-label="压缩参数">
+            <div class="audio-convert-format-selector">
+              <span class="audio-convert-format-label" data-i18n="home.pdfCompress.compressionLevel">压缩等级</span>
+              <div class="audio-convert-format-options" id="pdfCompressLevelOptions">
+                <button class="audio-convert-format-option" data-level="low" data-i18n="home.pdfCompress.levelLow">低</button>
+                <button class="audio-convert-format-option active" data-level="medium" data-i18n="home.pdfCompress.levelMedium">中</button>
+                <button class="audio-convert-format-option" data-level="high" data-i18n="home.pdfCompress.levelHigh">高</button>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-options-hint">低：优先清晰度 / 中：默认推荐 / 高：优先体积，适合分享和上传。</div>
+          </section>
+
+          <section class="pdf-merge-v2-queue pdf-compress-v2-queue" aria-label="待压缩文件">
+            <div class="pdf-merge-v2-section-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">COMPRESS QUEUE</span>
+                <h2>待压缩文件</h2>
+              </div>
+              <p>多文件会按队列顺序依次处理，结果会统一显示在完成弹框中。</p>
+            </div>
+            <div class="audio-convert-files pdf-merge-v2-files pdf-compress-v2-files" id="pdfCompressFiles" aria-live="polite"></div>
+          </section>
+
+          <section class="audio-convert-formats pdf-merge-v2-info pdf-compress-v2-info" aria-label="压缩说明">
+            <h3 class="audio-convert-formats-title" data-i18n="home.pdfCompress.infoTitle">压缩说明</h3>
+            <div class="pdf-merge-info-grid">
+              <div class="pdf-merge-info-item">
+                <i data-lucide="minimize-2"></i>
+                <span data-i18n="home.pdfCompress.info1">三种压缩等级，按需选择质量与体积的平衡</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="files"></i>
+                <span data-i18n="home.pdfCompress.info2">支持单文件或多文件批量压缩</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="download"></i>
+                <span data-i18n="home.pdfCompress.info3">单文件直接下载，多文件可打包 ZIP 下载</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="lock"></i>
+                <span data-i18n="home.pdfCompress.info4">纯本地处理，文件不上传服务器</span>
+              </div>
+            </div>
+          </section>
+
+          <footer class="pdf-merge-v2-actions pdf-compress-v2-actions">
+            <span>确认压缩等级和文件队列后开始处理，完成后查看完成弹框中的体积变化。</span>
+            <button class="audio-convert-process-btn pdf-merge-v2-process" id="pdfCompressProcessBtn" data-i18n="home.pdfCompress.processBtn" style="display:none;">开始压缩</button>
+          </footer>
+        </main>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask" id="pdfCompressProcessMask">
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="audio-convert-process-bar">
+        <div class="audio-convert-process-bar-fill" id="pdfCompressProcessBarFill"></div>
+      </div>
+      <div class="audio-convert-process-text" id="pdfCompressProcessText" data-i18n="home.pdfCompress.processing">正在压缩...</div>
+    </div>
+
+<div class="audio-convert-success-overlay" id="pdfCompressSuccessOverlay">
+      <div class="audio-convert-success-dialog">
+        <div class="audio-convert-success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <h3 class="audio-convert-success-title" data-i18n="home.pdfCompress.successTitle">压缩完成</h3>
+        <div class="audio-convert-success-meta" id="pdfCompressSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfCompress.successFileName">文件名</span>
+            <span class="audio-convert-success-value" id="pdfCompressSuccessFileName"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfCompress.successOriginalSize">原文件大小</span>
+            <span class="audio-convert-success-value" id="pdfCompressSuccessOriginalSize"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfCompress.successCompressedSize">压缩后大小</span>
+            <span class="audio-convert-success-value" id="pdfCompressSuccessCompressedSize"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfCompress.successCount">文件数</span>
+            <span class="audio-convert-success-value" id="pdfCompressSuccessCount"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfCompress.successPath">保存路径</span>
+            <span class="audio-convert-success-value" id="pdfCompressSuccessPath"></span>
+          </div>
+        </div>
+        <div class="audio-convert-success-actions">
+          <button class="audio-convert-success-btn audio-convert-success-btn-secondary" id="pdfCompressSuccessOpenFolder" data-i18n="home.pdfCompress.openFolder">打开文件夹</button>
+          <button class="audio-convert-success-btn audio-convert-success-btn-primary" id="pdfCompressSuccessOk" data-i18n="home.pdfCompress.ok">确定</button>
+        </div>
+      </div>
+    </div>

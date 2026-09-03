@@ -1,0 +1,291 @@
+<div class="pdf-merge-overlay pdf-merge-v2 pdf-editor-v2" id="pdfEditorOverlay" role="dialog" aria-modal="true" aria-label="PDF 编辑器">
+      <div class="plasma-bg pdf-merge-v2-bg" id="pdfEditorPlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="pdfEditorDropZone">
+        <span class="drop-hint" data-i18n="home.pdfEditor.dropHint">松手即可上传</span>
+      </div>
+      <input id="pdfEditorFileInput" type="file" accept="application/pdf,.pdf" hidden>
+      <input id="pdfEditorAppendInput" type="file" accept="application/pdf,.pdf" hidden>
+      <input id="pdfEditorImageInput" type="file" accept="image/png,image/jpeg" hidden>
+      <header class="pdf-merge-v2-topbar pdf-editor-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left pdf-editor-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="pdfEditorBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag pdf-editor-v2-top-tag">PDF EDITOR · TOOL PAGE 2.3</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="pdfEditorV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="pdf-merge-v2-body pdf-editor-v2-body" id="pdfEditorBody">
+        <aside class="pdf-editor-sidebar pdf-editor-page-sidebar" aria-label="PDF 页面选择">
+          <div class="pdf-editor-pages-head">
+            <span data-i18n="home.pdfEditor.pages">页面</span>
+            <div class="pdf-editor-pages-head-actions">
+              <span class="pdf-editor-pages-count" id="pdfEditorSelectedCount"></span>
+              <button class="pdf-editor-pages-action" id="pdfEditorSelectAll" type="button" data-i18n-title="home.pdfEditor.selectAll" title="全选页面" aria-label="全选页面">
+                <i data-lucide="check-check"></i>
+              </button>
+              <button class="pdf-editor-pages-action" id="pdfEditorInvertSelection" type="button" data-i18n-title="home.pdfEditor.invertSelection" title="反选页面" aria-label="反选页面">
+                <i data-lucide="list-restart"></i>
+              </button>
+            </div>
+          </div>
+          <div class="pdf-editor-page-strip" id="pdfEditorPageStrip" aria-live="polite"></div>
+        </aside>
+
+        <main class="pdf-editor-preview">
+          <div class="pdf-editor-preview-toolbar">
+            <div class="pdf-editor-toolbar-left">
+              <span class="pdf-editor-page-indicator" id="pdfEditorPageIndicator"></span>
+              <span class="pdf-editor-preview-mode" data-i18n="home.pdfEditor.previewMode">预览区</span>
+            </div>
+            <div class="pdf-editor-zoom" role="group" aria-label="缩放">
+              <button class="pdf-editor-zoom-btn" id="pdfEditorZoomOut" type="button" data-i18n-title="home.pdfEditor.zoomOut" title="缩小">
+                <i data-lucide="zoom-out"></i>
+              </button>
+              <button class="pdf-editor-zoom-value" id="pdfEditorZoomValue" type="button" data-i18n-title="home.pdfEditor.zoomReset" title="重置缩放"></button>
+              <button class="pdf-editor-zoom-btn" id="pdfEditorZoomIn" type="button" data-i18n-title="home.pdfEditor.zoomIn" title="放大">
+                <i data-lucide="zoom-in"></i>
+              </button>
+              <button class="pdf-editor-zoom-btn" id="pdfEditorFitWidth" type="button" data-i18n-title="home.pdfEditor.fitWidth" title="适应宽度">
+                <i data-lucide="move-horizontal"></i>
+              </button>
+            </div>
+          </div>
+          <div class="pdf-editor-canvas-scroll" id="pdfEditorCanvasScroll">
+            <div class="pdf-editor-canvas-stage" id="pdfEditorCanvasStage">
+              <div class="pdf-editor-empty" id="pdfEditorEmpty">
+                <div class="pdf-editor-empty-icon"><i data-lucide="file-pen-line"></i></div>
+                <h2 data-i18n="home.pdfEditor.emptyTitle">把 PDF 放到这里开始编辑</h2>
+                <p data-i18n="home.pdfEditor.emptyDesc">支持文字替换、内容插入、页面排序、旋转、提取与追加合并，文件仅在本机处理。</p>
+                <button class="audio-convert-cta pdf-merge-v2-cta" id="pdfEditorCta" type="button">
+                  <i data-lucide="upload"></i>
+                  <span data-i18n="home.pdfEditor.cta">上传 PDF 文件</span>
+                </button>
+              </div>
+              <div class="pdf-editor-component-menu" id="pdfEditorComponentMenu" role="toolbar" aria-label="组件操作" hidden>
+                <button type="button" id="pdfEditorComponentScaleDown" data-i18n-title="home.pdfEditor.zoomOut" title="缩小" aria-label="缩小"><i data-lucide="minus"></i></button>
+                <button type="button" id="pdfEditorComponentScaleUp" data-i18n-title="home.pdfEditor.zoomIn" title="放大" aria-label="放大"><i data-lucide="plus"></i></button>
+                <button type="button" id="pdfEditorComponentEdit" data-i18n-title="home.pdfEditor.editText" title="编辑文字" aria-label="编辑文字"><i data-lucide="type"></i></button>
+                <button type="button" id="pdfEditorComponentRotate" data-i18n-title="home.pdfEditor.rotateCw" title="按住旋转" aria-label="按住旋转"><i data-lucide="rotate-cw"></i></button>
+                <button type="button" id="pdfEditorComponentDelete" data-i18n-title="home.pdfEditor.delete" title="删除" aria-label="删除"><i data-lucide="trash-2"></i></button>
+              </div>
+              <div class="pdf-editor-shape-panel" id="pdfEditorShapePanel" role="group" aria-label="形状属性" hidden>
+                <label class="pdf-editor-shape-field" id="pdfEditorShapeFillField">
+                  <span data-i18n="home.pdfEditor.shapeFill">填充</span>
+                  <input type="color" id="pdfEditorShapeFill" value="#ffffff" aria-label="填充颜色">
+                </label>
+                <label class="pdf-editor-shape-field">
+                  <span data-i18n="home.pdfEditor.shapeStroke">描边</span>
+                  <input type="color" id="pdfEditorShapeStroke" value="#111111" aria-label="描边颜色">
+                </label>
+                <label class="pdf-editor-shape-field pdf-editor-shape-field-range">
+                  <span data-i18n="home.pdfEditor.shapeStrokeWidth">粗细</span>
+                  <input type="range" id="pdfEditorShapeStrokeWidth" min="0" max="40" step="0.5" value="2" aria-label="描边粗细">
+                </label>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <aside class="pdf-editor-tool-panel" aria-label="PDF 编辑器工具">
+          <div class="pdf-editor-filecard">
+            <div class="pdf-editor-filecard-icon"><i data-lucide="file-text"></i></div>
+            <div class="pdf-editor-filecard-meta">
+              <span class="pdf-editor-filecard-name" id="pdfEditorFileName" data-i18n="home.pdfEditor.fileNameEmpty">未载入文件</span>
+              <span class="pdf-editor-filecard-stats" id="pdfEditorFileStats"></span>
+            </div>
+          </div>
+          <div class="pdf-editor-tool-panel-scroll">
+            <div class="pdf-editor-tools" role="toolbar" aria-label="PDF 编辑器工具">
+              <button class="pdf-editor-tool" id="pdfEditorAppend" type="button">
+                <i data-lucide="file-plus-2"></i>
+                <span data-i18n="home.pdfEditor.append">追加文件</span>
+              </button>
+              <div class="pdf-editor-tool-section-label" data-i18n="home.pdfEditor.contentTools">内容编辑</div>
+              <div class="pdf-editor-tool-row">
+                <button class="pdf-editor-tool" id="pdfEditorInsertText" type="button" data-insert-mode="text">
+                  <i data-lucide="text-cursor-input"></i>
+                  <span data-i18n="home.pdfEditor.insertText">插入文本</span>
+                </button>
+                <button class="pdf-editor-tool" id="pdfEditorInsertImage" type="button" data-insert-mode="image">
+                  <i data-lucide="image-plus"></i>
+                  <span data-i18n="home.pdfEditor.insertImage">插入图像</span>
+                </button>
+              </div>
+              <div class="pdf-editor-tool-section-label" data-i18n="home.pdfEditor.insertShape">插入形状</div>
+              <div class="pdf-editor-tool-row pdf-editor-tool-row-3">
+                <button class="pdf-editor-tool" id="pdfEditorInsertRect" type="button" data-insert-mode="shape-rect">
+                  <i data-lucide="square"></i>
+                  <span data-i18n="home.pdfEditor.shapeRect">矩形</span>
+                </button>
+                <button class="pdf-editor-tool" id="pdfEditorInsertEllipse" type="button" data-insert-mode="shape-ellipse">
+                  <i data-lucide="circle"></i>
+                  <span data-i18n="home.pdfEditor.shapeEllipse">椭圆</span>
+                </button>
+                <button class="pdf-editor-tool" id="pdfEditorInsertLine" type="button" data-insert-mode="shape-line">
+                  <i data-lucide="slash"></i>
+                  <span data-i18n="home.pdfEditor.shapeLine">直线</span>
+                </button>
+              </div>
+              <div class="pdf-editor-tool-section-label" data-i18n="home.pdfEditor.objectTools">对象操作</div>
+              <button class="pdf-editor-tool pdf-editor-tool-edit" id="pdfEditorSelectComponent" type="button" aria-pressed="false">
+                <i data-lucide="mouse-pointer-click"></i>
+                <span data-i18n="home.pdfEditor.selectComponent">选择组件</span>
+              </button>
+              <div class="pdf-editor-tool-row">
+                <button class="pdf-editor-tool" id="pdfEditorUndo" type="button">
+                  <i data-lucide="undo-2"></i>
+                  <span data-i18n="home.pdfEditor.undo">撤销</span>
+                </button>
+                <button class="pdf-editor-tool" id="pdfEditorRedo" type="button">
+                  <i data-lucide="redo-2"></i>
+                  <span data-i18n="home.pdfEditor.redo">重做</span>
+                </button>
+              </div>
+              <button class="pdf-editor-tool" id="pdfEditorReset" type="button">
+                <i data-lucide="refresh-cw"></i>
+                <span data-i18n="home.pdfEditor.reset">重置</span>
+              </button>
+              <div class="pdf-editor-tool-section-label" data-i18n="home.pdfEditor.pageTools">页面操作</div>
+              <div class="pdf-editor-tool-row">
+                <button class="pdf-editor-tool" id="pdfEditorRotateCcw" type="button" data-i18n-title="home.pdfEditor.rotateCcw" title="向左旋转">
+                  <i data-lucide="rotate-ccw"></i>
+                  <span data-i18n="home.pdfEditor.rotateCcw">左转</span>
+                </button>
+                <button class="pdf-editor-tool" id="pdfEditorRotateCw" type="button" data-i18n-title="home.pdfEditor.rotateCw" title="向右旋转">
+                  <i data-lucide="rotate-cw"></i>
+                  <span data-i18n="home.pdfEditor.rotateCw">右转</span>
+                </button>
+              </div>
+              <div class="pdf-editor-tool-row">
+                <button class="pdf-editor-tool" id="pdfEditorMoveUp" type="button" data-i18n-title="home.pdfEditor.moveUp" title="上移">
+                  <i data-lucide="arrow-up"></i>
+                  <span data-i18n="home.pdfEditor.moveUp">上移</span>
+                </button>
+                <button class="pdf-editor-tool" id="pdfEditorMoveDown" type="button" data-i18n-title="home.pdfEditor.moveDown" title="下移">
+                  <i data-lucide="arrow-down"></i>
+                  <span data-i18n="home.pdfEditor.moveDown">下移</span>
+                </button>
+              </div>
+              <div class="pdf-editor-tool-row">
+                <button class="pdf-editor-tool" id="pdfEditorDuplicate" type="button" data-i18n-title="home.pdfEditor.duplicate" title="复制页面">
+                  <i data-lucide="copy-plus"></i>
+                  <span data-i18n="home.pdfEditor.duplicate">复制页面</span>
+                </button>
+                <button class="pdf-editor-tool" id="pdfEditorBlankPage" type="button" data-i18n-title="home.pdfEditor.blankPage" title="插入空白页">
+                  <i data-lucide="file-plus"></i>
+                  <span data-i18n="home.pdfEditor.blankPage">空白页</span>
+                </button>
+              </div>
+              <div class="pdf-editor-tool-row">
+                <button class="pdf-editor-tool pdf-editor-tool-danger" id="pdfEditorDelete" type="button">
+                  <i data-lucide="trash-2"></i>
+                  <span data-i18n="home.pdfEditor.delete">删除</span>
+                </button>
+                <button class="pdf-editor-tool pdf-editor-tool-accent" id="pdfEditorExtract" type="button">
+                  <i data-lucide="scissors"></i>
+                  <span data-i18n="home.pdfEditor.extract">提取</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="pdf-editor-preview-footer">
+            <span class="pdf-editor-footer-hint" id="pdfEditorFooterHint"></span>
+            <div class="pdf-editor-footer-actions">
+              <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary" id="pdfEditorReplace" type="button">
+                <i data-lucide="refresh-cw"></i>
+                <span data-i18n="home.pdfEditor.replace">重新上传</span>
+              </button>
+              <button class="pdf-merge-selection-btn pdf-merge-selection-btn-primary" id="pdfEditorExport" type="button">
+                <i data-lucide="download"></i>
+                <span data-i18n="home.pdfEditor.export">导出 PDF</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="pdf-editor-edit-modal" id="pdfEditorEditModal" role="dialog" aria-modal="true" aria-hidden="true" inert>
+        <div class="pdf-editor-edit-modal-card">
+          <header class="pdf-editor-edit-modal-head">
+            <span class="pdf-editor-edit-modal-title" id="pdfEditorEditTitle" data-i18n="home.pdfEditor.editText">编辑文字</span>
+            <button class="pdf-editor-edit-modal-close" id="pdfEditorEditClose" type="button" data-i18n-title="common.close" title="关闭" aria-label="关闭">
+              <i data-lucide="x"></i>
+            </button>
+          </header>
+          <div class="pdf-editor-edit-modal-body">
+            <label class="pdf-editor-edit-modal-label" id="pdfEditorEditOriginalLabel" data-i18n="home.pdfEditor.editTextOriginal">原文字</label>
+            <div class="pdf-editor-edit-modal-original" id="pdfEditorEditOriginal"></div>
+            <label class="pdf-editor-edit-modal-label" id="pdfEditorEditNewLabel" data-i18n="home.pdfEditor.editTextNew">新文字</label>
+            <input class="pdf-editor-edit-modal-input" id="pdfEditorEditInput" type="text" autocomplete="off">
+            <div class="pdf-editor-edit-security-note" id="pdfEditorEditSecurityNote" hidden>
+              <i data-lucide="shield-alert"></i>
+              <span data-i18n="home.pdfEditor.visualEditWarning">此操作仅覆盖原文字的视觉外观，原内容仍可能被提取，不可用于敏感信息脱敏。</span>
+            </div>
+          </div>
+          <footer class="pdf-editor-edit-modal-foot">
+            <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary" id="pdfEditorEditCancel" type="button">
+              <span data-i18n="common.cancel">取消</span>
+            </button>
+            <button class="pdf-merge-selection-btn pdf-merge-selection-btn-primary" id="pdfEditorEditSave" type="button">
+              <span data-i18n="common.save">保存</span>
+            </button>
+          </footer>
+        </div>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask pdf-editor-process-mask" id="pdfEditorProcessMask" role="dialog" aria-modal="true" aria-labelledby="pdfEditorProcessText" aria-hidden="true" inert>
+        <div class="tk-mascot-lg" aria-hidden="true"></div>
+        <div class="pdf-editor-process-status" aria-live="polite">
+          <span class="audio-convert-process-text" id="pdfEditorProcessText" data-i18n="home.pdfEditor.loadingDocument">正在读取 PDF...</span>
+          <strong id="pdfEditorProcessValue">0%</strong>
+        </div>
+        <div class="audio-convert-process-bar" id="pdfEditorProcessBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="audio-convert-process-bar-fill" id="pdfEditorProcessBarFill"></div>
+        </div>
+        <button class="audio-convert-cancel-btn pdf-editor-cancel-btn" id="pdfEditorCancel" type="button">
+          <i data-lucide="x" aria-hidden="true"></i>
+          <span data-i18n="home.pdfEditor.cancel">取消</span>
+        </button>
+      </div>
+
+<div class="audio-clip-success-overlay" id="pdfEditorSuccessOverlay" aria-hidden="true" inert>
+        <div class="audio-clip-success-dialog" role="dialog" aria-modal="true" aria-labelledby="pdfEditorSuccessTitle">
+          <div class="audio-clip-success-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <h3 class="audio-clip-success-title" id="pdfEditorSuccessTitle" data-i18n="home.pdfEditor.successTitle">完成</h3>
+          <div class="audio-clip-success-meta" id="pdfEditorSuccessMeta"></div>
+          <div class="audio-convert-success-detail">
+            <div class="audio-convert-success-row">
+              <span class="audio-convert-success-key" data-i18n="home.pdfEditor.successPath">保存路径</span>
+              <span class="audio-convert-success-value" id="pdfEditorSuccessPath"></span>
+            </div>
+          </div>
+          <div class="audio-clip-success-actions">
+            <button class="audio-clip-success-btn audio-clip-success-btn-secondary" id="pdfEditorSuccessOpenFolder" type="button" data-i18n="home.pdfEditor.openFolder">打开文件夹</button>
+            <button class="audio-clip-success-btn audio-clip-success-btn-primary" id="pdfEditorSuccessOk" type="button" data-i18n="home.pdfEditor.ok">确定</button>
+          </div>
+        </div>
+      </div>

@@ -1,0 +1,205 @@
+<div class="pdf-merge-overlay pdf-merge-v2 bmi-calc-v2" id="bmiCalcOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="bmiCalcBg"></div>
+      <header class="pdf-merge-v2-topbar">
+        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="bmiCalcBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">BODY FAT · TOOL PAGE 2.3</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="bmiCalcV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="audio-convert-body pdf-merge-v2-body bmi-calc-v2-body" id="bmiCalcBody">
+        <aside class="pdf-merge-v2-poster bmi-calc-v2-poster" aria-label="体脂率计算说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.bmiCalc.heroLabel">Health Calculator</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.bmiCalc.title">体脂率计算器</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.bmiCalc.subtitle">输入身体数据，计算 BMI、体脂率、基础代谢率等健康指标。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>所有计算都在本机完成，仅作为健康参考，不替代专业医疗建议。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="体脂率计算流程">
+            <div class="pdf-merge-v2-step is-active">
+              <span>01</span>
+              <div>
+                <strong>输入基础数据</strong>
+                <p>填写性别、年龄、身高和体重，自动生成 BMI 与基础代谢。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>02</span>
+              <div>
+                <strong>选择计算模式</strong>
+                <p>简易模式快速估算；精准模式可加入腰围、颈围、臀围。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>03</span>
+              <div>
+                <strong>实时更新结果</strong>
+                <p>输入变化后立即刷新体脂率、理想体重、脂肪量与瘦体重。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>04</span>
+              <div>
+                <strong>查看范围标记</strong>
+                <p>通过区间条快速理解当前结果所处的健康参考范围。</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace bmi-calc-v2-workspace" id="bmiCalcMain">
+          <section class="bmi-calc-input-panel" id="bmiCalcInputPanel" aria-label="身体数据输入">
+            <div class="bmi-calc-panel-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">BODY DATA</span>
+                <h2>身体数据</h2>
+              </div>
+              <p>输入后自动计算，无需额外点击。</p>
+            </div>
+            <div class="bmi-calc-mode-tabs" id="bmiCalcModeTabs">
+              <button class="bmi-calc-mode-tab active" type="button" data-mode="simple" data-i18n="home.bmiCalc.modeSimple">简易模式</button>
+              <button class="bmi-calc-mode-tab" type="button" data-mode="advanced" data-i18n="home.bmiCalc.modeAdvanced">精准模式</button>
+            </div>
+            <div class="bmi-calc-form" id="bmiCalcForm">
+              <div class="bmi-calc-field bmi-calc-field-wide">
+                <label data-i18n="home.bmiCalc.gender">性别</label>
+                <div class="bmi-calc-gender-tabs" id="bmiCalcGenderTabs">
+                  <button class="bmi-calc-gender-tab active" type="button" data-gender="male" data-i18n="home.bmiCalc.male">男</button>
+                  <button class="bmi-calc-gender-tab" type="button" data-gender="female" data-i18n="home.bmiCalc.female">女</button>
+                </div>
+              </div>
+              <div class="bmi-calc-field">
+                <label data-i18n="home.bmiCalc.age">年龄</label>
+                <input type="number" id="bmiCalcAge" placeholder="25" min="1" max="120" value="25">
+              </div>
+              <div class="bmi-calc-field">
+                <label data-i18n="home.bmiCalc.height">身高</label>
+                <input type="number" id="bmiCalcHeight" placeholder="170" min="50" max="250" value="170">
+              </div>
+              <div class="bmi-calc-field">
+                <label data-i18n="home.bmiCalc.weight">体重</label>
+                <input type="number" id="bmiCalcWeight" placeholder="65" min="10" max="300" value="65">
+              </div>
+              <div class="bmi-calc-advanced-fields" id="bmiCalcAdvancedFields" style="display:none;">
+                <div class="bmi-calc-field">
+                  <label data-i18n="home.bmiCalc.waist">腰围</label>
+                  <input type="number" id="bmiCalcWaist" placeholder="80" min="30" max="200">
+                </div>
+                <div class="bmi-calc-field">
+                  <label data-i18n="home.bmiCalc.neck">颈围</label>
+                  <input type="number" id="bmiCalcNeck" placeholder="38" min="20" max="100">
+                </div>
+                <div class="bmi-calc-field bmi-calc-female-only" id="bmiCalcHipField" style="display:none;">
+                  <label data-i18n="home.bmiCalc.hip">臀围</label>
+                  <input type="number" id="bmiCalcHip" placeholder="90" min="30" max="200">
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="bmi-calc-result-panel" id="bmiCalcResultPanel" aria-label="体脂率计算结果">
+            <div class="bmi-calc-panel-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">HEALTH INDEX</span>
+                <h2>结果仪表盘</h2>
+              </div>
+              <p>体脂、BMI、代谢与体重构成。</p>
+            </div>
+            <div class="bmi-calc-result-empty" id="bmiCalcResultEmpty">
+              <div class="bmi-calc-empty-icon-wrap">
+                <i data-lucide="activity"></i>
+              </div>
+              <p data-i18n="home.bmiCalc.resultHint">输入身体数据后自动计算结果</p>
+            </div>
+            <div class="bmi-calc-result-content" id="bmiCalcResultContent" style="display:none;">
+              <div class="bmi-calc-cards" id="bmiCalcCards">
+                <div class="bmi-calc-card" id="bmiCard">
+                  <div class="bmi-calc-card-label" data-i18n="home.bmiCalc.bmiLabel">BMI</div>
+                  <div class="bmi-calc-card-value" id="bmiValue">--</div>
+                  <div class="bmi-calc-card-tag" id="bmiTag">--</div>
+                </div>
+                <div class="bmi-calc-card" id="bodyFatCard">
+                  <div class="bmi-calc-card-label" data-i18n="home.bmiCalc.bodyFatLabel">体脂率</div>
+                  <div class="bmi-calc-card-value" id="bodyFatValue">--</div>
+                  <div class="bmi-calc-card-tag" id="bodyFatTag">--</div>
+                </div>
+                <div class="bmi-calc-card" id="bmrCard">
+                  <div class="bmi-calc-card-label" data-i18n="home.bmiCalc.bmrLabel">基础代谢率</div>
+                  <div class="bmi-calc-card-value" id="bmrValue">--</div>
+                  <div class="bmi-calc-card-tag" data-i18n="home.bmiCalc.bmrUnit">kcal/天</div>
+                </div>
+                <div class="bmi-calc-card" id="idealWeightCard">
+                  <div class="bmi-calc-card-label" data-i18n="home.bmiCalc.idealWeightLabel">理想体重</div>
+                  <div class="bmi-calc-card-value" id="idealWeightValue">--</div>
+                  <div class="bmi-calc-card-tag" id="idealWeightDiff">--</div>
+                </div>
+              </div>
+              <div class="bmi-calc-bar-section">
+                <div class="bmi-calc-bar-title" data-i18n="home.bmiCalc.bodyFatRange">体脂率范围</div>
+                <div class="bmi-calc-bar" id="bmiCalcBar">
+                  <div class="bmi-calc-bar-track">
+                    <div class="bmi-calc-bar-segment seg-low"></div>
+                    <div class="bmi-calc-bar-segment seg-normal"></div>
+                    <div class="bmi-calc-bar-segment seg-high"></div>
+                    <div class="bmi-calc-bar-segment seg-veryhigh"></div>
+                  </div>
+                  <div class="bmi-calc-bar-marker" id="bmiCalcBarMarker"></div>
+                </div>
+                <div class="bmi-calc-bar-labels">
+                  <span data-i18n="home.bmiCalc.rangeLow">偏瘦</span>
+                  <span data-i18n="home.bmiCalc.rangeNormal">正常</span>
+                  <span data-i18n="home.bmiCalc.rangeHigh">偏胖</span>
+                  <span data-i18n="home.bmiCalc.rangeVeryHigh">肥胖</span>
+                </div>
+              </div>
+              <div class="bmi-calc-detail" id="bmiCalcDetail">
+                <div class="bmi-calc-detail-row">
+                  <span data-i18n="home.bmiCalc.fatMass">体脂重量</span>
+                  <span id="fatMassValue">--</span>
+                </div>
+                <div class="bmi-calc-detail-row">
+                  <span data-i18n="home.bmiCalc.leanMass">瘦体重</span>
+                  <span id="leanMassValue">--</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+<div class="audio-clip-success-overlay" id="bmiCalcWarnDialog">
+      <div class="audio-clip-success-dialog">
+        <div class="audio-clip-success-icon" style="background: linear-gradient(135deg, #2a2a2e, #0a0a0f);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="28" height="28"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </div>
+        <h3 class="audio-clip-success-title" id="bmiCalcWarnTitle" data-i18n="home.bmiCalc.warnTitle">数值超出范围</h3>
+        <div class="audio-clip-success-meta" id="bmiCalcWarnMsg"></div>
+        <div class="audio-clip-success-actions">
+          <button class="audio-clip-success-btn audio-clip-success-btn-primary" id="bmiCalcWarnOk" data-i18n="home.bmiCalc.warnOk" style="background: linear-gradient(135deg, #2a2a2e, #0a0a0f);">确定</button>
+        </div>
+      </div>
+    </div>

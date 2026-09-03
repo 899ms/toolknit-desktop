@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
@@ -17,7 +18,7 @@ globalThis.window = {};
 const { HELP_CONTENT, HELP_CONTENT_EN } = await import('../src/help-data.js');
 
 const root = new URL('..', import.meta.url);
-const indexHtml = await readFile(new URL('index.html', root), 'utf8');
+const indexHtml = await readAppMarkup(import.meta.url);
 const zh = JSON.parse(await readFile(new URL('src/locales/zh.json', root), 'utf8'));
 const en = JSON.parse(await readFile(new URL('src/locales/en.json', root), 'utf8'));
 const builtinI18nKeys = new Set([

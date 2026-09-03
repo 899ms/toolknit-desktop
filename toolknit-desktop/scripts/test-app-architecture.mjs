@@ -283,6 +283,9 @@ assert.doesNotMatch(mainSource, /from ['"]\.\/pdf-editor-ui\.js['"]/, 'PDF Edito
 assert.match(mainSource, /pdfWorkerUrl,/, 'lazy features must receive the PDF worker URL through context');
 assert.throws(() => validateLazyToolSpecs({ broken: { overlayId: 'x', init: 'init' } }), /load/);
 assert.throws(() => validateLazyToolSpecs({
+  brokenMarkup: { overlayId: 'x', init: 'init', load() {}, markup: '<div></div>' }
+}), /markup must be a loader/);
+assert.throws(() => validateLazyToolSpecs({
   one: { instanceKey: 'shared', overlayId: 'one', init: 'init', load() {} },
   two: { instanceKey: 'shared', overlayId: 'two', init: 'init', load() {} }
 }), /same overlay and initializer/);
@@ -381,6 +384,113 @@ assert.deepEqual(disposed.sort(), ['fast', 'shared', 'slow']);
 assert.equal(root.listeners.get('keydown').size, 0);
 assert.equal(errors.length, 0);
 assert.equal(await registry.open('fast'), null, 'disposed registries must reject future opens');
+
+function createTemplateRoot() {
+  const templateRoot = new FakeTarget();
+  const elements = new Map();
+  templateRoot.defaultView = new FakeTarget();
+  templateRoot.body = {
+    append(fragment) {
+      for (const child of fragment.children || []) elements.set(child.id, child);
+    }
+  };
+  templateRoot.getElementById = id => elements.get(id) || null;
+  templateRoot.querySelectorAll = () => [];
+  templateRoot.createElement = name => {
+    assert.equal(name, 'template');
+    let markup = '';
+    return {
+      set innerHTML(value) { markup = value; },
+      get content() {
+        const id = markup.match(/\bid="([^"]+)"/)?.[1] || '';
+        const children = id ? [{ id }] : [];
+        return {
+          children,
+          cloneNode() { return { children: children.map(child => ({ ...child })) }; }
+        };
+      }
+    };
+  };
+  return { elements, root: templateRoot };
+}
+
+const mountedTemplate = createTemplateRoot();
+let sharedMarkupLoads = 0;
+let mountedInitializerOverlay = null;
+const templateRegistry = createLazyToolRegistry({
+  specs: {
+    templateOne: {
+      instanceKey: 'template-shared',
+      overlayId: 'template-overlay',
+      init: 'initTool',
+      markup: async () => {
+        sharedMarkupLoads += 1;
+        return { default: '<section id="template-overlay"></section>' };
+      },
+      load: async () => ({
+        initTool({ overlay }) {
+          mountedInitializerOverlay = overlay;
+          return { open() {} };
+        }
+      })
+    },
+    templateTwo: {
+      instanceKey: 'template-shared',
+      overlayId: 'template-overlay',
+      init: 'initTool',
+      markup: async () => {
+        sharedMarkupLoads += 1;
+        return '<section id="template-overlay"></section>';
+      },
+      load: async () => ({ initTool() { return { open() {} }; } })
+    }
+  },
+  root: mountedTemplate.root,
+  onError: error => errors.push(error)
+});
+assert.ok(await templateRegistry.open('templateOne'), 'a missing lazy overlay must mount before initialization');
+assert.equal(mountedInitializerOverlay, mountedTemplate.elements.get('template-overlay'), 'initialization must receive the mounted overlay');
+assert.ok(await templateRegistry.open('templateTwo'));
+assert.equal(sharedMarkupLoads, 1, 'tools sharing one instance must not mount their shared template twice');
+assert.equal(mountedTemplate.elements.size, 1, 'shared markup must produce one overlay');
+await templateRegistry.dispose();
+
+const pendingMarkup = deferred();
+const pendingMarkupStarted = deferred();
+const abandonedTemplateRoot = createTemplateRoot();
+let abandonedTemplateModuleLoads = 0;
+let abandonedTemplateInitializerCalls = 0;
+const abandonedTemplateRegistry = createLazyToolRegistry({
+  specs: {
+    abandonedTemplate: {
+      overlayId: 'abandoned-template-overlay',
+      init: 'initTool',
+      markup() {
+        pendingMarkupStarted.resolve();
+        return pendingMarkup.promise;
+      },
+      async load() {
+        abandonedTemplateModuleLoads += 1;
+        return {
+          initTool() {
+            abandonedTemplateInitializerCalls += 1;
+            return { open() {} };
+          }
+        };
+      }
+    }
+  },
+  root: abandonedTemplateRoot.root,
+  onError: error => errors.push(error)
+});
+const abandonedTemplateOpen = abandonedTemplateRegistry.open('abandonedTemplate');
+await pendingMarkupStarted.promise;
+await abandonedTemplateRegistry.dispose();
+pendingMarkup.resolve('<section id="abandoned-template-overlay"></section>');
+assert.equal(await abandonedTemplateOpen, null);
+assert.equal(abandonedTemplateRoot.elements.size, 0, 'a disposed registry must not mount a pending template');
+assert.equal(abandonedTemplateModuleLoads, 0, 'a disposed registry must not load the feature after a pending template');
+assert.equal(abandonedTemplateInitializerCalls, 0, 'a disposed registry must not initialize after a pending template');
 
 const abandonedLoad = deferred();
 const abandonedStarted = deferred();

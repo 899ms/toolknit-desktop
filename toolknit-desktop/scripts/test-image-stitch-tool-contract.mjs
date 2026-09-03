@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -7,7 +8,7 @@ import { imageStitchPageTemplate } from '../src/features/image-stitch/template.j
 const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [main, html, lazyTools, tool, controller, template, featureStyles, appStyles] = await Promise.all([
   read('src/main.js'),
-  read('index.html'),
+  readAppMarkup(import.meta.url),
   read('src/features/lazy-tools.js'),
   read('src/features/image-stitch/tool.js'),
   read('src/features/image-stitch/controller.js'),

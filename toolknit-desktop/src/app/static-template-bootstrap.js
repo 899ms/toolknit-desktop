@@ -1,6 +1,13 @@
 import donationTemplate from './templates/donation.html?raw';
 import updatePreviewTemplate from './templates/update-preview.html?raw';
 import settingsTemplate from './templates/settings.html?raw';
+import helpTemplate from './templates/help.html?raw';
+import legalTemplate from './templates/legal.html?raw';
+import feedbackTemplate from './templates/feedback.html?raw';
+import aiKeyTemplate from './templates/ai-key.html?raw';
+import dependencyManagersTemplate from './templates/dependency-managers.html?raw';
+import globalDialogsTemplate from './templates/global-dialogs.html?raw';
+import { mountTrustedTemplate } from './trusted-template-runtime.js';
 
 const STATIC_TEMPLATE_SPECS = Object.freeze([
   Object.freeze({
@@ -17,6 +24,36 @@ const STATIC_TEMPLATE_SPECS = Object.freeze([
     name: 'settings',
     markup: settingsTemplate,
     rootSelector: '#settingsOverlay'
+  }),
+  Object.freeze({
+    name: 'help',
+    markup: helpTemplate,
+    rootSelector: '#helpOverlay'
+  }),
+  Object.freeze({
+    name: 'legal',
+    markup: legalTemplate,
+    rootSelector: '#legalOverlay'
+  }),
+  Object.freeze({
+    name: 'feedback',
+    markup: feedbackTemplate,
+    rootSelector: '#feedbackOverlay'
+  }),
+  Object.freeze({
+    name: 'ai-key',
+    markup: aiKeyTemplate,
+    rootSelector: '#apiKeyOverlay'
+  }),
+  Object.freeze({
+    name: 'dependency-managers',
+    markup: dependencyManagersTemplate,
+    rootSelector: '#transcriptionModelOverlay'
+  }),
+  Object.freeze({
+    name: 'global-dialogs',
+    markup: globalDialogsTemplate,
+    rootSelector: '#dependencyGateOverlay'
   })
 ]);
 
@@ -25,12 +62,8 @@ function mountTemplate({ markup, rootSelector }, host = document.body) {
   const existing = rootSelector ? document.querySelector(rootSelector) : null;
   if (existing) return existing;
 
-  // These files are trusted, versioned application templates bundled by Vite.
-  const template = document.createElement('template');
-  template.innerHTML = markup;
-  const fragment = template.content.cloneNode(true);
-  host.append(fragment);
-  return rootSelector ? document.querySelector(rootSelector) : fragment;
+  mountTrustedTemplate(markup, { root: document, host });
+  return rootSelector ? document.querySelector(rootSelector) : null;
 }
 
 export function bootstrapStaticTemplates(host = document.body) {

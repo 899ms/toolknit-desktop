@@ -1,0 +1,173 @@
+<div class="pdf-merge-overlay pdf-merge-v2 pdf-crop-v2" id="pdfCropOverlay" role="dialog" aria-modal="true" aria-labelledby="pdfCropTitle" aria-hidden="true" inert>
+      <div class="plasma-bg pdf-merge-v2-bg" id="pdfCropPlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="pdfCropDropZone">
+        <span class="drop-hint" data-i18n="home.pdfCrop.dropHint">松手即可载入 PDF</span>
+      </div>
+      <input id="pdfCropFileInput" type="file" accept="application/pdf,.pdf" hidden>
+      <header class="pdf-merge-v2-topbar pdf-crop-topbar">
+        <div class="pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="pdfCropBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">PDF CROP · TOOL PAGE 2.3</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website"><i data-lucide="globe-2"></i><span>网页版本</span></button>
+          <button class="home-v2-support-top" type="button" data-open-support><i data-lucide="heart"></i><span>支持作者</span></button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="pdfCropV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置"><i data-lucide="settings"></i></button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="pdf-crop-layout">
+        <main class="pdf-crop-workspace" aria-labelledby="pdfCropTitle">
+          <div class="pdf-crop-preview-toolbar">
+            <div class="pdf-crop-preview-title">
+              <span class="pdf-crop-kicker">LIVE CROP PREVIEW</span>
+              <h1 id="pdfCropTitle" data-i18n="home.pdfCrop.title">PDF 裁剪</h1>
+            </div>
+            <div class="pdf-crop-page-nav">
+              <button id="pdfCropPrev" type="button" data-i18n-title="home.pdfCrop.previousPage" title="上一页"><i data-lucide="chevron-left"></i></button>
+              <span id="pdfCropPageIndicator" data-i18n="home.pdfCrop.noDocument">未载入文档</span>
+              <button id="pdfCropNext" type="button" data-i18n-title="home.pdfCrop.nextPage" title="下一页"><i data-lucide="chevron-right"></i></button>
+            </div>
+            <div class="pdf-crop-zoom">
+              <button id="pdfCropZoomOut" type="button" data-i18n-title="home.pdfCrop.zoomOut" title="缩小"><i data-lucide="minus"></i></button>
+              <span id="pdfCropZoomValue">100%</span>
+              <button id="pdfCropZoomIn" type="button" data-i18n-title="home.pdfCrop.zoomIn" title="放大"><i data-lucide="plus"></i></button>
+              <button id="pdfCropFit" type="button" data-i18n-title="home.pdfCrop.fit" title="适应窗口"><i data-lucide="scan"></i></button>
+            </div>
+          </div>
+
+          <div class="pdf-crop-canvas-scroll" id="pdfCropCanvasScroll">
+            <div class="pdf-crop-canvas-stage" id="pdfCropCanvasStage">
+              <div class="pdf-crop-empty" id="pdfCropEmpty">
+                <span class="pdf-crop-empty-icon"><i data-lucide="crop"></i></span>
+                <span class="pdf-crop-kicker">LOCAL PDF WORKSPACE</span>
+                <h2 data-i18n="home.pdfCrop.emptyTitle">添加一个 PDF，直接框选保留区域</h2>
+                <p data-i18n="home.pdfCrop.emptyDesc">支持多页文档，每页可以独立裁剪，也可以把同一范围应用到全部页面。</p>
+                <button class="pdf-crop-primary" id="pdfCropEmptyAdd" type="button"><i data-lucide="upload"></i><span data-i18n="home.pdfCrop.addFile">选择 PDF</span></button>
+              </div>
+              <div class="pdf-crop-canvas-wrap" id="pdfCropCanvasWrap" hidden>
+                <canvas id="pdfCropPreviewCanvas" class="pdf-crop-main-canvas"></canvas>
+                <div class="pdf-crop-interaction-layer is-unset" id="pdfCropInteractionLayer">
+                  <div class="pdf-crop-selection" id="pdfCropSelection">
+                    <button class="pdf-crop-handle handle-nw" data-handle="nw" type="button" aria-label="左上裁剪点"></button>
+                    <button class="pdf-crop-handle handle-n" data-handle="n" type="button" aria-label="上方裁剪点"></button>
+                    <button class="pdf-crop-handle handle-ne" data-handle="ne" type="button" aria-label="右上裁剪点"></button>
+                    <button class="pdf-crop-handle handle-e" data-handle="e" type="button" aria-label="右侧裁剪点"></button>
+                    <button class="pdf-crop-handle handle-se" data-handle="se" type="button" aria-label="右下裁剪点"></button>
+                    <button class="pdf-crop-handle handle-s" data-handle="s" type="button" aria-label="下方裁剪点"></button>
+                    <button class="pdf-crop-handle handle-sw" data-handle="sw" type="button" aria-label="左下裁剪点"></button>
+                    <button class="pdf-crop-handle handle-w" data-handle="w" type="button" aria-label="左侧裁剪点"></button>
+                    <span class="pdf-crop-size-badge" id="pdfCropSizeBadge"></span>
+                  </div>
+                  <div class="pdf-crop-draw-hint" id="pdfCropDrawHint"><i data-lucide="mouse-pointer-2"></i><span data-i18n="home.pdfCrop.drawHint">拖动画出要保留的区域</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pdf-crop-current-bar">
+            <span><i data-lucide="scan-line"></i><span id="pdfCropPreviewStatus" data-i18n="home.pdfCrop.previewEmpty">文件只在本机处理，导出不会修改源文件。</span></span>
+            <button id="pdfCropResetPage" type="button"><i data-lucide="rotate-ccw"></i><span data-i18n="home.pdfCrop.resetPage">重置本页</span></button>
+          </div>
+
+          <div class="pdf-crop-filmstrip-shell">
+            <div class="pdf-crop-filmstrip-head">
+              <span><b data-i18n="home.pdfCrop.pages">页面</b><small id="pdfCropPageCount">0 页</small></span>
+              <span data-i18n="home.pdfCrop.pageHint">点击缩略图切换页面</span>
+            </div>
+            <div class="pdf-crop-filmstrip is-empty" id="pdfCropFilmstrip" aria-live="polite"></div>
+          </div>
+        </main>
+
+        <aside class="pdf-crop-settings" aria-label="PDF 裁剪设置">
+          <div class="pdf-crop-settings-scroll">
+            <section class="pdf-crop-file-card">
+              <span class="pdf-crop-file-icon"><i data-lucide="file-text"></i></span>
+              <span><strong id="pdfCropFileName" data-i18n="home.pdfCrop.noFile">未载入文件</strong><small id="pdfCropFileMeta" data-i18n="home.pdfCrop.localOnly">单文件 · 纯本地处理</small></span>
+              <button id="pdfCropReplace" type="button" data-i18n-title="home.pdfCrop.replace" title="重新选择"><i data-lucide="refresh-cw"></i></button>
+            </section>
+
+            <section class="pdf-crop-setting-section">
+              <div class="pdf-crop-section-title"><span>01</span><div><strong data-i18n="home.pdfCrop.scopeTitle">作用范围</strong><small>APPLY SCOPE</small></div></div>
+              <div class="pdf-crop-scope" role="group" aria-label="作用范围">
+                <button class="is-active" data-crop-scope="all" type="button"><i data-lucide="layers-3"></i><span><b data-i18n="home.pdfCrop.scopeAll">全部页面</b><small data-i18n="home.pdfCrop.scopeAllHint">下一次调整同步全部页</small></span></button>
+                <button data-crop-scope="current" type="button"><i data-lucide="file"></i><span><b data-i18n="home.pdfCrop.scopeCurrent">当前页面</b><small data-i18n="home.pdfCrop.scopeCurrentHint">只修改正在预览的页面</small></span></button>
+              </div>
+              <p class="pdf-crop-scope-note" id="pdfCropScopeNote"></p>
+            </section>
+
+            <section class="pdf-crop-setting-section">
+              <div class="pdf-crop-section-title"><span>02</span><div><strong data-i18n="home.pdfCrop.marginTitle">精确边距</strong><small>EXACT MARGINS</small></div></div>
+              <div class="pdf-crop-margin-toolbar">
+                <label><span data-i18n="home.pdfCrop.unit">单位</span><select id="pdfCropUnit"><option value="mm">mm</option><option value="pt">pt</option></select></label>
+                <button id="pdfCropLinkMargins" type="button" aria-pressed="false"><i data-lucide="unlink"></i><span data-i18n="home.pdfCrop.linkMargins">联动边距</span></button>
+              </div>
+              <div class="pdf-crop-margin-grid">
+                <label><span data-i18n="home.pdfCrop.marginTop">上</span><input id="pdfCropMarginTop" data-margin-side="top" type="number" min="0" step="0.1" value="0"></label>
+                <label><span data-i18n="home.pdfCrop.marginRight">右</span><input id="pdfCropMarginRight" data-margin-side="right" type="number" min="0" step="0.1" value="0"></label>
+                <label><span data-i18n="home.pdfCrop.marginBottom">下</span><input id="pdfCropMarginBottom" data-margin-side="bottom" type="number" min="0" step="0.1" value="0"></label>
+                <label><span data-i18n="home.pdfCrop.marginLeft">左</span><input id="pdfCropMarginLeft" data-margin-side="left" type="number" min="0" step="0.1" value="0"></label>
+              </div>
+              <div class="pdf-crop-dimension-card"><span data-i18n="home.pdfCrop.outputSize">裁剪后尺寸</span><strong id="pdfCropDimension">-</strong></div>
+            </section>
+
+            <section class="pdf-crop-setting-section">
+              <div class="pdf-crop-section-title"><span>03</span><div><strong data-i18n="home.pdfCrop.adjustTitle">调整与历史</strong><small>ADJUST & HISTORY</small></div></div>
+              <div class="pdf-crop-history-actions">
+                <button id="pdfCropUndo" type="button"><i data-lucide="undo-2"></i><span data-i18n="home.pdfCrop.undo">撤销</span></button>
+                <button id="pdfCropRedo" type="button"><i data-lucide="redo-2"></i><span data-i18n="home.pdfCrop.redo">重做</span></button>
+              </div>
+              <button class="pdf-crop-reframe" id="pdfCropReframe" type="button" aria-pressed="false"><i data-lucide="scan"></i><span><b data-i18n="home.pdfCrop.reframe">重新框选</b><small data-i18n="home.pdfCrop.reframeHint">在预览区拖出一个新的保留区域</small></span></button>
+              <button class="pdf-crop-reset-all" id="pdfCropResetAll" type="button"><i data-lucide="refresh-ccw"></i><span data-i18n="home.pdfCrop.resetAll">重置全部裁剪</span></button>
+            </section>
+
+            <section class="pdf-crop-setting-section pdf-crop-export-section">
+              <div class="pdf-crop-section-title"><span>04</span><div><strong data-i18n="home.pdfCrop.exportTitle">导出设置</strong><small>OUTPUT</small></div></div>
+              <div class="pdf-crop-output-modes">
+                <label><input type="radio" name="pdfCropOutputMode" value="single" checked><span><i data-lucide="file-check-2"></i><b data-i18n="home.pdfCrop.outputSingle">合并为单个 PDF</b><small data-i18n="home.pdfCrop.outputSingleHint">保持原始页序和多页结构</small></span></label>
+                <label><input type="radio" name="pdfCropOutputMode" value="zip"><span><i data-lucide="archive"></i><b data-i18n="home.pdfCrop.outputZip">逐页 PDF + ZIP</b><small data-i18n="home.pdfCrop.outputZipHint">每页一个 PDF，统一打包</small></span></label>
+              </div>
+              <label class="pdf-crop-field"><span data-i18n="home.pdfCrop.outputName">输出名称</span><input id="pdfCropOutputName" type="text" maxlength="96" placeholder="document"></label>
+              <p class="pdf-crop-security-note"><i data-lucide="shield-alert"></i><span data-i18n="home.pdfCrop.securityNote">裁剪用于调整可视页面，不适合作为敏感内容脱敏手段。</span></p>
+            </section>
+          </div>
+          <div class="pdf-crop-export-bar">
+            <span><i data-lucide="shield-check"></i><span data-i18n="home.pdfCrop.exportNote">矢量保留 · 本地导出 · 不修改源文件</span></span>
+            <button class="pdf-crop-export" id="pdfCropExport" type="button"><i data-lucide="download"></i><span data-i18n="home.pdfCrop.exportButton">导出裁剪后的 PDF</span></button>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask pdf-crop-process-mask" id="pdfCropProcessMask" role="dialog" aria-modal="true" aria-labelledby="pdfCropProcessText" aria-hidden="true" inert>
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="pdf-crop-process-copy"><span id="pdfCropProcessText">正在准备...</span><strong id="pdfCropProcessValue">0%</strong></div>
+      <div class="audio-convert-process-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="audio-convert-process-bar-fill" id="pdfCropProcessFill"></div></div>
+      <button class="audio-convert-cancel-btn" id="pdfCropProcessCancel" type="button"><i data-lucide="x"></i><span data-i18n="common.cancel">取消</span></button>
+    </div>
+
+<div class="audio-clip-success-overlay" id="pdfCropSuccessOverlay" aria-hidden="true" inert>
+      <div class="audio-clip-success-dialog" role="dialog" aria-modal="true" aria-labelledby="pdfCropSuccessTitle">
+        <div class="audio-clip-success-icon"><i data-lucide="check"></i></div>
+        <h3 class="audio-clip-success-title" id="pdfCropSuccessTitle" data-i18n="home.pdfCrop.successTitle">PDF 裁剪完成</h3>
+        <div class="audio-clip-success-meta" id="pdfCropSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row"><span class="audio-convert-success-key" data-i18n="home.pdfCrop.outputCount">输出文件</span><span class="audio-convert-success-value" id="pdfCropSuccessCount"></span></div>
+          <div class="audio-convert-success-row"><span class="audio-convert-success-key" data-i18n="home.pdfCrop.successPath">保存路径</span><span class="audio-convert-success-value" id="pdfCropSuccessPath"></span></div>
+        </div>
+        <div class="audio-clip-success-actions">
+          <button class="audio-clip-success-btn audio-clip-success-btn-secondary" id="pdfCropSuccessOpenFolder" type="button" data-i18n="home.pdfCrop.openFolder">打开文件夹</button>
+          <button class="audio-clip-success-btn audio-clip-success-btn-primary" id="pdfCropSuccessOk" type="button" data-i18n="common.ok">确定</button>
+        </div>
+      </div>
+    </div>

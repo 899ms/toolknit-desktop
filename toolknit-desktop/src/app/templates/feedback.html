@@ -1,0 +1,48 @@
+<div class="feedback-overlay" id="feedbackOverlay">
+      <div class="lightrays-bg" id="lightraysBg"></div>
+      <header class="settings-v2-topbar feedback-v2-topbar">
+        <div class="settings-v2-topbar-left">
+          <button class="settings-v2-back" id="feedbackBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="settings-v2-top-tag">ToolKnit 2.3 Feedback</span>
+        </div>
+        <div class="home-v2-top-actions settings-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website" data-i18n-title="home.webVersion" data-i18n-aria-label="home.webVersion" title="网页版" aria-label="网页版">
+            <i data-lucide="globe-2"></i>
+            <span data-i18n="home.webVersion">网页版</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support data-i18n-title="home.supportAuthor" data-i18n-aria-label="home.supportAuthor" title="支持作者" aria-label="支持作者">
+            <i data-lucide="heart"></i>
+            <span data-i18n="home.supportAuthor">支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="feedbackV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn close" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="feedback-body">
+        <div class="feedback-hero">
+          <div class="feedback-hero-label" data-i18n="home.feedbackPage.heroLabel">ToolKnit Feedback</div>
+          <h1 class="feedback-hero-title" data-i18n="home.feedbackPage.title">告诉我们你的想法</h1>
+          <p class="feedback-hero-subtitle" data-i18n="home.feedbackPage.subtitle">遇到 bug、有功能建议，或者只是想打个招呼？尽管告诉我们，每一条反馈都会被认真对待。</p>
+          <button class="feedback-cta" id="feedbackCta" type="button" data-home-link="feedback">
+            <span data-i18n="home.feedbackPage.cta">我要反馈</span>
+            <i data-lucide="arrow-up-right"></i>
+          </button>
+        </div>
+        <div class="feedback-marquee">
+          <div class="marquee-fade-left"></div>
+          <div class="marquee-fade-right"></div>
+          <div class="marquee-track" id="marqueeTrack"></div>
+        </div>
+      </div>
+    </div>

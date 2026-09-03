@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -7,7 +8,7 @@ import { imageBatchPageTemplate, imageBatchPortalTemplate } from '../src/feature
 const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [main, html, styles, controller, tool, featureStyles] = await Promise.all([
   read('src/main.js'),
-  read('index.html'),
+  readAppMarkup(import.meta.url),
   readGlobalStyles(import.meta.url),
   read('src/features/image-batch/controller.js'),
   read('src/features/image-batch/tool.js'),

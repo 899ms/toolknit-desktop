@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
@@ -22,7 +23,7 @@ import {
 
 const read = path => fs.readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const main = read('src/main.js');
-const html = read('index.html');
+const html = readAppMarkup(import.meta.url);
 const controller = read('src/features/hardware-inspector/controller.js');
 const tool = read('src/features/hardware-inspector/tool.js');
 const renderers = [

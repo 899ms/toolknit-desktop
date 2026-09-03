@@ -1,4 +1,5 @@
 import { readGlobalStyles } from './lib/global-styles.mjs';
+import { readAppMarkup } from './lib/app-markup.mjs';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
@@ -40,21 +41,14 @@ async function sourceMetric(relativePath) {
   };
 }
 
-const [htmlParts, mainSource, css, rustFiles, frontendFiles, mcpRegistry] = await Promise.all([
-  Promise.all([
-    read('index.html'),
-    read('src/app/templates/settings.html'),
-    read('src/app/templates/donation.html'),
-    read('src/app/templates/update-preview.html')
-  ]),
+const [html, mainSource, css, rustFiles, frontendFiles, mcpRegistry] = await Promise.all([
+  readAppMarkup(import.meta.url),
   read('src/main.js'),
   readGlobalStyles(import.meta.url),
   collectFiles('src-tauri/src', new Set(['.rs'])),
   collectFiles('src', new Set(['.js', '.mjs'])),
   read('cli/lib/tool-registry.mjs')
 ]);
-const html = htmlParts.join('\n');
-
 const [rustSources, frontendSources, sourceFiles] = await Promise.all([
   Promise.all(rustFiles.map(async file => ({ file, source: await read(file) }))),
   Promise.all(frontendFiles.map(async file => ({ file, source: await read(file) }))),

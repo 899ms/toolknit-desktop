@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -7,7 +8,7 @@ import { buildAiTablePdf } from '../src/features/ai-table/pdf.js';
 import { AI_TABLE_DEMO_DATA } from '../src/features/ai-table/prompts.js';
 
 const [html, main, styles, specs, tool, editor, charts, exporter, pdf, prompts, sharedCss, featureCss, fontBytes] = await Promise.all([
-  readFile(new URL('../index.html', import.meta.url), 'utf8'),
+  readAppMarkup(import.meta.url),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
   readGlobalStyles(import.meta.url),
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),

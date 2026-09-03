@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -6,7 +7,7 @@ import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
 const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [main, html, lazyTools, entry, bpm, clip, bpmStyles, clipStyles, appStyles, navStyles] = await Promise.all([
   read('src/main.js'),
-  read('index.html'),
+  readAppMarkup(import.meta.url),
   read('src/features/lazy-tools.js'),
   read('src/features/audio-tools/tool.js'),
   read('src/features/audio-tools/bpm-controller.js'),

@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
@@ -7,7 +8,7 @@ const [controller, tool, compatibility, lazySpecs, featureStyles, index] = await
   readFile(new URL('../src/crypto-tool-ui.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/crypto/crypto.css', import.meta.url), 'utf8'),
-  readFile(new URL('../index.html', import.meta.url), 'utf8')
+  readAppMarkup(import.meta.url)
 ]);
 
 assert.match(tool, /from ['"]\.\/controller\.js['"]/, 'crypto entry must delegate behavior to its controller');

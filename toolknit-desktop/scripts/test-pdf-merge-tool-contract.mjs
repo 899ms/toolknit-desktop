@@ -1,9 +1,10 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { readGlobalStyles } from './lib/global-styles.mjs';
 
 const [html, main, specs, tool, preview, exporter, featureCss, sortable, globalStyles] = await Promise.all([
-  readFile(new URL('../index.html', import.meta.url), 'utf8'),
+  readAppMarkup(import.meta.url),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/pdf-merge/tool.js', import.meta.url), 'utf8'),

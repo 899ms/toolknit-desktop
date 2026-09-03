@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
@@ -388,7 +389,7 @@ for (const space of editableSpaces) {
 // through the 2.1 lazy tool shell rather than an isolated iframe.
 const projectRoot = new URL('..', import.meta.url);
 const [html, lazyTools, styles, tool, controller, zh, en] = await Promise.all([
-  readFile(new URL('index.html', projectRoot), 'utf8'),
+  readAppMarkup(import.meta.url),
   readFile(new URL('src/features/lazy-tools.js', projectRoot), 'utf8'),
   readFile(new URL('src/features/color-space-compare/color-space-compare.css', projectRoot), 'utf8'),
   readFile(new URL('src/features/color-space-compare/tool.js', projectRoot), 'utf8'),

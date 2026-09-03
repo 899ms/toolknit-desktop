@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -16,7 +17,7 @@ function solidPng(width, height, color) {
 }
 
 const [pageMarkup, stylesheet, featureStylesheet] = await Promise.all([
-  readFile(new URL('../index.html', import.meta.url), 'utf8'),
+  readAppMarkup(import.meta.url),
   readGlobalStyles(import.meta.url),
   readFile(new URL('../src/features/image-stitch/image-stitch.css', import.meta.url), 'utf8')
 ]);

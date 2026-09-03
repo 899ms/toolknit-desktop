@@ -1,0 +1,186 @@
+<div class="pdf-merge-overlay pdf-merge-v2 pdf-split-v2" id="pdfSplitOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="pdfSplitPlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="pdfSplitDropZone">
+        <span class="drop-hint" data-i18n="home.pdfSplit.dropHint">松手即可上传</span>
+      </div>
+      <header class="pdf-merge-v2-topbar pdf-split-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left pdf-split-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="pdfSplitBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag pdf-split-v2-top-tag">PDF SPLITTER · TOOL PAGE 2.3</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="pdfSplitV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="pdf-merge-v2-body pdf-split-v2-body" id="pdfSplitBody">
+        <aside class="pdf-merge-v2-poster pdf-split-v2-poster" aria-label="PDF 拆分说明">
+          <div class="pdf-merge-v2-poster-kicker">PDF Splitter</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.pdfSplit.title">PDF 文件拆分</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.pdfSplit.subtitle">预览并选择需要导出的页面，按单页生成新的 PDF 文件，全程在本地完成。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>文件只在本机处理，不上传服务器。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="拆分流程">
+            <div class="pdf-merge-v2-step is-active">
+              <span>01</span>
+              <div>
+                <strong>添加文件</strong>
+                <p>点击上传或直接拖入 PDF 文件。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>02</span>
+              <div>
+                <strong>预览页面</strong>
+                <p>文件载入后，进入拆分页选择区逐页查看。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>03</span>
+              <div>
+                <strong>勾选页面</strong>
+                <p>可按需选择单页或批量保留需要的页面。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>04</span>
+              <div>
+                <strong>导出结果</strong>
+                <p>保持清晰度，导出新的拆分 PDF 文件。</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace pdf-split-v2-workspace">
+          <section class="pdf-merge-v2-upload pdf-split-v2-upload" aria-label="上传 PDF 文件">
+            <div class="pdf-merge-v2-upload-copy">
+              <span class="pdf-merge-v2-upload-eyebrow">DROP OR SELECT</span>
+              <h2>把要拆分的 PDF 放到这里</h2>
+              <p>上传后会进入页面选择；你可以逐页勾选，也可以全部保留后再按页导出。</p>
+            </div>
+            <button class="audio-convert-cta pdf-merge-v2-cta" id="pdfSplitCta" type="button">
+              <i data-lucide="upload"></i>
+              <span data-i18n="home.pdfSplit.cta">上传 PDF 文件</span>
+            </button>
+          </section>
+
+          <section class="pdf-merge-v2-queue pdf-split-v2-queue" aria-label="待拆分文件">
+            <div class="pdf-merge-v2-section-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">SPLIT QUEUE</span>
+                <h2>待拆分文件</h2>
+              </div>
+              <p>支持拖拽排序、逐个移除；添加后会在下方预览页面。</p>
+            </div>
+            <div class="audio-convert-files pdf-merge-v2-files pdf-split-v2-files" id="pdfSplitFiles" aria-live="polite"></div>
+          </section>
+
+          <section class="audio-convert-formats pdf-merge-v2-info pdf-split-v2-info" aria-label="拆分说明">
+            <h3 class="audio-convert-formats-title" data-i18n="home.pdfSplit.infoTitle">拆分说明</h3>
+            <div class="pdf-merge-info-grid">
+              <div class="pdf-merge-info-item">
+                <i data-lucide="scissors"></i>
+                <span data-i18n="home.pdfSplit.info1">选择需要的页面，按单页生成新的 PDF 文件</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="file-text"></i>
+                <span data-i18n="home.pdfSplit.info2">预览每个页面，可视化选择需要导出的页面</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="layers"></i>
+                <span data-i18n="home.pdfSplit.info3">支持单页导出与所选页面批量导出</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="lock"></i>
+                <span data-i18n="home.pdfSplit.info4">纯本地处理，文件不上传服务器</span>
+              </div>
+            </div>
+          </section>
+
+          <footer class="pdf-merge-v2-actions pdf-split-v2-actions">
+            <span>添加完成后，进入拆分页选择，再导出所选页面。</span>
+            <button class="audio-convert-process-btn pdf-merge-v2-process" id="pdfSplitProcessBtn" data-i18n="home.pdfSplit.processBtn" style="display:none;">开始拆分</button>
+          </footer>
+        </main>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask" id="pdfSplitProcessMask">
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="audio-convert-process-bar">
+        <div class="audio-convert-process-bar-fill" id="pdfSplitProcessBarFill"></div>
+      </div>
+      <div class="audio-convert-process-text" id="pdfSplitProcessText" data-i18n="home.pdfSplit.processing">正在拆分...</div>
+    </div>
+
+<div class="audio-clip-success-overlay" id="pdfSplitSuccessOverlay">
+      <div class="audio-clip-success-dialog">
+        <div class="audio-clip-success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <h3 class="audio-clip-success-title" data-i18n="home.pdfSplit.successTitle">拆分完成</h3>
+        <div class="audio-clip-success-meta" id="pdfSplitSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfSplit.successCount">拆分文件数</span>
+            <span class="audio-convert-success-value" id="pdfSplitSuccessCount"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfSplit.successPath">保存路径</span>
+            <span class="audio-convert-success-value" id="pdfSplitSuccessPath"></span>
+          </div>
+        </div>
+        <div class="audio-clip-success-actions">
+          <button class="audio-clip-success-btn audio-clip-success-btn-secondary" id="pdfSplitSuccessOpenFolder" data-i18n="home.pdfSplit.openFolder">打开文件夹</button>
+          <button class="audio-clip-success-btn audio-clip-success-btn-primary" id="pdfSplitSuccessOk" data-i18n="home.pdfSplit.ok">确定</button>
+        </div>
+      </div>
+    </div>
+
+<section class="pdf-page-workspace" id="pdfSplitWorkspace" aria-hidden="true">
+      <header class="pdf-page-workspace-header">
+        <div>
+          <p class="pdf-merge-selection-eyebrow" id="pdfSplitWorkspaceStatus"></p>
+          <h2 class="pdf-page-workspace-title" data-i18n="home.pdfSplit.resultTitle">拆分页选择</h2>
+          <p class="pdf-page-workspace-file" id="pdfSplitWorkspaceHint"></p>
+        </div>
+        <div class="pdf-page-workspace-header-actions">
+          <span class="pdf-page-workspace-count" id="pdfSplitSelectedCount"></span>
+          <button class="pdf-page-workspace-close" id="pdfSplitWorkspaceClose" type="button" aria-label="Close">
+            <i data-lucide="x" aria-hidden="true"></i>
+          </button>
+        </div>
+      </header>
+      <div class="pdf-merge-page-stage" id="pdfSplitPageStage">
+        <div class="pdf-merge-page-strip" id="pdfSplitPageStrip" aria-live="polite"></div>
+      </div>
+      <footer class="pdf-page-workspace-footer">
+        <div class="pdf-page-workspace-status" id="pdfSplitSelectionMeta"></div>
+        <div class="pdf-page-workspace-footer-actions">
+          <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary" id="pdfSplitSelectAllBtn" data-i18n="home.pdfSplit.selectAll">全选</button>
+          <button class="pdf-merge-selection-btn pdf-merge-selection-btn-primary" id="pdfSplitDownloadAllBtn" data-i18n="home.pdfSplit.downloadSelected">导出已选页面</button>
+        </div>
+      </footer>
+    </section>

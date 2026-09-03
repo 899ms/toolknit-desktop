@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
@@ -24,7 +25,7 @@ const [
   zh,
   en
 ] = await Promise.all([
-  readFile(new URL('../index.html', import.meta.url), 'utf8'),
+  readAppMarkup(import.meta.url),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8').then(async main => `${main}\n${await readFile(new URL('../src/application-runtime.js', import.meta.url), 'utf8')}`),
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/excel-to-pdf/tool.js', import.meta.url), 'utf8'),

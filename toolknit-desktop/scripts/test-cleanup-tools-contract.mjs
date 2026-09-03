@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -16,7 +17,7 @@ import {
 const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [main, html, lazyTools, entry, largeFiles, cDrive, largeFileStyles, cDriveStyles, appStyles] = await Promise.all([
   read('src/main.js'),
-  read('index.html'),
+  readAppMarkup(import.meta.url),
   read('src/features/lazy-tools.js'),
   read('src/features/cleanup-tools/tool.js'),
   read('src/features/cleanup-tools/large-file-controller.js'),

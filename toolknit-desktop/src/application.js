@@ -12,6 +12,7 @@
       import { createAiKeyStore } from './app/ai-key-store.js';
       import { createWindowRuntime } from './app/window-runtime.js';
       import { createUpdateRuntime } from './app/update-runtime.js';
+      import { createModalRuntime } from './app/modal-runtime.js';
       import {
         createBackgroundRuntime,
         CUSTOM_BACKGROUND_CHANGE_EVENT,
@@ -159,141 +160,15 @@
       createIcons({ icons });
       applyTranslations();
 
-      // Full-screen tools are visually hidden with opacity while inactive. Keep
-      // their controls out of the keyboard and accessibility trees until open.
-      const MODAL_A11Y_ROOT_SELECTOR = [
-        '[id$="Overlay"]',
-        '[id$="Workspace"]',
-        '[id$="Dialog"]',
-        '#pdfMergeSelection',
-        '#aiDocStyleInspector'
-      ].join(', ');
-
-      function syncModalA11yState(root) {
-        if (!(root instanceof HTMLElement)) return;
-        const visible = root.classList.contains('visible');
-        root.toggleAttribute('inert', !visible);
-        root.setAttribute('aria-hidden', String(!visible));
-      }
-
-      function initModalA11yStates() {
-        const roots = Array.from(document.querySelectorAll(MODAL_A11Y_ROOT_SELECTOR));
-        roots.forEach(syncModalA11yState);
-        const observer = new MutationObserver(entries => {
-          entries.forEach(entry => syncModalA11yState(entry.target));
-        });
-        roots.forEach(root => observer.observe(root, {
-          attributes: true,
-          attributeFilter: ['class']
-        }));
-      }
-
+      const modalRuntime = createModalRuntime();
+      const {
+        initA11y: initModalA11yStates,
+        initOverflow: initModalOverflowTitles,
+        scanOverflow: scanModalOverflowNode,
+        syncA11y: syncModalA11yState,
+        syncOverflowTitle: syncModalOverflowTitle
+      } = modalRuntime;
       initModalA11yStates();
-
-      // Keep long dynamic values inspectable without letting result dialogs
-      // grow past their bounds. The visual rule uses ellipsis; title/aria-label
-      // retain the complete value for mouse and assistive-technology users.
-      const MODAL_OVERFLOW_ROOT_SELECTOR = [
-        '.audio-convert-success-overlay',
-        '.audio-clip-success-overlay',
-        '.pdf-preview-drawer',
-        '.donation-overlay',
-        '.transcription-model-overlay',
-        '.transcription-gate-overlay',
-        '.pdf-editor-edit-modal',
-        '#pdfEncryptPasswordDialog',
-        '#pdfDecryptPasswordDialog'
-      ].join(', ');
-      const MODAL_OVERFLOW_TARGET_SELECTOR = [
-        '.audio-convert-success-meta',
-        '.audio-convert-success-value',
-        '.audio-convert-success-path',
-        '.audio-clip-success-meta',
-        '.audio-clip-success-path',
-        '.cleanup-large-files-success-failures span',
-        '.pdf-page-workspace-file',
-        '.ppt-render-v2-file',
-        '.ppt-images-v2-file',
-        '.ppt-text-v2-file',
-        '.ppt-compress-v2-file',
-        '.transcription-selected-file',
-        '.pdf-editor-filecard-name'
-      ].join(', ');
-      const MODAL_OVERFLOW_ARIA_SELECTOR = [
-        '.audio-convert-success-value',
-        '.audio-convert-success-path',
-        '.audio-clip-success-path',
-        '.pdf-page-workspace-file',
-        '.ppt-render-v2-file',
-        '.ppt-images-v2-file',
-        '.ppt-text-v2-file',
-        '.ppt-compress-v2-file',
-        '.transcription-selected-file',
-        '.pdf-editor-filecard-name'
-      ].join(', ');
-
-      function syncModalOverflowTitle(node) {
-        if (!(node instanceof HTMLElement) || node.id === 'dependencyGateDesc') return;
-        const value = (node.textContent || '').replace(/\s+/g, ' ').trim();
-        const ownsTitle = node.dataset.tkOverflowTitle === '1';
-        const ownsAria = node.dataset.tkOverflowAria === '1';
-        if (!value) {
-          if (ownsTitle) node.removeAttribute('title');
-          if (ownsAria) node.removeAttribute('aria-label');
-          delete node.dataset.tkOverflowTitle;
-          delete node.dataset.tkOverflowAria;
-          return;
-        }
-
-        // Paths and filenames are the common offenders. Avoid a layout read
-        // here because result text can update several times during a batch.
-        const needsOverflowHint = value.length >= 28 || /(?:[A-Za-z]:[\\/]|https?:\/\/|\\\\)/.test(value);
-        if (!needsOverflowHint) {
-          if (ownsTitle) node.removeAttribute('title');
-          if (ownsAria) node.removeAttribute('aria-label');
-          delete node.dataset.tkOverflowTitle;
-          delete node.dataset.tkOverflowAria;
-          return;
-        }
-
-        node.setAttribute('title', value);
-        node.dataset.tkOverflowTitle = '1';
-        if (node.matches(MODAL_OVERFLOW_ARIA_SELECTOR) && !node.hasAttribute('aria-label')) {
-          node.setAttribute('aria-label', value);
-          node.dataset.tkOverflowAria = '1';
-        } else if (ownsAria) {
-          node.setAttribute('aria-label', value);
-        }
-      }
-
-      function scanModalOverflowNode(node) {
-        if (!node) return;
-        if (node.nodeType === 3) {
-          if (node.parentElement?.matches(MODAL_OVERFLOW_TARGET_SELECTOR)) syncModalOverflowTitle(node.parentElement);
-          return;
-        }
-        if (node.nodeType !== 1) return;
-        if (node.matches(MODAL_OVERFLOW_TARGET_SELECTOR)) syncModalOverflowTitle(node);
-        node.querySelectorAll?.(MODAL_OVERFLOW_TARGET_SELECTOR).forEach(syncModalOverflowTitle);
-      }
-
-      function initModalOverflowTitles() {
-        const roots = Array.from(document.querySelectorAll(MODAL_OVERFLOW_ROOT_SELECTOR));
-        roots.forEach(root => {
-          scanModalOverflowNode(root);
-          const observer = new MutationObserver(records => {
-            records.forEach(record => {
-              if (record.type === 'characterData') scanModalOverflowNode(record.target);
-              else {
-                scanModalOverflowNode(record.target);
-                record.addedNodes.forEach(scanModalOverflowNode);
-              }
-            });
-          });
-          observer.observe(root, { childList: true, characterData: true, subtree: true });
-        });
-      }
-
       initModalOverflowTitles();
 
       function enablePdfPageStageHorizontalWheel(stage) {

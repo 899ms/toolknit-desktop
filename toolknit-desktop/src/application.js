@@ -13,6 +13,7 @@
       import { createWindowRuntime } from './app/window-runtime.js';
       import { createUpdateRuntime } from './app/update-runtime.js';
       import { createModalRuntime } from './app/modal-runtime.js';
+      import { createOutputRuntime, OUTPUT_ROOT_KEY, displayFilesystemPath } from './app/output-runtime.js';
       import {
         createBackgroundRuntime,
         CUSTOM_BACKGROUND_CHANGE_EVENT,
@@ -202,8 +203,6 @@
       window.addEventListener('pagehide', stopDefaultDynamicBackground);
       syncDefaultDynamicBackground();
 
-      const OUTPUT_ROOT_KEY = 'toolknit.output-root.v1';
-
       let windowResizeQueue = Promise.resolve();
       async function adaptiveMinimumWindowSize() {
         if (!isTauri) return new LogicalSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
@@ -308,98 +307,18 @@
 
       initNativeWindowDragRegions();
 
-      function configuredOutputRoot() {
-        try { return localStorage.getItem(OUTPUT_ROOT_KEY)?.trim() || ''; } catch { return ''; }
-      }
-
-      async function syncConfiguredOutputRoot() {
-        if (!isTauri) return;
-        try {
-          const { invoke } = await tauriCorePromise;
-          const savedInBrowser = configuredOutputRoot();
-          let savedInApp = await invoke('get_output_root');
-          // Migrate the earlier browser-only setting once, then always use the native record.
-          if (!savedInApp && savedInBrowser) {
-            await invoke('set_output_root', { outputDir: savedInBrowser });
-            savedInApp = savedInBrowser;
-          }
-          if (savedInApp) localStorage.setItem(OUTPUT_ROOT_KEY, savedInApp);
-          else localStorage.removeItem(OUTPUT_ROOT_KEY);
-        } catch (error) {
-          console.error('Failed to sync output folder:', error);
-        }
-      }
-
-      async function getOutputDir(subFolder) {
-        const joinOutputSubFolder = (root, child) => {
-          const separator = root.includes('\\') ? '\\' : '/';
-          const normalizedChild = String(child || '')
-            .replace(/[\\/]+/g, separator)
-            .replace(separator === '\\' ? /^\\+|\\+$/g : /^\/+|\/+$/g, '');
-          const normalizedRoot = root.replace(/[\/\\]+$/, '');
-          return normalizedChild ? normalizedRoot + separator + normalizedChild : normalizedRoot;
-        };
-        let configuredRoot = configuredOutputRoot();
-        if (isTauri) {
-          try {
-            const { invoke } = await tauriCorePromise;
-            const savedInApp = await invoke('get_output_root');
-            configuredRoot = typeof savedInApp === 'string' ? savedInApp.trim() : '';
-            if (configuredRoot) localStorage.setItem(OUTPUT_ROOT_KEY, configuredRoot);
-            else localStorage.removeItem(OUTPUT_ROOT_KEY);
-          } catch (error) {
-            // Keep the last known path as a temporary fallback when native config is unavailable.
-            console.error('Failed to read output folder:', error);
-          }
-        }
-        if (configuredRoot) {
-          return joinOutputSubFolder(configuredRoot, subFolder);
-        }
-        if (!isTauri) return '~/Downloads/ToolKnit/' + subFolder;
-        try {
-          const { invoke } = await tauriCorePromise;
-          const defaultRoot = await invoke('get_default_output_root');
-          return joinOutputSubFolder(defaultRoot, subFolder);
-        } catch (e) {
-          console.error('Failed to get default output folder:', e);
-          return 'C:\\Users\\Downloads\\ToolKnit\\' + subFolder;
-        }
-      }
-      function outputParentFolder(outputPath) {
-        const value = String(outputPath || '').trim();
-        if (!value) return '';
-        const normalized = value.replace(/[\\/]+$/, '');
-        const parent = normalized.replace(/[/\\][^/\\]+$/, '');
-        return parent && parent !== normalized ? parent : normalized;
-      }
-      function displayFilesystemPath(path) {
-        const value = String(path || '').trim();
-        if (!value) return '';
-        const cleaned = value
-          .replace(/^\\\\\?\\UNC\\/i, '\\\\')
-          .replace(/^\\\\\?\\/i, '')
-          .replace(/^\/\/\?\/UNC\//i, '//')
-          .replace(/^\/\/\?\//i, '');
-        const looksLikeWindowsPath = /^[a-z]:[\\/]/i.test(cleaned) || /^\\\\/.test(cleaned) || /^\/\//.test(cleaned);
-        return looksLikeWindowsPath ? cleaned.replace(/\//g, '\\') : cleaned;
-      }
-      function displayOutputParentFolder(outputPath) {
-        return displayFilesystemPath(outputParentFolder(outputPath));
-      }
-      async function openOutputFolder(outputPath) {
-        if (!isTauri || !outputPath) return false;
-        const targetPath = String(outputPath).trim();
-        if (!targetPath) return false;
-        try {
-          const { invoke } = await tauriCorePromise;
-          await invoke('open_path', { path: targetPath });
-          return true;
-        } catch (error) {
-          console.error('Open output folder failed:', error);
-          window.showToast?.(t('common.openFolderFailed'));
-          return false;
-        }
-      }
+      const outputRuntime = createOutputRuntime({
+        isTauri,
+        tauriCorePromise,
+        notify: message => window.showToast?.(message),
+        translate: t
+      });
+      const configuredOutputRoot = outputRuntime.configuredRoot;
+      const syncConfiguredOutputRoot = outputRuntime.syncConfiguredRoot;
+      const getOutputDir = outputRuntime.getOutputDir;
+      const outputParentFolder = outputRuntime.outputParentFolder;
+      const displayOutputParentFolder = outputRuntime.displayOutputParentFolder;
+      const openOutputFolder = outputRuntime.openFolder;
       const transitionMask = document.getElementById('transitionMask');
       const navItems = document.querySelectorAll('.nav-item');
       const contentSections = document.querySelectorAll('.content-section');

@@ -74,6 +74,14 @@ kept as the historical execution record and final acceptance checklist.
   and feature renderers.
 - `src/features/ai-workbench/ai-workbench-shared.css` owns the chat, prompt and
   action primitives shared by AI Document and AI Table.
+- `src/app/ai-settings-runtime.js` owns provider selection, protected-key gates
+  and local AI configuration.
+- `src/app/external-links-runtime.js` owns validated external navigation and
+  non-blocking GitHub/contribution metrics.
+- `src/app/home-explorer-runtime.js` owns homepage search, category projection,
+  pagination and favorites with delegated events.
+- `src/app/font-settings-runtime.js` owns local font assets, metadata parsing,
+  FontFace loading and reset lifecycle.
 
 ## Feature contract
 
@@ -98,10 +106,12 @@ tool entry so it becomes a separate production chunk.
 - All 65 desktop tools are migrated (**100%**) across 12 categories; 127 Tauri
   command implementations, 126 unique command names, 46 MCP tools and the
   existing CLI contracts remain unchanged.
-- The current source footprint is 5,796 lines in `src/main.js`, 15,942 lines
-  in `src/styles.css`, 8,001 lines in `index.html` and 18,335 lines in the
-  Rust source tree's `lib.rs` entry.
-- The production entry is approximately 1,240.91 kB JavaScript and 344.07 kB
+- The current source footprint is 32 lines in `src/main.js`, 4 lines in
+  `src/styles.css`, 1,663 lines in `index.html`, 2,633 lines in the
+  application composition runtime and 48 lines in the Rust crate entry.
+  Large Rust implementation files remain grouped by cohesive native domain
+  behind the 24-line `native_runtime.rs` include boundary.
+- The production entry is approximately 1,308.94 kB JavaScript and 344.52 kB
   CSS. Heavy PDF, editor, AI, chart, media, PPT and picker dependencies are
   emitted as lazy chunks and loaded only when their tools open. The remaining
   chunks over 500 kB are known non-blocking warnings.

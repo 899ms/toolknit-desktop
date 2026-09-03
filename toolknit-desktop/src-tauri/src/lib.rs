@@ -17,6 +17,7 @@ pub use native_runtime::run;
 
 // Compatibility wrappers keep the public crate-level security contract stable
 // while the implementation lives in the platform boundary.
+#[allow(dead_code)]
 fn validate_external_url(value: &str) -> Result<url::Url, String> {
     // The platform implementation enforces url.len() > 2_048 and
     // url.chars().any(char::is_control), parsed.username().is_empty(),
@@ -24,6 +25,7 @@ fn validate_external_url(value: &str) -> Result<url::Url, String> {
     platform::security::validate_external_url(value)
 }
 
+#[allow(dead_code)]
 fn allow_webview_navigation(value: &url::Url) -> bool {
     platform::security::allow_webview_navigation(value)
 }

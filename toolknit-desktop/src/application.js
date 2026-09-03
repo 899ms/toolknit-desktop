@@ -15,6 +15,13 @@
       import { createModalRuntime } from './app/modal-runtime.js';
       import { createOutputRuntime, OUTPUT_ROOT_KEY, displayFilesystemPath } from './app/output-runtime.js';
       import {
+        createDependencyHelpers,
+        dependencyProgressPercent,
+        formatDependencyBytes,
+        isManagedRuntime,
+        normalizeLibreOfficeAvailability
+      } from './app/dependency-helpers.js';
+      import {
         createBackgroundRuntime,
         CUSTOM_BACKGROUND_CHANGE_EVENT,
         CUSTOM_BACKGROUND_STORAGE_KEY
@@ -319,6 +326,16 @@
       const outputParentFolder = outputRuntime.outputParentFolder;
       const displayOutputParentFolder = outputRuntime.displayOutputParentFolder;
       const openOutputFolder = outputRuntime.openFolder;
+      const dependencyHelpers = createDependencyHelpers({
+        translate: t,
+        getLanguage: getLang,
+        displayPath: displayFilesystemPath
+      });
+      const {
+        detectedRuntimeLabel,
+        dependencyStatusText,
+        runtimeMetadata
+      } = dependencyHelpers;
       const transitionMask = document.getElementById('transitionMask');
       const navItems = document.querySelectorAll('.nav-item');
       const contentSections = document.querySelectorAll('.content-section');
@@ -1478,12 +1495,7 @@
       let transcriptionDownloadSource = localStorage.getItem(MODEL_SOURCE_KEY) || 'auto';
       let dependencyGateState = null;
 
-      function formatTranscriptionBytes(bytes) {
-        if (!Number.isFinite(bytes) || bytes < 1) return '--';
-        const units = ['B', 'KB', 'MB', 'GB'];
-        const index = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
-        return `${(bytes / (1024 ** index)).toFixed(index < 2 ? 0 : 1)} ${units[index]}`;
-      }
+      const formatTranscriptionBytes = formatDependencyBytes;
 
       function activeTranscriptionModel() {
         return transcriptionModels.find(model => model.current && model.installed) || null;
@@ -1638,30 +1650,7 @@
       let ffmpegRuntimeProgress = null;
       let ffmpegRuntimeSource = localStorage.getItem(FFMPEG_SOURCE_KEY) || 'auto';
 
-      function formatRuntimeBytes(bytes) {
-        if (!Number.isFinite(bytes) || bytes < 1) return '--';
-        const units = ['B', 'KB', 'MB', 'GB'];
-        const index = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
-        return `${(bytes / (1024 ** index)).toFixed(index < 2 ? 0 : 1)} ${units[index]}`;
-      }
-
-      function isManagedRuntime(status) {
-        return status?.source === 'managed';
-      }
-
-      function detectedRuntimeLabel(status) {
-        if (!status?.installed) return '';
-        if (!isManagedRuntime(status)) return getLang() === 'en' ? 'Detected system dependency' : '已检测到系统依赖';
-        const size = formatRuntimeBytes(status.bytes);
-        return size === '--'
-          ? (getLang() === 'en' ? 'Installed' : '已安装')
-          : (getLang() === 'en' ? `Installed (${size})` : `已安装 (${size})`);
-      }
-
-      function runtimeMetadata(status) {
-        if (!status?.installed) return '';
-        return [status.version, displayFilesystemPath(status.path)].filter(Boolean).join(' · ');
-      }
+      const formatRuntimeBytes = formatDependencyBytes;
 
       function updateFfmpegRuntimeSummary() {
         if (!ffmpegRuntimeSummary) return;
@@ -1759,15 +1748,6 @@
       let libreOfficeRuntimeAvailabilityPromise = null;
       let libreOfficeRuntimeStatusAt = 0;
       let libreOfficeRuntimeStatusPromise = null;
-
-      function normalizeLibreOfficeAvailability(value) {
-        if (typeof value === 'boolean') return value;
-        if (value && typeof value === 'object') {
-          if (typeof value.available === 'boolean') return value.available;
-          if (typeof value.installed === 'boolean') return value.installed;
-        }
-        return Boolean(value);
-      }
 
       function cacheLibreOfficeAvailability(available, at = Date.now()) {
         libreOfficeRuntimeAvailable = Boolean(available);
@@ -1947,20 +1927,8 @@
         return getLang() === 'en' ? 'official' : 'china';
       }
 
-      function dependencyProgressPercent(progress) {
-        if (!progress) return 0;
-        if (['installing', 'verifying', 'complete'].includes(progress.phase)) return 100;
-        return Math.max(0, Math.min(100, Math.round((Number(progress.downloaded_bytes) || 0) / Math.max(1, Number(progress.total_bytes) || 0) * 100)));
-      }
-
-      function dependencyStatusText(type, progress, complete) {
-        if (complete || progress?.phase === 'complete') return t('home.dependencies.ready');
-        if (!progress) return t('home.dependencies.waiting');
-        if (progress.phase === 'installing') return t('home.dependencies.installing');
-        if (progress.phase === 'verifying') return t('home.dependencies.verifying');
-        const percent = dependencyProgressPercent(progress);
-        return `${t('home.dependencies.downloading')} ${percent}%`;
-      }
+      // dependencyProgressPercent and dependencyStatusText come from the shared
+      // dependency helper so every gate renders progress consistently.
 
       function renderDependencyGate() {
         const state = dependencyGateState;

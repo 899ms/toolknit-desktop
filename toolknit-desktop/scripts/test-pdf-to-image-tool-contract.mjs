@@ -27,8 +27,10 @@ for (const id of [
 
 assert.match(specs, /'pdf-to-image':\s*Object\.freeze\(\{[\s\S]*?import\('\.\/pdf-to-image\/tool\.js'\)/);
 assert.doesNotMatch(main, /from ['"].*pdf-to-image-ui\.js['"]|initPdfToImageTool/);
-assert.match(main, /lazyFeatureRegistry\.open\('pdf-to-image'\)/);
-assert.match(main, /openWithFile\(pdfFile, \{ allowLongExport: false \}\)/);
+// Homepage cards use the shared lazy launcher so migrated tools do not need
+// individual hard-coded call sites in the monolithic entry.
+assert.match(main, /lazyFeatureRegistry\.open\(toolId\)/);
+assert.match(main, /LAZY_TOOL_SPECS\[toolId\]/);
 
 assert.match(tool, /createLifecycleScope/);
 assert.match(tool, /createPdfToImagePreview/);

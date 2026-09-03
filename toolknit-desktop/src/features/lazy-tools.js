@@ -129,6 +129,11 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     load: () => import('./cleanup-tools/tool.js'),
     init: 'initCDriveCleanupTool'
   }),
+  'color-extractor': Object.freeze({
+    overlayId: 'colorExtractorOverlay',
+    load: () => import('./color-extractor/tool.js'),
+    init: 'initColorExtractorTool'
+  }),
   'video-convert': Object.freeze({
     overlayId: 'videoConvertOverlay',
     load: () => import('./video-tools/tool.js'),

@@ -39,14 +39,20 @@ async function sourceMetric(relativePath) {
   };
 }
 
-const [html, mainSource, css, rustFiles, frontendFiles, mcpRegistry] = await Promise.all([
-  read('index.html'),
+const [htmlParts, mainSource, css, rustFiles, frontendFiles, mcpRegistry] = await Promise.all([
+  Promise.all([
+    read('index.html'),
+    read('src/app/templates/settings.html'),
+    read('src/app/templates/donation.html'),
+    read('src/app/templates/update-preview.html')
+  ]),
   read('src/main.js'),
   read('src/styles/legacy.css'),
   collectFiles('src-tauri/src', new Set(['.rs'])),
   collectFiles('src', new Set(['.js', '.mjs'])),
   read('cli/lib/tool-registry.mjs')
 ]);
+const html = htmlParts.join('\n');
 
 const [rustSources, frontendSources, sourceFiles] = await Promise.all([
   Promise.all(rustFiles.map(async file => ({ file, source: await read(file) }))),
@@ -62,6 +68,7 @@ const [rustSources, frontendSources, sourceFiles] = await Promise.all([
 
 const architectureModulePaths = [
   'src/application.js',
+  'src/application-runtime.js',
   'src-tauri/src/native_runtime.rs',
   ...(await collectFiles('src/app', new Set(['.js']))),
   ...(await collectFiles('src/styles', new Set(['.css']))),

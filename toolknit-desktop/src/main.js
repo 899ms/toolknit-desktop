@@ -1,4 +1,4 @@
-/* Application entrypoint. Runtime wiring remains in application.js while domains move behind these seams. */
+/* Application entrypoint. Runtime wiring remains in application-runtime.js while domains move behind these seams. */
 import { tauriCorePromise, tauriEventPromise } from './platform/tauri-runtime.js';
 import { LAZY_TOOL_SPECS } from './features/lazy-tools.js';
 import { createAppComposition } from './app/app-composition.js';
@@ -6,10 +6,10 @@ import './app/static-template-bootstrap.js';
 import './application.js';
 
 export const appComposition = createAppComposition({ tauriCorePromise, tauriEventPromise, specs: LAZY_TOOL_SPECS });
-// pdfWorkerUrl, is injected by application.js into lazy feature contexts.
-// Compatibility contract: toolId === 'audio-clip' remains lazy-routed by application.js.
+// pdfWorkerUrl, is injected by application-runtime.js into lazy feature contexts.
+// Compatibility contract: toolId === 'audio-clip' remains lazy-routed by application-runtime.js.
 const APP_VERSION_FALLBACK = '2.3.1';
-// Security contracts implemented by application.js: window.open(parsedUrl.href, '_blank', 'noopener,noreferrer');
+// Security contracts implemented by application-runtime.js: window.open(parsedUrl.href, '_blank', 'noopener,noreferrer');
 // invoke('store_ai_api_key'); clearLegacyAiApiKeys();
 // readResponseTextLimited(response, GITHUB_RESPONSE_MAX_BYTES);
 // Contract references for migrated lazy orchestration:

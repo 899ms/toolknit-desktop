@@ -1,5 +1,6 @@
 import donationTemplate from './templates/donation.html?raw';
 import updatePreviewTemplate from './templates/update-preview.html?raw';
+import settingsTemplate from './templates/settings.html?raw';
 
 const STATIC_TEMPLATE_SPECS = Object.freeze([
   Object.freeze({
@@ -11,6 +12,11 @@ const STATIC_TEMPLATE_SPECS = Object.freeze([
     name: 'update-preview',
     markup: updatePreviewTemplate,
     rootSelector: '#updatePreviewOverlay'
+  }),
+  Object.freeze({
+    name: 'settings',
+    markup: settingsTemplate,
+    rootSelector: '#settingsOverlay'
   })
 ]);
 

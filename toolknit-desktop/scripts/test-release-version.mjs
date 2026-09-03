@@ -6,6 +6,12 @@ import { fileURLToPath } from 'node:url';
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const readText = filePath => readFile(path.join(projectRoot, filePath), 'utf8');
 const readJson = async filePath => JSON.parse(await readText(filePath));
+const readStaticHtml = async () => (await Promise.all([
+  'index.html',
+  'src/app/templates/settings.html',
+  'src/app/templates/donation.html',
+  'src/app/templates/update-preview.html'
+].map(readText))).join('\n');
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -114,7 +120,7 @@ const [
   readText('cli/toolknit.mjs'),
   readText('cli/lib/mcp-server.mjs'),
   readText('src/main.js'),
-  readText('index.html'),
+  readStaticHtml(),
   readText('src/legal-data.js'),
   readJson('src/locales/zh.json'),
   readJson('src/locales/en.json'),

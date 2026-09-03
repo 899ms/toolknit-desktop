@@ -11,6 +11,7 @@
       import { initUiSoundController } from './app/ui-sound-controller.js';
       import { createAiKeyStore } from './app/ai-key-store.js';
       import { createWindowRuntime } from './app/window-runtime.js';
+      import { createUpdateRuntime } from './app/update-runtime.js';
       import {
         createBackgroundRuntime,
         CUSTOM_BACKGROUND_CHANGE_EVENT,
@@ -18,7 +19,7 @@
       } from './app/background-runtime.js';
       import { LAZY_TOOL_SPECS } from './features/lazy-tools.js';
       import { joinPath, uniqueOutputDirectory, writeUniqueFile } from './features/ppt-workflows/shared.js';
-      import { tauriCorePromise, tauriEventPromise } from './platform/tauri-runtime.js';
+      import { tauriCorePromise, tauriEventPromise, loadTauriApp } from './platform/tauri-runtime.js';
       import { readTextDocument } from './shared/text-document-reader.js';
       import { formatFileSize } from './shared/file-size.js';
       import { escapeHtml, escapeAttr } from './shared/html.js';
@@ -1523,79 +1524,30 @@
       const checkVersionUpdateBtn = document.getElementById('checkVersionUpdateBtn');
       const openReleasePageBtn = document.getElementById('openReleasePageBtn');
       const APP_VERSION_FALLBACK = '2.3.1';
-      let versionCheckRunning = false;
       let updatePreviewController = null;
-      let lastVersionUpdateResult = null;
-      let versionUpdateState = { kind: 'neutral', version: APP_VERSION_FALLBACK };
-      const updateService = createUpdateService();
-
-      async function getLocalAppVersion() {
-        if (!isTauri) return APP_VERSION_FALLBACK;
-        try {
-          const { getVersion } = await import('@tauri-apps/api/app');
-          const version = await getVersion();
-          if (version && String(version).trim()) return String(version).trim();
-        } catch (error) {
-          console.error('Failed to read app version:', error);
-        }
-        return APP_VERSION_FALLBACK;
-      }
-
-      function renderVersionUpdateStatus() {
-        if (!versionUpdateStatus) return;
-        const { kind, version } = versionUpdateState;
-        const text = kind === 'checking'
-          ? t('settings.versionChecking')
-          : kind === 'available'
-            ? t('settings.versionAvailable', { version })
-            : kind === 'up-to-date'
-              ? t('settings.versionUpToDate', { version })
-              : kind === 'error'
-                ? t('settings.versionUpdateFailed')
-                : t('settings.versionCurrent', { version });
-        versionUpdateStatus.textContent = text;
-        versionUpdateStatus.dataset.kind = kind;
-        if (openReleasePageBtn) openReleasePageBtn.hidden = kind !== 'available';
-      }
-
-      function setVersionUpdateState(kind, version = APP_VERSION_FALLBACK) {
-        versionUpdateState = { kind, version };
-        renderVersionUpdateStatus();
-      }
-
-      async function runVersionUpdateCheck({ force = true, showUpdate = true } = {}) {
-        if (versionCheckRunning) return;
-        versionCheckRunning = true;
-        if (checkVersionUpdateBtn) checkVersionUpdateBtn.disabled = true;
-        setVersionUpdateState('checking');
-        try {
-          const localVersion = await getLocalAppVersion();
-          const result = await updateService.check({ force });
-          lastVersionUpdateResult = result;
-          const updateAvailable = compareVersions(result.release.version, localVersion) > 0;
-          if (updateAvailable) {
-            setVersionUpdateState('available', result.release.version);
-            // A manual Settings check deliberately bypasses a previous
-            // “Not right now” choice. The choice only suppresses automatic
-            // reminders for the same release.
-            if (showUpdate) updatePreviewController?.open({ ...result.release, currentVersion: localVersion });
-          } else {
-            setVersionUpdateState('up-to-date', localVersion);
-          }
-          return result;
-        } catch (error) {
-          if (showUpdate) console.error('Version update check failed:', error);
-          setVersionUpdateState('error');
-          return null;
-        } finally {
-          versionCheckRunning = false;
-          if (checkVersionUpdateBtn) checkVersionUpdateBtn.disabled = false;
-        }
-      }
+      const updateRuntime = createUpdateRuntime({
+        isTauri,
+        fallbackVersion: APP_VERSION_FALLBACK,
+        updateService: createUpdateService(),
+        compareVersions,
+        translate: t,
+        statusElement: versionUpdateStatus,
+        checkButton: checkVersionUpdateBtn,
+        releaseButton: openReleasePageBtn,
+        getPreviewController: () => updatePreviewController,
+        openExternalUrl: url => openExternalUrl(url || UPDATE_RELEASES_PAGE),
+        loadAppVersion: async () => (await loadTauriApp()).getVersion()
+      });
+      const updateService = updateRuntime.service;
+      const getLocalAppVersion = updateRuntime.getLocalAppVersion;
+      const renderVersionUpdateStatus = updateRuntime.render;
+      const setVersionUpdateState = updateRuntime.setState;
+      const runVersionUpdateCheck = updateRuntime.runCheck;
+      const getLastVersionUpdateResult = updateRuntime.getLastResult;
 
       checkVersionUpdateBtn?.addEventListener('click', () => void runVersionUpdateCheck());
       openReleasePageBtn?.addEventListener('click', () => {
-        void openExternalUrl(lastVersionUpdateResult?.release?.htmlUrl || UPDATE_RELEASES_PAGE);
+        void openExternalUrl(getLastVersionUpdateResult()?.release?.htmlUrl || UPDATE_RELEASES_PAGE);
       });
 
       void getLocalAppVersion().then(version => {

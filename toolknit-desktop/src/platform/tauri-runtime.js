@@ -12,3 +12,7 @@ export function loadTauriDialog() {
 export function loadTauriWebview() {
   return import('@tauri-apps/api/webview');
 }
+
+export function loadTauriApp() {
+  return import('@tauri-apps/api/app');
+}

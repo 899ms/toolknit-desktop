@@ -374,6 +374,7 @@ export function createPdfEditorThumbnails({
     dispose,
     getPageState: pageStateFor,
     getPageStates: () => pageStates,
+    releasePreview,
     refresh,
     stop
   };

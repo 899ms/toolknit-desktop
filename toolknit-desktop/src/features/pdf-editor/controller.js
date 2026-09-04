@@ -900,6 +900,11 @@ export function initPdfEditorTool({
   function refreshTile(pageState) {
     return thumbnails.refresh(pageState);
   }
+
+  function releasePreview(pageState, markReleased = true) {
+    return thumbnails.releasePreview(pageState, markReleased);
+  }
+
   // ----- Main preview -----
   function cancelMainRender() {
     return preview?.cancel();

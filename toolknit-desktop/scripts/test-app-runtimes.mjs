@@ -106,4 +106,22 @@ assert.doesNotThrow(() => home.renderFavorites());
 assert.doesNotThrow(() => home.renderHomeTools({ resetPagination: true }));
 home.dispose();
 
+const favoritesContent = new FakeElement('favoritesContent');
+const favoritesRoot = new FakeRoot([favoritesContent]);
+const favoriteStorage = {
+  getItem: () => JSON.stringify([{ tool: 'pdf-merge', name: 'PDF 文件合并', desc: '', iconHtml: '', category: 'pdf' }]),
+  setItem: () => {}
+};
+const favoriteTranslations = {
+  'home.toolNames.pdfCategoryTag': 'PDF工具'
+};
+const favorites = createHomeExplorerRuntime({
+  root: favoritesRoot,
+  storage: favoriteStorage,
+  translate: key => favoriteTranslations[key] || key
+});
+assert.match(favoritesContent.innerHTML, /PDF工具/);
+assert.doesNotMatch(favoritesContent.innerHTML, /PDF \/ LOCAL/);
+favorites.dispose();
+
 console.log('Application runtime module contracts passed');

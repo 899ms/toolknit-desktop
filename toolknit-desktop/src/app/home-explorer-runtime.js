@@ -5,11 +5,25 @@ const MAX_FAVORITES = 6;
 const PAGE_SIZE = 12;
 
 const categoryGroup = category => ({ audio: 'media', video: 'media', calculator: 'calc', cleanup: 'clean' }[category] || category || '');
-const categoryLabel = category => ({
-  pdf: 'PDF / LOCAL', ppt: 'PPT / STUDIO', image: 'IMAGE / LOCAL', audio: 'AUDIO / LOCAL', video: 'VIDEO / LOCAL',
-  text: 'TEXT / UTILITY', calculator: 'CALC / UTILITY', creative: 'CREATIVE / UTILITY', ai: 'AI / FORGE',
-  hardware: 'HARDWARE / READONLY', developer: 'DEVELOPER / LOCAL', cleanup: 'CLEAN / AI'
-}[category] || String(category || '').toUpperCase());
+const CATEGORY_LABEL_KEYS = Object.freeze({
+  pdf: 'home.toolNames.pdfCategoryTag',
+  ppt: 'home.toolNames.pptCategoryTag',
+  spreadsheet: 'home.toolNames.spreadsheetCategoryTag',
+  image: 'home.toolNames.imageCategoryTag',
+  audio: 'home.toolNames.audioCategoryTag',
+  video: 'home.toolNames.videoCategoryTag',
+  text: 'home.toolNames.textCategoryTag',
+  calculator: 'home.toolNames.calcCategoryTag',
+  creative: 'home.toolNames.creativeCategoryTag',
+  ai: 'home.toolNames.aiCategoryTag',
+  hardware: 'home.toolNames.hardwareCategoryTag',
+  developer: 'home.toolNames.developerCategoryTag',
+  cleanup: 'home.toolNames.cleanupCategoryTag'
+});
+const categoryLabel = (category, translate) => {
+  const key = CATEGORY_LABEL_KEYS[category];
+  return key ? translate(key) : String(category || '').toUpperCase();
+};
 
 /** Owns searchable home-tool projection, card interactions, and favorites. */
 export function createHomeExplorerRuntime({
@@ -68,7 +82,7 @@ export function createHomeExplorerRuntime({
     // interpolating user-controlled ids into a CSS selector.
     const item = Array.from(root?.querySelectorAll?.('.content-section:not([data-category="home"]) .audio-list-item') || [])
       .find(candidate => candidate.dataset?.tool === toolId);
-    return item ? getToolInfo(item) : { toolId, name: toolId, desc: '', iconHtml: '', category: '' };
+    return item ? getToolInfo(item) : { toolId };
   };
   const showFavoriteToast = message => {
     const toast = root?.getElementById?.('favToast');
@@ -116,11 +130,20 @@ export function createHomeExplorerRuntime({
       return;
     }
     container.innerHTML = favorites.map(record => {
-      const info = { ...record, ...findToolInfo(record.tool), toolId: record.tool };
+      const liveInfo = findToolInfo(record.tool);
+      const info = {
+        ...record,
+        ...liveInfo,
+        name: liveInfo.name || record.name || liveInfo.toolId,
+        desc: liveInfo.desc || record.desc || '',
+        iconHtml: liveInfo.iconHtml || record.iconHtml || '',
+        category: liveInfo.category || record.category || '',
+        toolId: record.tool
+      };
       const removeLabel = translate('home.favRemove');
       return `<article class="favorite-item" role="button" tabindex="0" data-tool="${escapeHtml(info.toolId)}" data-category="${escapeHtml(info.category || '')}">
         <span class="card-water-layer" aria-hidden="true"><span class="card-water-ripple"></span></span>
-        <span class="favorite-top"><span class="favorite-icon">${info.iconHtml || ''}</span><span class="favorite-category">${escapeHtml(categoryLabel(info.category))}</span></span>
+        <span class="favorite-top"><span class="favorite-icon">${info.iconHtml || ''}</span><span class="favorite-category">${escapeHtml(categoryLabel(info.category, translate))}</span></span>
         <span class="favorite-copy"><span class="favorite-name">${escapeHtml(info.name)}</span><span class="favorite-desc">${escapeHtml(info.desc || '')}</span></span>
         <button class="favorite-remove-btn" type="button" data-remove-favorite="${escapeHtml(info.toolId)}" aria-label="${escapeHtml(removeLabel)}" title="${escapeHtml(removeLabel)}"><i data-lucide="x"></i></button>
       </article>`;
@@ -140,7 +163,7 @@ export function createHomeExplorerRuntime({
     .filter(item => item.dataset.availability !== 'planned')
     .map(item => {
       const info = getToolInfo(item);
-      const tag = item.querySelector('.audio-tag')?.textContent?.trim() || categoryLabel(info.category);
+      const tag = item.querySelector('.audio-tag')?.textContent?.trim() || categoryLabel(info.category, translate);
       return { ...info, tag, homeCategory: categoryGroup(info.category), searchable: `${info.name} ${info.desc} ${tag} ${info.category}`.toLowerCase() };
     });
   const renderHomeTools = ({ resetPagination = false } = {}) => {

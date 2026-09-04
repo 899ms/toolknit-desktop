@@ -315,6 +315,13 @@ releaseEarly();
 releaseScope.dispose();
 assert.deepEqual(released, ['released'], 'manual lifecycle release must unregister itself');
 
+const timerScope = createLifecycleScope();
+let timerFired = 0;
+timerScope.timeout(() => { timerFired += 1; }, 0);
+await new Promise(resolve => setTimeout(resolve, 10));
+assert.equal(timerFired, 1, 'one-shot lifecycle timers must still execute');
+timerScope.dispose();
+
 let normalizedClosed = 0;
 let normalizedDestroyed = 0;
 const normalized = normalizeToolInstance({

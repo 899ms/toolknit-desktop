@@ -17,6 +17,7 @@ const [html, main, styles, rust, zh, en] = await Promise.all([
     'native_runtime/media.rs',
     'native_runtime/system.rs',
     'native_runtime/office.rs',
+    'native_runtime/office/ppt.rs',
     'native_runtime/runner.rs',
     'native_runtime/tests.rs'
   ].map(relativePath => readFile(new URL(`../src-tauri/src/${relativePath}`, import.meta.url), 'utf8')))

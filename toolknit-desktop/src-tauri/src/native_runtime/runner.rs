@@ -1,3 +1,6 @@
+use super::*;
+use super::office;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     system_cleanup::await_previous_instance_for_elevated_relaunch();
@@ -46,9 +49,9 @@ pub fn run() {
             transcribe_media,
             convert_audio_batch,
             cancel_convert,
-            open_path,
-            open_recycle_bin,
-            reveal_in_folder,
+            office::open_path,
+            office::open_recycle_bin,
+            office::reveal_in_folder,
             read_file_bytes,
             read_file_bytes_limited,
             prepare_icon_source_image,
@@ -118,8 +121,8 @@ pub fn run() {
             discard_pdf_to_image_session,
             cancel_pdf_to_image,
             export_pdf_to_images,
-            convert_ppt_to_pdf,
-            convert_excel_to_pdf,
+            office::convert_ppt_to_pdf,
+            office::convert_excel_to_pdf,
             convert_video_batch,
             set_tray_lang,
             screen_picker_bounds,
@@ -243,7 +246,7 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-fn show_main_window(app: &tauri::AppHandle) {
+pub(super) fn show_main_window(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.unminimize();
         let _ = window.show();
@@ -251,7 +254,7 @@ fn show_main_window(app: &tauri::AppHandle) {
     }
 }
 
-fn minimize_main_window(app: &tauri::AppHandle) {
+pub(super) fn minimize_main_window(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.minimize();
     }

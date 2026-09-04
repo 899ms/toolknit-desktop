@@ -34,7 +34,7 @@ const [
   readFile(new URL('../src/excel-to-pdf-ui.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/excel-to-pdf.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/excel-to-pdf/excel-to-pdf.css', import.meta.url), 'utf8'),
-  readFile(new URL('../src-tauri/src/native_runtime.rs', import.meta.url), 'utf8').then(async nativeRuntime => `${nativeRuntime}\n${await readFile(new URL('../src-tauri/src/native_runtime/office.rs', import.meta.url), 'utf8')}\n${await readFile(new URL('../src-tauri/src/native_runtime/runner.rs', import.meta.url), 'utf8')}`),
+  readFile(new URL('../src-tauri/src/native_runtime.rs', import.meta.url), 'utf8').then(async nativeRuntime => `${nativeRuntime}\n${await readFile(new URL('../src-tauri/src/native_runtime/office.rs', import.meta.url), 'utf8')}\n${await readFile(new URL('../src-tauri/src/native_runtime/office/excel.rs', import.meta.url), 'utf8')}\n${await readFile(new URL('../src-tauri/src/native_runtime/office/ppt.rs', import.meta.url), 'utf8')}\n${await readFile(new URL('../src-tauri/src/native_runtime/runner.rs', import.meta.url), 'utf8')}`),
   readFile(new URL('../src/locales/zh.json', import.meta.url), 'utf8'),
   readFile(new URL('../src/locales/en.json', import.meta.url), 'utf8')
 ]);

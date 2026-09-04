@@ -16,7 +16,8 @@ V3.0 的 65 个桌面工具已经全部进入懒加载、生命周期可控的 f
 - HTML ID：1,312 个，重复数 0。
 - Rust 单测：95 个，其中 1 个 LibreOffice 外部环境测试按设计忽略。
 - `src/main.js`：32 行；`src/styles.css`：4 行；`index.html`：1,663 行。
-- `src/application-runtime.js`：约 2,633 行，作为应用组合根，剩余职责主要是依赖门禁、窗口/平台协调和全局弹层编排。
+- `src/application-runtime.js`：1,909 行，作为应用组合根，剩余职责主要是依赖门禁、窗口/平台协调和全局弹层编排。
+- native runtime：38 个 Rust 文件；最大文件为 `system.rs`（1,872 行），没有超过 2,000 行的 native 文件。
 
 ## 2. 文件迁移映射
 
@@ -45,9 +46,9 @@ V3.0 的 65 个桌面工具已经全部进入懒加载、生命周期可控的 f
 
 ### Rust 原生层
 
-`src-tauri/src/lib.rs` 目前只负责模块注册和公开 `native_runtime::run`。`native_runtime.rs` 通过同一命名空间的 `include!` 聚合 `core`、`dependencies`、`transcription`、`pdf`、`image`、`media`、`system`、`office` 等领域实现，保持 command 私有可见性和现有协议不变。平台安全、路径和任务注册已经位于 `platform/*`、`runtime/*` 和 `commands/*`。
+`src-tauri/src/lib.rs` 目前只负责模块注册和公开 `native_runtime::run`。`native_runtime.rs` 将 `core`、`dependencies`、`transcription`、`pdf`、`image`、`media`、`system`、`office` 和 `runner` 作为独立领域模块组合；领域内部再按 picker、window、security、image operations、media I/O、PDF operations 等子职责组织，保持 command 私有可见性和现有协议不变。平台安全、路径和任务注册位于 `platform/*`、`runtime/*` 和 `commands/*`。
 
-这种组织避免了高风险的命令签名迁移；后续如需继续缩小单个 Rust 领域文件，应优先在同一命名空间内做 `include!` 级拆分，并为跨域私有 helper 增加明确的 `pub(super)` 边界，禁止复制安全校验。
+这种组织避免了高风险的命令签名迁移；后续如需继续缩小单个 Rust 领域文件，应继续沿现有领域边界拆分，并为跨域私有 helper 增加明确的 `pub(super)` 边界，禁止复制安全校验。
 
 ## 3. 依赖方向
 
@@ -69,7 +70,7 @@ feature 不得导入 `main.js`，不得直接构造 Tauri API；所有 native �
 3. 可选模板节点缺失时，AI、外链、首页和字体运行时不会在初始化阶段因事件绑定直接抛错。
 4. 版本契约测试改为读取懒加载反馈模板，修复模板迁移后的错误失败。
 5. AI 设置定时器改为注入窗口对象，浏览器测试和非窗口运行环境不再依赖隐式全局。
-6. Rust 中明确的兼容入口和领域标记增加 `dead_code` 语义标注，Cargo 输出不再产生无意义 warning。
+6. Rust 中明确的兼容入口和领域标记增加 `dead_code` 语义标注，并清理模块 glob 可见性、重复图像导入和 Excel 私有接口 warning；`cargo check` 当前无 warning。
 7. 修复 PDF 编辑器拆分后控制器遗漏 `createPdfEditorThumbnails` import 导致的懒加载 `ReferenceError`，并在缩略图契约测试中加入导入链断裂检查。
 
 ## 5. 性能与资源生命周期
@@ -77,18 +78,19 @@ feature 不得导入 `main.js`，不得直接构造 Tauri API；所有 native �
 - 首页首屏不会挂载懒加载工具 DOM；工具首次打开时才加载模板、脚本和 feature CSS。
 - 重复打开共享实例不会重复挂载模板或初始化；关闭工具会失效旧 revision，阻止过期异步结果写入新工具。
 - feature 生命周期统一回收事件、计时器、AbortController、原生 Tauri listener、PDF.js 任务和 object URL。
-- 当前生产构建主入口约 1,308.94 kB JavaScript、344.52 kB CSS；PDF、编辑器、AI、图表、PPT 和媒体依赖继续以懒加载 chunk 输出。
+- 当前生产构建主入口约 1,311.06 kB JavaScript、344.52 kB CSS；PDF、编辑器、AI、图表、PPT 和媒体依赖继续以懒加载 chunk 输出。
+- 当前超过 500 kB 的 JavaScript 输出为：主入口 1,311.06 kB、一个工具 chunk 1,004.39 kB、ExcelJS 929.56 kB、fontkit 710.96 kB、共享 chunk 662.10 kB；PDF worker 2,383.40 kB。它们均由重型第三方依赖或 worker 组成，工具依赖仍按需加载；本阶段保留为非阻断警告。
 - 已知非阻断提示：`pdf-lib-plus-encrypt` 的浏览器 `crypto` externalization、若干超过 500 kB 的 chunk，以及 Windows 链接器将导入库生成信息标记为 `linker_messages`。它们均不改变功能；前两项暂不阻塞开发，链接器提示属于工具链信息输出。
 
 ## 6. 验证结果
 
 - `npm run test:architecture`：通过，包含懒加载、生命周期、运行时模块契约和架构基线。
-- `npm run test:release`：87 个 npm 发布门禁全部通过。
+- `npm run test:release`：88 个 npm 发布门禁全部通过。
 - `cargo test --manifest-path src-tauri/Cargo.toml --lib`：94 passed、1 ignored、0 failed。
 - `cargo test --manifest-path src-tauri/Cargo.toml`：94 passed、1 ignored、0 failed；仅有 Windows 链接器 `linker_messages` 信息提示。
 - CLI clean worktree：打包并安装 `toolknit-cli@2.3.1`，46 个 MCP 工具枚举和调用契约通过。
-- `npm run build`：通过；只保留上述已知非阻断 warning。
-- `npm run tauri build -- --bundles nsis`：通过，生成 Windows x64 本地 NSIS 安装包；未签名、未上传。
+- `npm run build`：通过；只保留上述已知非阻断 warning。单独执行的 `npm run test:security-release` 通过 939 项，`npm run test:cli` 通过 CLI/MCP clean-worktree 契约。
+- `npm run tauri build -- --bundles nsis`：通过，生成 Windows x64 本地 NSIS 安装包；未签名、未上传。安装包为 50,435,242 bytes，SHA-256 为 `677E55528893343F4EA7EAEF6A936D97B728EF7188588728E8AA01D5135E3835`；应用为 46,488,064 bytes，SHA-256 为 `FD2641E9C146F4D4C3C2761ED1DC04DBEB071D6C1050C68FBFA99F13765EF18E`。
 - 浏览器回归：首页搜索/分类、设置到帮助弹层链路和控制台检查通过，错误/警告数为 0。
 
 ## 7. 本地 checkpoint

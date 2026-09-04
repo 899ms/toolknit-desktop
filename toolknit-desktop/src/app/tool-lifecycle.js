@@ -39,8 +39,14 @@ export function createLifecycleScope({ onError } = {}) {
   }
 
   function timeout(callback, delay) {
-    const id = setTimeout(callback, delay);
-    use(() => clearTimeout(id));
+    let release = NOOP;
+    const id = setTimeout(() => {
+      // A fired timeout no longer needs to stay in the scope's disposer set.
+      // This matters for long-lived app services that schedule transient UI work.
+      release();
+      callback();
+    }, delay);
+    release = use(() => clearTimeout(id));
     return id;
   }
 

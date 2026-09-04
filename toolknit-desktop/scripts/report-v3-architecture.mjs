@@ -1,6 +1,7 @@
 import { readGlobalStyles } from './lib/global-styles.mjs';
 import { readAppMarkup } from './lib/app-markup.mjs';
 import { readFile, readdir, stat } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -41,6 +42,14 @@ async function sourceMetric(relativePath) {
   };
 }
 
+function gitValue(args, fallback) {
+  try {
+    return execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim() || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 const [html, mainSource, css, rustFiles, frontendFiles, mcpRegistry] = await Promise.all([
   readAppMarkup(import.meta.url),
   read('src/main.js'),
@@ -72,6 +81,18 @@ const architectureModulePaths = [
   ...(await collectFiles('src-tauri/src/runtime', new Set(['.rs'])))
 ];
 const architectureModules = await Promise.all(architectureModulePaths.map(sourceMetric));
+const nativeRuntimeFiles = await Promise.all(
+  rustFiles
+    .filter(file => file.replaceAll('\\', '/').includes('src-tauri/src/native_runtime/'))
+    .map(sourceMetric)
+);
+const nativeRuntimeLargest = [...nativeRuntimeFiles]
+  .sort((left, right) => right.lines - left.lines)
+  .slice(0, 12);
+const sourceFilesOver2000 = [...rustFiles, ...frontendFiles]
+  .filter((file, index, files) => files.indexOf(file) === index)
+  .map(sourceMetric);
+const measuredSourceFiles = await Promise.all(sourceFilesOver2000);
 
 const tauriCommands = unique(rustSources.flatMap(({ source }) =>
   matches(source, /#\[tauri::command\][\s\S]{0,500}?\b(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?fn\s+([A-Za-z0-9_]+)/g)
@@ -93,11 +114,17 @@ const mcpTools = unique(matches(mcpRegistry, /\bname:\s*['"](toolknit_[^'"]+)['"
 const report = {
   generatedAt: new Date().toISOString(),
   gitBaseline: {
-    branch: 'codex/v3.0',
-    checkpoint: 'd962592'
+    branch: gitValue(['branch', '--show-current'], 'unknown'),
+    checkpoint: gitValue(['rev-parse', '--short', 'HEAD'], 'unknown')
   },
   sourceFiles,
   architectureModules,
+  sourceFilesOver2000: measuredSourceFiles.filter(file => file.lines > 2000),
+  nativeRuntime: {
+    fileCount: nativeRuntimeFiles.length,
+    largestFiles: nativeRuntimeLargest,
+    filesOver2000: nativeRuntimeFiles.filter(file => file.lines > 2000)
+  },
   desktopCatalog: {
     count: toolIds.length,
     toolIds

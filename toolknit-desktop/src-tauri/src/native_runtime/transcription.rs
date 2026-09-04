@@ -1,9 +1,11 @@
+use super::*;
+
 // ===== Offline transcription model management =====
 
-const TRANSCRIPTION_MODEL_DIRECTORY: &str = "models";
-const TRANSCRIPTION_MODEL_CONFIG: &str = "transcription-model.json";
+pub(super) const TRANSCRIPTION_MODEL_DIRECTORY: &str = "models";
+pub(super) const TRANSCRIPTION_MODEL_CONFIG: &str = "transcription-model.json";
 
-struct TranscriptionModelSpec {
+pub(super) struct TranscriptionModelSpec {
     id: &'static str,
     file_name: &'static str,
     display_name: &'static str,
@@ -11,7 +13,7 @@ struct TranscriptionModelSpec {
     sha256: &'static str,
 }
 
-const TRANSCRIPTION_MODELS: [TranscriptionModelSpec; 3] = [
+pub(super) const TRANSCRIPTION_MODELS: [TranscriptionModelSpec; 3] = [
     TranscriptionModelSpec {
         id: "base",
         file_name: "ggml-base.bin",
@@ -36,12 +38,12 @@ const TRANSCRIPTION_MODELS: [TranscriptionModelSpec; 3] = [
 ];
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
-struct TranscriptionModelConfig {
+pub(super) struct TranscriptionModelConfig {
     current_model: Option<String>,
 }
 
 #[derive(serde::Serialize)]
-struct TranscriptionModelStatus {
+pub(super) struct TranscriptionModelStatus {
     id: String,
     display_name: String,
     bytes: u64,
@@ -50,7 +52,7 @@ struct TranscriptionModelStatus {
 }
 
 #[derive(Clone, serde::Serialize)]
-struct ModelDownloadProgress {
+pub(super) struct ModelDownloadProgress {
     model_id: String,
     downloaded_bytes: u64,
     total_bytes: u64,
@@ -58,13 +60,13 @@ struct ModelDownloadProgress {
 }
 
 #[derive(serde::Serialize)]
-struct ModelDownloadResult {
+pub(super) struct ModelDownloadResult {
     model_id: String,
     path: String,
     current: bool,
 }
 
-struct ModelDownloadGuard;
+pub(super) struct ModelDownloadGuard;
 
 impl Drop for ModelDownloadGuard {
     fn drop(&mut self) {
@@ -72,7 +74,7 @@ impl Drop for ModelDownloadGuard {
     }
 }
 
-fn begin_model_download() -> Result<ModelDownloadGuard, String> {
+pub(super) fn begin_model_download() -> Result<ModelDownloadGuard, String> {
     IS_MODEL_DOWNLOADING
         .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
         .map_err(|_| "A model download is already in progress".to_string())?;
@@ -80,26 +82,26 @@ fn begin_model_download() -> Result<ModelDownloadGuard, String> {
     Ok(ModelDownloadGuard)
 }
 
-fn transcription_model_spec(model_id: &str) -> Result<&'static TranscriptionModelSpec, String> {
+pub(super) fn transcription_model_spec(model_id: &str) -> Result<&'static TranscriptionModelSpec, String> {
     TRANSCRIPTION_MODELS
         .iter()
         .find(|model| model.id == model_id.trim().to_ascii_lowercase())
         .ok_or("Unknown transcription model".to_string())
 }
 
-fn transcription_models_dir() -> Result<std::path::PathBuf, String> {
+pub(super) fn transcription_models_dir() -> Result<std::path::PathBuf, String> {
     Ok(toolknit_app_data_dir()?.join(TRANSCRIPTION_MODEL_DIRECTORY))
 }
 
-fn transcription_model_path(model: &TranscriptionModelSpec) -> Result<std::path::PathBuf, String> {
+pub(super) fn transcription_model_path(model: &TranscriptionModelSpec) -> Result<std::path::PathBuf, String> {
     Ok(transcription_models_dir()?.join(model.file_name))
 }
 
-fn transcription_model_config_path() -> Result<std::path::PathBuf, String> {
+pub(super) fn transcription_model_config_path() -> Result<std::path::PathBuf, String> {
     Ok(toolknit_app_data_dir()?.join(TRANSCRIPTION_MODEL_CONFIG))
 }
 
-fn read_transcription_model_config() -> TranscriptionModelConfig {
+pub(super) fn read_transcription_model_config() -> TranscriptionModelConfig {
     transcription_model_config_path()
         .ok()
         .and_then(|path| std::fs::read_to_string(path).ok())
@@ -107,7 +109,7 @@ fn read_transcription_model_config() -> TranscriptionModelConfig {
         .unwrap_or_default()
 }
 
-fn write_transcription_model_config(config: &TranscriptionModelConfig) -> Result<(), String> {
+pub(super) fn write_transcription_model_config(config: &TranscriptionModelConfig) -> Result<(), String> {
     let path = transcription_model_config_path()?;
     let parent = path
         .parent()
@@ -120,7 +122,7 @@ fn write_transcription_model_config(config: &TranscriptionModelConfig) -> Result
         .map_err(|error| format!("Cannot save model configuration: {}", error))
 }
 
-fn installed_model_file(
+pub(super) fn installed_model_file(
     model: &TranscriptionModelSpec,
 ) -> Result<Option<std::path::PathBuf>, String> {
     let path = transcription_model_path(model)?;
@@ -136,7 +138,7 @@ fn installed_model_file(
     }
 }
 
-fn transcription_model_source(
+pub(super) fn transcription_model_source(
     model: &TranscriptionModelSpec,
     source: Option<&str>,
 ) -> Result<String, String> {
@@ -151,7 +153,7 @@ fn transcription_model_source(
     Ok(format!("{}/{}", root, model.file_name))
 }
 
-fn sha256_file(path: &std::path::Path) -> Result<String, String> {
+pub(super) fn sha256_file(path: &std::path::Path) -> Result<String, String> {
     use sha2::{Digest, Sha256};
     use std::io::Read;
 
@@ -171,7 +173,7 @@ fn sha256_file(path: &std::path::Path) -> Result<String, String> {
     Ok(format!("{:x}", digest.finalize()))
 }
 
-fn get_whisper_cli_path() -> Result<std::path::PathBuf, String> {
+pub(super) fn get_whisper_cli_path() -> Result<std::path::PathBuf, String> {
     let executable = if cfg!(target_os = "windows") {
         "whisper-cli.exe"
     } else {
@@ -200,13 +202,13 @@ fn get_whisper_cli_path() -> Result<std::path::PathBuf, String> {
 }
 
 #[tauri::command]
-fn check_transcription_engine() -> bool {
+pub(super) fn check_transcription_engine() -> bool {
     get_whisper_cli_path()
         .map(|path| path.is_file())
         .unwrap_or(false)
 }
 
-fn get_whisper_library_path() -> Result<std::path::PathBuf, String> {
+pub(super) fn get_whisper_library_path() -> Result<std::path::PathBuf, String> {
     let library = if cfg!(target_os = "windows") {
         "whisper.dll"
     } else if cfg!(target_os = "macos") {
@@ -239,13 +241,13 @@ fn get_whisper_library_path() -> Result<std::path::PathBuf, String> {
 // ===== Teleprompter live offline recognition =====
 
 #[derive(Default)]
-struct TeleprompterRecognitionState {
+pub(super) struct TeleprompterRecognitionState {
     session: std::sync::Mutex<Option<TeleprompterRecognitionSession>>,
     generation: std::sync::atomic::AtomicU64,
     next_session_id: std::sync::atomic::AtomicU64,
 }
 
-struct TeleprompterRecognitionSession {
+pub(super) struct TeleprompterRecognitionSession {
     id: String,
     model_id: String,
     language: String,
@@ -254,13 +256,13 @@ struct TeleprompterRecognitionSession {
 }
 
 #[derive(serde::Serialize)]
-struct TeleprompterRecognitionResult {
+pub(super) struct TeleprompterRecognitionResult {
     text: String,
     confidence: f32,
     model_id: String,
 }
 
-fn teleprompter_recognition_language(language: &str) -> Result<String, String> {
+pub(super) fn teleprompter_recognition_language(language: &str) -> Result<String, String> {
     match language.trim().to_ascii_lowercase().as_str() {
         "auto" => Ok("auto".to_string()),
         "zh" | "zh-cn" | "chinese" => Ok("zh".to_string()),
@@ -269,14 +271,14 @@ fn teleprompter_recognition_language(language: &str) -> Result<String, String> {
     }
 }
 
-fn cancel_teleprompter_session(session: &TeleprompterRecognitionSession) {
+pub(super) fn cancel_teleprompter_session(session: &TeleprompterRecognitionSession) {
     session
         .cancelled
         .store(true, std::sync::atomic::Ordering::SeqCst);
 }
 
 #[tauri::command]
-async fn start_teleprompter_recognition(
+pub(super) async fn start_teleprompter_recognition(
     state: tauri::State<'_, TeleprompterRecognitionState>,
     language: String,
 ) -> Result<String, String> {
@@ -336,7 +338,7 @@ async fn start_teleprompter_recognition(
 }
 
 #[tauri::command]
-async fn transcribe_teleprompter_audio(
+pub(super) async fn transcribe_teleprompter_audio(
     state: tauri::State<'_, TeleprompterRecognitionState>,
     session_id: String,
     samples: Vec<i16>,
@@ -397,7 +399,7 @@ async fn transcribe_teleprompter_audio(
 }
 
 #[tauri::command]
-fn stop_teleprompter_recognition(
+pub(super) fn stop_teleprompter_recognition(
     state: tauri::State<'_, TeleprompterRecognitionState>,
     session_id: String,
 ) -> Result<(), String> {
@@ -420,7 +422,7 @@ fn stop_teleprompter_recognition(
 }
 
 #[tauri::command]
-fn list_transcription_models() -> Result<Vec<TranscriptionModelStatus>, String> {
+pub(super) fn list_transcription_models() -> Result<Vec<TranscriptionModelStatus>, String> {
     let config = read_transcription_model_config();
     TRANSCRIPTION_MODELS
         .iter()
@@ -438,7 +440,7 @@ fn list_transcription_models() -> Result<Vec<TranscriptionModelStatus>, String> 
 }
 
 #[tauri::command]
-fn set_current_transcription_model(model_id: String) -> Result<(), String> {
+pub(super) fn set_current_transcription_model(model_id: String) -> Result<(), String> {
     let model = transcription_model_spec(&model_id)?;
     if installed_model_file(model)?.is_none() {
         return Err("Install this offline model before selecting it".to_string());
@@ -449,7 +451,7 @@ fn set_current_transcription_model(model_id: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn delete_transcription_model(model_id: String) -> Result<(), String> {
+pub(super) fn delete_transcription_model(model_id: String) -> Result<(), String> {
     let model = transcription_model_spec(&model_id)?;
     let path = transcription_model_path(model)?;
     let partial = path.with_extension("bin.part");
@@ -468,7 +470,7 @@ fn delete_transcription_model(model_id: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn download_transcription_model(
+pub(super) async fn download_transcription_model(
     app_handle: tauri::AppHandle,
     model_id: String,
     source: Option<String>,
@@ -668,7 +670,7 @@ async fn download_transcription_model(
 }
 
 #[derive(serde::Serialize)]
-struct TranscriptionResult {
+pub(super) struct TranscriptionResult {
     model_id: String,
     raw_json_path: String,
     raw_srt_path: String,
@@ -676,12 +678,12 @@ struct TranscriptionResult {
 }
 
 #[derive(Clone, serde::Serialize)]
-struct TranscriptionProgress {
+pub(super) struct TranscriptionProgress {
     phase: String,
     progress: u8,
 }
 
-fn transcription_input_path(input_path: &str) -> Result<std::path::PathBuf, String> {
+pub(super) fn transcription_input_path(input_path: &str) -> Result<std::path::PathBuf, String> {
     const SUPPORTED_EXTENSIONS: &[&str] = &[
         "mp3", "aac", "m4a", "wav", "flac", "alac", "ogg", "wma", "mp4", "mkv", "avi", "mov",
         "webm", "flv", "wmv", "ts",
@@ -709,7 +711,7 @@ fn transcription_input_path(input_path: &str) -> Result<std::path::PathBuf, Stri
     Ok(path)
 }
 
-fn transcription_output_dir(output_dir: &str) -> Result<std::path::PathBuf, String> {
+pub(super) fn transcription_output_dir(output_dir: &str) -> Result<std::path::PathBuf, String> {
     if output_dir.trim().is_empty() || output_dir.contains('\0') {
         return Err("transcription:invalid-output".to_string());
     }
@@ -723,7 +725,7 @@ fn transcription_output_dir(output_dir: &str) -> Result<std::path::PathBuf, Stri
     Ok(path)
 }
 
-fn transcription_language(language: &str) -> Result<&str, String> {
+pub(super) fn transcription_language(language: &str) -> Result<&str, String> {
     match language.trim().to_ascii_lowercase().as_str() {
         "auto" => Ok("auto"),
         "zh" | "zh-cn" | "chinese" => Ok("zh"),
@@ -732,7 +734,7 @@ fn transcription_language(language: &str) -> Result<&str, String> {
     }
 }
 
-fn transcription_output_stem(input: &std::path::Path) -> String {
+pub(super) fn transcription_output_stem(input: &std::path::Path) -> String {
     let stem = input
         .file_stem()
         .and_then(|value| value.to_str())
@@ -759,7 +761,7 @@ fn transcription_output_stem(input: &std::path::Path) -> String {
     }
 }
 
-fn create_transcription_temp_dir(
+pub(super) fn create_transcription_temp_dir(
     output_dir: &std::path::Path,
 ) -> Result<std::path::PathBuf, String> {
     for _ in 0..10_000 {
@@ -778,7 +780,7 @@ fn create_transcription_temp_dir(
     Err("transcription:invalid-output".to_string())
 }
 
-async fn run_transcription_command(
+pub(super) async fn run_transcription_command(
     command: &std::path::Path,
     arguments: &[std::ffi::OsString],
 ) -> Result<std::process::Output, String> {
@@ -810,7 +812,7 @@ async fn run_transcription_command(
 // Whisper models occasionally answer spoken Mandarin in traditional
 // characters. Transcription outputs are rewritten to simplified so the
 // published files match what Chinese users expect to edit and share.
-fn simplify_char(character: char) -> char {
+pub(super) fn simplify_char(character: char) -> char {
     match character {
         '艦' => '舰',
         '彙' | '匯' => '汇',
@@ -912,11 +914,11 @@ fn simplify_char(character: char) -> char {
     }
 }
 
-fn simplify_chinese_text(input: &str) -> String {
+pub(super) fn simplify_chinese_text(input: &str) -> String {
     input.chars().map(simplify_char).collect()
 }
 
-fn simplify_transcription_outputs(temp_dir: &std::path::Path) -> Result<(), String> {
+pub(super) fn simplify_transcription_outputs(temp_dir: &std::path::Path) -> Result<(), String> {
     for name in ["transcript.json", "transcript.srt", "transcript.txt"] {
         let path = temp_dir.join(name);
         let content = std::fs::read_to_string(&path)
@@ -930,7 +932,7 @@ fn simplify_transcription_outputs(temp_dir: &std::path::Path) -> Result<(), Stri
     Ok(())
 }
 
-fn publish_transcription_outputs(
+pub(super) fn publish_transcription_outputs(
     temp_dir: &std::path::Path,
     output_dir: &std::path::Path,
     stem: &str,
@@ -971,7 +973,7 @@ fn publish_transcription_outputs(
 }
 
 #[tauri::command]
-async fn transcribe_media(
+pub(super) async fn transcribe_media(
     app_handle: tauri::AppHandle,
     input_path: String,
     output_dir: String,

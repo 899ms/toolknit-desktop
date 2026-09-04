@@ -90,7 +90,8 @@ Last updated: 2026-09-04
 
 The current V3 branch also verifies 95 Rust tests (94 passed, one intentional
 LibreOffice-dependent test ignored), 1,312 HTML ids with no duplicates, and a
-2,632-line application runtime. The homepage, AI settings, external-link and
+1,909-line application runtime. Native runtime is split across 38 Rust files;
+the largest is 1,872 lines and no native file exceeds 2,000 lines. The homepage, AI settings, external-link and
 font settings domains now have independent lifecycle-owned modules with
 focused runtime contract coverage. Help opened from Settings closes the
 Settings modal first, and homepage tool lookup no longer depends on
@@ -102,7 +103,7 @@ Settings modal first, and homepage tool lookup no longer depends on
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `src/main.js` lines | 32,605 | 31,110 | 30,627 | 29,737 | 28,639 | 26,760 | 25,386 | 24,727 | 24,108 | 23,279 | 23,268 | 23,220 | 23,173 | 22,333 | 21,708 | 21,250 | 21,241 | 16,184 | 15,709 | 15,019 | 13,538 | 13,000 | 12,511 | 12,084 | 10,796 | 9,176 | 7,651 | 6,211 | 32 |
 | `src/styles.css` lines | 37,200 | 34,140 | 33,408 | 32,304 | 30,826 | 30,826 | 27,871 | 27,863 | 27,821 | 27,821 | 27,426 | 27,425 | 27,425 | 27,182 | 27,165 | 27,059 | 24,975 | 24,644 | 24,644 | 24,093 | 22,772 | 21,962 | 21,408 | 21,349 | 20,802 | 18,627 | 17,205 | 15,941 | 4 |
-| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB | 2,288.63 kB | 1,839.13 kB | 1,603.72 kB | 1,591.36 kB | 1,531.34 kB | 1,423.95 kB | 1,405.69 kB | 1,395.57 kB | 1,385.48 kB | 1,350.13 kB | 1,307.20 kB | 1,273.59 kB | 1,252.00 kB | 1,308.87 kB |
+| Main JavaScript | 2,811.77 kB | 2,787.72 kB | 2,774.56 kB | 2,753.30 kB | 2,727.71 kB | 2,668.75 kB | 2,629.94 kB | 2,616.60 kB | 2,604.02 kB | 2,588.64 kB | 2,555.41 kB | 2,554.76 kB | 2,554.15 kB | 2,536.30 kB | 2,299.67 kB | 2,288.63 kB | 1,839.13 kB | 1,603.72 kB | 1,591.36 kB | 1,531.34 kB | 1,423.95 kB | 1,405.69 kB | 1,395.57 kB | 1,385.48 kB | 1,350.13 kB | 1,307.20 kB | 1,273.59 kB | 1,252.00 kB | 1,311.06 kB |
 | Main CSS | 816.20 kB | 753.95 kB | 740.81 kB | 722.86 kB | 698.16 kB | 698.16 kB | 650.32 kB | 650.17 kB | 649.33 kB | 649.33 kB | 642.84 kB | 622.70 kB | 603.27 kB | 599.37 kB | 599.03 kB | 597.52 kB | 525.34 kB | 520.27 kB | 520.27 kB | 499.11 kB | 487.68 kB | 465.07 kB | 455.39 kB | 454.30 kB | 441.86 kB | 406.98 kB | 383.98 kB | 362.81 kB | 344.52 kB |
 
 The text statistics feature emits a 10.39 kB JavaScript chunk and a 9.40 kB
@@ -1048,21 +1049,21 @@ tool migration at 65 of 65 tools (**100%**).
 
 ## Final verification
 
-- `npm run test:release` passed all 87 registered npm gates, including the
+- `npm run test:release` passed all 88 registered npm gates, including the
   architecture, security, every migrated-tool contract, CLI/MCP and production
-  build checks. The security gate reported 791 passing assertions.
-- `cargo test --manifest-path src-tauri/Cargo.toml --lib` passed 92 tests with
+  build checks. The security gate reported 939 passing assertions.
+- `cargo test --manifest-path src-tauri/Cargo.toml --lib` passed 94 tests with
   one intentional LibreOffice-dependent test ignored and zero failures.
 - `npm run test:cli-clean-worktree` created a detached clean Git worktree,
   staged all CLI resources from tracked sources, packed and installed
   `@toolknit/cli@2.3.1`, then invoked the CLI and MCP server. The installed MCP
   server listed all 46 tools and the temporary worktree was removed afterward.
-- `npm run tauri build -- --ci` produced the unsigned NSIS installer at
+- `npm run tauri build -- --bundles nsis` produced the unsigned NSIS installer at
   `src-tauri/target/release/bundle/nsis/toolknit-desktop_2.3.1_x64-setup.exe`.
-  The installer is 50,386,777 bytes and its SHA-256 is
-  `734B6220254045BB816FDB9BF5EA8BB1E8BB3F6E24EF933531F6B06E525D4DFB`.
-  The bundled application is 46,417,408 bytes with SHA-256
-  `41B03F4422DCE93509347F7AADF368C8F12DCA384E47CCBB2597F306DFD3B381`.
+  The installer is 50,435,242 bytes and its SHA-256 is
+  `677E55528893343F4EA7EAEF6A936D97B728EF7188588728E8AA01D5135E3835`.
+  The bundled application is 46,488,064 bytes with SHA-256
+  `FD2641E9C146F4D4C3C2761ED1DC04DBEB071D6C1050C68FBFA99F13765EF18E`.
 
 The remaining PDF Merge pointer-sort/native-drop parity check is a manual
 Windows WebView item, not an unverified automated claim. It does not block the

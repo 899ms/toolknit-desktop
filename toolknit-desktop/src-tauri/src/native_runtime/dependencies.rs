@@ -1,76 +1,78 @@
+use super::*;
+
 // ===== Audio Conversion =====
 
-static IS_CONVERTING: AtomicBool = AtomicBool::new(false);
-static CANCEL_FLAG: AtomicBool = AtomicBool::new(false);
-static CURRENT_CHILD_ID: AtomicU32 = AtomicU32::new(0);
-static PDF_DECRYPT_TEMP_ID: AtomicU64 = AtomicU64::new(0);
-static VIDEO_CONVERT_TEMP_ID: AtomicU64 = AtomicU64::new(0);
-static AUDIO_CONVERT_TEMP_ID: AtomicU64 = AtomicU64::new(0);
-static IS_MODEL_DOWNLOADING: AtomicBool = AtomicBool::new(false);
-static IS_FFMPEG_DOWNLOADING: AtomicBool = AtomicBool::new(false);
-static IS_LIBREOFFICE_DOWNLOADING: AtomicBool = AtomicBool::new(false);
-static CANCEL_MODEL_DOWNLOAD: AtomicBool = AtomicBool::new(false);
-static CANCEL_FFMPEG_DOWNLOAD: AtomicBool = AtomicBool::new(false);
-static CANCEL_LIBREOFFICE_DOWNLOAD: AtomicBool = AtomicBool::new(false);
-static TRANSCRIPTION_TEMP_ID: AtomicU64 = AtomicU64::new(0);
-static PPT_RENDER_TEMP_ID: AtomicU64 = AtomicU64::new(0);
-const PPT_RENDER_TIMEOUT_SECS: u64 = 180;
-const PPT_RENDER_PROBE_TIMEOUT_MS: u128 = 10_000;
-static ACTIVE_VIDEO_CHILDREN: std::sync::OnceLock<
+pub(super) static IS_CONVERTING: AtomicBool = AtomicBool::new(false);
+pub(super) static CANCEL_FLAG: AtomicBool = AtomicBool::new(false);
+pub(super) static CURRENT_CHILD_ID: AtomicU32 = AtomicU32::new(0);
+pub(super) static PDF_DECRYPT_TEMP_ID: AtomicU64 = AtomicU64::new(0);
+pub(super) static VIDEO_CONVERT_TEMP_ID: AtomicU64 = AtomicU64::new(0);
+pub(super) static AUDIO_CONVERT_TEMP_ID: AtomicU64 = AtomicU64::new(0);
+pub(super) static IS_MODEL_DOWNLOADING: AtomicBool = AtomicBool::new(false);
+pub(super) static IS_FFMPEG_DOWNLOADING: AtomicBool = AtomicBool::new(false);
+pub(super) static IS_LIBREOFFICE_DOWNLOADING: AtomicBool = AtomicBool::new(false);
+pub(super) static CANCEL_MODEL_DOWNLOAD: AtomicBool = AtomicBool::new(false);
+pub(super) static CANCEL_FFMPEG_DOWNLOAD: AtomicBool = AtomicBool::new(false);
+pub(super) static CANCEL_LIBREOFFICE_DOWNLOAD: AtomicBool = AtomicBool::new(false);
+pub(super) static TRANSCRIPTION_TEMP_ID: AtomicU64 = AtomicU64::new(0);
+pub(super) static PPT_RENDER_TEMP_ID: AtomicU64 = AtomicU64::new(0);
+pub(super) const PPT_RENDER_TIMEOUT_SECS: u64 = 180;
+pub(super) const PPT_RENDER_PROBE_TIMEOUT_MS: u128 = 10_000;
+pub(super) static ACTIVE_VIDEO_CHILDREN: std::sync::OnceLock<
     std::sync::Mutex<std::collections::BTreeSet<u32>>,
 > = std::sync::OnceLock::new();
-static ACTIVE_OFFICE_CHILDREN: std::sync::OnceLock<
+pub(super) static ACTIVE_OFFICE_CHILDREN: std::sync::OnceLock<
     std::sync::Mutex<std::collections::BTreeSet<u32>>,
 > = std::sync::OnceLock::new();
-static ICON_ARCHIVE_WRITE_ID: AtomicU64 = AtomicU64::new(0);
-static ICON_ARCHIVE_WRITES: std::sync::OnceLock<
+pub(super) static ICON_ARCHIVE_WRITE_ID: AtomicU64 = AtomicU64::new(0);
+pub(super) static ICON_ARCHIVE_WRITES: std::sync::OnceLock<
     std::sync::Mutex<std::collections::BTreeMap<u64, IconArchiveWrite>>,
 > = std::sync::OnceLock::new();
-static PDF_ENHANCE_WRITE_ID: AtomicU64 = AtomicU64::new(0);
-static PDF_ENHANCE_WRITES: std::sync::OnceLock<
+pub(super) static PDF_ENHANCE_WRITE_ID: AtomicU64 = AtomicU64::new(0);
+pub(super) static PDF_ENHANCE_WRITES: std::sync::OnceLock<
     std::sync::Mutex<std::collections::BTreeMap<u64, PdfEnhanceWrite>>,
 > = std::sync::OnceLock::new();
 
-const MAX_ICON_ARCHIVE_BYTES: u64 = 32 * 1024 * 1024;
-const MAX_PDF_ENHANCE_OUTPUT_BYTES: u64 = 100 * 1024 * 1024;
-const MAX_PDF_ENHANCE_PAGES: u32 = 100;
-const MAX_PDF_ENHANCE_WRITE_SESSIONS: usize = 4;
+pub(super) const MAX_ICON_ARCHIVE_BYTES: u64 = 32 * 1024 * 1024;
+pub(super) const MAX_PDF_ENHANCE_OUTPUT_BYTES: u64 = 100 * 1024 * 1024;
+pub(super) const MAX_PDF_ENHANCE_PAGES: u32 = 100;
+pub(super) const MAX_PDF_ENHANCE_WRITE_SESSIONS: usize = 4;
 
 #[derive(Clone)]
-struct IconArchiveWrite {
-    temporary_path: std::path::PathBuf,
-    output_directory: std::path::PathBuf,
-    file_name: String,
+pub(super) struct IconArchiveWrite {
+    pub(super) temporary_path: std::path::PathBuf,
+    pub(super) output_directory: std::path::PathBuf,
+    pub(super) file_name: String,
 }
 
-struct PdfEnhanceWrite {
-    file: std::fs::File,
-    temporary_path: std::path::PathBuf,
-    output_directory: std::path::PathBuf,
-    file_name: String,
-    expected_pages: u32,
-    bytes_written: u64,
+pub(super) struct PdfEnhanceWrite {
+    pub(super) file: std::fs::File,
+    pub(super) temporary_path: std::path::PathBuf,
+    pub(super) output_directory: std::path::PathBuf,
+    pub(super) file_name: String,
+    pub(super) expected_pages: u32,
+    pub(super) bytes_written: u64,
 }
 
-fn icon_archive_writes(
+pub(super) fn icon_archive_writes(
 ) -> &'static std::sync::Mutex<std::collections::BTreeMap<u64, IconArchiveWrite>> {
     ICON_ARCHIVE_WRITES.get_or_init(|| std::sync::Mutex::new(std::collections::BTreeMap::new()))
 }
 
-fn pdf_enhance_writes(
+pub(super) fn pdf_enhance_writes(
 ) -> &'static std::sync::Mutex<std::collections::BTreeMap<u64, PdfEnhanceWrite>> {
     PDF_ENHANCE_WRITES.get_or_init(|| std::sync::Mutex::new(std::collections::BTreeMap::new()))
 }
 
-fn active_video_children() -> &'static std::sync::Mutex<std::collections::BTreeSet<u32>> {
+pub(super) fn active_video_children() -> &'static std::sync::Mutex<std::collections::BTreeSet<u32>> {
     ACTIVE_VIDEO_CHILDREN.get_or_init(|| std::sync::Mutex::new(std::collections::BTreeSet::new()))
 }
 
-fn active_office_children() -> &'static std::sync::Mutex<std::collections::BTreeSet<u32>> {
+pub(super) fn active_office_children() -> &'static std::sync::Mutex<std::collections::BTreeSet<u32>> {
     ACTIVE_OFFICE_CHILDREN.get_or_init(|| std::sync::Mutex::new(std::collections::BTreeSet::new()))
 }
 
-fn terminate_conversion_process(pid: u32) {
+pub(super) fn terminate_conversion_process(pid: u32) {
     if pid == 0 {
         return;
     }
@@ -94,11 +96,11 @@ fn terminate_conversion_process(pid: u32) {
     }
 }
 
-const MAX_IMAGE_BATCH_FILES: usize = 100;
-const MAX_IMAGE_FILE_BYTES: u64 = 20 * 1024 * 1024;
-const MAX_IMAGE_PIXELS: u64 = 40_000_000;
+pub(super) const MAX_IMAGE_BATCH_FILES: usize = 100;
+pub(super) const MAX_IMAGE_FILE_BYTES: u64 = 20 * 1024 * 1024;
+pub(super) const MAX_IMAGE_PIXELS: u64 = 40_000_000;
 
-struct ConversionGuard;
+pub(super) struct ConversionGuard;
 
 impl Drop for ConversionGuard {
     fn drop(&mut self) {
@@ -108,7 +110,7 @@ impl Drop for ConversionGuard {
     }
 }
 
-fn begin_conversion() -> Result<ConversionGuard, String> {
+pub(super) fn begin_conversion() -> Result<ConversionGuard, String> {
     IS_CONVERTING
         .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
         .map_err(|_| "Another file conversion is already in progress".to_string())?;
@@ -116,20 +118,20 @@ fn begin_conversion() -> Result<ConversionGuard, String> {
     Ok(ConversionGuard)
 }
 
-const FFMPEG_RUNTIME_DIRECTORY: &str = "ffmpeg";
-const FFMPEG_ARCHIVE_BYTES: u64 = 29_581_307;
-const FFMPEG_ARCHIVE_SHA256: &str =
+pub(super) const FFMPEG_RUNTIME_DIRECTORY: &str = "ffmpeg";
+pub(super) const FFMPEG_ARCHIVE_BYTES: u64 = 29_581_307;
+pub(super) const FFMPEG_ARCHIVE_SHA256: &str =
     "8883a3dffbd0a16cf4ef95206ea05283f78908dbfb118f73c83f4951dcc06d77";
-const FFMPEG_OFFICIAL_URL: &str =
+pub(super) const FFMPEG_OFFICIAL_URL: &str =
     "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-win32-x64.gz";
-const FFMPEG_CHINA_URL: &str =
+pub(super) const FFMPEG_CHINA_URL: &str =
     "https://cdn.npmmirror.com/binaries/ffmpeg-static/b6.1.1/ffmpeg-win32-x64.gz";
-const FFMPEG_CHINA_FALLBACK_URL: &str = "https://gh-proxy.com/https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-win32-x64.gz";
+pub(super) const FFMPEG_CHINA_FALLBACK_URL: &str = "https://gh-proxy.com/https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-win32-x64.gz";
 
-fn ffmpeg_runtime_dir() -> Result<std::path::PathBuf, String> {
+pub(super) fn ffmpeg_runtime_dir() -> Result<std::path::PathBuf, String> {
     Ok(toolknit_app_data_dir()?.join(FFMPEG_RUNTIME_DIRECTORY))
 }
-fn ffmpeg_runtime_path() -> Result<std::path::PathBuf, String> {
+pub(super) fn ffmpeg_runtime_path() -> Result<std::path::PathBuf, String> {
     Ok(ffmpeg_runtime_dir()?.join(if cfg!(target_os = "windows") {
         "ffmpeg.exe"
     } else {
@@ -138,27 +140,27 @@ fn ffmpeg_runtime_path() -> Result<std::path::PathBuf, String> {
 }
 
 #[derive(Clone)]
-struct ResolvedFfmpegRuntime {
+pub(super) struct ResolvedFfmpegRuntime {
     path: std::path::PathBuf,
     source: String,
     version: Option<String>,
 }
 
-static FFMPEG_RUNTIME_CACHE: OnceLock<std::sync::Mutex<Option<ResolvedFfmpegRuntime>>> =
+pub(super) static FFMPEG_RUNTIME_CACHE: OnceLock<std::sync::Mutex<Option<ResolvedFfmpegRuntime>>> =
     OnceLock::new();
-const FFMPEG_PROBE_TIMEOUT_MS: u128 = 2_000;
+pub(super) const FFMPEG_PROBE_TIMEOUT_MS: u128 = 2_000;
 
-fn ffmpeg_runtime_cache() -> &'static std::sync::Mutex<Option<ResolvedFfmpegRuntime>> {
+pub(super) fn ffmpeg_runtime_cache() -> &'static std::sync::Mutex<Option<ResolvedFfmpegRuntime>> {
     FFMPEG_RUNTIME_CACHE.get_or_init(|| std::sync::Mutex::new(None))
 }
 
-fn invalidate_ffmpeg_runtime_cache() {
+pub(super) fn invalidate_ffmpeg_runtime_cache() {
     if let Ok(mut cache) = ffmpeg_runtime_cache().lock() {
         *cache = None;
     }
 }
 
-fn ffmpeg_candidates() -> Vec<(std::path::PathBuf, &'static str)> {
+pub(super) fn ffmpeg_candidates() -> Vec<(std::path::PathBuf, &'static str)> {
     let executable = if cfg!(target_os = "windows") {
         "ffmpeg.exe"
     } else {
@@ -250,7 +252,7 @@ fn ffmpeg_candidates() -> Vec<(std::path::PathBuf, &'static str)> {
         .collect()
 }
 
-fn probe_ffmpeg_runtime(
+pub(super) fn probe_ffmpeg_runtime(
     path: &std::path::Path,
     source: &'static str,
 ) -> Option<ResolvedFfmpegRuntime> {
@@ -306,7 +308,7 @@ fn probe_ffmpeg_runtime(
     })
 }
 
-fn resolve_ffmpeg_runtime() -> Option<ResolvedFfmpegRuntime> {
+pub(super) fn resolve_ffmpeg_runtime() -> Option<ResolvedFfmpegRuntime> {
     if let Ok(cache) = ffmpeg_runtime_cache().lock() {
         if let Some(runtime) = cache.as_ref() {
             if std::fs::metadata(&runtime.path)
@@ -328,7 +330,7 @@ fn resolve_ffmpeg_runtime() -> Option<ResolvedFfmpegRuntime> {
     None
 }
 
-fn get_ffmpeg_path() -> Result<std::path::PathBuf, String> {
+pub(super) fn get_ffmpeg_path() -> Result<std::path::PathBuf, String> {
     resolve_ffmpeg_runtime()
         .map(|runtime| runtime.path)
         .ok_or_else(|| {
@@ -337,14 +339,14 @@ fn get_ffmpeg_path() -> Result<std::path::PathBuf, String> {
 }
 
 #[tauri::command]
-fn check_ffmpeg() -> bool {
+pub(super) fn check_ffmpeg() -> bool {
     get_ffmpeg_path()
         .map(|path| path.is_file())
         .unwrap_or(false)
 }
 
 #[derive(Clone, serde::Serialize)]
-struct FfmpegRuntimeStatus {
+pub(super) struct FfmpegRuntimeStatus {
     installed: bool,
     path: Option<String>,
     bytes: u64,
@@ -352,18 +354,18 @@ struct FfmpegRuntimeStatus {
     version: Option<String>,
 }
 #[derive(Clone, serde::Serialize)]
-struct FfmpegDownloadProgress {
+pub(super) struct FfmpegDownloadProgress {
     downloaded_bytes: u64,
     total_bytes: u64,
     phase: String,
 }
-struct FfmpegDownloadGuard;
+pub(super) struct FfmpegDownloadGuard;
 impl Drop for FfmpegDownloadGuard {
     fn drop(&mut self) {
         IS_FFMPEG_DOWNLOADING.store(false, Ordering::SeqCst);
     }
 }
-fn begin_ffmpeg_download() -> Result<FfmpegDownloadGuard, String> {
+pub(super) fn begin_ffmpeg_download() -> Result<FfmpegDownloadGuard, String> {
     IS_FFMPEG_DOWNLOADING
         .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
         .map_err(|_| "An FFmpeg download is already in progress".to_string())?;
@@ -372,7 +374,7 @@ fn begin_ffmpeg_download() -> Result<FfmpegDownloadGuard, String> {
 }
 
 #[tauri::command]
-fn get_ffmpeg_runtime_status() -> Result<FfmpegRuntimeStatus, String> {
+pub(super) fn get_ffmpeg_runtime_status() -> Result<FfmpegRuntimeStatus, String> {
     let runtime = resolve_ffmpeg_runtime();
     let path = runtime.as_ref().map(|runtime| runtime.path.as_path());
     Ok(FfmpegRuntimeStatus {
@@ -387,7 +389,7 @@ fn get_ffmpeg_runtime_status() -> Result<FfmpegRuntimeStatus, String> {
     })
 }
 
-fn ffmpeg_download_candidates(source: &str) -> Result<Vec<(&'static str, &'static str)>, String> {
+pub(super) fn ffmpeg_download_candidates(source: &str) -> Result<Vec<(&'static str, &'static str)>, String> {
     let china = [
         ("china", FFMPEG_CHINA_URL),
         ("china-fallback", FFMPEG_CHINA_FALLBACK_URL),
@@ -402,7 +404,7 @@ fn ffmpeg_download_candidates(source: &str) -> Result<Vec<(&'static str, &'stati
     })
 }
 
-fn extract_ffmpeg_executable(
+pub(super) fn extract_ffmpeg_executable(
     archive: &std::path::Path,
     destination: &std::path::Path,
 ) -> Result<(), String> {
@@ -450,7 +452,7 @@ fn extract_ffmpeg_executable(
 }
 
 #[tauri::command]
-async fn download_ffmpeg_runtime(
+pub(super) async fn download_ffmpeg_runtime(
     app_handle: tauri::AppHandle,
     source: Option<String>,
 ) -> Result<FfmpegRuntimeStatus, String> {
@@ -631,7 +633,7 @@ async fn download_ffmpeg_runtime(
 }
 
 #[tauri::command]
-fn delete_ffmpeg_runtime() -> Result<(), String> {
+pub(super) fn delete_ffmpeg_runtime() -> Result<(), String> {
     let directory = ffmpeg_runtime_dir()?;
     if directory.exists() {
         std::fs::remove_dir_all(directory)
@@ -645,23 +647,23 @@ fn delete_ffmpeg_runtime() -> Result<(), String> {
 // LibreOffice remains an optional component. The desktop installer stays small;
 // users download and extract it to ToolKnit's private AppData location only when
 // PPT to PDF/image rendering is needed.
-const LIBREOFFICE_RUNTIME_DIRECTORY: &str = "libreoffice";
-const LIBREOFFICE_RUNTIME_VERSION: &str = "26.2.5";
-const LIBREOFFICE_ARCHIVE_BYTES: u64 = 372_948_992;
-const LIBREOFFICE_ARCHIVE_SHA256: &str =
+pub(super) const LIBREOFFICE_RUNTIME_DIRECTORY: &str = "libreoffice";
+pub(super) const LIBREOFFICE_RUNTIME_VERSION: &str = "26.2.5";
+pub(super) const LIBREOFFICE_ARCHIVE_BYTES: u64 = 372_948_992;
+pub(super) const LIBREOFFICE_ARCHIVE_SHA256: &str =
     "f15ba07bfcb0186986cf3171063506f5d207c11f8cc051ba0d135209e9e915f9";
-const LIBREOFFICE_OFFICIAL_URL: &str =
+pub(super) const LIBREOFFICE_OFFICIAL_URL: &str =
     "https://download.documentfoundation.org/libreoffice/stable/26.2.5/win/x86_64/LibreOffice_26.2.5_Win_x86-64.msi";
-const LIBREOFFICE_CHINA_URL: &str =
+pub(super) const LIBREOFFICE_CHINA_URL: &str =
     "https://mirrors.tuna.tsinghua.edu.cn/libreoffice/libreoffice/stable/26.2.5/win/x86_64/LibreOffice_26.2.5_Win_x86-64.msi";
 
-fn libreoffice_runtime_dir() -> Result<std::path::PathBuf, String> {
+pub(super) fn libreoffice_runtime_dir() -> Result<std::path::PathBuf, String> {
     Ok(toolknit_app_data_dir()?
         .join(LIBREOFFICE_RUNTIME_DIRECTORY)
         .join(LIBREOFFICE_RUNTIME_VERSION))
 }
 
-fn libreoffice_runtime_path() -> Result<std::path::PathBuf, String> {
+pub(super) fn libreoffice_runtime_path() -> Result<std::path::PathBuf, String> {
     Ok(libreoffice_runtime_dir()?
         .join("program")
         .join(if cfg!(target_os = "windows") {
@@ -672,7 +674,7 @@ fn libreoffice_runtime_path() -> Result<std::path::PathBuf, String> {
 }
 
 #[derive(Clone, serde::Serialize)]
-struct LibreOfficeRuntimeStatus {
+pub(super) struct LibreOfficeRuntimeStatus {
     installed: bool,
     path: Option<String>,
     bytes: u64,
@@ -681,7 +683,7 @@ struct LibreOfficeRuntimeStatus {
 }
 
 #[derive(Default)]
-struct LibreOfficeRuntimeCache {
+pub(super) struct LibreOfficeRuntimeCache {
     /// The last runtime path that was resolved successfully. Keeping this in
     /// memory avoids launching soffice --version for every PPT conversion.
     runtime: Option<LibreOfficeRuntimeInfo>,
@@ -692,29 +694,29 @@ struct LibreOfficeRuntimeCache {
     size_scan_generation: u64,
 }
 
-static LIBREOFFICE_RUNTIME_CACHE: std::sync::OnceLock<
+pub(super) static LIBREOFFICE_RUNTIME_CACHE: std::sync::OnceLock<
     std::sync::Mutex<LibreOfficeRuntimeCache>,
 > = std::sync::OnceLock::new();
-static LIBREOFFICE_CACHE_GENERATION: AtomicU64 = AtomicU64::new(0);
+pub(super) static LIBREOFFICE_CACHE_GENERATION: AtomicU64 = AtomicU64::new(0);
 
-fn libreoffice_runtime_cache() -> &'static std::sync::Mutex<LibreOfficeRuntimeCache> {
+pub(super) fn libreoffice_runtime_cache() -> &'static std::sync::Mutex<LibreOfficeRuntimeCache> {
     LIBREOFFICE_RUNTIME_CACHE.get_or_init(|| std::sync::Mutex::new(LibreOfficeRuntimeCache::default()))
 }
 
-fn invalidate_libreoffice_runtime_cache() {
+pub(super) fn invalidate_libreoffice_runtime_cache() {
     LIBREOFFICE_CACHE_GENERATION.fetch_add(1, Ordering::SeqCst);
     if let Ok(mut cache) = libreoffice_runtime_cache().lock() {
         *cache = LibreOfficeRuntimeCache::default();
     }
 }
 
-fn cache_libreoffice_runtime(runtime: LibreOfficeRuntimeInfo) {
+pub(super) fn cache_libreoffice_runtime(runtime: LibreOfficeRuntimeInfo) {
     if let Ok(mut cache) = libreoffice_runtime_cache().lock() {
         cache.runtime = Some(runtime);
     }
 }
 
-fn cached_libreoffice_runtime() -> Option<LibreOfficeRuntimeInfo> {
+pub(super) fn cached_libreoffice_runtime() -> Option<LibreOfficeRuntimeInfo> {
     libreoffice_runtime_cache()
         .lock()
         .ok()
@@ -722,13 +724,13 @@ fn cached_libreoffice_runtime() -> Option<LibreOfficeRuntimeInfo> {
 }
 
 #[derive(Clone, serde::Serialize)]
-struct LibreOfficeDownloadProgress {
+pub(super) struct LibreOfficeDownloadProgress {
     downloaded_bytes: u64,
     total_bytes: u64,
     phase: String,
 }
 
-struct LibreOfficeDownloadGuard;
+pub(super) struct LibreOfficeDownloadGuard;
 
 impl Drop for LibreOfficeDownloadGuard {
     fn drop(&mut self) {
@@ -736,7 +738,7 @@ impl Drop for LibreOfficeDownloadGuard {
     }
 }
 
-fn begin_libreoffice_download() -> Result<LibreOfficeDownloadGuard, String> {
+pub(super) fn begin_libreoffice_download() -> Result<LibreOfficeDownloadGuard, String> {
     IS_LIBREOFFICE_DOWNLOADING
         .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
         .map_err(|_| "A PPT runtime download is already in progress".to_string())?;
@@ -744,7 +746,7 @@ fn begin_libreoffice_download() -> Result<LibreOfficeDownloadGuard, String> {
     Ok(LibreOfficeDownloadGuard)
 }
 
-fn directory_size_bytes(path: &std::path::Path) -> u64 {
+pub(super) fn directory_size_bytes(path: &std::path::Path) -> u64 {
     let mut total = 0_u64;
     let mut stack = vec![path.to_path_buf()];
     while let Some(directory) = stack.pop() {
@@ -764,7 +766,7 @@ fn directory_size_bytes(path: &std::path::Path) -> u64 {
     total
 }
 
-fn cached_or_schedule_libreoffice_size(root: &std::path::Path) -> u64 {
+pub(super) fn cached_or_schedule_libreoffice_size(root: &std::path::Path) -> u64 {
     let (cached, should_scan, generation) = match libreoffice_runtime_cache().lock() {
         Ok(mut cache) => {
             if let Some(bytes) = cache.bytes {
@@ -806,7 +808,7 @@ fn cached_or_schedule_libreoffice_size(root: &std::path::Path) -> u64 {
 /// hot-path check used while opening the two PPT tools. A successful metadata
 /// check is sufficient because conversion performs the real process launch
 /// and reports a renderer error if a custom path is invalid.
-fn resolve_libreoffice_runtime_quick() -> Option<LibreOfficeRuntimeInfo> {
+pub(super) fn resolve_libreoffice_runtime_quick() -> Option<LibreOfficeRuntimeInfo> {
     for (candidate, source) in libreoffice_candidates() {
         let metadata = match std::fs::metadata(&candidate) {
             Ok(metadata) => metadata,
@@ -827,7 +829,7 @@ fn resolve_libreoffice_runtime_quick() -> Option<LibreOfficeRuntimeInfo> {
 }
 
 #[tauri::command]
-fn is_libreoffice_runtime_available() -> bool {
+pub(super) fn is_libreoffice_runtime_available() -> bool {
     if let Some(runtime) = cached_libreoffice_runtime() {
         if runtime
             .command
@@ -846,7 +848,7 @@ fn is_libreoffice_runtime_available() -> bool {
 }
 
 #[tauri::command]
-fn get_libreoffice_runtime_status() -> Result<LibreOfficeRuntimeStatus, String> {
+pub(super) fn get_libreoffice_runtime_status() -> Result<LibreOfficeRuntimeStatus, String> {
     // Status is also called from the settings page. Keep it responsive even
     // when the managed runtime contains tens of thousands of extracted files.
     // Detailed size metadata is filled asynchronously and appears on the next
@@ -877,7 +879,7 @@ fn get_libreoffice_runtime_status() -> Result<LibreOfficeRuntimeStatus, String> 
     })
 }
 
-fn libreoffice_download_candidates(
+pub(super) fn libreoffice_download_candidates(
     source: &str,
 ) -> Result<Vec<(&'static str, &'static str)>, String> {
     let china = [("china", LIBREOFFICE_CHINA_URL)];
@@ -892,7 +894,7 @@ fn libreoffice_download_candidates(
 }
 
 #[cfg(target_os = "windows")]
-fn extract_libreoffice_msi(
+pub(super) fn extract_libreoffice_msi(
     archive: &std::path::Path,
     destination: &std::path::Path,
 ) -> Result<(), String> {
@@ -934,12 +936,12 @@ fn extract_libreoffice_msi(
 }
 
 #[cfg(not(target_os = "windows"))]
-fn extract_libreoffice_msi(_: &std::path::Path, _: &std::path::Path) -> Result<(), String> {
+pub(super) fn extract_libreoffice_msi(_: &std::path::Path, _: &std::path::Path) -> Result<(), String> {
     Err("Managed LibreOffice download is currently available on Windows only".to_string())
 }
 
 #[tauri::command]
-async fn download_libreoffice_runtime(
+pub(super) async fn download_libreoffice_runtime(
     app_handle: tauri::AppHandle,
     source: Option<String>,
 ) -> Result<LibreOfficeRuntimeStatus, String> {
@@ -1138,7 +1140,7 @@ async fn download_libreoffice_runtime(
 }
 
 #[tauri::command]
-fn delete_libreoffice_runtime() -> Result<(), String> {
+pub(super) fn delete_libreoffice_runtime() -> Result<(), String> {
     let directory = libreoffice_runtime_dir()?;
     if directory.exists() {
         std::fs::remove_dir_all(&directory)
@@ -1149,7 +1151,7 @@ fn delete_libreoffice_runtime() -> Result<(), String> {
 }
 
 #[tauri::command]
-fn cancel_dependency_downloads() {
+pub(super) fn cancel_dependency_downloads() {
     CANCEL_FFMPEG_DOWNLOAD.store(true, Ordering::SeqCst);
     CANCEL_MODEL_DOWNLOAD.store(true, Ordering::SeqCst);
     CANCEL_LIBREOFFICE_DOWNLOAD.store(true, Ordering::SeqCst);

@@ -1,4 +1,5 @@
 import { Renderer, Program, Mesh, Triangle, Vec2 } from 'ogl';
+import { createBackgroundFrameLimiter } from './shared/animation-policy.js';
 
 const BACKGROUND_DPR_MAX = 1.25;
 
@@ -125,7 +126,9 @@ export function initDarkVeil(container, options = {}) {
 
   const start = performance.now();
   let frame = 0;
+  let isVisible = true;
   let pageVisible = typeof document === 'undefined' || !document.hidden;
+  const frameLimiter = createBackgroundFrameLimiter();
 
   const stopLoop = () => {
     if (frame) {
@@ -135,15 +138,19 @@ export function initDarkVeil(container, options = {}) {
   };
 
   const startLoop = () => {
-    if (!frame && pageVisible) {
+    if (!frame && pageVisible && isVisible) {
       frame = requestAnimationFrame(loop);
     }
   };
 
-  const loop = () => {
+  const loop = now => {
     frame = 0;
-    if (!pageVisible) return;
-    program.uniforms.uTime.value = ((performance.now() - start) / 1000) * speed;
+    if (!pageVisible || !isVisible) return;
+    if (!frameLimiter.shouldRender(now)) {
+      startLoop();
+      return;
+    }
+    program.uniforms.uTime.value = ((now - start) / 1000) * speed;
     program.uniforms.uHueShift.value = hueShift;
     program.uniforms.uNoise.value = noiseIntensity;
     program.uniforms.uScan.value = scanlineIntensity;
@@ -171,6 +178,16 @@ export function initDarkVeil(container, options = {}) {
   window.addEventListener('pagehide', handlePageHide);
   window.addEventListener('pageshow', handlePageShow);
 
+  const intersectionObserver = typeof IntersectionObserver === 'function'
+    ? new IntersectionObserver(([entry]) => {
+      const wasVisible = isVisible;
+      isVisible = Boolean(entry?.isIntersecting);
+      if (isVisible && !wasVisible) startLoop();
+      else if (!isVisible) stopLoop();
+    }, { threshold: 0 })
+    : null;
+  intersectionObserver?.observe(container);
+
   startLoop();
 
   return () => {
@@ -179,6 +196,7 @@ export function initDarkVeil(container, options = {}) {
     document.removeEventListener('visibilitychange', handleVisibilityChange);
     window.removeEventListener('pagehide', handlePageHide);
     window.removeEventListener('pageshow', handlePageShow);
+    intersectionObserver?.disconnect();
     try {
       const loseExt = gl.getExtension('WEBGL_lose_context');
       if (loseExt) loseExt.loseContext();

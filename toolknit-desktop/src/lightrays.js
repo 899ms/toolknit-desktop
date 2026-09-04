@@ -1,4 +1,5 @@
 import { Renderer, Program, Triangle, Mesh } from 'ogl';
+import { createBackgroundFrameLimiter } from './shared/animation-policy.js';
 
 const DEFAULT_COLOR = '#ffffff';
 const BACKGROUND_DPR_MAX = 1.25;
@@ -59,6 +60,7 @@ export function initLightRays(container, options = {}) {
   let smoothMouse = { x: 0.5, y: 0.5 };
   let destroyed = false;
   let pageVisible = typeof document === 'undefined' || !document.hidden;
+  const frameLimiter = createBackgroundFrameLimiter();
 
   function stopAnimation() {
     if (animationId) {
@@ -134,6 +136,10 @@ export function initLightRays(container, options = {}) {
     if (destroyed || !renderer || !uniforms || !mesh) return;
     animationId = null;
     if (!pageVisible) return;
+    if (!frameLimiter.shouldRender(t)) {
+      startAnimation();
+      return;
+    }
 
     uniforms.iTime.value = t * 0.001;
 

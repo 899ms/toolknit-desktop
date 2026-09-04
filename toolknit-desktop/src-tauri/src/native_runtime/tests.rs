@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod simplify_tests {
-    use super::*;
+    use super::super::*;
 
     #[test]
     fn simplify_converts_common_whisper_variants() {

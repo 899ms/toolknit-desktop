@@ -1,5 +1,7 @@
+use super::*;
+
 #[cfg(target_os = "windows")]
-const HARDWARE_PROVIDER_PREAMBLE: &str = r#"
+pub(super) const HARDWARE_PROVIDER_PREAMBLE: &str = r#"
 $script:__tkProviderMap = @{}
 $script:__tkDcomSession = $null
 $script:__tkDcomAttempted = $false
@@ -126,7 +128,7 @@ function Get-ToolKnitInstance {
 "#;
 
 #[cfg(target_os = "windows")]
-const PROVIDER_ATTACH: &str = r#"
+pub(super) const PROVIDER_ATTACH: &str = r#"
 if ($script:__tkProviderMap -and $script:__tkProviderMap.Count -gt 0) {
   try {
     $__tk_obj = $__toolknit_payload | ConvertFrom-Json
@@ -141,7 +143,7 @@ if ($script:__tkProviderMap -and $script:__tkProviderMap.Count -gt 0) {
 "#;
 
 #[cfg(all(target_os = "windows", debug_assertions))]
-fn append_hardware_debug(line: &str) {
+pub(super) fn append_hardware_debug(line: &str) {
     use std::io::Write;
     let stamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -158,10 +160,10 @@ fn append_hardware_debug(line: &str) {
 }
 
 #[cfg(any(not(target_os = "windows"), not(debug_assertions)))]
-fn append_hardware_debug(_line: &str) {}
+pub(super) fn append_hardware_debug(_line: &str) {}
 
 #[cfg(target_os = "windows")]
-fn run_windows_powershell_json(script: &str, context: &str) -> Result<serde_json::Value, String> {
+pub(super) fn run_windows_powershell_json(script: &str, context: &str) -> Result<serde_json::Value, String> {
     use std::os::windows::process::CommandExt;
 
     let provider_script = script.replace("Get-CimInstance", "Get-ToolKnitInstance");
@@ -284,14 +286,14 @@ exit 1
 }
 
 #[tauri::command]
-async fn get_hardware_overview() -> Result<serde_json::Value, String> {
+pub(super) async fn get_hardware_overview() -> Result<serde_json::Value, String> {
     tokio::task::spawn_blocking(collect_hardware_overview)
         .await
         .map_err(|error| format!("Hardware inspection worker failed: {}", error))?
 }
 
 #[cfg(target_os = "windows")]
-fn collect_hardware_overview() -> Result<serde_json::Value, String> {
+pub(super) fn collect_hardware_overview() -> Result<serde_json::Value, String> {
     // A single read-only PowerShell/CIM request avoids a chain of WMI calls on
     // the UI thread. The payload deliberately excludes serial numbers, UUIDs,
     // account names, MAC addresses, and any other machine-identifying values.
@@ -376,26 +378,26 @@ $batteries = @(Get-CimInstance Win32_Battery)
 }
 
 #[cfg(not(target_os = "windows"))]
-fn collect_hardware_overview() -> Result<serde_json::Value, String> {
+pub(super) fn collect_hardware_overview() -> Result<serde_json::Value, String> {
     Err("Hardware inspection is currently available on Windows only".to_string())
 }
 
 #[tauri::command]
-async fn get_cpu_memory_info() -> Result<serde_json::Value, String> {
+pub(super) async fn get_cpu_memory_info() -> Result<serde_json::Value, String> {
     tokio::task::spawn_blocking(collect_cpu_memory_info)
         .await
         .map_err(|error| format!("CPU and memory inspection worker failed: {}", error))?
 }
 
 #[tauri::command]
-async fn get_cpu_memory_live_stats() -> Result<serde_json::Value, String> {
+pub(super) async fn get_cpu_memory_live_stats() -> Result<serde_json::Value, String> {
     tokio::task::spawn_blocking(collect_cpu_memory_live_stats)
         .await
         .map_err(|error| format!("CPU and memory live stats worker failed: {}", error))?
 }
 
 #[cfg(target_os = "windows")]
-fn collect_cpu_memory_info() -> Result<serde_json::Value, String> {
+pub(super) fn collect_cpu_memory_info() -> Result<serde_json::Value, String> {
     // Keep identifiers private: memory serial numbers and physical addresses
     // are intentionally not read or included in this local-only payload.
     const SCRIPT: &str = r#"
@@ -455,7 +457,7 @@ $availableBytes = if ($null -ne $perfMemory -and $null -ne $perfMemory.Available
 }
 
 #[cfg(target_os = "windows")]
-fn collect_cpu_memory_live_stats() -> Result<serde_json::Value, String> {
+pub(super) fn collect_cpu_memory_live_stats() -> Result<serde_json::Value, String> {
     const SCRIPT: &str = r#"
 $ErrorActionPreference = 'SilentlyContinue'
 $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
@@ -474,17 +476,17 @@ $perfMemory = Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory | Select-Obj
 }
 
 #[cfg(not(target_os = "windows"))]
-fn collect_cpu_memory_info() -> Result<serde_json::Value, String> {
+pub(super) fn collect_cpu_memory_info() -> Result<serde_json::Value, String> {
     Err("CPU and memory inspection is currently available on Windows only".to_string())
 }
 
 #[cfg(not(target_os = "windows"))]
-fn collect_cpu_memory_live_stats() -> Result<serde_json::Value, String> {
+pub(super) fn collect_cpu_memory_live_stats() -> Result<serde_json::Value, String> {
     Err("CPU and memory inspection is currently available on Windows only".to_string())
 }
 
 #[derive(serde::Serialize)]
-struct DxgiAdapterInfo {
+pub(super) struct DxgiAdapterInfo {
     description: String,
     vendor_id: u32,
     device_id: u32,
@@ -494,7 +496,7 @@ struct DxgiAdapterInfo {
 }
 
 #[derive(serde::Serialize)]
-struct ActiveDisplayConfiguration {
+pub(super) struct ActiveDisplayConfiguration {
     adapter_name: String,
     device_name: String,
     monitor_key: String,
@@ -504,14 +506,14 @@ struct ActiveDisplayConfiguration {
 }
 
 #[tauri::command]
-async fn get_gpu_display_info() -> Result<serde_json::Value, String> {
+pub(super) async fn get_gpu_display_info() -> Result<serde_json::Value, String> {
     tokio::task::spawn_blocking(collect_gpu_display_info)
         .await
         .map_err(|error| format!("GPU and display inspection worker failed: {}", error))?
 }
 
 #[cfg(target_os = "windows")]
-fn collect_gpu_display_info() -> Result<serde_json::Value, String> {
+pub(super) fn collect_gpu_display_info() -> Result<serde_json::Value, String> {
     // WMI supplies display EDID and driver metadata. DXGI and GDI below are
     // intentionally used for data WMI cannot represent correctly, especially
     // dedicated memory on modern GPUs and per-display refresh rates.
@@ -568,7 +570,7 @@ $monitors = @(Get-CimInstance -Namespace root\wmi -ClassName WmiMonitorID | Wher
 }
 
 #[cfg(target_os = "windows")]
-fn utf16z_to_string(value: &[u16]) -> String {
+pub(super) fn utf16z_to_string(value: &[u16]) -> String {
     let end = value
         .iter()
         .position(|character| *character == 0)
@@ -577,7 +579,7 @@ fn utf16z_to_string(value: &[u16]) -> String {
 }
 
 #[cfg(target_os = "windows")]
-fn windows_display_match_key(value: &str) -> String {
+pub(super) fn windows_display_match_key(value: &str) -> String {
     let uppercase = value.to_ascii_uppercase();
     for prefix in ["MONITOR\\", "DISPLAY\\", "MONITOR#", "DISPLAY#"] {
         if let Some(start) = uppercase.find(prefix) {
@@ -592,7 +594,7 @@ fn windows_display_match_key(value: &str) -> String {
 }
 
 #[cfg(target_os = "windows")]
-fn enumerate_dxgi_adapters() -> Vec<DxgiAdapterInfo> {
+pub(super) fn enumerate_dxgi_adapters() -> Vec<DxgiAdapterInfo> {
     use windows::Win32::Graphics::Dxgi::{CreateDXGIFactory1, IDXGIFactory1, DXGI_ADAPTER_DESC1};
 
     let factory: IDXGIFactory1 = match unsafe { CreateDXGIFactory1() } {
@@ -625,7 +627,7 @@ fn enumerate_dxgi_adapters() -> Vec<DxgiAdapterInfo> {
 }
 
 #[cfg(target_os = "windows")]
-fn enumerate_active_displays() -> Vec<ActiveDisplayConfiguration> {
+pub(super) fn enumerate_active_displays() -> Vec<ActiveDisplayConfiguration> {
     use windows::core::PCWSTR;
     use windows::Win32::Graphics::Gdi::{
         EnumDisplayDevicesW, EnumDisplaySettingsW, DEVMODEW, DISPLAY_DEVICEW,
@@ -677,19 +679,19 @@ fn enumerate_active_displays() -> Vec<ActiveDisplayConfiguration> {
 }
 
 #[cfg(not(target_os = "windows"))]
-fn collect_gpu_display_info() -> Result<serde_json::Value, String> {
+pub(super) fn collect_gpu_display_info() -> Result<serde_json::Value, String> {
     Err("GPU and display inspection is currently available on Windows only".to_string())
 }
 
 #[tauri::command]
-async fn get_mainboard_firmware_info() -> Result<serde_json::Value, String> {
+pub(super) async fn get_mainboard_firmware_info() -> Result<serde_json::Value, String> {
     tokio::task::spawn_blocking(collect_mainboard_firmware_info)
         .await
         .map_err(|error| format!("Mainboard and firmware inspection worker failed: {}", error))?
 }
 
 #[cfg(target_os = "windows")]
-fn collect_mainboard_firmware_info() -> Result<serde_json::Value, String> {
+pub(super) fn collect_mainboard_firmware_info() -> Result<serde_json::Value, String> {
     // This inventory intentionally leaves out board serial numbers, UUIDs,
     // PnP instance paths, and any other machine-identifying values. Windows
     // exposes PCI device names and status without needing those identifiers.
@@ -756,19 +758,19 @@ $pciDevices = @($rawPci | Group-Object { "$($_.PNPClass)`u001f$($_.Name)`u001f$(
 }
 
 #[cfg(not(target_os = "windows"))]
-fn collect_mainboard_firmware_info() -> Result<serde_json::Value, String> {
+pub(super) fn collect_mainboard_firmware_info() -> Result<serde_json::Value, String> {
     Err("Mainboard and firmware inspection is currently available on Windows only".to_string())
 }
 
 #[tauri::command]
-async fn get_storage_health_info() -> Result<serde_json::Value, String> {
+pub(super) async fn get_storage_health_info() -> Result<serde_json::Value, String> {
     tokio::task::spawn_blocking(collect_storage_health_info)
         .await
         .map_err(|error| format!("Storage and health inspection worker failed: {}", error))?
 }
 
 #[cfg(target_os = "windows")]
-fn collect_storage_health_info() -> Result<serde_json::Value, String> {
+pub(super) fn collect_storage_health_info() -> Result<serde_json::Value, String> {
     // Storage serials and volume labels are deliberately excluded. The page
     // needs only non-identifying capacity, health, and reliability data.
     const SCRIPT: &str = r#"
@@ -836,19 +838,19 @@ try { $volumes = @(Get-Volume | Where-Object { $_.DriveLetter -and $_.DriveType 
 }
 
 #[cfg(not(target_os = "windows"))]
-fn collect_storage_health_info() -> Result<serde_json::Value, String> {
+pub(super) fn collect_storage_health_info() -> Result<serde_json::Value, String> {
     Err("Storage and health inspection is currently available on Windows only".to_string())
 }
 
 #[tauri::command]
-async fn get_network_devices_info() -> Result<serde_json::Value, String> {
+pub(super) async fn get_network_devices_info() -> Result<serde_json::Value, String> {
     tokio::task::spawn_blocking(collect_network_devices_info)
         .await
         .map_err(|error| format!("Network and device inspection worker failed: {}", error))?
 }
 
 #[cfg(target_os = "windows")]
-fn collect_network_devices_info() -> Result<serde_json::Value, String> {
+pub(super) fn collect_network_devices_info() -> Result<serde_json::Value, String> {
     // Deliberately exclude addresses and identifiers: IP, MAC, Bluetooth
     // address, device instance path, and serial values do not help this page.
     const SCRIPT: &str = r#"
@@ -899,19 +901,19 @@ $audioRaw = @(Get-CimInstance Win32_SoundDevice | ForEach-Object {
 }
 
 #[cfg(not(target_os = "windows"))]
-fn collect_network_devices_info() -> Result<serde_json::Value, String> {
+pub(super) fn collect_network_devices_info() -> Result<serde_json::Value, String> {
     Err("Network and device inspection is currently available on Windows only".to_string())
 }
 
 #[tauri::command]
-async fn get_power_sensors_info() -> Result<serde_json::Value, String> {
+pub(super) async fn get_power_sensors_info() -> Result<serde_json::Value, String> {
     tokio::task::spawn_blocking(collect_power_sensors_info)
         .await
         .map_err(|error| format!("Power and sensor inspection worker failed: {}", error))?
 }
 
 #[cfg(target_os = "windows")]
-fn collect_power_sensors_info() -> Result<serde_json::Value, String> {
+pub(super) fn collect_power_sensors_info() -> Result<serde_json::Value, String> {
     // Battery serial numbers, power-plan GUIDs, and sensor instance paths are
     // deliberately omitted. This page only needs human-readable read-only data.
     const SCRIPT: &str = r#"
@@ -1001,12 +1003,12 @@ $fans = @(Get-CimInstance Win32_Fan | ForEach-Object {
 }
 
 #[cfg(not(target_os = "windows"))]
-fn collect_power_sensors_info() -> Result<serde_json::Value, String> {
+pub(super) fn collect_power_sensors_info() -> Result<serde_json::Value, String> {
     Err("Power and sensor inspection is currently available on Windows only".to_string())
 }
 
 #[tauri::command]
-async fn scan_large_files(
+pub(super) async fn scan_large_files(
     root_path: String,
     min_size_mb: Option<u64>,
     mode: Option<String>,
@@ -1016,7 +1018,7 @@ async fn scan_large_files(
         .map_err(|error| format!("Large file scan worker failed: {}", error))?
 }
 
-fn collect_large_files(
+pub(super) fn collect_large_files(
     root_path: String,
     min_size_mb: Option<u64>,
     mode: Option<String>,
@@ -1129,12 +1131,12 @@ fn collect_large_files(
 }
 
 #[tauri::command]
-fn get_cleanup_drive_space(root_path: String) -> Result<Option<CleanupDriveSpace>, String> {
+pub(super) fn get_cleanup_drive_space(root_path: String) -> Result<Option<CleanupDriveSpace>, String> {
     cleanup_drive_space_from_path(&root_path)
 }
 
 #[cfg(target_os = "windows")]
-fn cleanup_drive_space_from_path(root_path: &str) -> Result<Option<CleanupDriveSpace>, String> {
+pub(super) fn cleanup_drive_space_from_path(root_path: &str) -> Result<Option<CleanupDriveSpace>, String> {
     use std::os::windows::process::CommandExt;
 
     if root_path.contains('\0') {
@@ -1188,12 +1190,12 @@ if ($null -ne $disk) {{
 }
 
 #[cfg(not(target_os = "windows"))]
-fn cleanup_drive_space_from_path(_root_path: &str) -> Result<Option<CleanupDriveSpace>, String> {
+pub(super) fn cleanup_drive_space_from_path(_root_path: &str) -> Result<Option<CleanupDriveSpace>, String> {
     Ok(None)
 }
 
 #[cfg(target_os = "windows")]
-fn cleanup_drive_root_letter_from_input(root_path: &str) -> Option<char> {
+pub(super) fn cleanup_drive_root_letter_from_input(root_path: &str) -> Option<char> {
     let trimmed = root_path.trim();
     let without_verbatim = trimmed.strip_prefix(r"\\?\").unwrap_or(trimmed);
     let bytes = without_verbatim.as_bytes();
@@ -1206,7 +1208,7 @@ fn cleanup_drive_root_letter_from_input(root_path: &str) -> Option<char> {
     cleanup_drive_root_letter(std::path::Path::new(root_path))
 }
 
-fn canonical_scan_root(root_path: &str) -> Result<std::path::PathBuf, String> {
+pub(super) fn canonical_scan_root(root_path: &str) -> Result<std::path::PathBuf, String> {
     if root_path.contains('\0') {
         return Err("Invalid scan folder".to_string());
     }
@@ -1222,7 +1224,7 @@ fn canonical_scan_root(root_path: &str) -> Result<std::path::PathBuf, String> {
     Ok(root)
 }
 
-fn normalize_large_file_mode(mode: Option<&str>) -> String {
+pub(super) fn normalize_large_file_mode(mode: Option<&str>) -> String {
     match mode.unwrap_or("video").to_ascii_lowercase().as_str() {
         "all" | "video" | "archives" | "installers" | "documents" | "images" | "audio"
         | "models" => mode.unwrap_or("video").to_ascii_lowercase(),
@@ -1230,7 +1232,7 @@ fn normalize_large_file_mode(mode: Option<&str>) -> String {
     }
 }
 
-fn cleanup_file_category(extension: &str) -> &'static str {
+pub(super) fn cleanup_file_category(extension: &str) -> &'static str {
     match extension {
         "mp4" | "mov" | "mkv" | "avi" | "webm" | "flv" | "m4v" | "wmv" | "ts" | "mpeg" | "mpg" => {
             "video"
@@ -1246,11 +1248,11 @@ fn cleanup_file_category(extension: &str) -> &'static str {
     }
 }
 
-fn cleanup_mode_allows(mode: &str, category: &str) -> bool {
+pub(super) fn cleanup_mode_allows(mode: &str, category: &str) -> bool {
     mode == "all" || mode == category
 }
 
-fn is_broad_or_protected_cleanup_root(path: &std::path::Path) -> bool {
+pub(super) fn is_broad_or_protected_cleanup_root(path: &std::path::Path) -> bool {
     let text = path.to_string_lossy().to_ascii_lowercase();
     #[cfg(target_os = "windows")]
     {
@@ -1286,7 +1288,7 @@ fn is_broad_or_protected_cleanup_root(path: &std::path::Path) -> bool {
 }
 
 #[cfg(target_os = "windows")]
-fn cleanup_drive_root_letter(path: &std::path::Path) -> Option<char> {
+pub(super) fn cleanup_drive_root_letter(path: &std::path::Path) -> Option<char> {
     let mut components = path.components();
     let drive = match components.next() {
         Some(std::path::Component::Prefix(prefix)) => match prefix.kind() {
@@ -1306,7 +1308,7 @@ fn cleanup_drive_root_letter(path: &std::path::Path) -> Option<char> {
     Some(drive)
 }
 
-fn cleanup_display_path(path: &std::path::Path) -> String {
+pub(super) fn cleanup_display_path(path: &std::path::Path) -> String {
     let text = path.to_string_lossy().into_owned();
     #[cfg(target_os = "windows")]
     {
@@ -1320,7 +1322,7 @@ fn cleanup_display_path(path: &std::path::Path) -> String {
     text
 }
 
-fn protected_cleanup_dir_names(path: &std::path::Path) -> Vec<String> {
+pub(super) fn protected_cleanup_dir_names(path: &std::path::Path) -> Vec<String> {
     path.components()
         .filter_map(|component| match component {
             std::path::Component::Normal(value) => {
@@ -1331,7 +1333,7 @@ fn protected_cleanup_dir_names(path: &std::path::Path) -> Vec<String> {
         .collect()
 }
 
-fn should_skip_cleanup_dir(path: &std::path::Path, root: &std::path::Path) -> bool {
+pub(super) fn should_skip_cleanup_dir(path: &std::path::Path, root: &std::path::Path) -> bool {
     if path != root && is_broad_or_protected_cleanup_root(path) {
         return true;
     }
@@ -1357,7 +1359,7 @@ fn should_skip_cleanup_dir(path: &std::path::Path, root: &std::path::Path) -> bo
     )
 }
 
-fn cleanup_folder_hint(path: &std::path::Path, root: &std::path::Path) -> String {
+pub(super) fn cleanup_folder_hint(path: &std::path::Path, root: &std::path::Path) -> String {
     let parent = path.parent().unwrap_or(root);
     let relative = parent.strip_prefix(root).unwrap_or(parent);
     let hint = relative.to_string_lossy().trim().to_string();
@@ -1368,7 +1370,7 @@ fn cleanup_folder_hint(path: &std::path::Path, root: &std::path::Path) -> String
     }
 }
 
-fn cleanup_local_risk(path: &std::path::Path, category: &str, size_bytes: u64) -> (String, String) {
+pub(super) fn cleanup_local_risk(path: &std::path::Path, category: &str, size_bytes: u64) -> (String, String) {
     let text = path.to_string_lossy().to_ascii_lowercase();
     let file_name = path
         .file_name()
@@ -1426,14 +1428,14 @@ fn cleanup_local_risk(path: &std::path::Path, category: &str, size_bytes: u64) -
 }
 
 #[tauri::command]
-async fn move_files_to_recycle_bin(paths: Vec<String>) -> Result<RecycleBinMoveResult, String> {
+pub(super) async fn move_files_to_recycle_bin(paths: Vec<String>) -> Result<RecycleBinMoveResult, String> {
     tokio::task::spawn_blocking(move || move_files_to_recycle_bin_blocking(paths))
         .await
         .map_err(|error| format!("Recycle bin worker failed: {}", error))?
 }
 
 #[cfg(target_os = "windows")]
-fn move_files_to_recycle_bin_blocking(paths: Vec<String>) -> Result<RecycleBinMoveResult, String> {
+pub(super) fn move_files_to_recycle_bin_blocking(paths: Vec<String>) -> Result<RecycleBinMoveResult, String> {
     let mut items = Vec::new();
     let mut moved = 0_usize;
     let mut failed = 0_usize;
@@ -1517,7 +1519,7 @@ fn move_files_to_recycle_bin_blocking(paths: Vec<String>) -> Result<RecycleBinMo
 }
 
 #[cfg(target_os = "windows")]
-fn move_single_file_to_recycle_bin(path: &std::path::Path) -> Result<(), String> {
+pub(super) fn move_single_file_to_recycle_bin(path: &std::path::Path) -> Result<(), String> {
     use windows::core::PCWSTR;
     use windows::Win32::UI::Shell::{
         SHFileOperationW, FOF_ALLOWUNDO, FOF_NOCONFIRMATION, FOF_NOERRORUI, FOF_SILENT, FO_DELETE,
@@ -1553,7 +1555,7 @@ fn move_single_file_to_recycle_bin(path: &std::path::Path) -> Result<(), String>
 
 #[cfg(target_os = "windows")]
 #[allow(dead_code)]
-fn move_files_to_recycle_bin_blocking_powershell_fallback(
+pub(super) fn move_files_to_recycle_bin_blocking_powershell_fallback(
     paths: Vec<String>,
 ) -> Result<RecycleBinMoveResult, String> {
     use std::io::Write;
@@ -1723,7 +1725,7 @@ $result | ConvertTo-Json -Depth 4 -Compress
 }
 
 #[cfg(not(target_os = "windows"))]
-fn move_files_to_recycle_bin_blocking(_paths: Vec<String>) -> Result<RecycleBinMoveResult, String> {
+pub(super) fn move_files_to_recycle_bin_blocking(_paths: Vec<String>) -> Result<RecycleBinMoveResult, String> {
     Err("Recycle bin cleanup is currently available on Windows only".to_string())
 }
 

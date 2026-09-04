@@ -1,4 +1,5 @@
 import { Renderer, Camera, Transform, Program, Mesh, Geometry } from 'ogl';
+import { createBackgroundFrameLimiter } from './shared/animation-policy.js';
 
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
@@ -179,18 +180,62 @@ export function initPlasmaWave(container, options = {}) {
   resize();
 
   const startTime = performance.now();
-  let animateId;
+  let animateId = 0;
+  let isVisible = true;
+  let pageVisible = typeof document === 'undefined' || !document.hidden;
+  let destroyed = false;
+  const frameLimiter = createBackgroundFrameLimiter();
+
+  const stop = () => {
+    if (animateId) cancelAnimationFrame(animateId);
+    animateId = 0;
+  };
+
+  const start = () => {
+    if (!destroyed && isVisible && pageVisible && !animateId) {
+      animateId = requestAnimationFrame(update);
+    }
+  };
 
   function update(now) {
+    animateId = 0;
+    if (destroyed || !isVisible || !pageVisible) return;
+    if (!frameLimiter.shouldRender(now)) {
+      start();
+      return;
+    }
     program.uniforms.iTime.value = (now - startTime) * 0.001;
     renderer.render({ scene, camera });
-    animateId = requestAnimationFrame(update);
+    start();
   }
 
-  animateId = requestAnimationFrame(update);
+  const intersectionObserver = typeof IntersectionObserver === 'function'
+    ? new IntersectionObserver(([entry]) => {
+      const wasVisible = isVisible;
+      isVisible = Boolean(entry?.isIntersecting);
+      if (isVisible && !wasVisible) start();
+      else if (!isVisible) stop();
+    }, { threshold: 0 })
+    : null;
+  intersectionObserver?.observe(container);
+  const onVisibilityChange = () => {
+    pageVisible = !document.hidden;
+    pageVisible ? start() : stop();
+  };
+  const onPageHide = () => { pageVisible = false; stop(); };
+  const onPageShow = () => { pageVisible = !document.hidden; start(); };
+  document.addEventListener('visibilitychange', onVisibilityChange);
+  window.addEventListener('pagehide', onPageHide);
+  window.addEventListener('pageshow', onPageShow);
+  start();
 
   return () => {
-    cancelAnimationFrame(animateId);
+    destroyed = true;
+    stop();
+    document.removeEventListener('visibilitychange', onVisibilityChange);
+    window.removeEventListener('pagehide', onPageHide);
+    window.removeEventListener('pageshow', onPageShow);
+    intersectionObserver?.disconnect();
     ro.disconnect();
     if (container && gl.canvas.parentNode === container) {
       container.removeChild(gl.canvas);

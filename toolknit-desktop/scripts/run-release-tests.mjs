@@ -6,6 +6,7 @@ const releaseTests = [
   'test:update-service',
   'test:window-radius',
   'test:architecture',
+  'test:animation-policy',
   'test:system-cleanup',
   'test:cleanup-tools-contract',
   'test:excel-to-pdf',

@@ -42,7 +42,10 @@
       import { createAiRequestRuntime } from './app/ai-request-runtime.js';
       import { extractJson } from './app/json-extractor.js';
       import { createToastManager } from './app/toast-manager.js';
+      import { createHelpCenterRuntime } from './app/help-center-runtime.js';
       import { createHomeController } from './app/home-controller.js';
+      import { createScreenPickerSettingsRuntime } from './app/screen-picker-settings-runtime.js';
+      import { createCustomBackgroundSettingsRuntime } from './app/custom-background-settings-runtime.js';
       import {
         PPT_TEXT_EXTRACT_LIMITS,
         analyzePptxText,
@@ -83,6 +86,11 @@
       const WINDOW_SAFE_MARGIN = 32;
       const isTauri = typeof window !== 'undefined' && !!window.__TAURI_INTERNALS__;
       let lazyFeatureRegistry = null;
+      let customBackgroundSettingsRuntime = null;
+
+      function syncCustomBackgroundPreviewPlayback() {
+        customBackgroundSettingsRuntime?.syncPreviewPlayback?.();
+      }
 
       function readTextStatsDocument(file) {
         return readTextDocument(file, {
@@ -515,16 +523,6 @@
         syncWindowRadiusControls();
       });
 
-      // Refresh help content on language change
-      onLangChange(() => {
-        helpSearchCache = null;
-        const activeItem = helpNav && helpNav.querySelector('.help-nav-item.active');
-        if (activeItem && activeItem.dataset.helpSection) {
-          showHelpSection(activeItem.dataset.helpSection);
-        }
-      });
-
-
       async function ensureFfmpegAvailable() {
         if (!isTauri) return false;
         try {
@@ -600,319 +598,20 @@
         void refreshStoragePath();
       });
 
-      // ===== Custom Advanced Dark background =====
-      // Keep only lightweight metadata in localStorage. Desktop media is
-      // copied into app data by Rust and exposed through the local range
-      // server; browser fallback stores a small data URL for development.
-      const CUSTOM_BACKGROUND_BROWSER_MAX_BYTES = 8 * 1024 * 1024;
-      const settingsBackgroundPreview = document.getElementById('settingsBackgroundPreview');
-      const settingsBackgroundSummary = document.getElementById('settingsBackgroundSummary');
-      const chooseBackgroundImage = document.getElementById('chooseBackgroundImage');
-      const chooseBackgroundVideo = document.getElementById('chooseBackgroundVideo');
-      const clearCustomBackground = document.getElementById('clearCustomBackground');
-      const customBackgroundImageInput = document.getElementById('customBackgroundImageInput');
-      const customBackgroundVideoInput = document.getElementById('customBackgroundVideoInput');
-      const settingsBackgroundImportStatus = document.getElementById('settingsBackgroundImportStatus');
-      const settingsBackgroundImportTrack = document.getElementById('settingsBackgroundImportTrack');
-      const settingsBackgroundImportLabel = document.getElementById('settingsBackgroundImportLabel');
-      let customBackgroundRenderToken = 0;
-      let customBackgroundPreviewMedia = null;
-      let customBackgroundImportBusy = false;
-
-      function readCustomBackgroundMetadata() {
-        try {
-          const raw = localStorage.getItem(CUSTOM_BACKGROUND_STORAGE_KEY);
-          if (!raw) return null;
-          const parsed = JSON.parse(raw);
-          if (!parsed || !['image', 'video'].includes(String(parsed.type || parsed.media_type))) return null;
-          return {
-            ...parsed,
-            type: parsed.type === 'video' || parsed.media_type === 'video' ? 'video' : 'image'
-          };
-        } catch {
-          return null;
-        }
-      }
-
-      function saveCustomBackgroundMetadata(metadata) {
-        try {
-          if (!metadata) localStorage.removeItem(CUSTOM_BACKGROUND_STORAGE_KEY);
-          else localStorage.setItem(CUSTOM_BACKGROUND_STORAGE_KEY, JSON.stringify(metadata));
-        } catch (error) {
-          console.warn('Unable to persist custom background metadata:', error);
-        }
-      }
-
-      function customBackgroundName(path = '') {
-        const value = String(path || '');
-        return value.split(/[\\/]/).pop() || '';
-      }
-
-      function customBackgroundImportLabel(phase = 'preparing') {
-        const labels = {
-          validating: 'settings.backgroundImportPreparing',
-          prepare: 'settings.backgroundImportPreparing',
-          preparing: 'settings.backgroundImportPreparing',
-          copying: 'settings.backgroundImportCopying',
-          probing: 'settings.backgroundImportAnalyzing',
-          analyzing: 'settings.backgroundImportAnalyzing',
-          converting: 'settings.backgroundImportTranscoding',
-          transcoding: 'settings.backgroundImportTranscoding',
-          verify: 'settings.backgroundImportFinalizing',
-          finalizing: 'settings.backgroundImportFinalizing',
-          complete: 'settings.backgroundImportComplete',
-          error: 'settings.backgroundImportFailed',
-          failed: 'settings.backgroundImportFailed'
-        };
-        return t(labels[String(phase || '').toLowerCase()] || 'settings.backgroundImportPreparing');
-      }
-
-      function syncCustomBackgroundControls() {
-        const hasBackground = Boolean(readCustomBackgroundMetadata());
-        if (chooseBackgroundImage) chooseBackgroundImage.disabled = customBackgroundImportBusy;
-        if (chooseBackgroundVideo) chooseBackgroundVideo.disabled = customBackgroundImportBusy;
-        if (clearCustomBackground) clearCustomBackground.disabled = customBackgroundImportBusy || !hasBackground;
-      }
-
-      function setCustomBackgroundImportState(active, { percent = 0, phase = 'preparing' } = {}) {
-        customBackgroundImportBusy = Boolean(active);
-        const rawPercent = Number(percent) || 0;
-        // Rust progress is normalized to 0..1; local browser stages use an
-        // already human-facing 0..100 range.
-        const normalizedPercent = Math.max(0, Math.min(100, rawPercent <= 1 ? rawPercent * 100 : rawPercent));
-        if (settingsBackgroundImportStatus) settingsBackgroundImportStatus.hidden = !customBackgroundImportBusy;
-        if (settingsBackgroundImportLabel && customBackgroundImportBusy) {
-          settingsBackgroundImportLabel.textContent = customBackgroundImportLabel(phase);
-        }
-        if (settingsBackgroundImportTrack) {
-          settingsBackgroundImportTrack.value = normalizedPercent;
-          settingsBackgroundImportTrack.setAttribute('aria-valuenow', String(Math.round(normalizedPercent)));
-        }
-        syncCustomBackgroundControls();
-      }
-
-      function dispatchCustomBackgroundChange(metadata, src = '') {
-        window.dispatchEvent(new CustomEvent('toolknit-custom-background-change', {
-          detail: metadata ? { ...metadata, src } : null
-        }));
-      }
-
-      function resetCustomBackgroundPreview() {
-        if (!settingsBackgroundPreview) return;
-        settingsBackgroundPreview.querySelectorAll('img, video').forEach(media => {
-          try { media.pause?.(); } catch {}
-          media.removeAttribute('src');
-          media.load?.();
-          media.remove();
-        });
-        customBackgroundPreviewMedia = null;
-        settingsBackgroundPreview.classList.remove('has-media');
-        const copy = settingsBackgroundPreview.querySelector('.settings-v2-background-preview-copy');
-        if (copy) copy.hidden = false;
-        syncCustomBackgroundControls();
-      }
-
-      function syncCustomBackgroundPreviewPlayback() {
-        const media = customBackgroundPreviewMedia;
-        if (!(media instanceof HTMLVideoElement)) return;
-        const shouldPlay = Boolean(settingsOverlay?.classList.contains('visible') && !document.hidden);
-        if (shouldPlay) media.play().catch(() => {});
-        else media.pause();
-      }
-
-      function setCustomBackgroundSummary(metadata = null) {
-        if (!settingsBackgroundSummary) return;
-        if (!metadata) {
-          settingsBackgroundSummary.textContent = t('settings.customBackgroundEmptyHint');
-          return;
-        }
-        const kind = metadata.type === 'video' ? t('settings.chooseBackgroundVideo') : t('settings.chooseBackgroundImage');
-        settingsBackgroundSummary.textContent = `${kind} · ${metadata.name || customBackgroundName(metadata.path) || t('settings.customBackground')}`;
-      }
-
-      async function renderCustomBackground(metadata) {
-        const token = ++customBackgroundRenderToken;
-        resetCustomBackgroundPreview();
-        if (!metadata) {
-          setCustomBackgroundSummary(null);
-          dispatchCustomBackgroundChange(null);
-          return;
-        }
-        let src = metadata.src || '';
-        try {
-          if (!src && isTauri && metadata.path) {
-            const { invoke } = await tauriCorePromise;
-            src = await invoke('get_custom_background_media_url', { path: metadata.path });
-          }
-          if (!src) throw new Error('Background source is unavailable');
-          if (token !== customBackgroundRenderToken || !settingsBackgroundPreview) return;
-          const isVideo = metadata.type === 'video' || metadata.media_type === 'video';
-          const media = document.createElement(isVideo ? 'video' : 'img');
-          media.src = src;
-          media.alt = '';
-          media.setAttribute('aria-hidden', 'true');
-          if (isVideo) {
-            media.muted = true;
-            media.loop = true;
-            media.autoplay = false;
-            media.playsInline = true;
-            media.preload = 'metadata';
-            media.addEventListener('error', () => window.showToast?.(t('settings.customBackgroundImportFailed')), { once: true });
-          } else {
-            media.decoding = 'async';
-            media.addEventListener('error', () => window.showToast?.(t('settings.customBackgroundImportFailed')), { once: true });
-          }
-          settingsBackgroundPreview.appendChild(media);
-          customBackgroundPreviewMedia = isVideo ? media : null;
-          syncCustomBackgroundPreviewPlayback();
-          settingsBackgroundPreview.classList.add('has-media');
-          const copy = settingsBackgroundPreview.querySelector('.settings-v2-background-preview-copy');
-          if (copy) copy.hidden = true;
-          setCustomBackgroundSummary(metadata);
-          syncCustomBackgroundControls();
-          dispatchCustomBackgroundChange(metadata, src);
-        } catch (error) {
-          console.error('Failed to render custom background:', error);
-          setCustomBackgroundSummary(null);
-          syncCustomBackgroundControls();
-          window.showToast?.(t('settings.customBackgroundImportFailed'));
-          dispatchCustomBackgroundChange(null);
-        }
-      }
-
-      function fileToDataUrl(file) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(String(reader.result || ''));
-          reader.onerror = () => reject(reader.error || new Error('Unable to read background file'));
-          reader.readAsDataURL(file);
-        });
-      }
-
-      async function importBrowserBackground(file, type) {
-        if (!file || customBackgroundImportBusy) return;
-        const mime = String(file.type || '').toLowerCase();
-        const extension = String(file.name || '').toLowerCase().split('.').pop();
-        const allowedExtensions = type === 'video'
-          ? ['mp4', 'webm', 'ogv', 'ogg', 'mov']
-          : ['png', 'jpg', 'jpeg', 'webp', 'avif', 'gif', 'bmp'];
-        const validType = type === 'video' ? mime.startsWith('video/') : mime.startsWith('image/');
-        if (!validType && !allowedExtensions.includes(extension)) {
-          window.showToast?.(t('settings.customBackgroundImportFailed'));
-          return;
-        }
-        if (file.size > CUSTOM_BACKGROUND_BROWSER_MAX_BYTES) {
-          window.showToast?.(t('settings.customBackgroundTooLarge'));
-          return;
-        }
-        setCustomBackgroundImportState(true, { percent: 12, phase: 'preparing' });
-        try {
-          setCustomBackgroundImportState(true, { percent: 48, phase: 'copying' });
-          const src = await fileToDataUrl(file);
-          const metadata = { type, media_type: type, name: file.name, mime: file.type, size: file.size, src };
-          saveCustomBackgroundMetadata(metadata);
-          setCustomBackgroundImportState(true, { percent: 88, phase: 'finalizing' });
-          await renderCustomBackground(metadata);
-          setCustomBackgroundImportState(true, { percent: 100, phase: 'complete' });
-        } catch (error) {
-          console.error('Failed to import browser background:', error);
-          setCustomBackgroundImportState(true, { percent: 0, phase: 'failed' });
-          window.showToast?.(t('settings.customBackgroundImportFailed'));
-        } finally {
-          window.setTimeout(() => setCustomBackgroundImportState(false), 220);
-        }
-      }
-
-      async function chooseDesktopBackground(type) {
-        if (customBackgroundImportBusy) return;
-        let unlistenProgress = null;
-        try {
-          const { open } = await import('@tauri-apps/plugin-dialog');
-          const extensions = type === 'video'
-            ? ['mp4', 'webm', 'ogv', 'ogg', 'mov']
-            : ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'];
-          const selected = await open({
-            multiple: false,
-            directory: false,
-            title: type === 'video' ? t('settings.chooseBackgroundVideo') : t('settings.chooseBackgroundImage'),
-            filters: [{ name: type === 'video' ? 'Video' : 'Image', extensions }]
-          });
-          if (!selected || Array.isArray(selected)) return;
-          const jobId = `background-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-          const [{ invoke }, { listen }] = await Promise.all([
-            tauriCorePromise,
-            tauriEventPromise
-          ]);
-          setCustomBackgroundImportState(true, {
-            percent: type === 'video' ? 6 : 10,
-            phase: type === 'video' ? 'analyzing' : 'copying'
-          });
-          unlistenProgress = await listen('custom-background-import-progress', event => {
-            const progress = event?.payload || {};
-            const progressJobId = progress.jobId || progress.job_id;
-            if (progressJobId && progressJobId !== jobId) return;
-            setCustomBackgroundImportState(true, {
-              percent: progress.percent,
-              phase: progress.phase || 'preparing'
-            });
-          });
-          const asset = await invoke('import_custom_background', { sourcePath: selected, jobId });
-          const metadata = {
-            type: asset?.media_type === 'video' ? 'video' : type,
-            media_type: asset?.media_type || type,
-            path: asset?.path || selected,
-            name: customBackgroundName(selected)
-          };
-          saveCustomBackgroundMetadata(metadata);
-          await renderCustomBackground(metadata);
-          setCustomBackgroundImportState(true, { percent: 100, phase: 'complete' });
-        } catch (error) {
-          console.error('Failed to import desktop background:', error);
-          setCustomBackgroundImportState(true, { percent: 0, phase: 'failed' });
-          window.showToast?.(String(error?.message || error) || t('settings.customBackgroundImportFailed'));
-        } finally {
-          try { unlistenProgress?.(); } catch {}
-          if (customBackgroundImportBusy) {
-            window.setTimeout(() => setCustomBackgroundImportState(false), 340);
-          }
-        }
-      }
-
-      chooseBackgroundImage?.addEventListener('click', () => {
-        if (isTauri) void chooseDesktopBackground('image');
-        else customBackgroundImageInput?.click();
+      // Custom background settings own import, preview and media cleanup.
+      customBackgroundSettingsRuntime = createCustomBackgroundSettingsRuntime({
+        root: document,
+        windowRef: window,
+        isTauri,
+        tauriCorePromise,
+        tauriEventPromise,
+        settingsOverlay,
+        storageKey: CUSTOM_BACKGROUND_STORAGE_KEY,
+        changeEvent: CUSTOM_BACKGROUND_CHANGE_EVENT,
+        translate: t,
+        showToast,
+        onLanguageChange: onLangChange
       });
-      chooseBackgroundVideo?.addEventListener('click', () => {
-        if (isTauri) void chooseDesktopBackground('video');
-        else customBackgroundVideoInput?.click();
-      });
-      customBackgroundImageInput?.addEventListener('change', event => {
-        void importBrowserBackground(event.target.files?.[0], 'image');
-        event.target.value = '';
-      });
-      customBackgroundVideoInput?.addEventListener('change', event => {
-        void importBrowserBackground(event.target.files?.[0], 'video');
-        event.target.value = '';
-      });
-      clearCustomBackground?.addEventListener('click', async () => {
-        if (customBackgroundImportBusy) return;
-        try {
-          if (isTauri) {
-            const { invoke } = await tauriCorePromise;
-            await invoke('clear_custom_background');
-          }
-          saveCustomBackgroundMetadata(null);
-          await renderCustomBackground(null);
-          window.showToast?.(t('settings.customBackgroundCleared'));
-        } catch (error) {
-          console.error('Failed to clear custom background:', error);
-          window.showToast?.(t('settings.customBackgroundImportFailed'));
-        }
-      });
-
-      void renderCustomBackground(readCustomBackgroundMetadata());
-      onLangChange(() => setCustomBackgroundSummary(readCustomBackgroundMetadata()));
-
       // ===== Local interface font overrides =====
       const fontSettingsRuntime = createFontSettingsRuntime({
         root: document,
@@ -960,110 +659,17 @@
 
       onLangChange(renderVersionUpdateStatus);
 
-      // ===== Screen picker global shortcut =====
-      const screenPickerShortcutBtn = document.getElementById('screenPickerShortcutBtn');
-      const screenPickerShortcutLabel = document.getElementById('screenPickerShortcutLabel');
-      const screenPickerShortcutReset = document.getElementById('screenPickerShortcutReset');
-      let screenPickerRecording = false;
-      let screenPickerKeyHandler = null;
-
-      async function refreshScreenPickerShortcut() {
-        if (!screenPickerShortcutLabel) return;
-        if (!isTauri) {
-          screenPickerShortcutLabel.textContent = 'Ctrl+Shift+C';
-          return;
-        }
-        try {
-          const { invoke } = await tauriCorePromise;
-          const info = await invoke('get_screen_picker_shortcut');
-          screenPickerShortcutLabel.textContent = info?.value || info?.default || 'Ctrl+Shift+C';
-        } catch (error) {
-          console.error('Cannot read screen picker shortcut:', error);
-          screenPickerShortcutLabel.textContent = 'Ctrl+Shift+C';
-        }
-      }
-
-      function stopScreenPickerRecording() {
-        screenPickerRecording = false;
-        if (screenPickerKeyHandler) {
-          window.removeEventListener('keydown', screenPickerKeyHandler, true);
-          screenPickerKeyHandler = null;
-        }
-        screenPickerShortcutBtn?.classList.remove('is-recording');
-      }
-
-      function screenPickerKeyToken(event) {
-        const code = event?.code || '';
-        if (/^Key[A-Z]$/.test(code)) return code.slice(3);
-        if (/^Digit[0-9]$/.test(code)) return code.slice(5);
-        if (/^F([1-9]|1[0-9]|2[0-4])$/.test(code)) return code;
-        return '';
-      }
-
-      function screenPickerShortcutFromEvent(event) {
-        const modifiers = [];
-        if (event.ctrlKey) modifiers.push('Ctrl');
-        if (event.altKey) modifiers.push('Alt');
-        if (event.shiftKey) modifiers.push('Shift');
-        if (event.metaKey) modifiers.push('Super');
-        const key = screenPickerKeyToken(event);
-        if (!key || key === 'Escape') return '';
-        return [...modifiers, key].join('+');
-      }
-
-      screenPickerShortcutBtn?.addEventListener('click', async () => {
-        if (!isTauri) {
-          showToast(getLang() === 'zh' ? '屏幕取色快捷键仅支持桌面版。' : 'Screen picker shortcut is desktop-only.');
-          return;
-        }
-        if (screenPickerRecording) {
-          stopScreenPickerRecording();
-          await refreshScreenPickerShortcut();
-          return;
-        }
-        screenPickerRecording = true;
-        screenPickerShortcutBtn.classList.add('is-recording');
-        screenPickerShortcutLabel.textContent = t('settings.screenPickerShortcutRecording');
-        screenPickerKeyHandler = async (event) => {
-          if (event.key === 'Escape') {
-            event.preventDefault();
-            stopScreenPickerRecording();
-            await refreshScreenPickerShortcut();
-            return;
-          }
-          const next = screenPickerShortcutFromEvent(event);
-          if (!next) return;
-          event.preventDefault();
-          event.stopPropagation();
-          stopScreenPickerRecording();
-          try {
-            const { invoke } = await tauriCorePromise;
-            await invoke('set_screen_picker_shortcut', { shortcut: next });
-            await refreshScreenPickerShortcut();
-            showToast(t('settings.screenPickerShortcutSaved'));
-          } catch (error) {
-            await refreshScreenPickerShortcut();
-            showToast(String(error?.message || error) || t('settings.screenPickerShortcutInvalid'));
-          }
-        };
-        window.addEventListener('keydown', screenPickerKeyHandler, true);
+      // Screen picker shortcut settings own their event and recording cleanup.
+      const screenPickerSettingsRuntime = createScreenPickerSettingsRuntime({
+        root: document,
+        windowRef: window,
+        isTauri,
+        tauriCorePromise,
+        translate: t,
+        getLanguage: getLang,
+        showToast,
+        onLanguageChange: onLangChange
       });
-
-      screenPickerShortcutReset?.addEventListener('click', async () => {
-        if (!isTauri) return;
-        try {
-          const { invoke } = await tauriCorePromise;
-          const info = await invoke('get_screen_picker_shortcut');
-          await invoke('set_screen_picker_shortcut', { shortcut: info?.default || 'Ctrl+Shift+C' });
-          stopScreenPickerRecording();
-          await refreshScreenPickerShortcut();
-          showToast(t('settings.screenPickerShortcutResetDone'));
-        } catch (error) {
-          showToast(String(error?.message || error));
-        }
-      });
-
-      void refreshScreenPickerShortcut();
 
       // ===== Offline model manager and local transcription =====
       const MODEL_SOURCE_KEY = 'toolknit.transcription-model-source.v1';
@@ -1768,7 +1374,6 @@
         renderDependencyGate();
       });
 
-      const helpBtn = document.getElementById('helpBtn');
       function openSettingsOverlay() {
         if (!settingsOverlay) return;
         document.getElementById('helpOverlay')?.classList.remove('visible');
@@ -1785,11 +1390,6 @@
           openSettingsOverlay();
         }));
       }
-      if (helpBtn) {
-        helpBtn.addEventListener('click', () => {
-          openHelpOverlay('overview');
-        });
-      }
 
       if (settingsBack && settingsOverlay) {
         settingsBack.addEventListener('click', () => {
@@ -1799,352 +1399,27 @@
         });
       }
 
-      const helpLink = document.getElementById('helpLink');
-      const feedbackLink = document.getElementById('feedbackLink');
-      const declarationLink = document.getElementById('declarationLink');
-      const usagePolicyLink = document.getElementById('usagePolicyLink');
-
-      if (helpLink) {
-        helpLink.addEventListener('click', (e) => {
-          e.preventDefault();
-          openHelpOverlay();
-        });
-      }
-
-      const helpOverlay = document.getElementById('helpOverlay');
-      const helpBackBtn = document.getElementById('helpBackBtn');
-      const helpNav = document.getElementById('helpNav');
-      const helpContentBody = document.getElementById('helpContentBody');
-      const helpContentTitle = document.getElementById('helpContentTitle');
-      const helpSearchInput = document.getElementById('helpSearchInput');
-
-      function openHelpOverlay(sectionId = 'overview') {
-        if (!helpOverlay) return;
-        // Help is a top-level modal. Close the settings modal first so the two
-        // focus/ARIA layers cannot remain visible at the same time.
-        if (settingsOverlay?.classList.contains('visible')) {
-          settingsOverlay.classList.remove('visible');
-          settingsOverlay.style.zIndex = '';
-          syncCustomBackgroundPreviewPlayback?.();
-        }
-        helpOverlay.classList.add('visible');
-        showHelpSection(sectionId || 'overview');
-      }
-
-      function closeHelpOverlay() {
-        if (!helpOverlay) return;
-        helpOverlay.classList.remove('visible');
-        if (helpSearchInput) helpSearchInput.value = '';
-        if (helpNav) {
-          helpNav.querySelectorAll('.help-nav-item').forEach(item => {
-            item.style.display = '';
-          });
-          helpNav.querySelectorAll('.help-nav-group').forEach(g => g.style.display = '');
-        }
-      }
-
-      if (helpBackBtn) {
-        helpBackBtn.addEventListener('click', closeHelpOverlay);
-      }
-
-      let helpSearchCache = null;
-      function buildHelpSearchCache() {
-        const content = getHelpContent();
-        if (helpSearchCache || !content) return;
-        helpSearchCache = {};
-        for (const key in content) {
-          const entry = content[key];
-          helpSearchCache[key] = (entry.title + ' ' + entry.html).toLowerCase();
-        }
-      }
-
-      function showHelpSection(sectionId) {
-        const content = getHelpContent();
-        if (!content || !content[sectionId]) return;
-        const data = content[sectionId];
-        if (helpContentTitle) helpContentTitle.textContent = data.title;
-        if (helpContentBody) {
-          helpContentBody.innerHTML = data.html;
-          helpContentBody.scrollTop = 0;
-        }
-        if (helpSearchInput) helpSearchInput.value = '';
-        if (helpNav) {
-          helpNav.querySelectorAll('.help-nav-item').forEach(item => {
-            item.style.display = '';
-            item.classList.toggle('active', item.dataset.helpSection === sectionId);
-          });
-          helpNav.querySelectorAll('.help-nav-group').forEach(g => g.style.display = '');
-        }
-      }
-
-      if (helpNav) {
-        helpNav.addEventListener('click', (e) => {
-          const item = e.target.closest('.help-nav-item');
-          if (!item) return;
-          const section = item.dataset.helpSection;
-          if (section) showHelpSection(section);
-        });
-      }
-
-      if (helpContentBody) {
-        helpContentBody.addEventListener('click', async (event) => {
-          const button = event.target.closest('.help-prompt-copy');
-          if (!button) return;
-          const prompt = button.dataset.copyPrompt || '';
-          if (!prompt) return;
-          const originalLabel = button.textContent;
-          try {
-            await navigator.clipboard.writeText(prompt);
-            button.textContent = getLang() === 'zh' ? '已复制' : 'Copied';
-            button.classList.add('is-copied');
-            setTimeout(() => {
-              button.textContent = originalLabel;
-              button.classList.remove('is-copied');
-            }, 1600);
-          } catch (error) {
-            console.error('Could not copy Agent prompt:', error);
-          }
-        });
-      }
-
-      if (helpSearchInput) {
-        helpSearchInput.addEventListener('input', () => {
-          const query = helpSearchInput.value.trim().toLowerCase();
-          if (!helpNav) return;
-          if (!query) {
-            helpNav.querySelectorAll('.help-nav-item').forEach(item => item.style.display = '');
-            helpNav.querySelectorAll('.help-nav-group').forEach(g => g.style.display = '');
-            const activeItem = helpNav.querySelector('.help-nav-item.active');
-            if (activeItem && activeItem.dataset.helpSection) {
-              const section = activeItem.dataset.helpSection;
-              const content = getHelpContent();
-              if (content[section]) {
-                helpContentTitle.textContent = content[section].title;
-                helpContentBody.innerHTML = content[section].html;
-              }
-            }
-            return;
-          }
-          buildHelpSearchCache();
-          let anyVisible = false;
-          helpNav.querySelectorAll('.help-nav-group').forEach(group => {
-            let groupHasVisible = false;
-            group.querySelectorAll('.help-nav-item').forEach(item => {
-              const text = (item.textContent || '').toLowerCase();
-              const section = item.dataset.helpSection || '';
-              const cached = (helpSearchCache && helpSearchCache[section]) || '';
-              const match = text.includes(query) || cached.includes(query);
-              item.style.display = match ? '' : 'none';
-              if (match) groupHasVisible = true;
-            });
-            group.style.display = groupHasVisible ? '' : 'none';
-            if (groupHasVisible) anyVisible = true;
-          });
-          if (helpContentBody) {
-            if (!anyVisible) {
-              helpContentBody.innerHTML = `<div class="help-search-empty">${escapeHtml(t('help.searchEmpty'))}</div>`;
-            }
-          }
-        });
-      }
-
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && helpOverlay && helpOverlay.classList.contains('visible')) {
-          closeHelpOverlay();
-        }
+      const helpCenterRuntime = createHelpCenterRuntime({
+        root: document,
+        windowRef: window,
+        translate: t,
+        getLanguage: getLang,
+        onLangChange,
+        getHelpContent,
+        getLegalContent,
+        escapeHtml,
+        initLightRays,
+        settingsOverlay,
+        settingsContent,
+        syncCustomBackgroundPreviewPlayback
       });
-
-      const feedbackOverlay = document.getElementById('feedbackOverlay');
-      const feedbackBack = document.getElementById('feedbackBack');
-      const feedbackSettings = document.getElementById('feedbackV2Settings');
-      const feedbackBtn = document.getElementById('feedbackBtn');
-      const lightraysBg = document.getElementById('lightraysBg');
-      let lightraysInstance = null;
-
-      function openFeedbackOverlay() {
-        if (!feedbackOverlay) return;
-        feedbackOverlay.classList.add('visible');
-        if (lightraysBg && !lightraysInstance) {
-          lightraysInstance = initLightRays(lightraysBg, {
-            raysOrigin: 'top-center',
-            raysColor: '#ffffff',
-            raysSpeed: 0.6,
-            lightSpread: 0.6,
-            rayLength: 3,
-            followMouse: true,
-            mouseInfluence: 0.1,
-            noiseAmount: 0,
-            distortion: 0,
-            pulsating: false,
-            fadeDistance: 1,
-            saturation: 1
-          });
-        }
-      }
-
-      function closeFeedbackOverlay() {
-        if (!feedbackOverlay) return;
-        feedbackOverlay.classList.remove('visible');
-        if (lightraysInstance) {
-          lightraysInstance.destroy();
-          lightraysInstance = null;
-        }
-      }
-
-      if (feedbackLink && feedbackOverlay) {
-        feedbackLink.addEventListener('click', (e) => {
-          e.preventDefault();
-          openFeedbackOverlay();
-        });
-      }
-
-      if (feedbackBtn && feedbackOverlay) {
-        feedbackBtn.addEventListener('click', () => {
-          openFeedbackOverlay();
-        });
-      }
-
-      if (feedbackBack && feedbackOverlay) {
-        feedbackBack.addEventListener('click', () => {
-          closeFeedbackOverlay();
-        });
-      }
-
-      if (feedbackSettings && feedbackOverlay) {
-        feedbackSettings.addEventListener('click', closeFeedbackOverlay);
-      }
-
-      // PPT image extraction is mounted by the lazy feature registry.
-
-
-
-      // Cleanup tools are mounted by the lazy feature registry.
-
-      // Audio Convert is mounted by the lazy feature registry.
-
-
-      // Random marquee reviews
-      const marqueeTrack = document.getElementById('marqueeTrack');
-      if (marqueeTrack) {
-        function getReviewers() {
-          return [
-            { name: 'Sarah', text: t('home.feedbackPage.review1') },
-            { name: 'Michael', text: t('home.feedbackPage.review2') },
-            { name: 'Emily', text: t('home.feedbackPage.review3') },
-            { name: 'David', text: t('home.feedbackPage.review4') },
-            { name: 'Jessica', text: t('home.feedbackPage.review5') },
-            { name: 'James', text: t('home.feedbackPage.review6') },
-            { name: 'Olivia', text: t('home.feedbackPage.review7') },
-            { name: 'Christopher', text: t('home.feedbackPage.review8') },
-            { name: 'Amanda', text: t('home.feedbackPage.review9') },
-            { name: 'Matthew', text: t('home.feedbackPage.review10') },
-            { name: 'Elizabeth', text: t('home.feedbackPage.review11') },
-            { name: 'Daniel', text: t('home.feedbackPage.review12') }
-          ];
-        }
-
-        function renderReviews() {
-          const stars = Array.from({ length: 5 }, () => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>').join('');
-          const reviewers = getReviewers();
-
-          const cards = reviewers.map((r, i) => {
-            const initial = r.name.charAt(0).toUpperCase();
-            const palettes = [
-              ['#667eea', '#764ba2'], ['#f093fb', '#f5576c'], ['#4facfe', '#00f2fe'],
-              ['#43e97b', '#38f9d7'], ['#fa709a', '#fee140'], ['#30cfd0', '#330867'],
-              ['#a8edea', '#fed6e3'], ['#ff9a9e', '#fecfef'], ['#ffecd2', '#fcb69f'],
-              ['#a18cd1', '#fbc2eb'], ['#fbc2eb', '#a6c1ee'], ['#84fab0', '#8fd3f4']
-            ];
-            const [c1, c2] = palettes[i % palettes.length];
-            const avatarSvg = `<div class="marquee-avatar" style="background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;">${escapeHtml(initial)}</div>`;
-            return `
-              <div class="marquee-card">
-                <div class="marquee-card-header">
-                  ${avatarSvg}
-                  <div class="marquee-info">
-                    <div class="marquee-name">${escapeHtml(r.name)}</div>
-                    <div class="marquee-stars">${stars}</div>
-                  </div>
-                </div>
-                <p class="marquee-text">${escapeHtml(r.text)}</p>
-              </div>
-            `;
-          }).join('');
-
-          // Duplicate for seamless loop
-          marqueeTrack.innerHTML = cards + cards;
-        }
-
-        renderReviews();
-        onLangChange(renderReviews);
-      }
-
-      // ===== Legal Overlay (Declaration & Usage Policy) =====
-      const legalOverlay = document.getElementById('legalOverlay');
-      const legalBackBtn = document.getElementById('legalBackBtn');
-      const legalNav = document.getElementById('legalNav');
-      const legalContentTitle = document.getElementById('legalContentTitle');
-      const legalContentBody = document.getElementById('legalContentBody');
-
-      function showLegalSection(sectionId) {
-        const content = getLegalContent();
-        if (!content || !content[sectionId]) return;
-        const data = content[sectionId];
-        if (legalContentTitle) legalContentTitle.textContent = data.title;
-        if (legalContentBody) {
-          legalContentBody.innerHTML = data.html;
-          legalContentBody.scrollTop = 0;
-        }
-        if (legalNav) {
-          legalNav.querySelectorAll('.help-nav-item').forEach(item => {
-            item.classList.toggle('active', item.dataset.legalSection === sectionId);
-          });
-        }
-      }
-
-      function openLegalOverlay(sectionId) {
-        if (legalOverlay) legalOverlay.classList.add('visible');
-        showLegalSection(sectionId || 'declaration');
-      }
-
-      function closeLegalOverlay() {
-        if (legalOverlay) legalOverlay.classList.remove('visible');
-      }
-
-      if (legalBackBtn) {
-        legalBackBtn.addEventListener('click', closeLegalOverlay);
-      }
-
-      if (legalNav) {
-        legalNav.querySelectorAll('.help-nav-item').forEach(item => {
-          item.addEventListener('click', () => {
-            const section = item.dataset.legalSection;
-            if (section) showLegalSection(section);
-          });
-        });
-      }
-
-      if (declarationLink) {
-        declarationLink.addEventListener('click', (e) => {
-          e.preventDefault();
-          openLegalOverlay('declaration');
-        });
-      }
-
-      if (usagePolicyLink) {
-        usagePolicyLink.addEventListener('click', (e) => {
-          e.preventDefault();
-          openLegalOverlay('usage-policy');
-        });
-      }
-
-      // Refresh legal content on language change
-      onLangChange(() => {
-        if (legalOverlay && legalOverlay.classList.contains('visible')) {
-          const activeItem = legalNav && legalNav.querySelector('.help-nav-item.active');
-          showLegalSection(activeItem ? activeItem.dataset.legalSection : 'declaration');
-        }
-      });
+      const {
+        openFeedbackOverlay,
+        openHelpOverlay,
+        openLegalOverlay,
+        showHelpSection,
+        showLegalSection
+      } = helpCenterRuntime;
 
       const aiSettingsRuntime = createAiSettingsRuntime({
         root: document,

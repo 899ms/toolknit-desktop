@@ -107,14 +107,18 @@ tool entry so it becomes a separate production chunk.
   command implementations, 126 unique command names, 46 MCP tools and the
   existing CLI contracts remain unchanged.
 - The current source footprint is 32 lines in `src/main.js`, 4 lines in
-  `src/styles.css`, 1,663 lines in `index.html`, 2,633 lines in the
+  `src/styles.css`, 1,663 lines in `index.html`, 1,909 lines in the
   application composition runtime and 48 lines in the Rust crate entry.
-  Large Rust implementation files remain grouped by cohesive native domain
-  behind the 24-line `native_runtime.rs` include boundary.
-- The production entry is approximately 1,308.94 kB JavaScript and 344.52 kB
+- The native boundary is composed of explicit `core`, `dependencies`,
+  `transcription`, `pdf`, `image`, `media`, `system`, `office` and `runner`
+  modules. It contains 38 Rust files; the largest is `system.rs` at 1,872
+  lines, and no native file exceeds the 2,000-line review threshold.
+- The production entry is approximately 1,311.06 kB JavaScript and 344.52 kB
   CSS. Heavy PDF, editor, AI, chart, media, PPT and picker dependencies are
   emitted as lazy chunks and loaded only when their tools open. The remaining
-  chunks over 500 kB are known non-blocking warnings.
+  chunks over 500 kB are known non-blocking warnings: the PDF worker (2,383.40
+  kB), one tool chunk (1,004.39 kB), ExcelJS (929.56 kB), fontkit (710.96 kB),
+  and one shared chunk (662.10 kB).
 
 ## Migrated ownership
 

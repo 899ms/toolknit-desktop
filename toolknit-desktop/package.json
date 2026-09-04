@@ -94,6 +94,7 @@
     "test:update-service": "node scripts/test-update-service.mjs",
     "test:window-radius": "node scripts/test-window-radius-rendering.mjs",
     "test:architecture": "node scripts/test-app-architecture.mjs && node scripts/test-app-runtimes.mjs && node scripts/report-v3-architecture.mjs --check",
+    "test:animation-policy": "node scripts/test-animation-policy.mjs",
     "test:system-cleanup": "node scripts/test-system-cleanup-runtime.mjs",
     "test:cleanup-tools-contract": "node scripts/test-cleanup-tools-contract.mjs",
     "test:excel-to-pdf": "node scripts/test-excel-to-pdf-shell.mjs && cargo test --manifest-path src-tauri/Cargo.toml excel_to_pdf --lib",

@@ -2,7 +2,9 @@
 
 <img src="assets/readme/hero-v2.webp" alt="ToolKnit Desktop — ToolKnit spider web hero" width="100%" />
 
-<h1>ToolKnit Desktop 2.3</h1>
+<h1>ToolKnit Desktop 3.0</h1>
+
+<p><strong>V3.0 正式版准备中</strong> · 当前分支用于灰度验证，安装包将在完成真实 Windows 回归后发布。</p>
 
 <p><strong>本地文件工作台 · 桌面端、网页端与 AI Agent 工作流</strong></p>
 
@@ -18,7 +20,7 @@
 
 <p>
   <a href="README_EN.md"><img src="https://img.shields.io/badge/Language-English-475569?style=for-the-badge&labelColor=334155" alt="English README" /></a>
-  <img src="https://img.shields.io/badge/2.3.1-最新版本-16a34a?style=for-the-badge&labelColor=166534" alt="ToolKnit 2.3.1 current release" />
+  <img src="https://img.shields.io/badge/V3.0-灰度准备中-f59e0b?style=for-the-badge&labelColor=b45309" alt="ToolKnit Desktop 3.0 gray test preparation" />
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10/11" />
   <img src="https://img.shields.io/badge/Local--first-文件留在本机-0f766e?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/Tauri-2.x-475569?style=for-the-badge" alt="Tauri 2.x" />
@@ -46,20 +48,20 @@
       <p><img src="https://img.shields.io/badge/DESKTOP-Windows-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Windows desktop" /> <strong>再用桌面端</strong></p>
       <p>Windows 本地优先版本，适合长期文件工作、离线处理和可视化编辑。</p>
       <p><a href="https://github.com/ZihangDong/toolknit-desktop/releases"><strong>查看桌面端下载</strong></a></p>
-      <sub>2.3.1 安装包、SHA-256 校验文件和版本说明通过 GitHub Release 发布。</sub>
+      <sub>V3.0 安装包、SHA-256 校验文件和版本说明将在灰度验证完成后通过 GitHub Release 发布。</sub>
     </td>
   </tr>
 </table>
 
-## ToolKnit 2.3
+## ToolKnit 3.0
 
-ToolKnit Desktop 2.3 是一套面向 Windows 的本地文件工作台。它把常用文件处理、图像与 Markdown 创作、开发者工具、AI 内容生产、专业文档工作流和 IDE Agent 自动化放在同一个产品体系里。
+ToolKnit Desktop 3.0 是一套面向 Windows 的本地文件工作台。它把常用文件处理、图像与 Markdown 创作、开发者工具、AI 内容生产、专业文档工作流和 IDE Agent 自动化放在同一个产品体系里。
 
 同一份本地文件可以被桌面端预览、被 CLI 批处理、被 MCP Agent 调用，并且拥有明确的输入、输出、进度、错误和安全边界。
 
 <table width="100%" cellpadding="14" cellspacing="0">
   <tr>
-    <td align="center"><h3>65</h3><strong>桌面工具</strong></td>
+    <td align="center"><h3>68</h3><strong>桌面工具</strong></td>
     <td align="center"><h3>12</h3><strong>功能分类</strong></td>
     <td align="center"><h3>46</h3><strong>MCP 能力</strong></td>
     <td align="center"><h3>3</h3><strong>工作方式</strong></td>
@@ -68,23 +70,30 @@ ToolKnit Desktop 2.3 是一套面向 Windows 的本地文件工作台。它把�
   </tr>
 </table>
 
-## 2.3 核心更新
+## V3.0 核心更新
 
-V2.3 新增 5 项桌面工具，并完成更新、依赖下载、管理员重启、圆角渲染和工具页交互的兼容性加固：
+V3.0 是一次面向长期使用的完整升级：工具数量从 65 项扩展到 68 项，旧工具统一迁移到按需加载的模块边界，新工具、原生运行时和共享界面使用同一套输入、输出、进度、错误和清理契约。
 
-- `提词器`：支持平滑滚动、镜像、专注模式，以及 Windows 系统识别或 ToolKnit 离线识别驱动的句子级语音跟随。
-- `PDF 加页码`：支持页面范围、编号方式、起始值、文本模板、位置和外观预览，以矢量指令写入页码。
-- `PDF 裁剪`：支持可视化框选、精确边距、统一或逐页调整，通过修改页面边界完成无损裁剪。
-- `背景移除`：使用按需下载的本地模型生成透明背景，支持边缘优化、背景预览和原始分辨率导出。
-- `Excel 转 PDF`：批量读取 XLSX、XLS 和 ODS，通过 ToolKnit 管理的本地 LibreOffice 运行时渲染，并兼容 WPS 工作簿。
+### 新增能力
 
-同时完成一轮面向真实 Windows 环境的体验与兼容性加固：启动后空闲检查 GitHub Release，可延后提醒且不上传使用数据；安装器携带 WebView2 引导程序；依赖下载、安装阶段提示和管理员权限重启更可靠；工具页导航、导出弹窗与圆角渲染保持一致；PDF.js 使用兼容构建，修复旧版 WebView2 打开 PDF 失败的问题。
+- `PDF 文本转 Markdown`：解析有文本层的 PDF，按页重建阅读顺序、标题、段落、列表和基础表格，并直接导入 Markdown 编辑器继续修改。
+- `AI PDF 转 Markdown`：逐页生成视觉分析结果，再汇总为结构化 Markdown；保留页码来源、完整文档摘要、重试和取消能力。
+- `Windows 剪贴板历史`：开启监控后记录后续复制的文字、PNG 图片和文件路径，按时间线保存，支持搜索、筛选、收藏、图片预览和本地加密。
 
-桌面端、Tauri、Rust crate 与 `@toolknit/cli` 版本统一为 `2.3.1`；发布门禁覆盖 65 个桌面工具帮助映射、46 项 MCP 能力、完整前端回归、Rust 测试与发布安全检查。
+### 全面升级
 
-### 2.1 系列基础
+- `白天 / 深色模式`：PDF、PPT、AI、音视频、图像、文本、计算器、硬件、开发者和清理页面统一适配两套主题，补齐空状态、上传、处理中、成功、错误、焦点和禁用状态。
+- `PDF / PPT 工作台`：统一上传、预览、进度、导出和结果弹层；PDF 编辑支持页面操作、文字与图像插入、撤销重做和安全导出；PPT 工具共享转换、预览和素材工作流。
+- `AI 工作流`：AI 润色、翻译、文档、表格、PPT 大纲和 PPTX 草稿统一密钥门禁、失败恢复、重试和输出校验。
+- `媒体与离线能力`：FFmpeg、LibreOffice、Whisper 和本地视觉模型按需检测、下载和释放，转换过程保留取消、进度和依赖错误反馈。
+- `清理安全边界`：AI 大文件清理支持目录与 C 盘大文件扫描；C 盘清理按风险档位处理系统缓存，受保护目录、链接、系统属性和文件变化校验由原生层兜底。
+- `应用稳定性`：工具懒加载，重复打开、返回、Escape、窗口关闭和失败路径统一释放 Worker、Canvas、监听器、任务和临时资源，过期异步结果不会写入新会话。
 
-2.1 系列新增 11 项桌面工具，并围绕自定义背景、玻璃拟态交互、依赖复用、任务生命周期和失败恢复完成一轮系统升级。新工具继续遵循本地优先原则，重型编辑器与算法模块按需加载，离开页面后会释放 Worker、Canvas、监听器和临时资源。
+V3.0 的桌面端、Tauri、Rust 原生运行时和 `@toolknit/cli` 版本统一为 `3.0.0`。当前处于灰度测试阶段，正式安装包和 Release 文件会在真实 Windows 回归完成后发布。
+
+### 持续保留的基础能力
+
+ToolKnit 继续遵循本地优先原则：重型编辑器和算法模块按需加载，离开页面后主动释放后台资源；网页端、Windows 桌面端、CLI 和 MCP Agent 共用清晰的输入输出边界。
 
 <table cellpadding="16" cellspacing="0">
   <tr>
@@ -166,13 +175,13 @@ V2.3 新增 5 项桌面工具，并完成更新、依赖下载、管理员重启
 
 ## 完整功能目录
 
-下面按桌面端的 12 个分类列出全部 65 项工具。名称对应应用内入口，支持的 CLI / MCP 能力会在相应工具成熟后提供同一套输入输出契约。
+下面按桌面端的 12 个分类列出全部 68 项工具。名称对应应用内入口，支持的 CLI / MCP 能力会在相应工具成熟后提供同一套输入输出契约。
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/PDF-Document%20Studio-ed1c24?style=for-the-badge&logo=adobeacrobatreader&logoColor=white" alt="PDF Document Studio" /></td><td align="right" style="border:0;"><h3 align="right">PDF 文档工具 · 12 项</h3></td></tr>
+  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/PDF-Document%20Studio-ed1c24?style=for-the-badge&logo=adobeacrobatreader&logoColor=white" alt="PDF Document Studio" /></td><td align="right" style="border:0;"><h3 align="right">PDF 文档工具 · 14 项</h3></td></tr>
 </table>
 
-`PDF 合并` · `PDF 拆分` · `PDF 加页码` · `PDF 裁剪` · `PDF 转图像` · `PDF 编辑器` · `PDF 页面旋转` · `PDF 文件加密` · `PDF 文件解密` · `PDF 文件压缩` · `PDF 文字增强` · `Excel 转 PDF`
+`PDF 合并` · `PDF 拆分` · `PDF 加页码` · `PDF 裁剪` · `PDF 转图像` · `PDF 文本转 Markdown` · `AI PDF 转 Markdown` · `PDF 编辑器` · `PDF 页面旋转` · `PDF 文件加密` · `PDF 文件解密` · `PDF 文件压缩` · `PDF 文字增强` · `Excel 转 PDF`
 
 支持拖拽排序、逐页预览、选页导出、页码写入、无损裁剪、页面旋转、文字替换、文本与图像插入、追加合并、密码保护、扫描件增强、多等级压缩和工作簿本地渲染。PDF、工作簿、密码和导出结果默认只在本机处理。
 
@@ -238,7 +247,7 @@ Markdown 编辑器提供 GFM、Mermaid、数学公式、标题大纲、草稿恢
 
 `AI 大文件清理` · `C 盘清理`
 
-大文件清理先在本机扫描，再由本地规则和可选 AI 只分析文件名、大小、修改时间和目录线索；C 盘清理按风险级别检查可安全释放的系统空间。删除前逐项确认，最终移入回收站，不读取或上传文件内容。
+大文件清理先在本机扫描，可选择目录或扫描 C 盘中的大文件候选，再由本地规则和可选 AI 只分析文件名、大小、修改时间和目录线索；C 盘清理按低、中、高风险检查固定系统缓存空间。受保护目录、链接和系统属性会跳过，删除前逐项确认；大文件清理移入回收站，系统级 C 盘清理明确提示永久删除范围。
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/AI-AI%20Workbench-10a37f?style=for-the-badge&logo=openai&logoColor=white" alt="AI Workbench" /></td><td align="right" style="border:0;"><h3 align="right">AI 工作台 · 4 项</h3></td></tr>
@@ -249,12 +258,12 @@ Markdown 编辑器提供 GFM、Mermaid、数学公式、标题大纲、草稿恢
 AI 文档支持多页 PDF、可编辑工程文件、编号图、预览、检查、编辑、撤销和重新渲染；AI 表格支持 CSV、XLSX、PDF、PNG、可编辑项目、行列与图表编号、公式修改和重新渲染。只有明确调用 AI 时，相关文字才会发送到你配置的模型服务。
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/HARDWARE-System%20Inspector-0078d4?style=for-the-badge&logo=windows11&logoColor=white" alt="System Inspector" /></td><td align="right" style="border:0;"><h3 align="right">硬件工具 · 7 项</h3></td></tr>
+  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/HARDWARE-System%20Inspector-0078d4?style=for-the-badge&logo=windows11&logoColor=white" alt="System Inspector" /></td><td align="right" style="border:0;"><h3 align="right">硬件与系统工具 · 8 项</h3></td></tr>
 </table>
 
-`整机概览` · `CPU 与内存` · `GPU 与显示器` · `主板与固件` · `存储健康` · `网络设备` · `电源传感器`
+`整机概览` · `CPU 与内存` · `GPU 与显示器` · `主板与固件` · `存储健康` · `网络设备` · `电源传感器` · `Windows 剪贴板历史`
 
-只读查看 Windows、设备型号、CPU、内存、显卡、显示器、主板、BIOS、安全启动、TPM、虚拟化、磁盘、网络和电源传感器信息；CPU 与内存页面还提供实时状态刷新。
+只读查看 Windows、设备型号、CPU、内存、显卡、显示器、主板、BIOS、安全启动、TPM、虚拟化、磁盘、网络和电源传感器信息；CPU 与内存页面提供实时状态刷新，剪贴板历史按用户主动开启的监控记录后续复制内容。
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/DEVELOPER-Local%20Toolbox-475569?style=for-the-badge&logo=visualstudiocode&logoColor=white" alt="Local Developer Toolbox" /></td><td align="right" style="border:0;"><h3 align="right">开发者工具 · 6 项</h3></td></tr>
@@ -268,7 +277,7 @@ AI 文档支持多页 PDF、可编辑工程文件、编号图、预览、检查�
 
 <img src="https://img.shields.io/badge/LOCAL-默认本地-0f766e?style=for-the-badge" alt="Local first" /> **默认本地**：桌面端的 PDF、PPT、图像、音频、视频、文本、计算器、硬件和清理工具在设备本地运行，源文件不会上传到 ToolKnit 服务器。
 
-<img src="https://img.shields.io/badge/AI-明确授权-d97706?style=for-the-badge&logo=openai&logoColor=white" alt="AI requires explicit authorization" /> **明确授权**：只有主动使用 AI 润色、翻译、AI 文档、AI 表格、PPT 文本 AI 整理、AI PPT 大纲、AI PPTX 草稿或转写后的 `refine` 时，相关文字才会发送到你配置的模型服务。
+<img src="https://img.shields.io/badge/AI-明确授权-d97706?style=for-the-badge&logo=openai&logoColor=white" alt="AI requires explicit authorization" /> **明确授权**：只有主动使用 AI 润色、翻译、AI 文档、AI 表格、AI PDF 转 Markdown、PPT 文本 AI 整理、AI PPT 大纲、AI PPTX 草稿、AI 大文件复核或转写后的 `refine` 时，符合该功能说明的数据才会发送到你配置的模型服务；大文件清理只发送文件元数据，不发送文件内容。
 
 <img src="https://img.shields.io/badge/RUNTIME-按需依赖-2563eb?style=for-the-badge&logo=ffmpeg&logoColor=white" alt="Runtime dependencies on demand" /> **按需依赖**：优先复用本机已有的 FFmpeg 与 LibreOffice；Whisper 模型和缺失运行时按需下载，支持依赖检测、校验和镜像源选择。
 
@@ -276,7 +285,7 @@ CLI 和 MCP 默认要求明确输入与输出路径，不覆盖已有文件；�
 
 ## 技术栈
 
-ToolKnit 2.3 采用轻量桌面容器与本地文件引擎组合，网页端、桌面端、CLI 和 MCP 共用清晰的输入输出边界。
+ToolKnit 3.0 采用轻量桌面容器与本地文件引擎组合，网页端、桌面端、CLI 和 MCP 共用清晰的输入输出边界。
 
 <table cellpadding="10" cellspacing="0">
   <tr>
@@ -380,9 +389,9 @@ ToolKnit 2.3 采用轻量桌面容器与本地文件引擎组合，网页端、�
 
 ### 安装 Windows 桌面端
 
-从 [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases) 获取 2.3.1 安装包、版本说明和对应的 `.sha256` 文件。请只从本仓库 Release 页面下载，并在运行前核对 SHA-256 校验值。
+从 [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases) 获取当前稳定版安装包、版本说明和对应的 `.sha256` 文件。V3.0 当前处于灰度准备阶段，正式安装包会在验证完成后单独发布；请只从本仓库 Release 页面下载，并在运行前核对 SHA-256 校验值。
 
-**代码签名状态：** 2.3.1 暂未进行 Authenticode 代码签名，因此 Windows 可能显示“未知发布者”或 SmartScreen 提示。确认下载地址和 SHA-256 后再继续安装；后续签名版本将遵循[代码签名政策](CODE_SIGNING_POLICY.md)。
+**代码签名状态：** 当前公开安装包是否签名以对应 Release 说明为准。未签名版本可能显示“未知发布者”或 SmartScreen 提示；确认下载地址和 SHA-256 后再继续安装，后续签名版本遵循[代码签名政策](CODE_SIGNING_POLICY.md)。
 
 **系统要求：** 桌面端需要 Windows 10 1803（内部版本 17134）或更高版本，或 Windows 11，并依赖 Microsoft Edge WebView2 Runtime。安装包内置 WebView2 引导程序，首次安装仍需要联网下载运行时；WPS、Office 或浏览器本身不能替代 WebView2。Windows 7、8 和 8.1，以及 1803 之前的 Windows 10 不受支持，安装器会在复制文件前直接提示原因。
 
@@ -511,5 +520,5 @@ ToolKnit Desktop 和 CLI/MCP 源代码采用 [Apache License 2.0](LICENSE) 开�
 该协议不授予 ToolKnit 名称、Logo、视觉标识、域名、官网、托管网页服务、服务账号或其他独立运营产品的使用权。详见 [NOTICE](NOTICE)。
 
 <p align="center">
-  <sub>ToolKnit Desktop 2.3 · Local-first tools for real work</sub>
+  <sub>ToolKnit Desktop 3.0 · Local-first tools for real work</sub>
 </p>

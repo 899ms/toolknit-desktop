@@ -103,7 +103,16 @@ $content.ThrowIfNotEmpty()
 $digestInfo.ThrowIfNotEmpty()
 
 $signature = Get-AuthenticodeSignature -LiteralPath $SignedPath
-if ($signature.Status -notin @('Valid', 'NotTrusted')) { throw "Authenticode validation failed: $($signature.Status)" }
+$acceptedWindowsStatuses = @('Valid', 'NotTrusted')
+$windowsTrustStatusAccepted = $signature.Status -in $acceptedWindowsStatuses
+if (-not $windowsTrustStatusAccepted -and $signature.Status -eq 'UnknownError') {
+    # Some hosted Windows images report an untrusted SignPath test chain as
+    # UnknownError even after the CMS and Authenticode digest checks above pass.
+    # Keep the cryptographic checks authoritative and expose this trust state
+    # in the report instead of treating it as a production trust result.
+    $windowsTrustStatusAccepted = $true
+}
+if (-not $windowsTrustStatusAccepted) { throw "Authenticode validation failed: $($signature.Status)" }
 $certificate = $signature.SignerCertificate
 if (-not $certificate -or $certificate.Thumbprint -ne $cms.SignerInfos[0].Certificate.Thumbprint) { throw 'Signer certificate mismatch.' }
 if ($ExpectedThumbprint -and $certificate.Thumbprint -ne ($ExpectedThumbprint -replace '\s', '')) { throw 'Unexpected signing certificate thumbprint.' }
@@ -119,6 +128,8 @@ $report = [ordered]@{
     cmsSignatureVerified = $true
     authenticodeDigestVerified = $true
     windowsTrustStatus = $signature.Status.ToString()
+    windowsTrustStatusAccepted = $windowsTrustStatusAccepted
+    testCertificateTrustWarning = ($signature.Status -eq 'NotTrusted' -or $signature.Status -eq 'UnknownError')
     signerSubject = $certificate.Subject
     signerThumbprint = $certificate.Thumbprint
     certificateExpiresUtc = $certificate.NotAfter.ToUniversalTime().ToString('o')

@@ -130,10 +130,11 @@ jobs:
           UNSIGNED_INSTALLER: ${{ steps.installer.outputs.path }}
           SIGNING_REQUEST_ID: ${{ steps.signpath.outputs.signing-request-id }}
           SIGNING_REQUEST_URL: ${{ steps.signpath.outputs.signing-request-web-url }}
+          SIGNPATH_TEST_CERTIFICATE_THUMBPRINT: '6831FA4A3067EDCE07AD33005E16AD0997662B05'
         run: |
           $installers = @(Get-ChildItem 'tmp/signpath/signed/*.exe' -File)
           if ($installers.Count -ne 1) { throw 'Expected exactly one signed installer.' }
-          ./scripts/verify-test-signature.ps1 -SignedPath $installers[0].FullName -UnsignedPath $env:UNSIGNED_INSTALLER -ReportPath 'tmp/signpath/signed/verification.json'
+          ./scripts/verify-test-signature.ps1 -SignedPath $installers[0].FullName -UnsignedPath $env:UNSIGNED_INSTALLER -ExpectedThumbprint $env:SIGNPATH_TEST_CERTIFICATE_THUMBPRINT -ReportPath 'tmp/signpath/signed/verification.json'
           $hash = (Get-FileHash -LiteralPath $installers[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $($installers[0].Name)" | Set-Content -LiteralPath "$($installers[0].FullName).sha256" -Encoding ascii
           [ordered]@{

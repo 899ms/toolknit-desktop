@@ -73,6 +73,7 @@ check(!/release-signing|action-gh-release|contents:\s*write|pull_request_target/
 check(testSigningWorkflow.includes("github.ref == 'refs/heads/ToolKnit-Desktop-V3.0-正式版'"), 'Test signing must be restricted to the reviewed V3 branch');
 check(testSigningWorkflow.includes('archive: false') && testSigningWorkflow.includes('skip-decompress: true'), 'The PE artifact configuration requires raw upload and download');
 check(testSigningWorkflow.includes('./scripts/test-signpath-verifier.ps1') && testSigningWorkflow.includes('./scripts/verify-test-signature.ps1'), 'Test signing must exercise and run cryptographic verification');
+check(testSigningWorkflow.includes("SIGNPATH_TEST_CERTIFICATE_THUMBPRINT: '6831FA4A3067EDCE07AD33005E16AD0997662B05'") && testSigningWorkflow.includes('-ExpectedThumbprint $env:SIGNPATH_TEST_CERTIFICATE_THUMBPRINT'), 'Test signing must pin the independently checked SignPath test certificate');
 check(!releaseWorkflow.includes('$tag = "${{ github.ref_name }}"'), 'Release tags must not be interpolated directly into PowerShell');
 check(releaseWorkflow.includes('RELEASE_TAG: ${{ github.ref_name }}') && releaseWorkflow.includes('$tag = $env:RELEASE_TAG'), 'Release tags must enter PowerShell through an environment variable');
 

@@ -22,7 +22,9 @@
 
 `toolknit-test-signed-<run-id>` 产物包含测试签名安装包、`.sha256`、`verification.json` 和 `provenance.json`。原始未签名 EXE 单独保留 7 天；验签成功的结果保留 14 天。
 
-验证脚本会检查 PE 结构、签名前后有效载荷一致、CMS 密码学签名、SHA-256 Authenticode 摘要、证书有效期和代码签名用途。Windows 状态通常为 `Valid` 或测试证书预期的 `NotTrusted`；部分 Windows runner 对未受信任的测试证书链返回 `UnknownError`，在前述密码学检查已通过时也接受该状态。实际状态和 `testCertificateTrustWarning` 会写入报告，不伪装成系统信任。
+验证脚本会检查 PE 结构、签名前后有效载荷一致、CMS 密码学签名、SHA-256 Authenticode 摘要、证书有效期和代码签名用途。工作流固定校验 SignPath 项目的测试证书指纹 `6831FA4A3067EDCE07AD33005E16AD0997662B05`，证书轮换后需要独立核对新指纹并更新配置。
+
+Windows 将自签名测试证书的 `CERT_E_UNTRUSTEDROOT`（`0x800B0109`）报告为 `UnknownError`。只有错误消息与操作系统本地化的该错误完全一致、证书指纹匹配、证书为自签名且证书链仅有 `UntrustedRoot` 时才接受；其他未知错误、显式不信任、证书过期或载荷异常仍然拒绝。实际 Windows 状态、消息、证书链状态和 `testCertificateTrustWarning` 会写入报告，不伪装成系统信任。
 
 在本机用 PowerShell 7 复核，可将 SignPath 测试证书页面中的指纹传给 `-ExpectedThumbprint`：
 

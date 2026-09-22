@@ -103,22 +103,41 @@ $content.ThrowIfNotEmpty()
 $digestInfo.ThrowIfNotEmpty()
 
 $signature = Get-AuthenticodeSignature -LiteralPath $SignedPath
-$acceptedWindowsStatuses = @('Valid', 'NotTrusted')
-$windowsTrustStatusAccepted = $signature.Status -in $acceptedWindowsStatuses
-if (-not $windowsTrustStatusAccepted -and $signature.Status -eq 'UnknownError') {
-    # Some hosted Windows images report an untrusted SignPath test chain as
-    # UnknownError even after the CMS and Authenticode digest checks above pass.
-    # Keep the cryptographic checks authoritative and expose this trust state
-    # in the report instead of treating it as a production trust result.
-    $windowsTrustStatusAccepted = $true
-}
-if (-not $windowsTrustStatusAccepted) { throw "Authenticode validation failed: $($signature.Status)" }
 $certificate = $signature.SignerCertificate
 if (-not $certificate -or $certificate.Thumbprint -ne $cms.SignerInfos[0].Certificate.Thumbprint) { throw 'Signer certificate mismatch.' }
 if ($ExpectedThumbprint -and $certificate.Thumbprint -ne ($ExpectedThumbprint -replace '\s', '')) { throw 'Unexpected signing certificate thumbprint.' }
 $eku = @($certificate.Extensions | Where-Object { $_.Oid.Value -eq '2.5.29.37' } | ForEach-Object { $_.EnhancedKeyUsages } | ForEach-Object { $_.Value })
 if ('1.3.6.1.5.5.7.3.3' -notin $eku) { throw 'Signer certificate lacks the code-signing EKU.' }
 if ($certificate.NotBefore -gt (Get-Date) -or $certificate.NotAfter -lt (Get-Date)) { throw 'Test certificate is outside its validity period.' }
+
+$windowsTrustStatusAccepted = $signature.Status -eq 'Valid'
+$testCertificateTrustWarning = $false
+$chainStatus = @()
+if (-not $windowsTrustStatusAccepted) {
+    # PowerShell maps CERT_E_UNTRUSTEDROOT (0x800B0109) to UnknownError.
+    # Resolve its OS-localized message instead of accepting arbitrary errors.
+    $untrustedRootMessage = [ComponentModel.Win32Exception]::new(-2146762487).Message
+    if ($signature.Status -notin @('UnknownError', 'NotTrusted') -or $signature.StatusMessage -ne $untrustedRootMessage) {
+        throw "Authenticode validation failed: $($signature.Status): $($signature.StatusMessage)"
+    }
+    if (-not $ExpectedThumbprint -or $certificate.Subject -ne $certificate.Issuer) {
+        throw 'An untrusted test certificate must be self-signed and explicitly pinned by thumbprint.'
+    }
+    $chain = [Security.Cryptography.X509Certificates.X509Chain]::new()
+    try {
+        # A pinned self-signed test certificate has no issuing CA to query.
+        $chain.ChainPolicy.RevocationMode = 'NoCheck'
+        $chain.ChainPolicy.DisableCertificateDownloads = $true
+        $null = $chain.ChainPolicy.ApplicationPolicy.Add([Security.Cryptography.Oid]::new('1.3.6.1.5.5.7.3.3'))
+        $null = $chain.Build($certificate)
+        $chainStatus = @($chain.ChainStatus | ForEach-Object { $_.Status.ToString() })
+        if ($chain.ChainElements.Count -ne 1 -or $chainStatus.Count -ne 1 -or $chainStatus[0] -ne 'UntrustedRoot') {
+            throw "Unexpected test certificate chain failure: $($chainStatus -join ', ')"
+        }
+    } finally { $chain.Dispose() }
+    $windowsTrustStatusAccepted = $true
+    $testCertificateTrustWarning = $true
+}
 
 $report = [ordered]@{
     file = [IO.Path]::GetFileName($SignedPath)
@@ -128,8 +147,11 @@ $report = [ordered]@{
     cmsSignatureVerified = $true
     authenticodeDigestVerified = $true
     windowsTrustStatus = $signature.Status.ToString()
+    windowsTrustStatusMessage = $signature.StatusMessage
     windowsTrustStatusAccepted = $windowsTrustStatusAccepted
-    testCertificateTrustWarning = ($signature.Status -eq 'NotTrusted' -or $signature.Status -eq 'UnknownError')
+    certificateChainStatus = $chainStatus
+    expectedThumbprintMatched = [bool]$ExpectedThumbprint
+    testCertificateTrustWarning = $testCertificateTrustWarning
     signerSubject = $certificate.Subject
     signerThumbprint = $certificate.Thumbprint
     certificateExpiresUtc = $certificate.NotAfter.ToUniversalTime().ToString('o')

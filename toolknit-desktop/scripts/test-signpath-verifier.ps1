@@ -52,6 +52,66 @@ try {
     $damagedPath = Join-Path $directory 'damaged-cms.exe'
     [IO.File]::WriteAllBytes($damagedPath, $damaged)
     Expect-Rejected 'damaged signature' { & $verifier -SignedPath $damagedPath -UnsignedPath $unsignedPath } 'ASN1|ASN.1|Decode|编码|解码'
+
+    # Generate a self-signed fixture in memory; never install a certificate or run the fixture.
+    $rsa = [Security.Cryptography.RSA]::Create(2048)
+    $testCertificate = $null
+    try {
+        $request = [Security.Cryptography.X509Certificates.CertificateRequest]::new(
+            'CN=ToolKnit verifier test', $rsa, [Security.Cryptography.HashAlgorithmName]::SHA256,
+            [Security.Cryptography.RSASignaturePadding]::Pkcs1)
+        $usages = [Security.Cryptography.OidCollection]::new()
+        $null = $usages.Add([Security.Cryptography.Oid]::new('1.3.6.1.5.5.7.3.3'))
+        $request.CertificateExtensions.Add([Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension]::new($usages, $true))
+        $testCertificate = $request.CreateSelfSigned([DateTimeOffset]::UtcNow.AddDays(-1), [DateTimeOffset]::UtcNow.AddDays(1))
+        $originalCms = [Security.Cryptography.Pkcs.SignedCms]::new()
+        $originalLength = [BitConverter]::ToInt32($signed, $certificateOffset)
+        $originalCms.Decode([byte[]]$signed[($certificateOffset + 8)..($certificateOffset + $originalLength - 1)])
+        $testCms = [Security.Cryptography.Pkcs.SignedCms]::new($originalCms.ContentInfo)
+        $signer = [Security.Cryptography.Pkcs.CmsSigner]::new($testCertificate)
+        $signer.IncludeOption = 'EndCertOnly'
+        $testCms.ComputeSignature($signer)
+        $encoded = $testCms.Encode()
+        $recordLength = $encoded.Length + 8
+        $recordSize = [int]([Math]::Ceiling($recordLength / 8.0) * 8)
+        $selfSigned = [byte[]]::new($unsigned.Length + $recordSize)
+        [Array]::Copy($unsigned, $selfSigned, $unsigned.Length)
+        [BitConverter]::GetBytes([uint32]$unsigned.Length).CopyTo($selfSigned, $security)
+        [BitConverter]::GetBytes([uint32]$recordSize).CopyTo($selfSigned, $security + 4)
+        [BitConverter]::GetBytes([uint32]$recordLength).CopyTo($selfSigned, $unsigned.Length)
+        [BitConverter]::GetBytes([uint16]0x200).CopyTo($selfSigned, $unsigned.Length + 4)
+        [BitConverter]::GetBytes([uint16]2).CopyTo($selfSigned, $unsigned.Length + 6)
+        $encoded.CopyTo($selfSigned, $unsigned.Length + 8)
+        $testPath = Join-Path $directory 'self-signed.exe'
+        [IO.File]::WriteAllBytes($testPath, $selfSigned)
+
+        $result = & $verifier -SignedPath $testPath -UnsignedPath $unsignedPath -ExpectedThumbprint $testCertificate.Thumbprint | ConvertFrom-Json
+        if (-not $result.expectedThumbprintMatched -or -not $result.testCertificateTrustWarning -or
+            $result.certificateChainStatus.Count -ne 1 -or $result.certificateChainStatus[0] -ne 'UntrustedRoot') {
+            throw 'The self-signed fixture must report only a pinned untrusted root.'
+        }
+        Write-Output 'PASS: pinned self-signed certificate with untrusted root'
+        Expect-Rejected 'unpinned untrusted certificate' { & $verifier -SignedPath $testPath -UnsignedPath $unsignedPath } 'explicitly pinned'
+        Expect-Rejected 'different self-signed certificate' { & $verifier -SignedPath $testPath -UnsignedPath $unsignedPath -ExpectedThumbprint $thumbprint } 'thumbprint'
+
+        $simulatedState = @{
+            Certificate = (Microsoft.PowerShell.Security\Get-AuthenticodeSignature -LiteralPath $testPath).SignerCertificate
+            Status = 'UnknownError'
+        }
+        $mockSignature = {
+            param([string]$LiteralPath)
+            [pscustomobject]@{ Status = $simulatedState.Status; StatusMessage = 'Unrelated trust failure'; SignerCertificate = $simulatedState.Certificate }
+        }.GetNewClosure()
+        Set-Item Function:\Get-AuthenticodeSignature -Value $mockSignature
+        try {
+            Expect-Rejected 'arbitrary UnknownError' { & $verifier -SignedPath $testPath -UnsignedPath $unsignedPath -ExpectedThumbprint $testCertificate.Thumbprint } 'Authenticode validation failed'
+            $simulatedState.Status = 'NotTrusted'
+            Expect-Rejected 'explicit distrust' { & $verifier -SignedPath $testPath -UnsignedPath $unsignedPath -ExpectedThumbprint $testCertificate.Thumbprint } 'Authenticode validation failed'
+        } finally { Remove-Item Function:\Get-AuthenticodeSignature }
+    } finally {
+        if ($testCertificate) { $testCertificate.Dispose() }
+        $rsa.Dispose()
+    }
 } finally {
     # This exact, newly created temporary directory contains generated fixtures only.
     $resolvedDirectory = [IO.Path]::GetFullPath($directory)

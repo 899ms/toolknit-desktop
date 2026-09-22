@@ -53,6 +53,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build frontend
+        run: npm run build
+
       - name: Test signature verifier rejection paths
         run: ./scripts/test-signpath-verifier.ps1
 

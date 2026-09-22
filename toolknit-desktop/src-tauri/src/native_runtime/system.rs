@@ -2138,13 +2138,18 @@ mod cleanup_large_file_tests {
         make_sparse_file(&target.join("visible.mp4"), 11 * MB);
         let junction = dir.join("redirect");
         let status = std::process::Command::new("cmd.exe")
-            .args(["/C", "mklink", "/J"])
+            .args(["/D", "/C", "mklink", "/J"])
             .arg(&junction)
             .arg(&target)
             .creation_flags(0x08000000)
             .output()
             .unwrap();
-        assert!(status.status.success(), "fixture junction creation failed");
+        assert!(
+            status.status.success(),
+            "fixture junction creation failed: {} {}",
+            String::from_utf8_lossy(&status.stdout),
+            String::from_utf8_lossy(&status.stderr)
+        );
         assert!(canonical_scan_root(&junction.to_string_lossy(), false).is_err());
         assert!(cleanup_guard::reject_links(&junction.join("visible.mp4")).is_err());
         let result = collect_large_files(

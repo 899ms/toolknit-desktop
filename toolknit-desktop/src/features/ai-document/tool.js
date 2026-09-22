@@ -1,4 +1,5 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
+import { AiProviderError, AI_PROVIDER_LIMITS } from '../../ai-provider-core.js';
 import {
   AI_DOC_LIMITS,
   AiDocLayoutError,
@@ -18,8 +19,10 @@ import { createAiDocumentRequestSession } from './request-session.js';
 import '../ai-workbench/ai-workbench-shared.css';
 import './ai-document.css';
 import './ai-document-editor.css';
+import '../../styles/components/ai-workbench-light.css';
+import './ai-document-light.css';
 
-const REQUEST_TIMEOUT_MS = 90_000;
+const REQUEST_TIMEOUT_MS = AI_PROVIDER_LIMITS.maxTimeoutMs;
 
 function appendToolKnitAvatar(container, alt) {
   const image = document.createElement('img');
@@ -236,7 +239,7 @@ export function initAiDocumentTool({
           role: message.role === 'user' ? 'user' : 'assistant',
           content: message.content
         }))
-      ], request.signal, 8192);
+      ], request.signal, 8192, { timeoutMs: REQUEST_TIMEOUT_MS, reasoningEffort: 'low', diagnostics: true });
       if (!isCurrent(owner, request.id)) return;
       if (typeof content !== 'string' || !content.trim()) {
         throw new AiDocLayoutError('invalid_layout', 'AI returned an empty response.');
@@ -286,10 +289,15 @@ export function initAiDocumentTool({
     } catch (error) {
       if (!isCurrent(owner, request.id)) return;
       console.error('[AI Doc] Error:', error);
-      if (request.signal.aborted) {
-        if (request.timedOut()) addChatMessage('ai', t('home.aiDoc.requestTimeout'));
+      if (error instanceof AiProviderError && error.diagnostics) {
+        console.error('[AI Doc] API diagnostics:', JSON.stringify(error.diagnostics, null, 2));
+      }
+      if (request.signal.aborted || error.code === 'timeout') {
+        if (request.timedOut() || error.code === 'timeout') addChatMessage('ai', t('home.aiDoc.requestTimeout'));
       } else if (error instanceof AiDocLayoutError) {
         addChatMessage('ai', t(layoutErrorKey(error)));
+      } else if (error instanceof AiProviderError) {
+        addChatMessage('ai', error.message);
       } else {
         addChatMessage('ai', t('home.aiDoc.networkError'));
       }

@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { compactFfmpegError, resolveFfmpeg, runFfmpeg } from './ffmpeg-runtime.mjs';
 import { cancellationError, isCancellationError, ToolKnitError, throwIfAborted } from './errors.mjs';
 import { isPlaceholderAiApiKey, requestAiCompletion } from './core/ai-provider-core.js';
-import { simplifyChineseText } from './core/teleprompter-core.js';
+import { simplifyChineseText, simplifyTranscriptionJson } from './core/core/chinese-text.js';
 
 const CLI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PROJECT_ROOT = path.resolve(CLI_ROOT, '..');
@@ -110,7 +110,7 @@ export async function installTranscriptionModel({ model_id, source = 'auto' }, o
       let start = 0;
       try { start = (await stat(partial)).size; } catch {}
       if (start > model.bytes) { await rm(partial, { force: true }); start = 0; }
-      const headers = { 'User-Agent': 'ToolKnit/2.3.1 offline-model-manager' };
+      const headers = { 'User-Agent': 'ToolKnit/3.0.0 offline-model-manager' };
       if (start > 0) headers.Range = `bytes=${start}-`;
       const response = await fetch(sourceUrl(model, candidate), { headers, redirect: 'follow', signal: options.signal });
       if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`);
@@ -257,22 +257,22 @@ function parseSrt(value) {
     const id = Number(lines.shift());
     const timing = lines.shift() || '';
     const match = /^(\S+)\s+-->\s+(\S+)$/.exec(timing.trim());
-    return Number.isInteger(id) && match && lines.length ? { id, start: match[1], end: match[2], text: lines.join('\n').trim() } : null;
+    return Number.isInteger(id) && match && lines.length ? { id, start: match[1], end: match[2], text: simplifyChineseText(lines.join('\n').trim()) } : null;
   }).filter(Boolean);
 }
 
-function parseRefinement(value, expected) {
+export function parseRefinement(value, expected) {
   const text = String(value || '').replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
   const objectStart = text.indexOf('{');
   let parsed;
   try { parsed = JSON.parse(objectStart >= 0 ? text.slice(objectStart) : text); } catch { throw new ToolKnitError('PROCESSING_FAILED', 'AI refinement returned invalid JSON. Original files were kept.'); }
-  if (!Array.isArray(parsed?.segments) || parsed.segments.length !== expected.length) throw new ToolKnitError('PROCESSING_FAILED', 'AI refinement changed subtitle segment count. Original files were kept.');
+  if (!Array.isArray(parsed?.segments) || parsed.segments.length !== expected.size) throw new ToolKnitError('PROCESSING_FAILED', 'AI refinement changed subtitle segment count. Original files were kept.');
   const result = new Map();
   for (const segment of parsed.segments) {
     const id = Number(segment?.id);
     const content = typeof segment?.text === 'string' ? segment.text.trim() : '';
     if (!expected.has(id) || result.has(id) || !content || content.length > 1200) throw new ToolKnitError('PROCESSING_FAILED', 'AI refinement returned invalid subtitle IDs. Original files were kept.');
-    result.set(id, content);
+    result.set(id, simplifyChineseText(content));
   }
   if (result.size !== expected.size) throw new ToolKnitError('PROCESSING_FAILED', 'AI refinement omitted subtitle segments. Original files were kept.');
   return result;
@@ -339,7 +339,9 @@ export async function transcribeMedia({ input_path, output_dir, language = 'auto
     // Whisper sometimes answers in traditional characters; publish simplified.
     for (const filePath of [sources.json, sources.srt, sources.txt]) {
       const content = await readFile(filePath, 'utf8');
-      const simplified = simplifyChineseText(content);
+      const simplified = filePath === sources.json
+        ? JSON.stringify(simplifyTranscriptionJson(JSON.parse(content)))
+        : simplifyChineseText(content);
       if (simplified !== content) await writeFile(filePath, simplified, 'utf8');
     }
     report(options, 94, 'Publishing transcription results.');

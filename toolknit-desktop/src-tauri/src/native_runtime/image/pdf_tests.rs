@@ -58,11 +58,13 @@ mod pdf_to_image_backend_tests {
                 "document",
                 PdfToImageExportMode::Long,
                 1,
-                &[page, second],
+                &[page.clone(), second],
                 200,
             ),
             "document_long_02_pages_007_105"
         );
+        assert_eq!(pdf_to_image_logical_stem("document", PdfToImageExportMode::Horizontal, 0, &[page.clone()], 8), "document_horizontal_01_pages_07");
+        assert_eq!(pdf_to_image_logical_stem("document", PdfToImageExportMode::Grid, 0, &[page.clone(), page.clone()], 8), "document_grid_pages_07_07");
         assert_eq!(
             pdf_to_image_page_number_from_file_name("page_00007.png"),
             Some(7)
@@ -123,6 +125,15 @@ mod pdf_to_image_backend_tests {
             memory_limited.iter().map(Vec::len).collect::<Vec<_>>(),
             vec![3, 3]
         );
+        let horizontal = build_pdf_to_image_groups(&pages[..6], PdfToImageExportMode::Horizontal, 5, PDF_TO_IMAGE_MAX_LONG_PIXELS)
+            .expect("build horizontal groups");
+        assert_eq!(horizontal.iter().map(Vec::len).collect::<Vec<_>>(), vec![5, 1]);
+        let grid = build_pdf_to_image_groups(&pages[..4], PdfToImageExportMode::Grid, 5, PDF_TO_IMAGE_MAX_LONG_PIXELS)
+            .expect("build grid group");
+        assert_eq!(grid.len(), 1);
+        assert_eq!(grid[0].len(), 4);
+        assert_eq!(pdf_to_image_grid_layout(&grid[0], PDF_TO_IMAGE_MAX_LONG_PIXELS).unwrap().width, 224);
+        assert!(build_pdf_to_image_groups(&pages[..6], PdfToImageExportMode::Grid, 5, PDF_TO_IMAGE_MAX_LONG_PIXELS).is_err());
     }
 
     #[test]
@@ -341,6 +352,7 @@ mod pdf_to_image_backend_tests {
             .expect("write rendered PDF page");
         }
 
+        let mut progress = Vec::new();
         let result = export_pdf_to_images_blocking(
             PdfToImageExportRequest {
                 session_id: session.session_id.clone(),
@@ -356,9 +368,16 @@ mod pdf_to_image_backend_tests {
                 job_id: None,
             },
             &cancelled,
-            |_, _, _, _| {},
+            |phase, current, total, percent| {
+                progress.push((phase.to_string(), current, total, percent));
+            },
         )
         .expect("export sixteen PDF pages");
+
+        assert!(progress
+            .windows(2)
+            .all(|events| events[1].3 >= events[0].3));
+        assert_eq!(progress.last().map(|event| event.3), Some(100));
 
         assert_eq!(result.output_count, 4);
         assert_eq!(
@@ -422,12 +441,13 @@ mod pdf_to_image_backend_tests {
             .expect("calculate centered long layout");
         assert_eq!((layout.width, layout.height), (4, 3));
         assert_eq!(layout.sizes, vec![(2, 2), (4, 1)]);
-        let canvas = compose_pdf_to_image_group(
+        let canvas = compose_pdf_to_image_group_with_mode(
             &pages,
             &layout,
             image::Rgba([255, 255, 255, 255]),
             "png",
             &cancelled,
+            PdfToImageExportMode::Long,
         )
         .expect("compose centered long image");
         assert_eq!(canvas.get_pixel(0, 0).0, [255, 255, 255, 255]);

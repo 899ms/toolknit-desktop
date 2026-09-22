@@ -1,0 +1,6 @@
+OpenCC Traditional Chinese to Simplified Chinese dictionaries.
+Copyright OpenCC authors and contributors. Licensed under Apache-2.0.
+Source: https://github.com/BYVoid/OpenCC/tree/ver.1.1.9/data/dictionary
+TSPhrases.txt and TSCharacters.txt; first replacement, chained character resolution and identity aliases for phrase outputs.
+TWVariantsRevPhrases.txt and reversed TWVariants.txt: only the U+8457 auxiliary and its phrase exceptions; keys/values canonicalized for mixed input.
+Generated t2s.json retains version and source SHA-256 values. See LICENSE.txt.

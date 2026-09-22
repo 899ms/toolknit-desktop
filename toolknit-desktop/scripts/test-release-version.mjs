@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const readText = filePath => readFile(path.join(projectRoot, filePath), 'utf8');
@@ -61,14 +62,14 @@ function cargoLockPackageVersion(text, packageName) {
   return captureExactlyOnce(matches[0], /^version\s*=\s*"([^"]+)"\s*$/m, `Cargo.lock ${packageName} version`);
 }
 
-async function listJavaScriptFiles(directory) {
+async function listUiSourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
   for (const entry of entries) {
     const entryPath = path.join(directory, entry.name);
     if (entry.isDirectory()) {
-      files.push(...await listJavaScriptFiles(entryPath));
-    } else if (entry.isFile() && /\.m?js$/i.test(entry.name)) {
+      files.push(...await listUiSourceFiles(entryPath));
+    } else if (entry.isFile() && /\.(?:m?js|html)$/i.test(entry.name)) {
       files.push(entryPath);
     }
   }
@@ -136,10 +137,13 @@ assert.match(fullVersion, /^\d+\.\d+\.\d+$/, 'package.json version must use MAJO
 const seriesVersion = fullVersion.split('.').slice(0, 2).join('.');
 
 assert.match(repositoryReadme, new RegExp(`<h1>ToolKnit Desktop ${escapeRegExp(seriesVersion)}<\\/h1>`), 'Repository README heading must match the current release series');
-assert.match(repositoryReadme, /<h3>65<\/h3><strong>桌面工具<\/strong>/, 'Repository README must state the 65-tool V2.3 catalog');
+const desktopToolCount = Object.keys(LAZY_TOOL_SPECS).length;
+assert.match(repositoryReadme, new RegExp(`<h3>${desktopToolCount}<\\/h3><strong>桌面工具<\\/strong>`), 'Repository README must match the current desktop catalog');
+assert.match(zhHelpSource, new RegExp(`${desktopToolCount} 个桌面工具`), 'Chinese help overview must match the desktop catalog');
+assert.match(enHelpSource, new RegExp(`${desktopToolCount} desktop tools`), 'English help overview must match the desktop catalog');
 assert.match(repositoryReadme, /<h3>46<\/h3><strong>MCP 能力<\/strong>/, 'Repository README must state the 46-capability MCP contract');
 assert.match(releaseNotes, new RegExp(`^# ToolKnit Desktop ${escapeRegExp(fullVersion)}\\s*$`, 'm'), 'Release notes heading must match package.json version');
-assert.match(releaseNotes, /65 项工具/, 'Release notes must state the 65-tool desktop catalog');
+assert.match(releaseNotes, new RegExp(`${desktopToolCount} 项工具`), 'Release notes must match the current desktop catalog');
 assert.match(releaseNotes, /46 项已发布能力/, 'Release notes must state the 46-capability CLI and MCP contract');
 
 const manifestVersions = new Map([
@@ -171,10 +175,43 @@ const runtimeVersions = new Map([
   ['MCP SERVER_INFO version', captureExactlyOnce(mcpServer, /const SERVER_INFO\s*=\s*Object\.freeze\(\{[^}]*\bversion:\s*'([^']+)'[^}]*\}\)/, 'MCP SERVER_INFO version')],
   ['APP_VERSION_FALLBACK', captureExactlyOnce(mainSource, /const APP_VERSION_FALLBACK\s*=\s*'([^']+)'/, 'APP_VERSION_FALLBACK')]
 ]);
+runtimeVersions.set('Application runtime fallback', captureExactlyOnce(
+  await readText('src/application-runtime.js'),
+  /const APP_VERSION_FALLBACK\s*=\s*'([^']+)'/,
+  'Application runtime APP_VERSION_FALLBACK'
+));
 
 for (const [label, actual] of runtimeVersions) {
   assert.equal(actual, fullVersion, `${label} must match package.json version`);
 }
+
+for (const source of [
+  'cli/lib/transcription-runtime.mjs',
+  'src-tauri/src/ai_provider.rs',
+  'src-tauri/src/onnx_segmenter.rs',
+  'src-tauri/src/native_runtime/dependencies.rs',
+  'src-tauri/src/native_runtime/transcription.rs'
+]) {
+  const versions = captures(await readText(source), /ToolKnit\/(\d+\.\d+\.\d+)\b/);
+  assert.ok(versions.length > 0, `${source} must identify its ToolKnit user agent version`);
+  for (const version of versions) assert.equal(version, fullVersion, `${source} user agent version must match package.json`);
+}
+
+const previewSource = await readText('src/update-preview.js');
+for (const name of ['current', 'latest']) {
+  assert.equal(captureExactlyOnce(previewSource, new RegExp(`${name}: '([^']+)'`), `Preview ${name} version`), fullVersion);
+  assert.equal(captureExactlyOnce(indexHtml, new RegExp(`data-update-version="${name}">([^<]+)<`), `Preview ${name} markup version`), fullVersion);
+}
+assert.equal(captureExactlyOnce(indexHtml, /data-update-release="brand-version">(\d+\.\d+) PREVIEW</, 'Preview brand version'), seriesVersion);
+assert.equal(captureExactlyOnce(indexHtml, /data-update-release="edition">TOOLKNIT DESKTOP · V(\d+\.\d+)</, 'Preview edition version'), seriesVersion);
+for (const source of [previewSource, indexHtml]) {
+  for (const version of captures(source, /WHAT(?:\\)?'S NEW · (\d+\.\d+)/)) assert.equal(version, seriesVersion);
+}
+for (const source of [zhHelpSource, enHelpSource, previewSource, await readText('src/app/templates/update-preview.html')]) {
+  for (const version of captures(source, /\bToolKnit (\d+\.\d+)\b/)) assert.equal(version, seriesVersion);
+}
+assert.match(await readText('../README_EN.md'), new RegExp(`<h1>ToolKnit Desktop ${escapeRegExp(seriesVersion)}<\\/h1>`));
+assert.match(await readText('../README_EN.md'), new RegExp(`<h3>${desktopToolCount}<\\/h3><strong>Desktop tools<\\/strong>`), 'English README must match the desktop catalog');
 
 assert.equal(elementTextById(indexHtml, 'settings-version'), `v${fullVersion}`, 'Settings version must match package.json');
 assert.equal(elementTextById(indexHtml, 'sidebarVersion'), `v${fullVersion}`, 'Sidebar version must match package.json');
@@ -217,7 +254,7 @@ assert.equal(
 );
 
 const toolPageMentions = sourceMentions(indexHtml, /\bTOOL PAGE (\d+\.\d+)\b/, 'index.html');
-for (const filePath of await listJavaScriptFiles(path.join(projectRoot, 'src'))) {
+for (const filePath of await listUiSourceFiles(path.join(projectRoot, 'src'))) {
   const source = path.relative(projectRoot, filePath).replaceAll('\\', '/');
   toolPageMentions.push(...sourceMentions(await readFile(filePath, 'utf8'), /\bTOOL PAGE (\d+\.\d+)\b/, source));
 }

@@ -1131,3 +1131,9 @@
       .pdf-merge-selection {
         top: 68px;
       }
+.audio-clip-v2 .audio-clip-v2-wave-panel.tk-vertical-stripe-surface {
+  background-image: var(--tk-vertical-stripe-surface-image);
+  background-position: 0 0;
+  background-size: var(--tk-vertical-stripe-surface-size);
+  background-color: var(--tk-vertical-stripe-surface-color);
+}

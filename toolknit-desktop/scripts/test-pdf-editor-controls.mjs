@@ -76,6 +76,7 @@ controls.setHistoryState({ getBaseline: () => baseline, canUndo: () => undo, can
 
 controls.updateControls();
 assert.equal(refs.exportBtn.disabled, true);
+assert.equal(refs.insertTextBtn.disabled, true);
 assert.equal(refs.footerHint.textContent, 'home.pdfEditor.footerEmptyHint:');
 
 hasDocument = true;

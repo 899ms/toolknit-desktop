@@ -3,6 +3,8 @@ import { createLifecycleScope } from '../../app/tool-lifecycle.js';
 import { bindToolPageChrome, mountToolPageBackground, toolTopbarMarkup } from '../../shared/tool-page-shell.js';
 import { decodeBase64Utf8, decodeJwt, decodeUrlComponent, describeDeveloperToolError, encodeBase64Utf8, encodeUrlComponent, formatJsonText, generateUuidV4 } from './core.js';
 import './developer-toolbox.css';
+import '../../styles/components/developer-workbench-light.css';
+import './developer-toolbox-light.css';
 
 const MODES = [
   { id: 'json-tools', label: 'JSON 格式化', icon: 'braces' },
@@ -27,11 +29,12 @@ export function initDeveloperToolbox({ overlay, notify = message => window.showT
   if (!overlay) throw new Error('developer-toolbox:missing-overlay');
   const lifecycle = createLifecycleScope();
   overlay.innerHTML = `<div class="tool-page-v2-shell developer-toolbox-shell">
-    ${toolTopbarMarkup({ tag: 'DEVELOPER TOOLS · TOOL PAGE 2.3', title: '开发者工具', closeAttr: 'data-dev-close' })}
+    ${toolTopbarMarkup({ tag: 'DEVELOPER TOOLS · TOOL PAGE 3.0', title: '开发者工具', closeAttr: 'data-dev-close' })}
     <main class="tool-page-v2-body developer-toolbox-main"><aside class="tool-page-v2-rail developer-toolbox-nav"><div class="tool-page-v2-rail-kicker">DEVELOPER TOOLS</div><h1>开发者<br>工具</h1><p>常用编码、数据和身份工具集中在一个本地工作台。</p><div class="tool-page-v2-rail-note"><span>LOCAL ONLY</span><strong>输入内容只存在当前会话，关闭页面后立即清除。</strong></div><div class="tool-page-v2-steps"><div class="is-active"><b>01</b><span><strong>选择工具</strong><small>从左侧导航切换处理模块。</small></span></div><div><b>02</b><span><strong>输入数据</strong><small>输入与选项变化后实时处理。</small></span></div><div><b>03</b><span><strong>复制结果</strong><small>结果不会写入历史记录。</small></span></div></div><div class="developer-toolbox-nav-index"><div class="developer-toolbox-nav-label">UTILITY INDEX</div><nav data-dev-nav></nav></div></aside><section class="developer-toolbox-workspace"><div class="developer-toolbox-heading"><div><span data-dev-eyebrow>JSON / DATA</span><h1 data-dev-title>JSON 格式化</h1><p data-dev-description>校验、格式化和压缩 JSON 文本。</p></div><span class="developer-toolbox-status" data-dev-status>就绪</span></div><div class="developer-toolbox-panel" data-dev-panel></div></section></main>
   </div>`;
   createIcons({ icons });
   const shell = overlay.querySelector('.tool-page-v2-shell');
+  shell.classList.add('tool-page-v2-light');
   let backgroundDispose = null;
   lifecycle.use(bindToolPageChrome(shell, () => api.close()));
   const q = selector => overlay.querySelector(selector);
@@ -66,6 +69,7 @@ export function initDeveloperToolbox({ overlay, notify = message => window.showT
   }
   function runJwt() { const input = q('[data-dev-input]').value.trim(); try { const result = decodeJwt(input); q('[data-jwt-header]').textContent = JSON.stringify(result.header, null, 2); q('[data-jwt-payload]').textContent = JSON.stringify(result.payload, null, 2); setStatus('已解析，未验证签名'); } catch (error) { q('[data-jwt-header]').textContent = '无法解析'; q('[data-jwt-payload]').textContent = describeDeveloperToolError(error, mode); setStatus('解析失败', true); } }
   function clearSessionData() {
+    closeJsonIndentMenu();
     q('[data-dev-input]') && (q('[data-dev-input]').value = '');
     q('[data-dev-output]') && (q('[data-dev-output]').value = '');
     q('[data-jwt-header]') && (q('[data-jwt-header]').textContent = '');
@@ -86,6 +90,13 @@ export function initDeveloperToolbox({ overlay, notify = message => window.showT
   }
   lifecycle.event(overlay, 'click', event => { const nav = event.target.closest('[data-dev-tool]'); if (nav) { mode = nav.dataset.devTool; overlay.querySelectorAll('[data-dev-tool]').forEach(item => item.classList.toggle('is-active', item === nav)); renderPanel(); return; } const indentTrigger = event.target.closest('[data-json-indent-trigger]'); if (indentTrigger) { const menu = q('[data-json-indent-menu]'); const opening = menu.hidden; menu.hidden = !opening; indentTrigger.setAttribute('aria-expanded', String(opening)); return; } const indentOption = event.target.closest('[data-json-indent-option]'); if (indentOption) { q('[data-json-indent]').value = indentOption.dataset.jsonIndentOption; q('[data-json-indent-label]').textContent = indentOption.textContent; overlay.querySelectorAll('[data-json-indent-option]').forEach(item => { const selected = item === indentOption; item.classList.toggle('is-selected', selected); item.setAttribute('aria-selected', String(selected)); }); closeJsonIndentMenu(); q('[data-dev-input]')?.value ? run() : setStatus('就绪'); return; } if (q('[data-json-indent-menu]') && !event.target.closest('[data-json-indent-control]')) closeJsonIndentMenu(); const direction = event.target.closest('[data-codec-direction]'); if (direction) { overlay.querySelectorAll('[data-codec-direction]').forEach(item => item.classList.toggle('is-active', item === direction)); run(); return; } if (event.target.closest('[data-uuid-generate]')) { const count = Math.max(1, Math.min(50, Number(q('[data-uuid-count]').value) || 1)); q('[data-dev-output]').value = Array.from({ length: count }, generateUuidV4).join('\n'); setStatus(`${count} 个 UUID 已生成`); } if (event.target.closest('[data-dev-copy]')) copyResult(); if (event.target.closest('[data-dev-clear]')) { q('[data-dev-input]') && (q('[data-dev-input]').value = ''); q('[data-dev-output]') && (q('[data-dev-output]').value = ''); q('[data-jwt-header]') && (q('[data-jwt-header]').textContent = '等待解析'); q('[data-jwt-payload]') && (q('[data-jwt-payload]').textContent = '等待解析'); setStatus('已清空'); } });
   lifecycle.event(overlay, 'input', event => { if (event.target.matches('[data-dev-input]')) { clearTimeout(timer); timer = setTimeout(() => mode === 'jwt' ? runJwt() : run(), 180); } });
+  lifecycle.event(overlay, 'keydown', event => {
+    const menu = q('[data-json-indent-menu]');
+    if (event.key !== 'Escape' || !menu || menu.hidden) return;
+    event.preventDefault();
+    closeJsonIndentMenu();
+    q('[data-json-indent-trigger]')?.focus();
+  });
   const api = {
     open(toolId = 'json-tools') {
       lifecycle.invalidate();

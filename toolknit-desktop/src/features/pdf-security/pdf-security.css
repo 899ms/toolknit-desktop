@@ -21,6 +21,38 @@
   max-height: 240px;
 }
 
+/* Keep the background tool layout stable while its bar belongs to the subpage. */
+.pdf-encrypt-v2 > .pdf-merge-v2-body,
+.pdf-decrypt-v2 > .pdf-merge-v2-body {
+  grid-row: 2;
+}
+
+.pdf-security-password-page.pdf-merge-v2 {
+  grid-template-rows: auto minmax(0, 1fr);
+  align-items: stretch;
+  justify-content: normal;
+}
+
+.pdf-security-password-page::before,
+.pdf-security-password-page::after {
+  content: none;
+}
+
+.pdf-security-password-body {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: 24px;
+}
+
+.pdf-security-password-body .pdf-encrypt-password-dialog {
+  max-width: 100%;
+  max-height: 100%;
+}
+
 .pdf-encrypt-password-dialog {
   box-sizing: border-box;
   min-width: 0;

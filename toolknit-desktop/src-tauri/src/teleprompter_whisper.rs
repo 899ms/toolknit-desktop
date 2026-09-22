@@ -397,7 +397,13 @@ impl WhisperSession {
             params.translate = false;
             params.no_context = true;
             params.no_timestamps = true;
-            params.single_segment = false;
+            params.single_segment = true;
+            // Live windows need neither 30 seconds of encoder padding nor
+            // temperature retries; the next overlapping window refines text.
+            params.audio_ctx = ((audio.len().div_ceil(320) + 50) as c_int).clamp(512, 1500);
+            params.max_tokens = ((audio.len().div_ceil(2_000) + 16) as c_int).clamp(24, 128);
+            params.temperature_inc = 0.0;
+            params.greedy.best_of = 1;
             params.print_special = false;
             params.print_progress = false;
             params.print_realtime = false;
@@ -445,7 +451,7 @@ impl WhisperSession {
                 }
             }
             Ok(WhisperTranscript {
-                text: text_parts.join(" ").trim().to_string(),
+                text: crate::chinese_text::simplify(text_parts.join(" ").trim()),
                 confidence: if confidence_count == 0 {
                     0.0
                 } else {
@@ -548,6 +554,56 @@ mod tests {
             .chunks_exact(2)
             .map(|chunk| i16::from_le_bytes([chunk[0], chunk[1]]))
             .collect())
+    }
+
+    // Opt-in synthetic fixture only; never capture or log a user's microphone.
+    #[test]
+    fn rolling_synthetic_speech_benchmark() {
+        let Ok(model) = std::env::var("TOOLKNIT_TEST_WHISPER_MODEL") else { return };
+        let Ok(wav) = std::env::var("TOOLKNIT_TEST_TTS_WAV") else { return };
+        let samples = read_wav_mono_i16(Path::new(&wav)).expect("synthetic mono 16k WAV");
+        let library = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("resources/whisper/Release/whisper.dll");
+        let session = WhisperSession::load(&library, Path::new(&model)).expect("test model");
+        let mut records = Vec::new();
+        for seconds in [0.9_f32, 1.5, 2.1, 3.2, 4.8, 6.4, 8.0, 9.6, 11.2] {
+            let end = ((seconds * 16_000.0) as usize).min(samples.len());
+            let start = end.saturating_sub(51_200);
+            let started = std::time::Instant::now();
+            let result = session.transcribe(samples[start..end].to_vec(), "zh", "",
+                Arc::new(AtomicBool::new(false))).expect("rolling inference");
+            records.push(serde_json::json!({
+                "start": start, "end": end, "ms": started.elapsed().as_millis(),
+                "text": result.text, "confidence": result.confidence
+            }));
+        }
+        println!("[rolling-synthetic] {}", serde_json::to_string(&records).unwrap());
+        if let Ok(output) = std::env::var("TOOLKNIT_TEST_ROLLING_OUTPUT") {
+            std::fs::write(output, serde_json::to_vec_pretty(&records).unwrap()).unwrap();
+        }
+        assert!(records.iter().any(|record| !record["text"].as_str().unwrap().is_empty()));
+    }
+
+    #[test]
+    fn weak_audio_synthetic_windows() {
+        let Ok(model) = std::env::var("TOOLKNIT_TEST_WHISPER_MODEL") else { return };
+        let Ok(input) = std::env::var("TOOLKNIT_TEST_AUDIO_WINDOWS") else { return };
+        let fixture: serde_json::Value = serde_json::from_slice(&std::fs::read(input).unwrap()).unwrap();
+        let library = Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/whisper/Release/whisper.dll");
+        let session = WhisperSession::load(&library, Path::new(&model)).expect("synthetic test model");
+        let mut cases = Vec::new();
+        for case in fixture["cases"].as_array().unwrap() {
+            let mut records = Vec::new();
+            for window in case["windows"].as_array().unwrap() {
+                let samples: Vec<i16> = serde_json::from_value(window["samples"].clone()).unwrap();
+                let started = std::time::Instant::now();
+                let result = session.transcribe(samples, "zh", "", Arc::new(AtomicBool::new(false))).unwrap();
+                records.push(serde_json::json!({"start":window["windowStart"], "end":window["windowEnd"], "utterance":window["utterance"], "ms":started.elapsed().as_millis(), "text":result.text, "confidence":result.confidence}));
+            }
+            cases.push(serde_json::json!({"name":case["name"], "records":records}));
+        }
+        let output = std::env::var("TOOLKNIT_TEST_ROLLING_OUTPUT").expect("synthetic output path");
+        std::fs::write(output, serde_json::to_vec_pretty(&cases).unwrap()).unwrap();
     }
 
     // End-to-end proof for the follow-reading chain: a real TTS voice speaking

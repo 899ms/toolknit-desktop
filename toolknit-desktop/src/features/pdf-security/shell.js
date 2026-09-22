@@ -1,4 +1,5 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
+import { createModalSession } from '../../app/modal-runtime.js';
 import { onLangChange, t } from '../../i18n.js';
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 
@@ -59,6 +60,9 @@ export function createPdfSecurityShell({
   const confirmInput = isEncrypt ? byId('pdfEncryptConfirmInput') : null;
   const passwordCancel = byId(`${prefix}PasswordCancel`);
   const passwordConfirm = byId(`${prefix}PasswordConfirm`);
+  const topbar = overlay?.querySelector('.pdf-merge-v2-topbar');
+  const topbarNextSibling = topbar?.nextSibling;
+  const backLabel = backButton?.querySelector('[data-i18n]');
   const eyeButtons = isEncrypt
     ? [byId('pdfEncryptEyeBtn1'), byId('pdfEncryptEyeBtn2')]
     : [byId('pdfDecryptEyeBtn')];
@@ -100,6 +104,25 @@ export function createPdfSecurityShell({
   let successResult = null;
   let actions = {};
   let buttonRevision = 0;
+  const passwordSession = createModalSession({
+    root: passwordDialog,
+    background: overlay,
+    initialFocus: passwordInput,
+    onClose: () => hidePassword({ focusProcess: true }),
+    canClose: () => !isBusy()
+  });
+
+  function renderBackLabel() {
+    const key = passwordDialog.classList.contains('visible') ? 'common.backToPrevious' : 'settings.back';
+    if (backLabel) {
+      backLabel.dataset.i18n = key;
+      backLabel.textContent = t(key);
+    }
+    if (backButton) {
+      backButton.dataset.i18nTitle = key;
+      backButton.title = t(key);
+    }
+  }
 
   const showToast = (message, duration = 7000) => {
     if (disposed) return;
@@ -147,17 +170,25 @@ export function createPdfSecurityShell({
   }
 
   function hidePassword({ focusProcess = false } = {}) {
+    passwordSession.close({ restore: focusProcess });
     setInteractiveLayer(passwordDialog, false);
+    if (topbar?.parentElement === passwordDialog) {
+      overlay.insertBefore(topbar, topbarNextSibling?.parentNode === overlay ? topbarNextSibling : null);
+    }
+    renderBackLabel();
     clearPassword();
     if (focusProcess) safeFocus(processButton);
   }
 
   function showPassword() {
-    if (!selectedFile || isBusy()) return;
+    if (!selectedFile || isBusy() || passwordDialog.classList.contains('visible')) return;
     clearPassword();
     permissionInputs.forEach(input => { if (input) input.checked = true; });
-    setInteractiveLayer(passwordDialog, true);
-    safeFocus(passwordInput);
+    // Reparent the actual tool bar: no cloned IDs, duplicate controls or
+    // independent navigation styling to drift from the template page.
+    if (topbar) passwordDialog.prepend(topbar);
+    passwordSession.open();
+    renderBackLabel();
   }
 
   function hideSuccess({ focusProcess = false } = {}) {
@@ -329,7 +360,7 @@ export function createPdfSecurityShell({
   }
 
   function handleKeydown(event) {
-    if (!overlay.classList.contains('visible') || event.key !== 'Escape') return;
+    if (event.defaultPrevented || overlay.inert || !overlay.classList.contains('visible') || event.key !== 'Escape') return;
     event.preventDefault();
     event.stopPropagation();
     if (passwordDialog.classList.contains('visible')) hidePassword({ focusProcess: true });
@@ -406,7 +437,10 @@ export function createPdfSecurityShell({
     return true;
   }
 
-  listen(backButton, 'click', () => { void close(); });
+  listen(backButton, 'click', () => {
+    if (passwordDialog.classList.contains('visible')) hidePassword({ focusProcess: true });
+    else void close();
+  });
   listen(ctaButton, 'click', () => { void requestFile(); });
   listen(fileInput, 'change', event => {
     setFileList(event.target.files, session);
@@ -453,7 +487,7 @@ export function createPdfSecurityShell({
   listen(successOk, 'click', () => hideSuccess({ focusProcess: true }));
   listen(successOpenFolder, 'click', () => { void openSavedFolder(); });
   listen(document, 'keydown', handleKeydown);
-  lifecycle.use(onLangChange(() => renderSuccess()) || (() => {}));
+  lifecycle.use(onLangChange(() => { renderSuccess(); renderBackLabel(); }) || (() => {}));
   listen(window, 'beforeunload', () => { void dispose(); }, { once: true });
 
   setInteractiveLayer(passwordDialog, false);

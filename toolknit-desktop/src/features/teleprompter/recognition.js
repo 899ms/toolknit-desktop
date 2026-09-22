@@ -1,10 +1,10 @@
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
-import { createSystemSpeechTranscriptState } from '../../teleprompter-core.js';
+import { createSystemSpeechTranscriptState, simplifyChineseText } from '../../teleprompter-core.js';
+import { createLiveAudioWindow, LIVE_AUDIO_TIMING } from './audio-window.js';
+import { createTeleprompterDiagnostics } from './diagnostics.js';
 
 export const TELEPROMPTER_RECOGNITION_TIMING = Object.freeze({
-  offlineSampleRate: 16_000,
-  offlineWindowSeconds: 3.2,
-  offlineOverlapSeconds: 0.6,
+  offlineSampleRate: LIVE_AUDIO_TIMING.sampleRate,
   systemStartTimeoutMs: 3_500,
   systemFirstResultTimeoutMs: 12_000
 });
@@ -46,21 +46,15 @@ export function createTeleprompterRecognitionController({
   setStatus = () => {},
   applyTranscript = () => {},
   getPrompt = () => '',
-  logError = (...args) => console.error(...args)
+  logError = (...args) => console.error(...args),
+  diagnostics = createTeleprompterDiagnostics({ windowRef })
 } = {}) {
   let systemRecognition = null;
   let systemRestartTimer = 0;
   let systemStartTimer = 0;
   let systemResultTimer = 0;
   let generation = 0;
-  let microphoneStream = null;
-  let audioContext = null;
-  let audioSource = null;
-  let audioProcessor = null;
-  let audioSink = null;
-  let offlineSessionId = '';
-  let offlineSamples = [];
-  let offlineInference = false;
+  let offlineOwner = null;
 
   function recognitionConstructor() {
     return windowRef?.SpeechRecognition || windowRef?.webkitSpeechRecognition || null;
@@ -97,6 +91,7 @@ export function createTeleprompterRecognitionController({
     let fallingBack = false;
     let cycleStarted = false;
     let receivedResult = false;
+    let requestId = 0;
     systemRecognition = recognition;
     recognition.continuous = true;
     recognition.interimResults = true;
@@ -139,6 +134,7 @@ export function createTeleprompterRecognitionController({
       systemStartTimer = 0;
       setRuntime('active');
       setStatus('listening', 'engineListening');
+      diagnostics.event('system-ready', { session: activeGeneration, language: recognition.lang });
       if (!receivedResult && !systemResultTimer) {
         systemResultTimer = windowRef?.setTimeout(
           fallback,
@@ -149,6 +145,14 @@ export function createTeleprompterRecognitionController({
     recognition.onresult = event => {
       if (activeGeneration !== generation || !isPlaying()) return;
       const state = transcriptState.push(event.results, event.resultIndex);
+      state.latest = simplifyChineseText(state.latest);
+      state.transcript = simplifyChineseText(state.transcript);
+      requestId += 1;
+      diagnostics.event('transcript', {
+        engine: 'system', session: activeGeneration, requestId,
+        text: String(state.latest || state.transcript || '').slice(-2000), final: state.final,
+        skipped: state.transcript ? null : 'empty-transcript'
+      });
       if (!state.transcript) return;
       receivedResult = true;
       windowRef?.clearTimeout(systemResultTimer);
@@ -156,11 +160,12 @@ export function createTeleprompterRecognitionController({
       setRuntime('active');
       applyTranscript(state.latest || state.transcript, state.final, {
         context: state.transcript,
-        cumulative: true
+        cumulative: true, recognitionSession: activeGeneration, requestId
       });
     };
     recognition.onerror = event => {
       if (activeGeneration !== generation) return;
+      diagnostics.event('system-error', { session: activeGeneration, error: event.error });
       const denied = ['not-allowed', 'audio-capture'].includes(event.error);
       if (!denied) return fallback();
       stopSystemRecognition();
@@ -183,68 +188,81 @@ export function createTeleprompterRecognitionController({
     return true;
   }
 
-  async function stopOfflineRecognition() {
-    const sessionId = offlineSessionId;
-    offlineSessionId = '';
-    offlineSamples = [];
-    offlineInference = false;
-    if (audioProcessor) audioProcessor.onaudioprocess = null;
-    try { audioProcessor?.disconnect(); } catch {}
-    try { audioSource?.disconnect(); } catch {}
-    try { audioSink?.disconnect(); } catch {}
-    audioProcessor = null;
-    audioSource = null;
-    audioSink = null;
-    microphoneStream?.getTracks?.().forEach(track => track.stop());
-    microphoneStream = null;
-    if (audioContext) {
-      try { await audioContext.close(); } catch {}
-      audioContext = null;
-    }
+  async function stopOfflineRecognition(owner = offlineOwner) {
+    if (!owner) return;
+    if (offlineOwner === owner) offlineOwner = null;
+    owner.closed = true;
+    owner.captureDiagnostics?.stop();
+    owner.captureDiagnostics = null;
+    diagnostics.event('stopped', { session: owner.generation });
+    const { sessionId, audioContext } = owner;
+    owner.sessionId = '';
+    owner.audioContext = null;
+    if (owner.audioProcessor) owner.audioProcessor.onaudioprocess = null;
+    try { owner.audioProcessor?.disconnect(); } catch {}
+    try { owner.audioSource?.disconnect(); } catch {}
+    try { owner.audioSink?.disconnect(); } catch {}
+    owner.microphoneStream?.getTracks?.().forEach(track => track.stop());
+    owner.microphoneStream = null;
+    const closeAudio = Promise.resolve().then(() => audioContext?.close()).catch(() => {});
     if (isTauri && sessionId) {
       try { await invoke('stop_teleprompter_recognition', { sessionId }); } catch {}
     }
+    await closeAudio;
   }
 
-  async function processOfflineWindow(activeGeneration) {
-    if (offlineInference || !offlineSessionId || activeGeneration !== generation || !isPlaying()) return;
-    const sessionId = offlineSessionId;
-    const targetLength = Math.round(
-      TELEPROMPTER_RECOGNITION_TIMING.offlineSampleRate
-      * TELEPROMPTER_RECOGNITION_TIMING.offlineWindowSeconds
-    );
-    const overlapLength = Math.round(
-      TELEPROMPTER_RECOGNITION_TIMING.offlineSampleRate
-      * TELEPROMPTER_RECOGNITION_TIMING.offlineOverlapSeconds
-    );
-    if (offlineSamples.length < targetLength) return;
-    if (offlineSamples.length > targetLength * 2) offlineSamples = offlineSamples.slice(-targetLength);
-    const chunk = offlineSamples.slice(0, targetLength);
-    offlineSamples = offlineSamples.slice(Math.max(0, targetLength - overlapLength));
-    offlineInference = true;
+  function isCurrent(owner) {
+    return offlineOwner === owner && !owner.closed && owner.generation === generation
+      && isPlaying() && getVoiceFollow() && !isDisposed();
+  }
+
+  async function processOfflineWindow(owner) {
+    if (!isCurrent(owner) || owner.inference || !owner.sessionId) return;
+    const window = owner.audio.take();
+    if (!window) return;
+    owner.inference = true;
+    const requestId = ++owner.requestCount;
+    owner.inferenceStarted = diagnostics.now();
+    diagnostics.event('recognize', {
+      session: owner.generation, requestId, samples: window.samples.length,
+      audioMs: Math.round(window.samples.length / LIVE_AUDIO_TIMING.sampleRate * 1000),
+      windowStart: window.windowStart, windowEnd: window.windowEnd,
+      inputRms: Number(window.inputRms.toFixed(1)), gain: Number(window.gain.toFixed(2))
+    });
     setStatus('listening', 'engineRecognizing');
     try {
       const result = await invoke('transcribe_teleprompter_audio', {
-        sessionId,
-        samples: chunk,
+        sessionId: owner.sessionId,
+        samples: window.samples,
         prompt: getPrompt()
       });
-      if (activeGeneration === generation && isPlaying() && result?.text) {
-        applyTranscript(result.text, true);
+      const current = isCurrent(owner);
+      if (result?.text) result.text = simplifyChineseText(result.text);
+      const accepted = current && result?.text && (result.confidence == null || result.confidence >= 0.35);
+      diagnostics.event('transcript', () => ({
+        engine: 'offline', session: owner.generation, requestId,
+        elapsedMs: Math.round(diagnostics.now() - owner.inferenceStarted),
+        text: String(result?.text || '').slice(0, 2000),
+        confidence: result?.confidence ?? null, model: result?.model_id ?? null,
+        skipped: accepted ? null : !current ? 'stale-session' : !result?.text ? 'empty-transcript' : 'low-speech-confidence'
+      }));
+      if (accepted) {
+        const { windowStart, windowEnd, utterance } = window;
+        applyTranscript(result.text, false, {
+          rolling: true, windowStart, windowEnd, utterance, recognitionSession: owner.generation, requestId
+        });
       }
     } catch (error) {
+      diagnostics.event('recognition-error', { session: owner.generation, requestId, error: error?.name || 'Error' });
       const message = String(error?.message || error || '');
-      if (activeGeneration === generation && !/stopped|cancelled|session-not-found/i.test(message)) {
+      if (isCurrent(owner) && !/stopped|cancelled|session-not-found/i.test(message)) {
         logError('[Teleprompter] offline recognition failed:', error);
         useScrollFallback();
-        void stopOfflineRecognition();
+        void stopOfflineRecognition(owner);
       }
     } finally {
-      if (activeGeneration !== generation || sessionId !== offlineSessionId) return;
-      offlineInference = false;
-      if (activeGeneration === generation && isPlaying() && offlineSamples.length >= targetLength) {
-        void processOfflineWindow(activeGeneration);
-      }
+      owner.inference = false;
+      if (isCurrent(owner)) void processOfflineWindow(owner);
     }
   }
 
@@ -265,48 +283,61 @@ export function createTeleprompterRecognitionController({
       return false;
     }
     setStatus('idle', 'engineLoading');
+    const owner = { generation: activeGeneration, audio: createLiveAudioWindow(), closed: false, requestCount: 0 };
+    offlineOwner = owner;
+    diagnostics.event('model-loading', { session: activeGeneration });
     try {
-      offlineSessionId = await invoke('start_teleprompter_recognition', {
+      owner.sessionId = await invoke('start_teleprompter_recognition', {
         language: getLanguage() === 'zh' ? 'zh' : 'en'
       });
-      if (activeGeneration !== generation || !isPlaying()) {
-        await stopOfflineRecognition();
+      if (!isCurrent(owner)) {
+        await stopOfflineRecognition(owner);
         return false;
       }
-      microphoneStream = await navigatorRef.mediaDevices.getUserMedia({
+      diagnostics.event('microphone-request', { session: activeGeneration });
+      owner.microphoneStream = await navigatorRef.mediaDevices.getUserMedia({
         audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         video: false
       });
-      if (activeGeneration !== generation || !isPlaying()) {
-        await stopOfflineRecognition();
+      if (!isCurrent(owner)) {
+        await stopOfflineRecognition(owner);
         return false;
       }
       const AudioContextCtor = windowRef?.AudioContext || windowRef?.webkitAudioContext;
       if (!AudioContextCtor) throw new Error('audio-context unavailable');
-      audioContext = new AudioContextCtor({ latencyHint: 'interactive' });
+      const audioContext = owner.audioContext = new AudioContextCtor({ latencyHint: 'interactive' });
       await audioContext.resume();
+      if (!isCurrent(owner)) {
+        await stopOfflineRecognition(owner);
+        return false;
+      }
       if (audioContext.state !== 'running') {
         throw Object.assign(new Error('audio-context suspended'), { name: 'AudioContextSuspended' });
       }
-      audioSource = audioContext.createMediaStreamSource(microphoneStream);
-      audioProcessor = audioContext.createScriptProcessor(4096, 1, 1);
-      audioSink = audioContext.createGain();
+      const audioSource = owner.audioSource = audioContext.createMediaStreamSource(owner.microphoneStream);
+      const audioProcessor = owner.audioProcessor = audioContext.createScriptProcessor(1024, 1, 1);
+      const audioSink = owner.audioSink = audioContext.createGain();
       audioSink.gain.value = 0;
+      const readAudioState = () => {
+        const track = owner.microphoneStream?.getAudioTracks?.()[0];
+        return {
+          session: activeGeneration, contextState: audioContext.state, sourceSampleRate: audioContext.sampleRate,
+          trackEnabled: track?.enabled ?? null, trackMuted: track?.muted ?? null, trackState: track?.readyState ?? null,
+          inference: Boolean(owner.inference),
+          inferenceMs: owner.inference ? Math.round(diagnostics.now() - owner.inferenceStarted) : 0
+        };
+      };
+      diagnostics.event('microphone-ready', readAudioState);
+      owner.captureDiagnostics = diagnostics.capture(readAudioState);
       audioProcessor.onaudioprocess = event => {
-        if (activeGeneration !== generation || !isPlaying()) return;
+        if (!isCurrent(owner)) return;
         const converted = resampleTeleprompterAudio(
           event.inputBuffer.getChannelData(0),
           audioContext.sampleRate
         );
-        for (let index = 0; index < converted.length; index += 1) offlineSamples.push(converted[index]);
-        const maxBuffered = TELEPROMPTER_RECOGNITION_TIMING.offlineSampleRate * 11;
-        if (offlineSamples.length > maxBuffered) {
-          offlineSamples = offlineSamples.slice(-Math.round(
-            TELEPROMPTER_RECOGNITION_TIMING.offlineSampleRate
-            * TELEPROMPTER_RECOGNITION_TIMING.offlineWindowSeconds
-          ));
-        }
-        void processOfflineWindow(activeGeneration);
+        owner.audio.append(converted);
+        owner.captureDiagnostics?.accept(converted, owner.audio.state());
+        void processOfflineWindow(owner);
       };
       audioSource.connect(audioProcessor);
       audioProcessor.connect(audioSink);
@@ -315,8 +346,11 @@ export function createTeleprompterRecognitionController({
       setStatus('listening', 'engineListening');
       return true;
     } catch (error) {
+      const current = isCurrent(owner);
+      await stopOfflineRecognition(owner);
+      if (!current || activeGeneration !== generation) return false;
+      diagnostics.event('start-error', { session: activeGeneration, error: error?.name || 'Error' });
       logError('[Teleprompter] recognition start failed:', error);
-      await stopOfflineRecognition();
       const message = String(error?.message || error || '');
       if (/model-not-installed/i.test(message)) {
         setRuntime('fallback');
@@ -335,9 +369,10 @@ export function createTeleprompterRecognitionController({
   }
 
   async function stop({ updateStatus = true } = {}) {
-    generation += 1;
+    const stoppedGeneration = ++generation;
     stopSystemRecognition();
     await stopOfflineRecognition();
+    if (stoppedGeneration !== generation) return;
     setRuntime('idle');
     if (updateStatus) {
       if (!getVoiceFollow()) setStatus('idle', 'engineIdle');
@@ -346,9 +381,14 @@ export function createTeleprompterRecognitionController({
   }
 
   async function start() {
-    await stop({ updateStatus: false });
-    if (!isPlaying() || !getVoiceFollow()) return;
-    const activeGeneration = ++generation;
+    const stopped = stop({ updateStatus: false });
+    const activeGeneration = generation;
+    await stopped;
+    diagnostics.event('start', {
+      session: activeGeneration, engine: getEngine(), voiceFollow: getVoiceFollow(),
+      playing: isPlaying(), language: getLanguage(), desktop: isTauri
+    });
+    if (activeGeneration !== generation || !isPlaying() || !getVoiceFollow() || isDisposed()) return;
     setRuntime('starting');
     const beginOffline = async () => {
       if (activeGeneration !== generation || !isPlaying() || !getVoiceFollow()) return;
@@ -356,6 +396,7 @@ export function createTeleprompterRecognitionController({
     };
     const beginOfflineWithGate = async () => {
       const ready = await ensureOfflineModelThen(beginOffline);
+      diagnostics.event('model-gate', { session: activeGeneration, ready: Boolean(ready) });
       if (ready) await beginOffline();
       else if (activeGeneration === generation) {
         setRuntime('fallback');

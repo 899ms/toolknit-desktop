@@ -4,6 +4,7 @@ import { bindPointerSortableFileList } from '../../shared/sortable-file-list.js'
 import {
   ImageBatchError,
   getImageBatchFailureSummary,
+  getImageCompressionOutcome,
   normalizeImageCompressionQuality,
   normalizeImageTargetFormat,
   validateImageCompressionSelection,
@@ -238,6 +239,12 @@ export function createImageBatchController({
     files.forEach((file, index) => {
       const item = document.createElement('div');
       item.className = 'audio-convert-file-item';
+      item.dataset.index = String(index);
+      const number = document.createElement('span');
+      number.className = 'audio-convert-file-index';
+      const numberText = document.createElement('span');
+      numberText.textContent = String(index + 1);
+      number.append(numberText);
       const name = document.createElement('span');
       name.className = 'audio-convert-file-name';
       name.textContent = String(file?.name || fileNameFromPath(file?.path) || t('common.unnamedFile'));
@@ -255,7 +262,7 @@ export function createImageBatchController({
         files.splice(index, 1);
         renderFiles();
       });
-      item.append(name, remove);
+      item.append(number, name, remove);
       fileList.append(item);
     });
     bindPointerSortableFileList({
@@ -374,10 +381,10 @@ export function createImageBatchController({
 
   function compressionQualityText() {
     const base = t(QUALITY_LABELS[selectedOption] || QUALITY_LABELS.medium);
-    const hasWebp = files.some(file => /\.webp$/i.test(file?.name || ''));
-    const hasNonWebp = files.some(file => !/\.webp$/i.test(file?.name || ''));
-    if (!hasWebp) return base;
-    return hasNonWebp ? `${base} / ${t('home.imageCompress.webpLossless')}` : t('home.imageCompress.webpLossless');
+    const hasLossless = files.some(file => /\.(png|webp)$/i.test(file?.name || ''));
+    const hasJpeg = files.some(file => /\.jpe?g$/i.test(file?.name || ''));
+    if (!hasLossless) return base;
+    return hasJpeg ? `${base} / ${t('home.imageCompress.lossless')}` : t('home.imageCompress.lossless');
   }
 
   function showSuccess(result) {
@@ -387,17 +394,32 @@ export function createImageBatchController({
       : `~/Downloads/toolknit-${mode === 'convert' ? 'converted' : 'compressed'}`);
     const count = result?.success_count ?? files.length;
     const failed = result?.fail_count ?? 0;
+    const unchanged = mode === 'compress'
+      ? getImageCompressionOutcome(result, files.length).unchangedCount : 0;
     const format = mode === 'convert' ? selectedOption : compressionQualityText();
     const firstName = files[0]?.name || '';
     let summary;
-    if (failed > 0 && count > 0) summary = t(`${config.translationRoot}.successSummaryPartial`, { success: count, fail: failed, format });
+    if (unchanged > 0) summary = t('home.imageCompress.resultSummary', { success: count, unchanged, fail: failed, format });
+    else if (failed > 0 && count > 0) summary = t(`${config.translationRoot}.successSummaryPartial`, { success: count, fail: failed, format });
     else if (failed > 0) summary = t(`${config.translationRoot}.allFailed`, { count: failed });
     else if (count > 1) summary = t(`${config.translationRoot}.successSummaryPlural`, { count, format });
     else summary = t(`${config.translationRoot}.successSummarySingle`, { name: firstName, format });
     if (successMeta) successMeta.textContent = summary;
+    if (mode === 'compress') {
+      const icon = successOverlay.querySelector('.audio-convert-success-icon');
+      if (icon) {
+        icon.dataset.resultState = count > 0 && failed === 0 ? 'success' : 'info';
+        const glyph = document.createElement('i');
+        glyph.dataset.lucide = icon.dataset.resultState === 'success' ? 'check' : 'info';
+        icon.replaceChildren(glyph);
+        refreshIcons();
+      }
+    }
     if (successFormat) successFormat.textContent = format;
     if (successCount) successCount.textContent = `${count} ${t(`${config.translationRoot}.successCountUnit`)}`;
-    if (successPath) successPath.textContent = displayFilesystemPath(outputPath);
+    if (openFolder) openFolder.disabled = count === 0;
+    if (successPath) successPath.textContent = count === 0 && mode === 'compress'
+      ? t('home.imageCompress.noSmallerOutput') : displayFilesystemPath(outputPath);
     if (mode === 'compress') {
       const originalSize = Number(result?.original_size) || 0;
       const compressedSize = Number(result?.compressed_size) || 0;
@@ -478,13 +500,10 @@ export function createImageBatchController({
       if (!isCurrentOperation(operation)) return;
       releaseOperation(operation);
       setProcessing(false);
-      if (result?.success_count === 0 && result?.fail_count > 0) {
-        const onlyNoSmaller = mode === 'compress' && Array.isArray(result.errors)
-          && result.errors.length > 0
-          && result.errors.every(error => String(error).includes('no smaller output was produced'));
-        showError(onlyNoSmaller
-          ? t('home.imageCompress.noSmallerOutput')
-          : t(`${config.translationRoot}.allFailed`, { count: result.fail_count }));
+      const unchanged = mode === 'compress'
+        ? getImageCompressionOutcome(result, files.length).unchangedCount : 0;
+      if (result?.success_count === 0 && result?.fail_count > 0 && unchanged === 0) {
+        showError(t(`${config.translationRoot}.allFailed`, { count: result.fail_count }));
         return;
       }
       showSuccess(result);

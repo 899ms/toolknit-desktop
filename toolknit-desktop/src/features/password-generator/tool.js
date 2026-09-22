@@ -1,16 +1,20 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
 import { onLangChange, t } from '../../i18n.js';
+import { copySensitiveText } from '../../platform/clipboard-runtime.js';
 import {
   assessPasswordStrength,
   countPasswordComposition,
   generatePassword
 } from './core.js';
+import '../../styles/components/calculator-form.css';
 import './password-generator.css';
+import './password-generator-light.css';
 
 const COPY_FEEDBACK_MS = 1500;
 
 export function initPasswordGeneratorTool({
   overlay,
+  isTauri = false,
   notify = message => window.showToast?.(message),
   initStandardToolPlasma = () => null,
   disposeStandardToolPlasma = () => null
@@ -203,13 +207,13 @@ export function initPasswordGeneratorTool({
   }
 
   async function copyPassword(password, button) {
-    if (!password || !navigator.clipboard?.writeText) {
+    if (!password || (!isTauri && !navigator.clipboard?.writeText)) {
       notify(t('home.passwordGen.copyFailed'));
       return;
     }
     const token = lifecycle.token();
     try {
-      await navigator.clipboard.writeText(password);
+      await copySensitiveText(password, { isTauri });
       if (!lifecycle.isCurrent(token) || !overlay.classList.contains('visible')) return;
       button.textContent = t('home.passwordGen.copied');
       scheduleCopyReset(button, token);

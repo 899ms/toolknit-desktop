@@ -7,10 +7,11 @@ import { pptTextPageTemplate, pptTextPortalTemplate, pptCompressPageTemplate, pp
 import { createOperationGuard } from '../src/features/ppt-workflows/shared.js';
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [main, html, styles, tool, textController, compressController, outlineController, shared, featureStyles] = await Promise.all([
+const [main, html, styles, tool, textController, compressController, outlineController, shared, featureStyles, workbenchStyles, applicationRuntime] = await Promise.all([
   read('src/main.js'), readAppMarkup(import.meta.url), readGlobalStyles(import.meta.url), read('src/features/ppt-workflows/tool.js'),
   read('src/features/ppt-workflows/text-controller.js'), read('src/features/ppt-workflows/compress-controller.js'),
-  read('src/features/ppt-workflows/outline-controller.js'), read('src/features/ppt-workflows/shared.js'), read('src/features/ppt-workflows/ppt-workflows.css')
+  read('src/features/ppt-workflows/outline-controller.js'), read('src/features/ppt-workflows/shared.js'), read('src/features/ppt-workflows/ppt-workflows.css'),
+  read('src/styles/components/ppt-workbench.css'), read('src/application-runtime.js')
 ]);
 
 for (const [id, overlayId, initializer] of [['ppt-text', 'pptTextOverlay', 'initPptTextTool'], ['ppt-compress', 'pptCompressOverlay', 'initPptCompressTool'], ['ppt-outline', 'pptOutlineOverlay', 'initPptOutlineTool']]) {
@@ -38,9 +39,22 @@ for (const source of [textController, compressController]) {
 assert.doesNotMatch(outlineController, /registerNativePptxDrop/);
 assert.match(textController, /AbortController|abortController/);
 assert.match(compressController, /canvas\.width = 0/);
+assert.match(compressController, /enhanceToolSelect\(level\)/);
+assert.match(compressController, /levelSelect\?\.dispose\(\)/);
+assert.match(pptCompressPageTemplate(), /id="pptCompressLevel"/);
+assert.match(textController, /if \(isOpen\(owner\) && !busy\) setProgress\(0, text\('processing'\), false\)/);
+assert.match(compressController, /if \(isOpen\(owner\) && !busy\) setProgress\(0, text\('processing'\), false\)/);
 assert.match(shared, /if \(!isCurrent\(\) \|\| owner\.disposed\) \{\s*unlisten\(\);\s*return;/);
 assert.match(shared, /owner\.use\(unlisten\)/);
 assert.match(featureStyles, /ppt-text-v2/);
+assert.match(featureStyles, /@media \(min-width: 981px\) and \(max-height: 520px\)/);
+assert.doesNotMatch(featureStyles, /@media \(max-height: 520px\)/, 'short-window shrinking must not collapse stacked workspaces');
+assert.match(workbenchStyles, /\[data-ppt-text-portal\][\s\S]*z-index:\s*40000/);
+assert.match(workbenchStyles, /\[data-ppt-compress-portal\][\s\S]*z-index:\s*40010/);
+assert.match(workbenchStyles, /\[data-ppt-outline-portal\][\s\S]*z-index:\s*40010/);
+assert.match(outlineController, /await continueToDraft\(lastResult/);
+assert.match(applicationRuntime, /continueToDraft: async \(outline, sourceLabel\)/);
+assert.match(applicationRuntime, /instance\?\.raw\?\.importOutline/);
 
 let currentSession = { disposed: false };
 const guard = createOperationGuard(() => currentSession);

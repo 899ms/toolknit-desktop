@@ -134,6 +134,7 @@ export function createIconGeneratorController({
   const successOverlay = byId('iconGenSuccessOverlay');
   const successMeta = byId('iconGenSuccessMeta');
   const successCount = byId('iconGenSuccessCount');
+  const successPath = byId('iconGenSuccessPath');
   const openFolder = byId('iconGenOpenFolder');
   const successOk = byId('iconGenSuccessOk');
   if (!fileList || !cta || !processButton || !processMask || !successOverlay) {
@@ -156,6 +157,8 @@ export function createIconGeneratorController({
   let processing = false;
   let outputPath = '';
   let lastCount = 0;
+  let successRevision = 0;
+  let openingFolder = false;
   let buttonRevision = 0;
   let disposed = false;
 
@@ -427,20 +430,55 @@ export function createIconGeneratorController({
     return wasProcessing;
   }
 
-  function showSuccess(count) {
-    lastCount = count;
-    if (successCount) successCount.textContent = `${count} ${t('home.iconGen.successCountUnit')}`;
-    if (successMeta) {
-      const summary = t('home.iconGen.successSummary', { count });
-      const directory = outputPath ? displayFilesystemPath(outputParentFolder(outputPath)) : '';
-      successMeta.textContent = directory ? `${summary}\n${directory}` : summary;
+  function updateSuccessContent() {
+    if (successCount) successCount.textContent = `${lastCount} ${t('home.iconGen.successCountUnit')}`;
+    if (successMeta) successMeta.textContent = t('home.iconGen.successSummary', { count: lastCount });
+    const canOpenFolder = isTauri && Boolean(outputPath);
+    if (successPath) {
+      successPath.textContent = canOpenFolder
+        ? displayFilesystemPath(outputParentFolder(outputPath))
+        : t('home.iconGen.browserDownloadLocation');
+      successPath.title = successPath.textContent;
     }
-    if (openFolder) openFolder.style.display = outputPath ? '' : 'none';
+    if (openFolder) {
+      openFolder.disabled = !canOpenFolder || openingFolder;
+      openFolder.title = canOpenFolder ? '' : t('home.iconGen.browserOpenFolderUnavailable');
+    }
+  }
+
+  function showSuccess(count) {
+    successRevision += 1;
+    lastCount = count;
+    openingFolder = false;
+    updateSuccessContent();
     setInteractiveLayer(successOverlay, true);
   }
 
   function closeSuccess() {
+    successRevision += 1;
+    openingFolder = false;
+    if (successOverlay.contains(documentRef.activeElement)) processButton.focus({ preventScroll: true });
     setInteractiveLayer(successOverlay, false);
+  }
+
+  async function openSuccessFolder() {
+    if (!isTauri || !outputPath || openingFolder || !successOverlay.classList.contains('visible')) return;
+    const owner = session;
+    const revision = successRevision;
+    const isCurrentResult = () => isOpenSession(owner) && revision === successRevision;
+    openingFolder = true;
+    updateSuccessContent();
+    try {
+      const opened = await openOutputFolder(outputParentFolder(outputPath));
+      if (isCurrentResult() && opened !== false) closeSuccess();
+    } catch {
+      if (isCurrentResult()) showError(t('common.openFolderFailed'));
+    } finally {
+      if (isCurrentResult()) {
+        openingFolder = false;
+        updateSuccessContent();
+      }
+    }
   }
 
   async function startProcessing() {
@@ -480,7 +518,8 @@ export function createIconGeneratorController({
         urlApi
       });
       assertActive();
-      outputPath = published.savedPath || '';
+      outputPath = typeof published.savedPath === 'string' ? published.savedPath.trim() : '';
+      if (isTauri && !outputPath) throw new Error('icon-generator:missing-output-path');
       setProgress(100);
       await waitForScope(operation.owner, 400);
       assertActive();
@@ -547,12 +586,7 @@ export function createIconGeneratorController({
   lifecycle.event(processButton, 'click', () => { void startProcessing(); });
   lifecycle.event(cancelButton, 'click', cancelOperation);
   lifecycle.event(successOk, 'click', closeSuccess);
-  lifecycle.event(openFolder, 'click', () => {
-    void (async () => {
-      if (isTauri && outputPath) await openOutputFolder(outputParentFolder(outputPath));
-      closeSuccess();
-    })();
-  });
+  lifecycle.event(openFolder, 'click', () => { void openSuccessFolder(); });
   lifecycle.event(overlay.querySelector('[data-home-link="website"]'), 'click', event => {
     event.preventDefault();
     void openExternalUrl(WEBSITE_URL);
@@ -569,7 +603,7 @@ export function createIconGeneratorController({
     });
   });
   lifecycle.use(onLangChange(() => {
-    if (successOverlay.classList.contains('visible') && lastCount) showSuccess(lastCount);
+    if (successOverlay.classList.contains('visible') && lastCount) updateSuccessContent();
     else if (!processing) setProgress(0);
   }));
 

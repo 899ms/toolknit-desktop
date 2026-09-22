@@ -1,13 +1,17 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
-import { onLangChange, t } from '../../i18n.js';
+import { applyTranslations, onLangChange, t } from '../../i18n.js';
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 import { bindPointerSortableFileList } from '../../shared/sortable-file-list.js';
+import { moveFocusOutOfHiddenRegion } from '../../shared/tool-page-shell.js';
+import { enhanceToolSelects } from '../../tool-custom-select.js';
 import {
   PDF_COMPRESS_LEVELS,
   getPdfCompressErrorCode,
-  summarizePdfCompressResults
+  summarizePdfCompressResults,
+  normalizePdfCompressionOptions
 } from '../../pdf-compress-core.js';
 import { createPdfCompressProcessor, PdfCompressCancelledError } from './processor.js';
+import { createPdfCompressionResultList } from './results.js';
 import './pdf-compress.css';
 
 function fileNameFromPath(path) {
@@ -23,6 +27,7 @@ function outputParentFolder(path) {
 
 function setInteractiveLayer(element, visible) {
   if (!element) return;
+  if (!visible) moveFocusOutOfHiddenRegion(element);
   element.classList.toggle('visible', visible);
   element.setAttribute('aria-hidden', visible ? 'false' : 'true');
   element.inert = !visible;
@@ -64,7 +69,20 @@ export function initPdfCompressTool({
   const processMask = byId('pdfCompressProcessMask');
   const progressFill = byId('pdfCompressProcessBarFill');
   const progressText = byId('pdfCompressProcessText');
+  const workflowOptions = byId('pdfCompressWorkflowOptions');
+  const regularOptions = byId('pdfCompressRegularOptions');
+  const targetOptions = byId('pdfCompressTargetOptions');
   const levelOptions = byId('pdfCompressLevelOptions');
+  const targetSize = byId('pdfCompressTargetSize');
+  const targetSizeControls = byId('pdfCompressTargetSizeControls');
+  const modeOptions = byId('pdfCompressModeOptions');
+  const claritySelect = byId('pdfCompressClarity');
+  const customTarget = byId('pdfCompressCustomTarget');
+  const targetValue = byId('pdfCompressTargetValue');
+  const targetUnit = byId('pdfCompressTargetUnit');
+  const modeHint = byId('pdfCompressModeHint');
+  const targetHint = byId('pdfCompressTargetHint');
+  const cancelButton = byId('pdfCompressCancel');
   const successOverlay = byId('pdfCompressSuccessOverlay');
   const successMeta = byId('pdfCompressSuccessMeta');
   const successFileName = byId('pdfCompressSuccessFileName');
@@ -88,6 +106,11 @@ export function initPdfCompressTool({
   let session = null;
   let files = [];
   let level = levelOptions?.querySelector('.active')?.dataset.level || 'medium';
+  let targetSizeMb = null;
+  let workflow = 'regular';
+  let mode = 'structure';
+  let clarity = 'readable';
+  let unit = 'KB';
   let processing = false;
   let activeOperation = null;
   let activePromise = null;
@@ -108,7 +131,92 @@ export function initPdfCompressTool({
   };
   const isOpenSession = owner => owner && owner === session && !owner.disposed
     && overlay.classList.contains('visible');
-  const processor = createPdfCompressProcessor({ isTauri, getOutputDir });
+  const processor = createPdfCompressProcessor({ isTauri, getOutputDir,
+    saveBrowser: async (bytes, name, operation) => {
+      const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+      operation.owner.use(() => URL.revokeObjectURL(url));
+      operation.owner.timeout(() => URL.revokeObjectURL(url), 2000);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      link.hidden = true;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      return `~/Downloads/${name}`;
+    }
+  });
+  const customSelectControls = enhanceToolSelects([targetSize, claritySelect, targetUnit]);
+  lifecycle.use(() => customSelectControls.forEach(control => control.dispose()));
+  const resultList = createPdfCompressionResultList({
+    root: byId('pdfCompressResults'), translate: t, formatFileSize, errorMessage,
+    canRetryCompact: result => isReadablePageTooLarge(result),
+    onRetryCompact: () => retryWithCompactClarity()
+  });
+  lifecycle.use(resultList.dispose);
+
+  const targetRequiresRaster = () => workflow === 'target';
+
+  function targetSelectionMegabytes() {
+    if (!targetSize || targetSize.value === 'custom') return null;
+    const value = Number(targetSize.value);
+    return Number.isFinite(value) ? value : null;
+  }
+
+  function syncOptions() {
+    const targetWorkflow = targetRequiresRaster();
+    if (regularOptions) regularOptions.hidden = targetWorkflow;
+    if (targetOptions) targetOptions.hidden = !targetWorkflow;
+    workflowOptions?.querySelectorAll('[data-workflow]').forEach(button => {
+      const active = button.dataset.workflow === workflow;
+      button.disabled = processing;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    regularOptions?.querySelectorAll('button, input, select').forEach(control => {
+      control.disabled = processing || targetWorkflow;
+    });
+    targetOptions?.querySelectorAll('button, input, select').forEach(control => {
+      control.disabled = processing || !targetWorkflow;
+    });
+    if (customTarget) {
+      const custom = targetSize?.value === 'custom';
+      customTarget.hidden = !custom;
+      targetSizeControls?.classList.toggle('is-custom', custom);
+    }
+    if (claritySelect) claritySelect.disabled = processing || !targetWorkflow;
+    levelOptions?.querySelectorAll('button').forEach(button => {
+      button.disabled = processing || targetWorkflow;
+      button.classList.toggle('active', button.dataset.level === level);
+    });
+    modeOptions?.querySelectorAll('[data-mode]').forEach(button => {
+      button.disabled = processing || targetWorkflow;
+      button.classList.toggle('active', button.dataset.mode === mode);
+      button.setAttribute('aria-pressed', String(button.dataset.mode === mode));
+    });
+    if (modeHint) {
+      const key = mode === 'structure' ? 'home.pdfCompress.structureHint' : 'home.pdfCompress.rasterHint';
+      modeHint.dataset.i18n = key;
+      modeHint.textContent = t(key);
+    }
+    if (targetHint) {
+      targetHint.dataset.i18n = 'home.pdfCompress.targetHint';
+      targetHint.textContent = t('home.pdfCompress.targetHint')
+        + (clarity === 'compact' ? ` ${t('home.pdfCompress.compactWarning')}` : '');
+    }
+    customSelectControls.forEach(control => control.refresh());
+  }
+
+  function selectedTargetBytes() {
+    if (!targetRequiresRaster() || !targetSize) {
+      targetSizeMb = null;
+      return null;
+    }
+    const bytes = targetSize.value === 'custom' ? Math.floor(Number(targetValue.value) * (unit === 'MB' ? 1024 * 1024 : 1024))
+      : Number(targetSize.value) * 1024 * 1024;
+    targetSizeMb = targetSelectionMegabytes();
+    return normalizePdfCompressionOptions({ mode: 'raster', level, clarity, targetBytes: bytes }).targetBytes;
+  }
 
   if (browserInput) {
     browserInput.type = 'file';
@@ -123,7 +231,8 @@ export function initPdfCompressTool({
     const value = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
     if (progressFill) progressFill.style.width = `${value}%`;
     if (progressText) {
-      progressText.textContent = Number(detail.total) > 0
+      const key = { preparing: 'phasePreparing', encoding: 'phaseEncoding', attempt: 'phaseAttempt', verifying: 'phaseVerifying' }[detail.phase];
+      progressText.textContent = key ? t(`home.pdfCompress.${key}`, { ...detail, size: formatFileSize(detail.bytes || 0) }) : Number(detail.total) > 0
         ? `${t('home.pdfCompress.processing')} (${detail.current}/${detail.total})`
         : t('home.pdfCompress.processing');
     }
@@ -131,6 +240,9 @@ export function initPdfCompressTool({
 
   function setProcessing(visible) {
     setInteractiveLayer(processMask, visible);
+    if (cancelButton) cancelButton.disabled = false;
+    syncOptions();
+    if (visible) safeFocus(cancelButton);
     if (!visible) setProgress(0);
   }
 
@@ -301,10 +413,11 @@ export function initPdfCompressTool({
 
   function cancelOperation({ silent = false, detach = false } = {}) {
     const operation = activeOperation;
-    if (!operation) return;
+    if (!operation) return Promise.resolve();
     operation.silent ||= silent;
-    processor.cancel(operation);
+    const cancelPromise = processor.cancel(operation);
     if (detach && activeOperation === operation) activeOperation = null;
+    return cancelPromise;
   }
 
   function finishOperation(operation) {
@@ -314,7 +427,14 @@ export function initPdfCompressTool({
     setProcessing(false);
   }
 
-  function errorMessage(error) {
+  function isReadablePageTooLarge(result) {
+    return Boolean(result
+      && result.targetBytes != null
+      && result.clarity === 'readable'
+      && getPdfCompressErrorCode(result.error) === 'page-too-large');
+  }
+
+  function errorMessage(error, result = null) {
     const key = {
       'desktop-only': 'errorDesktopOnly',
       'input-too-large': 'errorTooLarge',
@@ -322,45 +442,81 @@ export function initPdfCompressTool({
       'invalid-level': 'errorInvalidLevel',
       'invalid-pdf': 'errorInvalidPdf',
       'password-protected': 'errorPasswordProtected',
+      'busy': 'errorBusy',
+      'timeout': 'errorTimeout',
+      'output-invalid': 'errorOutputInvalid',
       'qpdf-unavailable': 'errorEngineUnavailable',
       'output-path': 'errorOutputPath',
+      'invalid-mode': 'errorInvalidMode',
+      'invalid-clarity': 'errorInvalidMode',
+      'invalid-target-size': 'errorInvalidTarget',
+      'cache-limit': 'errorCacheLimit',
+      'cache-unavailable': 'errorCacheLimit',
+      'page-too-large': 'errorPageTooLarge',
+      'output-too-large': 'errorOutputTooLarge',
+      'input-changed': 'errorInputChanged',
+      'write-session': 'errorOutputInvalid',
       'compression-failed': 'errorFailed'
     }[getPdfCompressErrorCode(error)] || 'errorFailed';
-    return t(`home.pdfCompress.${key}`);
+    const message = t(`home.pdfCompress.${key}`);
+    return isReadablePageTooLarge(result)
+      ? `${message} ${t('home.pdfCompress.pageTooLargeGuidance')}`
+      : message;
   }
 
-  function renderSuccess(savedResults, noOutputCount) {
-    const outputResults = savedResults.filter(result => result?.outputPath);
-    if (!outputResults.length) return;
-    const count = outputResults.length;
-    const originalBytes = outputResults.reduce((sum, result) => sum + (Number(result.originalSize) || 0), 0);
+  function retryWithCompactClarity() {
+    if (disposed || processing || !isOpenSession(session)) return;
+    workflow = 'target';
+    clarity = 'compact';
+    if (claritySelect) claritySelect.value = clarity;
+    targetSizeMb = targetSelectionMegabytes();
+    syncOptions();
+    hideSuccess({ focusProcess: true });
+  }
+
+  function renderSuccess(allResults) {
+    if (!allResults.length) return;
+    const summary = summarizePdfCompressResults(allResults);
+    const outputResults = summary.savedResults;
+    const count = allResults.length;
+    const originalBytes = allResults.reduce((sum, result) => sum + (Number(result.originalSize) || 0), 0);
     const compressedBytes = outputResults.reduce((sum, result) => sum + (Number(result.compressedSize) || 0), 0);
-    const firstName = String(outputResults[0]?.name || '');
+    const firstName = String(allResults[0]?.name || '');
     if (successCount) successCount.textContent = String(count);
     if (successFileName) successFileName.textContent = count === 1
       ? firstName
-      : (firstName ? `${firstName} 等 ${count} 个文件` : `${count} 个文件`);
+      : t('home.pdfCompress.filesCount', { count });
     if (successOriginalSize) successOriginalSize.textContent = formatFileSize(originalBytes);
-    if (successCompressedSize) successCompressedSize.textContent = formatFileSize(compressedBytes);
+    if (successCompressedSize) successCompressedSize.textContent = outputResults.length ? formatFileSize(compressedBytes) : t('home.pdfCompress.noOutputFile');
     if (successPath) {
-      const path = displayFilesystemPath(outputResults[0].outputPath);
+      const path = outputResults.length ? displayFilesystemPath(outputResults[0].outputPath) : t('home.pdfCompress.noOutputFile');
       successPath.textContent = path;
       successPath.title = path;
     }
     if (successMeta) {
-      successMeta.textContent = noOutputCount > 0
-        ? t('home.pdfCompress.successWithNoOutputMeta', { saved: count, skipped: noOutputCount })
-        : (count > 1
-          ? t('home.pdfCompress.successAllMeta', { count })
-          : t('home.pdfCompress.successSingleMeta'));
+      successMeta.textContent = t('home.pdfCompress.resultSummary', { count, saved: outputResults.length });
     }
-    lastSavedPath = outputResults[0].outputPath;
+    lastSavedPath = outputResults[0]?.outputPath || '';
+    if (successOpenFolder) successOpenFolder.disabled = !isTauri || !outputResults.length;
+    const icon = document.createElement('i');
+    icon.dataset.lucide = outputResults.length === count ? 'check' : 'info';
+    const iconHost = successOverlay.querySelector('.audio-convert-success-icon');
+    if (iconHost) {
+      iconHost.dataset.resultState = outputResults.length === count ? 'success' : 'info';
+      iconHost.replaceChildren(icon);
+    }
+    resultList.render(allResults);
+    refreshIcons();
     setInteractiveLayer(successOverlay, true);
     safeFocus(successOk || successOpenFolder);
   }
 
   async function processFiles(owner = session) {
     if (!files.length || processing || !isOpenSession(owner)) return;
+    let targetBytes;
+    try { targetBytes = selectedTargetBytes(); }
+    catch (error) { showError(errorMessage(error)); return; }
+    const processingMode = workflow === 'target' ? 'raster' : mode;
     const operation = beginOperation(owner);
     if (!operation) return;
     processing = true;
@@ -370,6 +526,7 @@ export function initPdfCompressTool({
     const work = processor.run({
       files: snapshot,
       level,
+      mode: processingMode, clarity, targetBytes, targetSizeMb,
       operation,
       onProgress: (percent, detail) => {
         if (operation.isCurrent()) setProgress(percent, detail);
@@ -393,26 +550,17 @@ export function initPdfCompressTool({
       showError(t('common.errorOccurred', { error: errorMessage(failure) }));
       return;
     }
-    if (!outcome) return;
+    if (!outcome) {
+      if (operation.cancelled && !operation.silent) {
+        showToast(t('home.pdfCompress.cancelled'));
+        safeFocus(processButton);
+      }
+      return;
+    }
     results = outcome.results || [];
     outputDirectory = outcome.outputDir || '';
-    const summary = summarizePdfCompressResults(results);
-    const errors = (outcome.errors || []).map(item => `${item.name}: ${errorMessage(item.error)}`);
-    if (summary.savedCount > 0) renderSuccess(summary.savedResults, summary.noOutputCount);
-    if (summary.noOutputCount > 0) {
-      const message = t('home.pdfCompress.noSmallerAll', { count: summary.noOutputCount });
-      showError(errors.length > 0
-        ? `${message}\n\n${t('home.pdfCompress.partialFail')}:\n${errors.join('\n')}`
-        : message);
-    }
-    if (summary.savedCount > 0 && errors.length > 0) {
-      showError(`${t('home.pdfCompress.partialFail')}:\n${errors.join('\n')}`);
-    }
-    if (summary.processedCount === 0 && errors.length === 0) {
-      showError(t('home.pdfCompress.errorFailed'));
-    } else if (summary.processedCount === 0 && errors.length > 0) {
-      showError(`${t('home.pdfCompress.compressFailed')}:\n${errors.join('\n')}`);
-    }
+    if (results.length) renderSuccess(results);
+    else showError(t('home.pdfCompress.errorFailed'));
   }
 
   async function openSavedFolder() {
@@ -430,6 +578,7 @@ export function initPdfCompressTool({
 
   function hideSuccess({ focusProcess = false } = {}) {
     setInteractiveLayer(successOverlay, false);
+    resultList.clear();
     if (focusProcess) safeFocus(processButton);
   }
 
@@ -444,6 +593,7 @@ export function initPdfCompressTool({
 
   function open() {
     if (disposed || isOpenSession(session)) return;
+    [overlay, processMask, successOverlay].forEach(root => applyTranslations(root));
     returnFocus = document.activeElement;
     session?.dispose();
     session = createLifecycleScope();
@@ -451,6 +601,7 @@ export function initPdfCompressTool({
     results = [];
     outputDirectory = '';
     lastSavedPath = '';
+    workflow = 'regular';
     overlay.classList.add('visible');
     overlay.classList.remove('drag-over');
     overlay.setAttribute('aria-hidden', 'false');
@@ -458,6 +609,8 @@ export function initPdfCompressTool({
     hideDropZone();
     hideSuccess();
     setProcessing(false);
+    syncOptions();
+    customSelectControls.forEach(control => control.refresh());
     renderFiles();
     levelOptions?.querySelectorAll('.audio-convert-format-option').forEach(button => {
       button.classList.toggle('active', button.dataset.level === level);
@@ -482,12 +635,14 @@ export function initPdfCompressTool({
     }]);
   }
 
-  function close({ force = false, restoreFocus = true } = {}) {
+  async function close({ force = false, restoreFocus = true } = {}) {
     if (activeOperation && !force) {
       showToast(t('home.pdfCompress.processing'));
       return false;
     }
-    if (activeOperation) cancelOperation({ silent: true, detach: true });
+    const cancelPromise = activeOperation
+      ? cancelOperation({ silent: true, detach: true })
+      : null;
     const focusTarget = returnFocus;
     returnFocus = null;
     const owner = session;
@@ -502,6 +657,7 @@ export function initPdfCompressTool({
     processing = false;
     hideDropZone();
     hideSuccess();
+    customSelectControls.forEach(control => control.close());
     setProcessing(false);
     fileList.replaceChildren();
     fileList.classList.remove('has-files', 'is-reordering');
@@ -510,12 +666,18 @@ export function initPdfCompressTool({
     overlay.inert = true;
     plasma = disposeStandardToolPlasma(plasma);
     if (restoreFocus) safeFocus(focusTarget);
+    await cancelPromise;
     return true;
   }
 
   listen(back, 'click', () => { void close(); });
   listen(cta, 'click', () => { void chooseFiles(); });
   listen(processButton, 'click', () => { void processFiles(session); });
+  listen(cancelButton, 'click', () => {
+    cancelButton.disabled = true;
+    if (progressText) progressText.textContent = t('home.pdfCompress.cancelling');
+    void cancelOperation();
+  });
   listen(processButton, 'transitionend', event => {
     if (event.propertyName === 'opacity' && !processButton.classList.contains('visible')) {
       processButton.style.display = 'none';
@@ -523,11 +685,40 @@ export function initPdfCompressTool({
   });
   listen(levelOptions, 'click', event => {
     const button = event.target.closest('.audio-convert-format-option');
-    if (!button || processing || !PDF_COMPRESS_LEVELS.has(button.dataset.level)) return;
+    if (!button || processing || workflow !== 'regular' || !PDF_COMPRESS_LEVELS.has(button.dataset.level)) return;
     level = button.dataset.level;
-    levelOptions.querySelectorAll('.audio-convert-format-option').forEach(item => {
-      item.classList.toggle('active', item === button);
-    });
+    syncOptions();
+  });
+  listen(workflowOptions, 'click', event => {
+    const value = event.target.closest('[data-workflow]')?.dataset.workflow;
+    if (processing || !['regular', 'target'].includes(value)) return;
+    workflow = value;
+    targetSizeMb = workflow === 'target' ? targetSelectionMegabytes() : null;
+    syncOptions();
+  });
+  listen(targetSize, 'change', () => {
+    targetSizeMb = workflow === 'target' ? targetSelectionMegabytes() : null;
+    syncOptions();
+  });
+  listen(modeOptions, 'click', event => {
+    const value = event.target.closest('[data-mode]')?.dataset.mode;
+    if (processing || !['structure', 'raster'].includes(value)
+      || workflow !== 'regular') return;
+    mode = value;
+    syncOptions();
+  });
+  listen(claritySelect, 'change', () => {
+    if (workflow !== 'target') return;
+    clarity = claritySelect.value;
+    syncOptions();
+  });
+  listen(targetUnit, 'change', () => {
+    const value = Number(targetValue.value);
+    if (Number.isFinite(value) && value > 0) targetValue.value = String(value * (unit === 'MB' ? 1024 : 1) / (targetUnit.value === 'MB' ? 1024 : 1));
+    unit = targetUnit.value;
+    targetValue.min = String(unit === 'KB' ? 50 : 50 / 1024);
+    targetValue.max = String(unit === 'KB' ? 51200 : 50);
+    syncOptions();
   });
   listen(successOk, 'click', () => hideSuccess({ focusProcess: true }));
   listen(successOpenFolder, 'click', () => { void openSavedFolder(); });
@@ -538,7 +729,9 @@ export function initPdfCompressTool({
   });
   lifecycle.use(onLangChange(() => {
     renderFiles();
-    if (successOverlay.classList.contains('visible')) renderSuccess(summarizePdfCompressResults(results).savedResults, summarizePdfCompressResults(results).noOutputCount);
+    customSelectControls.forEach(control => control.refresh());
+    syncOptions();
+    if (successOverlay.classList.contains('visible')) renderSuccess(results);
   }));
   listen(window, 'beforeunload', () => { void dispose(); }, { once: true });
 
@@ -546,13 +739,13 @@ export function initPdfCompressTool({
   setInteractiveLayer(successOverlay, false);
   overlay.setAttribute('aria-hidden', 'true');
   overlay.inert = true;
+  syncOptions();
   renderFiles();
 
   async function dispose() {
     if (disposed) return;
     const pending = activePromise;
-    if (activeOperation) cancelOperation({ silent: true });
-    close({ force: true, restoreFocus: false });
+    await close({ force: true, restoreFocus: false });
     if (pending) {
       try { await pending; } catch (_) {}
     }

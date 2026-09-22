@@ -39,6 +39,7 @@ export function createPdfEditorControls({
   getSelectedIds = () => new Set(),
   getCurrentPage = () => null,
   pageSupportsContentEditing = () => false,
+  pageSupportsInsertion = pageSupportsContentEditing,
   getSelectedComponent = () => null,
   getComponentMode = () => false,
   getEditMode = () => false,
@@ -71,14 +72,15 @@ export function createPdfEditorControls({
     if (replaceBtn) replaceBtn.disabled = busy;
     if (exportBtn) exportBtn.disabled = busy || !has;
 
-    const sourceRotationKnown = !page || Number.isFinite(Number(page.sourceRotation));
+    const sourceRotationKnown = !page || page.sourceRotation == null || Number.isFinite(Number(page.sourceRotation));
     const contentEditingAllowed = has && sourceRotationKnown && pageSupportsContentEditing(page);
+    const insertionAllowed = has && sourceRotationKnown && pageSupportsInsertion(page);
     if (editTextBtn) editTextBtn.disabled = busy || !contentEditingAllowed;
     if (editTextSidebarBtn) editTextSidebarBtn.disabled = busy || !contentEditingAllowed;
-    if (insertTextBtn) insertTextBtn.disabled = busy || !contentEditingAllowed;
-    if (insertImageBtn) insertImageBtn.disabled = busy || !contentEditingAllowed;
+    if (insertTextBtn) insertTextBtn.disabled = busy || !insertionAllowed;
+    if (insertImageBtn) insertImageBtn.disabled = busy || !insertionAllowed;
     for (const button of [insertRectBtn, insertEllipseBtn, insertLineBtn]) {
-      if (button) button.disabled = busy || !contentEditingAllowed;
+      if (button) button.disabled = busy || !insertionAllowed;
     }
     if (selectComponentBtn) {
       selectComponentBtn.disabled = busy || !has;

@@ -1,0 +1,57 @@
+import assert from 'node:assert/strict';
+import { createLiveAudioWindow } from '../src/features/teleprompter/audio-window.js';
+
+const voice = (seconds, value = 3000) => new Int16Array(Math.round(seconds * 16000)).fill(value);
+const ring = createLiveAudioWindow();
+ring.append(voice(0.8));
+assert.equal(ring.take(), null);
+ring.append(voice(0.1));
+const first = ring.take();
+assert.equal(first.samples.length, 14400, 'first decode starts at 900 ms, not 3200 ms');
+assert.equal(ring.take(), null, 'no duplicate work without new audio');
+ring.append(voice(8, 5000));
+const latest = ring.take();
+assert.equal(latest.samples.length, 51200, 'memory and context remain bounded');
+assert.equal(latest.windowEnd, 142400);
+assert.ok(latest.samples.every(value => value === 5000), 'slow inference resumes at newest audio');
+ring.append(voice(0.45, 0));
+assert.ok(ring.take(), 'one trailing window lets the decoder finish the last word');
+ring.append(voice(4, 0));
+assert.equal(ring.take(), null, 'silence must not repeatedly transcribe old speech');
+ring.append(voice(0.9));
+assert.equal(ring.take().utterance, 2, 'a new utterance can repeat the same words');
+const silence = createLiveAudioWindow();
+silence.append(voice(5, 0));
+assert.equal(silence.take(), null);
+silence.append(voice(0.5));
+assert.equal(silence.take(), null, 'do not pad first speech with seconds of silence');
+silence.append(voice(0.4));
+assert.ok(silence.take().samples.length <= 18400);
+
+const low = createLiveAudioWindow();
+const wave = (seconds, rms) => Int16Array.from({ length: Math.round(seconds * 16000) },
+  (_, index) => Math.round(rms * Math.SQRT2 * Math.sin(2 * Math.PI * 220 * index / 16000)));
+for (let index = 0; index < 100; index += 1) low.append(wave(0.02, 4));
+assert.equal(low.take(), null, 'observed RMS 3-6 background must not trigger inference');
+for (let index = 0; index < 45; index += 1) low.append(wave(0.02, 20));
+const weak = low.take();
+assert.ok(weak, 'speech below the old 100 RMS gate must be decoded');
+assert.ok(weak.gain > 1 && weak.gain <= 64);
+assert.ok(weak.inputRms < 100);
+assert.ok(Math.max(...weak.samples.map(Math.abs)) <= 28000);
+low.append(wave(0.7, 4));
+low.append(wave(0.3, 18));
+assert.equal(low.take().utterance, weak.utterance, 'short low-volume pauses retain sentence context');
+low.append(wave(5, 4));
+assert.equal(low.take(), null, 'normalization never submits pure background noise');
+
+const impulse = createLiveAudioWindow();
+impulse.append(voice(0.02));
+impulse.append(voice(1, 0));
+assert.equal(impulse.take(), null, 'an isolated short click is not enough to decode');
+const peak = createLiveAudioWindow();
+const peaked = wave(0.9, 20);
+peaked[1000] = 20000;
+peak.append(peaked);
+assert.ok(Math.max(...peak.take().samples.map(Math.abs)) <= 28000, 'gain cannot clip a transient peak');
+console.log('teleprompter live audio window tests passed');

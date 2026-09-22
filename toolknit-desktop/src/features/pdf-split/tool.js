@@ -1,4 +1,5 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
+import { createModalSession, setModalInteractivity } from '../../app/modal-runtime.js';
 import { PDF_SPLIT_LIMITS, assertPdfSplitSelection } from '../../pdf-split-core.js';
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 import { bindSortableFileList } from '../../shared/sortable-file-list.js';
@@ -55,6 +56,8 @@ export function initPdfSplitTool({
   let runRevision = 0;
   let activeRunId = 0;
   let exporter = null;
+  const processModal = createModalSession({ root: processMask, background: overlay,
+    initialFocus: byId('pdfSplitProcessCancel'), onClose: () => cancelProcessing() });
   const isDemo = import.meta.env.DEV
     && new URLSearchParams(window.location.search).get('pdf-split-demo') === '1';
 
@@ -68,6 +71,7 @@ export function initPdfSplitTool({
   }
 
   const preview = createPdfSplitPreview({
+    overlay,
     workspace: byId('pdfSplitWorkspace'),
     workspaceClose: byId('pdfSplitWorkspaceClose'),
     workspaceStatus: byId('pdfSplitWorkspaceStatus'),
@@ -80,6 +84,7 @@ export function initPdfSplitTool({
     isSaving: () => Boolean(exporter?.busy),
     onDownloadPage: index => exporter?.downloadSingle(index),
     onDownloadAll: () => exporter?.downloadAll(),
+    onDownloadZip: () => exporter?.downloadZip(),
     refreshIcons
   });
 
@@ -96,14 +101,7 @@ export function initPdfSplitTool({
     successOk: byId('pdfSplitSuccessOk'),
     getOutputDir,
     displayFilesystemPath,
-    onBeforeSuccess: type => {
-      if (type === 'all') preview.closeWorkspace({ force: true });
-    },
-    onAcknowledge: () => {
-      preview.closeWorkspace({ force: true });
-      files = [];
-      renderFiles();
-    },
+    workspace: byId('pdfSplitWorkspace'),
     showError
   });
 
@@ -319,7 +317,7 @@ export function initPdfSplitTool({
     const runId = ++runRevision;
     activeRunId = runId;
     processing = true;
-    processMask?.classList.add('visible');
+    processModal.open();
     setProgress(5, t('home.pdfSplit.processing'));
 
     try {
@@ -340,6 +338,7 @@ export function initPdfSplitTool({
       });
       assertCurrent(owner, runId);
       setProgress(100, t('home.pdfSplit.processing'));
+      processModal.close();
       preview.openWorkspace();
     } catch (error) {
       if (isCurrentRun(owner, runId)) {
@@ -353,8 +352,8 @@ export function initPdfSplitTool({
         activeRunId = 0;
         processing = false;
       }
-      if (isOpenSession(owner)) {
-        processMask?.classList.remove('visible');
+      if (isCurrentRun(owner, runId)) {
+        processModal.close();
         setProgress(0);
       }
     }
@@ -364,14 +363,15 @@ export function initPdfSplitTool({
     runRevision += 1;
     activeRunId = 0;
     processing = false;
+    processModal.close({ restore: false });
     session?.dispose();
     session = null;
     pickerOwnerRelease?.();
     pickerOwnerRelease = null;
     pickerScope?.dispose();
     pickerScope = null;
-    preview.close();
     exporter.close();
+    preview.close();
     files = [];
     fileScope?.dispose();
     fileScope = null;
@@ -381,8 +381,8 @@ export function initPdfSplitTool({
     hideDropZone();
     processMask?.classList.remove('visible');
     setProgress(0);
+    setModalInteractivity(overlay, false);
     overlay.classList.remove('visible');
-    overlay.setAttribute('aria-hidden', 'true');
     plasma = disposeStandardToolPlasma(plasma);
   }
 
@@ -392,7 +392,7 @@ export function initPdfSplitTool({
       session = createLifecycleScope();
       exporter.open();
       overlay.classList.add('visible');
-      overlay.setAttribute('aria-hidden', 'false');
+      setModalInteractivity(overlay, true);
       plasma = initStandardToolPlasma(background);
       void registerNativeDrop(session);
       if (isDemo) void loadDemoFiles(session);
@@ -414,6 +414,16 @@ export function initPdfSplitTool({
     api.close();
   });
   lifecycle.event(cta, 'click', () => { void chooseFiles(); });
+  function cancelProcessing() {
+    if (exporter.busy) { exporter.cancel(); return; }
+    runRevision += 1;
+    activeRunId = 0;
+    processing = false;
+    preview.releaseResources();
+    processModal.close();
+    processButton?.focus({ preventScroll: true });
+  }
+  lifecycle.event(byId('pdfSplitProcessCancel'), 'click', cancelProcessing);
   lifecycle.event(processButton, 'click', () => { void processSelection(); });
   lifecycle.event(processButton, 'transitionend', event => {
     if (event.propertyName === 'opacity' && !processButton.classList.contains('visible')) {

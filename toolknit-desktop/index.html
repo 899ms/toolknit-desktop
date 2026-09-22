@@ -4,27 +4,87 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ToolKnit Desktop</title>
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <script data-tk-theme-bootstrap>
+      if (new URLSearchParams(window.location.search).get('screen-picker') !== '1') {
+        let theme = 'light';
+        try { if (localStorage.getItem('toolknit.theme.v3') === 'dark') theme = 'dark'; } catch {}
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.tkStartup = 'loading';
+        // Keep a failed entry module from leaving an uncloseable loading screen.
+        window.__toolknitStartupWatchdog = window.setTimeout(() => {
+          document.documentElement.dataset.tkStartup = 'revealing';
+          window.setTimeout(() => {
+            document.getElementById('appStartupMask')?.remove();
+            document.querySelector('.app')?.removeAttribute('inert');
+            document.body?.removeAttribute('aria-busy');
+            delete document.documentElement.dataset.tkStartup;
+          }, 350);
+        }, 15000);
+      }
+    </script>
+    <style data-tk-startup-style>
+      /* Critical first-paint UI: no external font, image or icon dependency. */
+      #appStartupMask { display: none; }
+      html[data-tk-startup] #appStartupMask {
+        position: fixed;
+        inset: 0;
+        z-index: 100001;
+        display: grid;
+        place-items: center;
+        margin: 0;
+        background: #fff;
+        color: #111;
+        opacity: 1;
+        transition: opacity 350ms ease;
+      }
+      html[data-theme="dark"] #appStartupMask { background: #000; color: #eee; }
+      html[data-tk-startup="revealing"] #appStartupMask { opacity: 0; }
+      .tk-startup-spinner {
+        box-sizing: border-box;
+        width: 36px;
+        height: 36px;
+        border: 3px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: tk-startup-spin 800ms linear infinite;
+      }
+      .tk-startup-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+      @keyframes tk-startup-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        .tk-startup-spinner { animation: none; }
+      }
+    </style>
     <link rel="stylesheet" href="./src/styles/index.css">
     <link rel="stylesheet" href="./src/tool-page-v2-final.css">
     <link rel="stylesheet" href="./src/tool-custom-select.css">
     <link rel="stylesheet" href="./src/tool-waveform-slider.css">
     <link rel="stylesheet" href="./src/bg-removal.css">
     <link rel="stylesheet" href="./src/tool-nav-unified.css">
+    <link rel="stylesheet" href="./src/styles/themes/index.css">
+    <link rel="stylesheet" href="./src/styles/themes/image-crop-light.css">
     <script>
       if (new URLSearchParams(window.location.search).get('screen-picker') === '1') {
         document.documentElement.dataset.screenPicker = '1';
       }
     </script>
     <style>
-      /* The desktop app opens on the approved v2 home. Keep the first paint
-         on the same dark surface while the full stylesheet and icons load. */
+      /* Resolve the saved theme before the first paint, including slow startup. */
+      html[data-theme="light"] { --tk-window-bg: #ffffff; }
       /* Tauri's native window may be transparent for rounded corners. Keep a
          real dark document surface during first paint so WebView2 never shows
          an empty transparent frame if startup work is still settling. */
       html,
       body,
       body.v2-home-active {
-        background: #060607;
+        background: var(--tk-window-bg, #060607);
       }
 
       body.v2-home-active .global-window-controls {
@@ -36,11 +96,15 @@
         inset: 0;
         width: 100vw;
         height: 100vh;
-        background: #060607;
+        background: var(--tk-window-bg, #060607);
       }
     </style>
   </head>
   <body class="v2-home-active">
+    <div id="appStartupMask" role="status" aria-live="polite">
+      <span class="tk-startup-spinner" aria-hidden="true"></span>
+      <span class="tk-startup-label" data-i18n="app.loading">正在加载...</span>
+    </div>
     <div class="transition-mask" id="transitionMask">
       <div class="tk-mascot-lg" aria-hidden="true"></div>
     </div>
@@ -359,7 +423,7 @@
         <button class="home-v2-brand" type="button" data-home-return aria-label="ToolKnit 首页">
           <img src="/logo.png" alt="" />
           <span class="home-v2-brand-name">ToolKnit</span>
-          <span class="home-v2-brand-version">2.3</span>
+          <span class="home-v2-brand-version">3.0</span>
         </button>
         <div class="home-v2-top-actions">
           <button class="home-v2-nav-link" type="button" data-home-link="website">
@@ -453,7 +517,7 @@
               <i data-lucide="settings"></i>
             </div>
           </div>
-          <div class="version-text" id="sidebarVersion">v2.3.1</div>
+          <div class="version-text" id="sidebarVersion">v3.0.0</div>
         </div>
       </div>
       <div class="divider"></div>
@@ -500,22 +564,19 @@
                     <strong data-i18n="home.supportGroupNote">赞助后可加入灰度体验群，提前体验版本并提交希望加入的功能。</strong>
                   </p>
                   <div class="hero-meta" data-i18n-aria-label="home.productInfoAria" aria-label="产品信息">
-                    <span>WINDOWS DESKTOP</span>
-                    <span>LOCAL FIRST</span>
-                    <span>OPEN SOURCE</span>
+                    <span><i data-lucide="monitor" aria-hidden="true"></i><span>WINDOWS DESKTOP</span></span>
+                    <span><i data-lucide="hard-drive" aria-hidden="true"></i><span>LOCAL FIRST</span></span>
+                    <span><i data-lucide="code-xml" aria-hidden="true"></i><span>OPEN SOURCE</span></span>
                   </div>
                 </div>
 
-                <div class="weave-stage" data-i18n-aria-label="home.webPreviewAria" aria-label="ToolKnit 网页端预览">
-                  <button class="web-preview-stage" type="button" data-home-link="website" data-i18n-aria-label="home.openWebAria" aria-label="打开 ToolKnit 网页版">
-                    <img class="web-preview-image" src="assets/backgrounds/home-web-preview.png" alt="ToolKnit 网页版工具库预览" loading="eager" decoding="async" />
-                    <span class="web-preview-tint" aria-hidden="true"></span>
-                    <span class="web-preview-sheen" aria-hidden="true"></span>
-                    <span class="web-preview-corner">WEB / TOOLKNIT.COM</span>
-                    <span class="web-preview-hover-copy" aria-hidden="true">
-                      <strong>OPEN THE WEB WORKBENCH</strong>
-                      <span><span data-i18n="home.webPreviewHover">点击进入网页端</span> <i data-lucide="arrow-up-right"></i></span>
-                    </span>
+
+                <div class="home-weaving">
+                  <div class="home-weaving-art" aria-hidden="true"></div>
+                  <button class="home-weaving-link" type="button" data-home-link="website" data-i18n-aria-label="home.openWebAria" aria-label="打开 ToolKnit 网页版">
+                    <i data-lucide="globe-2" aria-hidden="true"></i>
+                    <span data-i18n="home.webPreviewHover">点击进入网页端</span>
+                    <i data-lucide="arrow-up-right" aria-hidden="true"></i>
                   </button>
                 </div>
               </section>
@@ -615,7 +676,7 @@
               </section>
 
               <footer class="footer-note">
-                <span>TOOLKNIT DESKTOP 2.3.1 / UI CONCEPT 01</span>
+                <span>TOOLKNIT DESKTOP 3.0.0 / UI CONCEPT 01</span>
                 <span>FILES STAY ON YOUR DEVICE</span>
               </footer>
             </div>
@@ -722,6 +783,20 @@
                       <span class="tool-badge badge-new" data-i18n="home.toolNames.badgeNew">新</span>
                     </div>
                     <div class="audio-list-meta" data-i18n="home.toolNames.pdfToImageMeta">逐页图像 / 长图拼接 / 高清导出</div>
+                  </div>
+                </div>
+                <div class="audio-list-item" data-tool="pdf-text-markdown" role="button" tabindex="0" data-i18n-aria-label="home.toolNames.pdfTextMarkdown">
+                  <div class="audio-list-icon"><i data-lucide="scan-text"></i></div>
+                  <div class="audio-list-info">
+                    <div class="audio-list-title" data-i18n="home.toolNames.pdfTextMarkdown">PDF 文本提取 / Markdown</div>
+                    <div class="audio-list-desc" data-i18n="home.toolNames.pdfTextMarkdownDesc">提取电子 PDF 文字并生成 Markdown</div>
+                  </div>
+                  <div class="audio-list-right">
+                    <div class="audio-list-tags">
+                      <span class="audio-tag" data-i18n="home.toolNames.pdfCategoryTag">PDF工具</span>
+                      <span class="tool-badge badge-new" data-i18n="home.toolNames.badgeNew">新</span>
+                    </div>
+                    <div class="audio-list-meta" data-i18n="home.toolNames.pdfTextMarkdownMeta">逐页重排 / 页码标记 / 导入 Markdown 编辑器</div>
                   </div>
                 </div>
                 <div class="audio-list-item" data-tool="pdf-rotate" role="button" tabindex="0" data-i18n-aria-label="home.toolNames.pdfRotate">
@@ -1417,6 +1492,17 @@
                 <button class="audio-clear-btn tools-clear-btn" data-i18n="home.clearSearch" style="display:none;">清除搜索结果</button>
               </div>
               <div class="audio-list">
+                <div class="audio-list-item" data-tool="pdf-ai-markdown" role="button" tabindex="0" data-i18n-aria-label="home.toolNames.pdfAiMarkdown">
+                  <div class="audio-list-icon"><i data-lucide="scan-eye"></i></div>
+                  <div class="audio-list-info">
+                    <div class="audio-list-title" data-i18n="home.toolNames.pdfAiMarkdown">AI PDF 转 Markdown</div>
+                    <div class="audio-list-desc" data-i18n="home.toolNames.pdfAiMarkdownDesc">逐页识别扫描件、表格和复杂版式</div>
+                  </div>
+                  <div class="audio-list-right">
+                    <div class="audio-list-tags"><span class="audio-tag" data-i18n="home.toolNames.aiCategoryTag">AI工具</span><span class="tool-badge badge-new" data-i18n="home.toolNames.badgeNew">新</span></div>
+                    <div class="audio-list-meta" data-i18n="home.toolNames.pdfAiMarkdownMeta">视觉识别 / 全文导读 / Markdown 编辑器</div>
+                  </div>
+                </div>
                 <div class="audio-list-item" data-tool="ai-polish" role="button" tabindex="0" data-i18n-aria-label="home.toolNames.aiPolish">
                   <div class="audio-list-icon"><i data-lucide="pen-line"></i></div>
                   <div class="audio-list-info">
@@ -1492,6 +1578,11 @@
                 <button class="audio-clear-btn tools-clear-btn" data-i18n="home.clearSearch" style="display:none;">清除搜索结果</button>
               </div>
               <div class="audio-list">
+                <div class="audio-list-item" data-tool="clipboard-history" role="button" tabindex="0" data-i18n-aria-label="home.clipboardHistory.title">
+                  <div class="audio-list-icon"><i data-lucide="clipboard-list"></i></div>
+                  <div class="audio-list-info"><div class="audio-list-title" data-i18n="home.clipboardHistory.title">剪贴板历史</div><div class="audio-list-desc" data-i18n="home.clipboardHistory.cardDescription">实时记录文字、图片与文件路径</div></div>
+                  <div class="audio-list-right"><div class="audio-list-tags"><span class="audio-tag" data-i18n="home.toolNames.hardwareCategoryTag">硬件工具</span><span class="tool-badge badge-new" data-i18n="home.toolNames.badgeNew">新</span></div><div class="audio-list-meta" data-i18n="home.clipboardHistory.cardMeta">Windows / 本地加密 / 时间线</div></div>
+                </div>
                 <div class="audio-list-item" data-tool="hardware-overview" role="button" tabindex="0" data-i18n-aria-label="home.toolNames.hardwareOverview">
                   <div class="audio-list-icon"><i data-lucide="layout-dashboard"></i></div>
                   <div class="audio-list-info">

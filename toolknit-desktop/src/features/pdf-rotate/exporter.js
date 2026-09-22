@@ -1,5 +1,6 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
-import { createPdfRotateFileName, rotatePdfPages } from '../../pdf-rotate-core.js';
+import { createPdfRotateExportJob } from './export-runtime.js';
+import { createModalSession } from '../../app/modal-runtime.js';
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 import { t } from '../../i18n.js';
 
@@ -10,6 +11,7 @@ function outputParent(path) {
 export function createPdfRotateExporter({
   isTauri = false,
   preview,
+  workspace,
   processMask,
   setProgress,
   successOverlay,
@@ -30,6 +32,11 @@ export function createPdfRotateExporter({
   let activeId = 0;
   let saving = false;
   let lastSavedPath = '';
+  let activeJob = null;
+  const successModal = createModalSession({ root: successOverlay, background: workspace,
+    initialFocus: successOk, onClose: () => successModal.close() });
+  const processModal = createModalSession({ root: processMask, background: workspace,
+    initialFocus: processMask?.querySelector('[data-rotate-cancel]'), onClose: () => cancel() });
 
   function revokeObjectUrl(url) {
     const timer = objectUrls.get(url);
@@ -68,7 +75,7 @@ export function createPdfRotateExporter({
       });
     }
 
-    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const blob = new Blob([bytes], { type: fileName.endsWith('.zip') ? 'application/zip' : 'application/pdf' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -88,11 +95,10 @@ export function createPdfRotateExporter({
     if (successCount) successCount.textContent = String(count);
     if (successPath) successPath.textContent = displayFilesystemPath(path);
     if (successMeta) {
-      successMeta.textContent = t(type === 'all'
-        ? 'home.pdfRotate.successAllMeta'
-        : 'home.pdfRotate.successSingleMeta');
+      successMeta.textContent = t(type === 'zip' ? 'home.pdfRotate.successZipMeta'
+        : type === 'all' ? 'home.pdfSplit.exportPdfMeta' : 'home.pdfRotate.successSingleMeta', { count });
     }
-    successOverlay?.classList.add('visible');
+    successModal.open();
   }
 
   function report(error, owner, id) {
@@ -107,7 +113,7 @@ export function createPdfRotateExporter({
     const id = ++revision;
     activeId = id;
     setSaving(true, owner);
-    processMask?.classList.add('visible');
+    processModal.open();
     try {
       await work(owner, id);
     } catch (error) {
@@ -119,53 +125,35 @@ export function createPdfRotateExporter({
         activeId = 0;
       }
       if (ownsUi) {
-        processMask?.classList.remove('visible');
+        processModal.close();
         setProgress(0);
         preview.setSaving(false);
       }
     }
   }
 
-  async function downloadSingle(index) {
-    const state = preview.getExportState();
-    const page = state?.pages[index];
-    if (!state?.fileData || !page) return;
-    await runExport(async (owner, id) => {
-      setProgress(15, t('home.pdfRotate.saving'));
-      const bytes = await rotatePdfPages({
-        fileData: state.fileData,
-        pages: [{ pageIndex: page.pageIndex, rotation: page.rotation }],
-        onProgress: () => {
-          assertCurrent(owner, id);
-          setProgress(85, t('home.pdfRotate.saving'));
-        }
-      });
-      const fileName = createPdfRotateFileName(page.fileName, page.pageIndex);
-      const path = await saveBytes(bytes, fileName, owner, id);
-      showSuccess(path, 'single', 1, owner, id);
-    });
-  }
-
-  async function downloadAll() {
-    const state = preview.getExportState();
+  async function download({ index = null, selectedOnly = false, mode }) {
+    const state = preview.getExportState({ index, selectedOnly });
     if (!state?.fileData || !state.pages.length) return;
     await runExport(async (owner, id) => {
       setProgress(5, t('home.pdfRotate.saving'));
-      const bytes = await rotatePdfPages({
-        fileData: state.fileData,
-        pages: state.pages.map(({ pageIndex, rotation }) => ({ pageIndex, rotation })),
-        onProgress: ({ completed, total }) => {
-          assertCurrent(owner, id);
-          setProgress(10 + Math.round((completed / total) * 80), t('home.pdfRotate.saving'));
-        }
+      const job = createPdfRotateExportJob({ ...state, mode,
+        onProgress: percent => { if (current(owner, id)) setProgress(Math.round(percent), t('home.pdfRotate.saving')); }
       });
-      const fileName = createPdfRotateFileName(state.fileName);
-      const path = await saveBytes(bytes, fileName, owner, id);
-      showSuccess(path, 'all', state.pages.length, owner, id);
+      activeJob = job;
+      const release = owner.use(() => job.cancel());
+      let output;
+      try { output = await job.promise; }
+      finally { release(); if (activeJob === job) activeJob = null; }
+      assertCurrent(owner, id);
+      const path = await saveBytes(output.bytes, output.fileName, owner, id);
+      assertCurrent(owner, id);
+      processModal.close();
+      showSuccess(path, mode, output.pageCount, owner, id);
     });
   }
 
-  lifecycle.event(successOk, 'click', () => successOverlay?.classList.remove('visible'));
+  lifecycle.event(successOk, 'click', () => successModal.close());
   lifecycle.event(successOpenFolder, 'click', async () => {
     if (!isTauri || !lastSavedPath) return;
     try {
@@ -176,24 +164,35 @@ export function createPdfRotateExporter({
     }
   });
 
-  function close() {
+  function cancel() {
     revision += 1;
+    activeJob?.cancel(); activeJob = null;
+    activeId = 0; saving = false;
+    preview.setSaving(false);
+    processModal.close();
+    setProgress(0);
+  }
+
+  function close() {
+    cancel();
     session?.dispose();
     session = null;
-    successOverlay?.classList.remove('visible');
-    processMask?.classList.remove('visible');
+    successModal.close({ restore: false });
+    for (const url of objectUrls.keys()) revokeObjectUrl(url);
     setProgress(0);
     lastSavedPath = '';
   }
 
   return {
+    cancel,
     close,
     dispose() {
       close();
       lifecycle.dispose();
     },
-    downloadAll,
-    downloadSingle,
+    downloadAll: () => download({ selectedOnly: true, mode: 'all' }),
+    downloadSingle: index => download({ index, mode: 'single' }),
+    downloadZip: () => download({ selectedOnly: true, mode: 'zip' }),
     open() {
       session?.dispose();
       session = createLifecycleScope();

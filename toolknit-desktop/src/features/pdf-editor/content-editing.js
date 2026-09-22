@@ -52,6 +52,7 @@ export function createPdfEditorContentEditing({
   getCurrentPage = () => null,
   getCurrentTextLayerCache = () => null,
   pageSupportsContentEditing = () => true,
+  pageSupportsInsertion = pageSupportsContentEditing,
   getActiveOperation = () => null,
   nextId = () => '',
   storeInsertedImage = () => {},
@@ -86,7 +87,7 @@ export function createPdfEditorContentEditing({
     if (!insertMode || !pendingInsert || !canvasWrap) return;
     const page = getCurrentPage();
     const cache = getCurrentTextLayerCache();
-    if (!page || !cache || !pageSupportsContentEditing(page)) return;
+    if (!page || !cache || !pageSupportsInsertion(page)) return;
     const bounds = canvasWrap.getBoundingClientRect();
     const cssX = Math.max(0, Math.min(bounds.width, event.clientX - bounds.left));
     const cssY = Math.max(0, Math.min(bounds.height, event.clientY - bounds.top));
@@ -237,7 +238,7 @@ export function createPdfEditorContentEditing({
   function openInsertTextModal() {
     if (!hasDocument() || getActiveOperation()) return;
     const page = getCurrentPage();
-    if (!page || !pageSupportsContentEditing(page)) {
+    if (!page || !pageSupportsInsertion(page)) {
       showToast(t('home.pdfEditor.editTextRotated'));
       return;
     }
@@ -269,7 +270,7 @@ export function createPdfEditorContentEditing({
   function chooseInsertImage() {
     if (!hasDocument() || getActiveOperation()) return;
     const page = getCurrentPage();
-    if (!page || !pageSupportsContentEditing(page)) {
+    if (!page || !pageSupportsInsertion(page)) {
       showToast(t('home.pdfEditor.editTextRotated'));
       return;
     }
@@ -295,7 +296,7 @@ export function createPdfEditorContentEditing({
   function insertShape(shapeType) {
     if (!hasDocument() || getActiveOperation()) return;
     const page = getCurrentPage();
-    if (!page || !pageSupportsContentEditing(page)) {
+    if (!page || !pageSupportsInsertion(page)) {
       showToast(t('home.pdfEditor.editTextRotated'));
       return;
     }

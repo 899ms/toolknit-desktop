@@ -1,4 +1,5 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
+import { AiProviderError, AI_PROVIDER_LIMITS } from '../../ai-provider-core.js';
 import {
   AI_TABLE_LIMITS,
   AiTableDataError,
@@ -17,8 +18,10 @@ import {
 } from './prompts.js';
 import '../ai-workbench/ai-workbench-shared.css';
 import './ai-table.css';
+import '../../styles/components/ai-workbench-light.css';
+import './ai-table-light.css';
 
-const REQUEST_TIMEOUT_MS = 90_000;
+const REQUEST_TIMEOUT_MS = AI_PROVIDER_LIMITS.maxTimeoutMs;
 
 function appendToolKnitAvatar(container, alt) {
   const image = document.createElement('img');
@@ -208,7 +211,7 @@ export function initAiTableTool({
           role: message.role === 'user' ? 'user' : 'assistant',
           content: message.content
         }))
-      ], request.signal, 8192);
+      ], request.signal, 8192, { timeoutMs: REQUEST_TIMEOUT_MS, reasoningEffort: 'low' });
       if (!isCurrent(owner, request.id)) return;
       if (typeof content !== 'string' || !content.trim()) {
         throw new AiTableDataError('invalid_table', 'AI returned an empty response.');
@@ -263,12 +266,14 @@ export function initAiTableTool({
     } catch (error) {
       if (!isCurrent(owner, request.id)) return;
       console.error('[AI Table] Error:', error);
-      if (request.signal.aborted) {
-        if (request.timedOut()) addChatMessage('ai', t('home.aiTable.requestTimeout'));
+      if (request.signal.aborted || error.code === 'timeout') {
+        if (request.timedOut() || error.code === 'timeout') addChatMessage('ai', t('home.aiTable.requestTimeout'));
       } else if (error instanceof AiTableDataError) {
         addChatMessage('ai', error.code === 'table_too_large'
           ? t('home.aiTable.tableTooLarge')
           : t('home.aiTable.parseError'));
+      } else if (error instanceof AiProviderError) {
+        addChatMessage('ai', error.message);
       } else {
         addChatMessage('ai', t('home.aiTable.errNetwork'));
       }

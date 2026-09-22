@@ -8,6 +8,11 @@ import {
 const source = await readFile(new URL('../src/features/teleprompter/controller.js', import.meta.url), 'utf8');
 const templateSource = await readFile(new URL('../src/features/teleprompter/template.js', import.meta.url), 'utf8');
 const toolSource = await readFile(new URL('../src/features/teleprompter/tool.js', import.meta.url), 'utf8');
+const lightThemeSource = await readFile(
+  new URL('../src/styles/themes/teleprompter-light.css', import.meta.url),
+  'utf8'
+);
+const themeIndexSource = await readFile(new URL('../src/styles/themes/index.css', import.meta.url), 'utf8');
 const recognitionSource = await readFile(
   new URL('../src/features/teleprompter/recognition.js', import.meta.url),
   'utf8'
@@ -43,6 +48,20 @@ assert.match(toolSource, /from ['"]\.\/controller\.js['"]/, 'the feature entry m
 assert.match(toolSource, /import ['"]\.\/teleprompter\.css['"]/, 'the teleprompter feature must own its lazy stylesheet');
 assert.match(templateSource, /data-tele-action="play"/, 'the feature template must retain playback controls');
 assert.match(templateSource, /data-tele-engine/, 'the feature template must retain engine controls');
+assert.match(themeIndexSource, /@import url\('\.\/teleprompter-light\.css'\)/,
+  'the shared theme entry must load the teleprompter light stylesheet');
+assert.match(lightThemeSource, /html\[data-theme="light"\] \.teleprompter-overlay \{[\s\S]*--tele-light-surface:\s*#ffffff/,
+  'light mode must define a local, maintainable workbench palette');
+assert.match(lightThemeSource, /\.teleprompter-input \{[\s\S]*color:\s*var\(--tele-light-ink\)[\s\S]*background-color:\s*var\(--tk-vertical-stripe-surface-color\)/,
+  'light mode must keep the script editor readable and preserve the shared stripe surface');
+assert.match(lightThemeSource, /\.teleprompter-screen \{[\s\S]*background:\s*#030304/,
+  'the prompt screen must stay dark in light mode');
+assert.match(lightThemeSource, /\.teleprompter-overlay\.is-focus \{[\s\S]*color-scheme:\s*dark[\s\S]*background:\s*#030304 !important/,
+  'focus mode must explicitly remain a dark reading environment');
+assert.match(lightThemeSource, /\.teleprompter-overlay\.is-focus \.teleprompter-controls \{[\s\S]*background:\s*rgba\(6, 6, 7, \.96\)/,
+  'focus-mode controls must not inherit the light toolbar');
+assert.match(lightThemeSource, /body:has\(\.teleprompter-overlay\.visible\) \.tool-custom-select-menu/,
+  'the portaled engine menu must be adapted while the teleprompter is visible');
 assert.doesNotMatch(source, /let audioContext = null/,
   'AudioContext must be owned by the recognition controller');
 assert.match(recognitionSource, /audioProcessor\.onaudioprocess = event =>/);

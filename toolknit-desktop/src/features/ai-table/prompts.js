@@ -46,21 +46,21 @@ export const AI_TABLE_SYSTEM_PROMPT = `你是一位数据分析专家，擅长�
 6. 如果用户要求图表，必须包含 charts 字段
 7. 优先生成能直接用于复盘、汇报、排期、预算、清单、对比、统计的结构：列名清晰、行数据有差异、有层次，不要每行都机械平均`;
 
-export const AI_TABLE_DEMO_DATA = Object.freeze({
+export const AI_TABLE_DEMO_DATA = /* @__PURE__ */ Object.freeze({
   ready: true,
   title: 'ToolKnit V3 迁移进度示例',
   summary: 'AI Table development fixture',
-  columns: Object.freeze([
-    Object.freeze({ key: 'module', label: '模块', type: 'text' }),
-    Object.freeze({ key: 'progress', label: '完成度', type: 'number' }),
-    Object.freeze({ key: 'status', label: '状态', type: 'text' })
+  columns: /* @__PURE__ */ Object.freeze([
+    /* @__PURE__ */ Object.freeze({ key: 'module', label: '模块', type: 'text' }),
+    /* @__PURE__ */ Object.freeze({ key: 'progress', label: '完成度', type: 'number' }),
+    /* @__PURE__ */ Object.freeze({ key: 'status', label: '状态', type: 'text' })
   ]),
-  rows: Object.freeze([
-    Object.freeze(['架构基础', 100, '已完成']),
-    Object.freeze(['AI 文档', 100, '已完成']),
-    Object.freeze(['AI 表格', 65, '进行中'])
+  rows: /* @__PURE__ */ Object.freeze([
+    /* @__PURE__ */ Object.freeze(['架构基础', 100, '已完成']),
+    /* @__PURE__ */ Object.freeze(['AI 文档', 100, '已完成']),
+    /* @__PURE__ */ Object.freeze(['AI 表格', 65, '进行中'])
   ]),
-  charts: Object.freeze([
-    Object.freeze({ type: 'bar', title: '模块完成度', labelColumn: 0, valueColumns: Object.freeze([1]) })
+  charts: /* @__PURE__ */ Object.freeze([
+    /* @__PURE__ */ Object.freeze({ type: 'bar', title: '模块完成度', labelColumn: 0, valueColumns: /* @__PURE__ */ Object.freeze([1]) })
   ])
 });

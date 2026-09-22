@@ -1,0 +1,66 @@
+/* Shared control geometry. Variants keep ownership of color, state and width. */
+
+/* App and tool topbars use one stable text/icon box. */
+:is(.home-v2-nav-link, .home-v2-support-top, .home-v2-icon-button, .home-v2-window-button,
+    .tool-page-v2-nav-link, .tool-page-v2-support, .tool-page-v2-icon,
+    .tool-page-v2-back, .settings-v2-back) {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+:is(.home-v2-nav-link, .home-v2-support-top, .tool-page-v2-nav-link, .tool-page-v2-support) svg {
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+}
+
+:is(.home-v2-icon-button, .home-v2-window-button, .tool-page-v2-icon) {
+  flex: 0 0 34px;
+}
+
+:is(.home-v2-icon-button, .home-v2-window-button, .tool-page-v2-icon) svg {
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+}
+
+/* Choice controls never rely on the browser's normal line-height. */
+:is(.settings-overlay.v2-settings .settings-v2-btn, .settings-overlay.v2-settings .settings-v2-choice, .settings-overlay.v2-settings .settings-v2-link-card) {
+  box-sizing: border-box;
+  line-height: 1.25;
+}
+
+:is(.settings-overlay.v2-settings .settings-v2-btn, .settings-overlay.v2-settings .settings-v2-choice) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+/* Dependency selectors are reused by transcription and matting managers. */
+:is(#transcriptionModelOverlay, #mattingModelOverlay, #ffmpegRuntimeOverlay, #libreOfficeRuntimeOverlay) .audio-convert-format-option,
+:is(#transcriptionModelOverlay, #mattingModelOverlay, #ffmpegRuntimeOverlay, #libreOfficeRuntimeOverlay) .settings-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.25;
+  vertical-align: middle;
+}
+
+:is(#transcriptionModelOverlay, #mattingModelOverlay, #ffmpegRuntimeOverlay, #libreOfficeRuntimeOverlay) .audio-convert-format-option svg,
+:is(#transcriptionModelOverlay, #mattingModelOverlay, #ffmpegRuntimeOverlay, #libreOfficeRuntimeOverlay) .settings-btn svg {
+  flex: 0 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.home-v2-nav-link, .home-v2-support-top, .home-v2-icon-button, .home-v2-window-button,
+      .tool-page-v2-nav-link, .tool-page-v2-support, .tool-page-v2-icon, .tool-page-v2-back,
+      .settings-v2-back, .settings-v2-btn, .settings-v2-choice, .settings-v2-link-card) {
+    transition-duration: 0.01ms;
+  }
+}

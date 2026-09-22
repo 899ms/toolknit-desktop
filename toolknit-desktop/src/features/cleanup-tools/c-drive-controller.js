@@ -1,4 +1,5 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
+import { createModalSession } from '../../app/modal-runtime.js';
 import { onLangChange as defaultOnLangChange, t as defaultTranslate } from '../../i18n.js';
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 import { formatFileSize } from '../../shared/file-size.js';
@@ -46,6 +47,7 @@ let cDriveCleanupScanRunId = 0;
 let cDriveCleanupRunning = false;
 let cDriveCleanupRelaunching = false;
 let cDriveCleanupCountdownTimer = null;
+let cDriveCleanupCountdownRemaining = null;
 let cDriveCleanupRunId = 0;
 let openRevision = 0;
 let disposed = false;
@@ -76,6 +78,21 @@ const CDRIVE_TIER_CONFIG = {
     warnKey: 'home.cDriveCleanupPage.explainHighWarn'
   }
 };
+
+const adminModal = createModalSession({
+  root: cDriveCleanupAdminMask,
+  background: cDriveCleanupOverlay,
+  initialFocus: cDriveCleanupAdminRelaunch,
+  onClose: () => cDriveCleanupHideAdminMask()
+});
+const confirmModal = createModalSession({
+  root: cDriveCleanupConfirmMask,
+  background: cDriveCleanupOverlay,
+  initialFocus: cDriveCleanupConfirmCancel,
+  onClose: () => cDriveCleanupCloseConfirm()
+});
+lifecycle.use(() => adminModal.dispose());
+lifecycle.use(() => confirmModal.dispose());
 
 function isCurrentOpen(owner) {
   return !disposed && owner === openRevision && cDriveCleanupOverlay.classList.contains('visible');
@@ -142,13 +159,11 @@ function cDriveCleanupSelect(tier) {
 }
 
 function cDriveCleanupShowAdminMask() {
-  cDriveCleanupAdminMask?.classList.add('visible');
-  cDriveCleanupAdminMask?.setAttribute('aria-hidden', 'false');
+  adminModal.open();
 }
 
 function cDriveCleanupHideAdminMask() {
-  cDriveCleanupAdminMask?.classList.remove('visible');
-  cDriveCleanupAdminMask?.setAttribute('aria-hidden', 'true');
+  adminModal.close();
 }
 
 function cDriveCleanupSetRelaunching(value) {
@@ -180,6 +195,7 @@ function cDriveCleanupClearCountdown() {
     clearTimeout(cDriveCleanupCountdownTimer);
     cDriveCleanupCountdownTimer = null;
   }
+  cDriveCleanupCountdownRemaining = null;
 }
 
 function cDriveCleanupCloseConfirm() {
@@ -188,27 +204,33 @@ function cDriveCleanupCloseConfirm() {
     cDriveCleanupConfirmRun.disabled = true;
     cDriveCleanupConfirmRun.textContent = t('home.cDriveCleanupPage.confirmCountdown', { n: 5 });
   }
-  cDriveCleanupConfirmMask?.classList.remove('visible');
-  cDriveCleanupConfirmMask?.setAttribute('aria-hidden', 'true');
+  confirmModal.close();
+}
+
+function cDriveCleanupRenderCountdown() {
+  if (!cDriveCleanupConfirmRun || cDriveCleanupCountdownRemaining === null) return;
+  if (cDriveCleanupCountdownRemaining <= 0) {
+    cDriveCleanupConfirmRun.disabled = false;
+    cDriveCleanupConfirmRun.textContent = t('home.cDriveCleanupPage.confirmReady');
+    return;
+  }
+  cDriveCleanupConfirmRun.disabled = true;
+  cDriveCleanupConfirmRun.textContent = t('home.cDriveCleanupPage.confirmCountdown', {
+    n: cDriveCleanupCountdownRemaining
+  });
 }
 
 function cDriveCleanupStartCountdown() {
   cDriveCleanupClearCountdown();
-  let remaining = 5;
+  cDriveCleanupCountdownRemaining = 5;
   const update = () => {
-    if (remaining <= 0) {
-      if (cDriveCleanupConfirmRun) {
-        cDriveCleanupConfirmRun.disabled = false;
-        cDriveCleanupConfirmRun.textContent = t('home.cDriveCleanupPage.confirmReady');
-      }
+    if (cDriveCleanupCountdownRemaining === null) return;
+    cDriveCleanupRenderCountdown();
+    if (cDriveCleanupCountdownRemaining <= 0) {
       cDriveCleanupCountdownTimer = null;
       return;
     }
-    if (cDriveCleanupConfirmRun) {
-      cDriveCleanupConfirmRun.disabled = true;
-      cDriveCleanupConfirmRun.textContent = t('home.cDriveCleanupPage.confirmCountdown', { n: remaining });
-    }
-    remaining -= 1;
+    cDriveCleanupCountdownRemaining -= 1;
     cDriveCleanupCountdownTimer = setTimeout(update, 1000);
   };
   update();
@@ -229,8 +251,7 @@ function cDriveCleanupOpenConfirm() {
       cDriveCleanupConfirmConsequences.hidden = true;
     }
   }
-  cDriveCleanupConfirmMask?.classList.add('visible');
-  cDriveCleanupConfirmMask?.setAttribute('aria-hidden', 'false');
+  confirmModal.open();
   cDriveCleanupStartCountdown();
 }
 
@@ -375,8 +396,8 @@ const unregisterLanguage = registerLanguageChange(() => {
   cDriveCleanupRenderSizes();
   cDriveCleanupRenderExplain();
   cDriveCleanupSetRelaunching(cDriveCleanupRelaunching);
-  if (cDriveCleanupConfirmMask?.classList.contains('visible') && cDriveCleanupConfirmRun?.disabled) {
-    cDriveCleanupStartCountdown();
+  if (cDriveCleanupConfirmMask?.classList.contains('visible')) {
+    cDriveCleanupRenderCountdown();
   }
 });
 lifecycle.use(unregisterLanguage);

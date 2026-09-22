@@ -4,7 +4,7 @@
 
 <h1>ToolKnit Desktop 3.0</h1>
 
-<p><strong>V3.0 正式版准备中</strong> · 当前分支用于灰度验证，安装包将在完成真实 Windows 回归后发布。</p>
+<p><strong>V3.0 正式版准备中</strong> · 当前分支提供 3.0 完整源码，代码签名接入与验证完成后再发布正式安装包。</p>
 
 <p><strong>本地文件工作台 · 桌面端、网页端与 AI Agent 工作流</strong></p>
 
@@ -20,7 +20,7 @@
 
 <p>
   <a href="README_EN.md"><img src="https://img.shields.io/badge/Language-English-475569?style=for-the-badge&labelColor=334155" alt="English README" /></a>
-  <img src="https://img.shields.io/badge/V3.0-灰度准备中-f59e0b?style=for-the-badge&labelColor=b45309" alt="ToolKnit Desktop 3.0 gray test preparation" />
+  <img src="https://img.shields.io/badge/V3.0-正式发布准备中-f59e0b?style=for-the-badge&labelColor=b45309" alt="ToolKnit Desktop 3.0 release preparation" />
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10/11" />
   <img src="https://img.shields.io/badge/Local--first-文件留在本机-0f766e?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/Tauri-2.x-475569?style=for-the-badge" alt="Tauri 2.x" />
@@ -48,7 +48,7 @@
       <p><img src="https://img.shields.io/badge/DESKTOP-Windows-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Windows desktop" /> <strong>再用桌面端</strong></p>
       <p>Windows 本地优先版本，适合长期文件工作、离线处理和可视化编辑。</p>
       <p><a href="https://github.com/ZihangDong/toolknit-desktop/releases"><strong>查看桌面端下载</strong></a></p>
-      <sub>V3.0 安装包、SHA-256 校验文件和版本说明将在灰度验证完成后通过 GitHub Release 发布。</sub>
+      <sub>V3.0 安装包、SHA-256 校验文件和版本说明将在代码签名接入与验证完成后通过 GitHub Release 发布。</sub>
     </td>
   </tr>
 </table>
@@ -89,7 +89,7 @@ V3.0 是一次面向长期使用的完整升级：工具数量从 65 项扩展�
 - `清理安全边界`：AI 大文件清理支持目录与 C 盘大文件扫描；C 盘清理按风险档位处理系统缓存，受保护目录、链接、系统属性和文件变化校验由原生层兜底。
 - `应用稳定性`：工具懒加载，重复打开、返回、Escape、窗口关闭和失败路径统一释放 Worker、Canvas、监听器、任务和临时资源，过期异步结果不会写入新会话。
 
-V3.0 的桌面端、Tauri、Rust 原生运行时和 `@toolknit/cli` 版本统一为 `3.0.0`。当前处于灰度测试阶段，正式安装包和 Release 文件会在真实 Windows 回归完成后发布。
+V3.0 的桌面端、Tauri、Rust 原生运行时和 `@toolknit/cli` 源码版本统一为 `3.0.0`。当前处于正式发布准备阶段，SignPath 接入与签名验证尚待完成；源码更新不代表安装包或 npm 包已经发布。
 
 ### 持续保留的基础能力
 
@@ -389,7 +389,7 @@ ToolKnit 3.0 采用轻量桌面容器与本地文件引擎组合，网页端、�
 
 ### 安装 Windows 桌面端
 
-从 [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases) 获取当前稳定版安装包、版本说明和对应的 `.sha256` 文件。V3.0 当前处于灰度准备阶段，正式安装包会在验证完成后单独发布；请只从本仓库 Release 页面下载，并在运行前核对 SHA-256 校验值。
+从 [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases) 获取当前稳定版安装包、版本说明和对应的 `.sha256` 文件。V3.0 当前处于正式发布准备阶段，正式安装包会在签名接入与验证完成后单独发布；请只从本仓库 Release 页面下载，并在运行前核对 SHA-256 校验值。
 
 **代码签名状态：** 当前公开安装包是否签名以对应 Release 说明为准。未签名版本可能显示“未知发布者”或 SmartScreen 提示；确认下载地址和 SHA-256 后再继续安装，后续签名版本遵循[代码签名政策](CODE_SIGNING_POLICY.md)。
 

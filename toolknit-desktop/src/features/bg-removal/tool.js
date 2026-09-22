@@ -120,6 +120,10 @@ export function initBgRemovalTool({
   const fileBytesEl = query('[data-bgr-file-bytes]');
   const uploadLabel = query('[data-bgr-upload-label]');
   const compareButton = query('[data-bgr-action="compare"]');
+  const brushCursor = document.createElement('div');
+  brushCursor.className = 'bg-removal-brush-cursor';
+  brushCursor.setAttribute('aria-hidden', 'true');
+  viewport.append(brushCursor);
 
   const originalDisplayCtx = originalDisplayCanvas.getContext('2d');
   const resultCtx = resultCanvas.getContext('2d');
@@ -171,7 +175,12 @@ export function initBgRemovalTool({
   let activeStroke = null;
   let panning = false;
   let panStart = null;
+  let activePointerId = null;
+  let pointerMoveFrame = 0;
+  let queuedPointerMove = null;
+  let cursorBlockedByControls = false;
   let compareHeld = false;
+  let comparePointerId = null;
   const history = createEditHistory();
 
   function copy(key, params) {
@@ -496,6 +505,8 @@ export function initBgRemovalTool({
   }
 
   function setTool(tool) {
+    if (activeTool !== tool) endPointerInteraction();
+    cancelPointerMove();
     activeTool = tool;
     overlay.querySelectorAll('[data-bgr-tool]').forEach(button => {
       button.classList.toggle('is-active', button.dataset.bgrTool === activeTool);
@@ -505,27 +516,109 @@ export function initBgRemovalTool({
     if (activeTool === 'pan') removeBrushCursor();
   }
 
+  function endPointerInteraction(event = null) {
+    if (painting || panning) flushPointerMove();
+    else cancelPointerMove();
+    if (painting && activeStroke) {
+      painting = false;
+      if (commitEditStroke(history, activeStroke)) markEdited();
+      activeStroke = null;
+    }
+    if (panning) {
+      panning = false;
+      panStart = null;
+      viewport.style.cursor = activeTool === 'pan' ? 'grab' : 'none';
+    }
+    const pointerId = activePointerId ?? event?.pointerId;
+    if (pointerId !== null && pointerId !== undefined) {
+      try {
+        if (viewport.hasPointerCapture?.(pointerId)) viewport.releasePointerCapture(pointerId);
+      } catch {}
+    }
+    activePointerId = null;
+  }
+
+  function cancelPointerMove() {
+    if (pointerMoveFrame) {
+      window.cancelAnimationFrame(pointerMoveFrame);
+      pointerMoveFrame = 0;
+    }
+    queuedPointerMove = null;
+  }
+
+  function processPointerMove(move) {
+    if (!move || (activePointerId !== null && move.pointerId !== activePointerId)) return;
+    updateBrushCursor(move.clientX, move.clientY);
+    if (painting && activeStroke) {
+      const point = toImageCoords(move.clientX, move.clientY);
+      const last = activeStroke.points[activeStroke.points.length - 1];
+      if (Math.hypot(point.x - last.x, point.y - last.y) >= Math.max(1, activeStroke.radius * 0.18)) {
+        activeStroke.points.push(point);
+        drawStrokeSegment(workMaskCtx, last, point, activeStroke);
+        renderResultRegion(last, point, activeStroke.radius);
+      }
+      return;
+    }
+    if (panning && panStart) {
+      view.x = panStart.viewX + move.clientX - panStart.x;
+      view.y = panStart.viewY + move.clientY - panStart.y;
+      view.fit = false;
+      applyView();
+    }
+  }
+
+  function flushPointerMove() {
+    if (pointerMoveFrame) {
+      window.cancelAnimationFrame(pointerMoveFrame);
+      pointerMoveFrame = 0;
+    }
+    const move = queuedPointerMove;
+    queuedPointerMove = null;
+    processPointerMove(move);
+  }
+
+  function schedulePointerMove(event) {
+    queuedPointerMove = {
+      pointerId: event.pointerId,
+      clientX: event.clientX,
+      clientY: event.clientY
+    };
+    if (pointerMoveFrame) return;
+    pointerMoveFrame = window.requestAnimationFrame(() => {
+      pointerMoveFrame = 0;
+      const move = queuedPointerMove;
+      queuedPointerMove = null;
+      processPointerMove(move);
+    });
+  }
+
   function updateBrushCursor(clientX, clientY) {
     if (activeTool === 'pan' || !processed || isBusy()) {
       removeBrushCursor();
       return;
     }
-    let ring = viewport.querySelector('.bg-removal-brush-cursor');
-    if (!ring) {
-      ring = document.createElement('div');
-      ring.className = 'bg-removal-brush-cursor';
-      viewport.append(ring);
-    }
     const viewportRect = viewport.getBoundingClientRect();
+    const insideViewport = clientX >= viewportRect.left
+      && clientX <= viewportRect.right
+      && clientY >= viewportRect.top
+      && clientY <= viewportRect.bottom;
+    const hitTarget = document.elementFromPoint(clientX, clientY);
+    const hitsViewport = Boolean(hitTarget && (hitTarget === viewport || viewport.contains(hitTarget)));
+    if (!insideViewport || cursorBlockedByControls || !hitsViewport) {
+      removeBrushCursor();
+      return;
+    }
     const diameter = brushSize * view.scale;
-    ring.style.width = `${diameter}px`;
-    ring.style.height = `${diameter}px`;
-    ring.style.left = `${clientX - viewportRect.left - diameter / 2}px`;
-    ring.style.top = `${clientY - viewportRect.top - diameter / 2}px`;
+    const x = clientX - viewportRect.left - diameter / 2;
+    const y = clientY - viewportRect.top - diameter / 2;
+    brushCursor.style.width = `${diameter}px`;
+    brushCursor.style.height = `${diameter}px`;
+    brushCursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    brushCursor.classList.add('is-visible');
   }
 
   function removeBrushCursor() {
-    viewport.querySelector('.bg-removal-brush-cursor')?.remove();
+    brushCursor.classList.remove('is-visible');
   }
 
   function markEdited(key = 'unsavedEdits') {
@@ -631,7 +724,7 @@ export function initBgRemovalTool({
     const requestId = ++segmentRequestSequence;
     activeSegmentRequest = requestId;
     operationKind = 'segmenting';
-    setCompareHeld(false);
+    releaseCompare();
     setParamsOpen(false);
     setState('processing', 'processing', undefined, { status: 'working' });
     let previewPath = '';
@@ -790,8 +883,27 @@ export function initBgRemovalTool({
     if (!event.target.closest('[data-bgr-brush-wrap]')) brushPop.hidden = true;
   }, listenerOptions);
 
+  [toolbar, zoombar].filter(Boolean).forEach(controlBar => {
+    const clearControlHover = () => {
+      cursorBlockedByControls = true;
+      if (!painting && !panning) cancelPointerMove();
+      removeBrushCursor();
+    };
+    controlBar.addEventListener('pointerenter', clearControlHover, listenerOptions);
+    controlBar.addEventListener('pointermove', clearControlHover, listenerOptions);
+    controlBar.addEventListener('pointerleave', event => {
+      const nextTarget = event.relatedTarget;
+      cursorBlockedByControls = Boolean(nextTarget?.closest?.('[data-bgr-toolbar], [data-bgr-zoombar]'));
+    }, listenerOptions);
+    controlBar.addEventListener('wheel', event => event.stopPropagation(), { ...listenerOptions, passive: true });
+  });
+
   overlay.querySelectorAll('[data-bgr-tool]').forEach(button => {
-    button.addEventListener('click', () => setTool(button.dataset.bgrTool), listenerOptions);
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      setTool(button.dataset.bgrTool);
+    }, listenerOptions);
   });
 
   modelSelect.addEventListener('change', () => {
@@ -828,6 +940,10 @@ export function initBgRemovalTool({
 
   viewport.addEventListener('pointerdown', event => {
     if (!imageWidth || isBusy()) return;
+    if (event.button !== 0 && event.button !== 1) return;
+    endPointerInteraction();
+    activePointerId = event.pointerId;
+    event.preventDefault();
     if (activeTool !== 'pan' && processed && event.button === 0) {
       viewport.setPointerCapture(event.pointerId);
       painting = true;
@@ -850,53 +966,51 @@ export function initBgRemovalTool({
   }, listenerOptions);
 
   viewport.addEventListener('pointermove', event => {
-    updateBrushCursor(event.clientX, event.clientY);
-    if (painting && activeStroke) {
-      const point = toImageCoords(event.clientX, event.clientY);
-      const last = activeStroke.points[activeStroke.points.length - 1];
-      if (Math.hypot(point.x - last.x, point.y - last.y) >= Math.max(1, activeStroke.radius * 0.18)) {
-        activeStroke.points.push(point);
-        drawStrokeSegment(workMaskCtx, last, point, activeStroke);
-        renderResultRegion(last, point, activeStroke.radius);
-      }
-      return;
-    }
-    if (panning && panStart) {
-      view.x = panStart.viewX + event.clientX - panStart.x;
-      view.y = panStart.viewY + event.clientY - panStart.y;
-      view.fit = false;
-      applyView();
-    }
+    cursorBlockedByControls = false;
+    schedulePointerMove(event);
   }, listenerOptions);
 
   viewport.addEventListener('pointerleave', () => {
+    if (!painting && !panning) cancelPointerMove();
     if (!painting) removeBrushCursor();
   }, listenerOptions);
 
   const endPointer = event => {
-    if (painting && activeStroke) {
-      painting = false;
-      if (commitEditStroke(history, activeStroke)) markEdited();
-      activeStroke = null;
-    }
-    if (panning) {
-      panning = false;
-      panStart = null;
-      viewport.style.cursor = activeTool === 'pan' ? 'grab' : 'none';
-    }
-    try { viewport.releasePointerCapture(event.pointerId); } catch {}
+    if (activePointerId !== null && event?.pointerId !== undefined && event.pointerId !== activePointerId) return;
+    endPointerInteraction(event);
   };
   viewport.addEventListener('pointerup', endPointer, listenerOptions);
   viewport.addEventListener('pointercancel', endPointer, listenerOptions);
+  viewport.addEventListener('lostpointercapture', endPointer, listenerOptions);
+  window.addEventListener('pointerup', endPointer, listenerOptions);
+  window.addEventListener('pointercancel', endPointer, listenerOptions);
+  window.addEventListener('blur', () => endPointerInteraction(), listenerOptions);
+
+  const releaseCompare = event => {
+    if (comparePointerId !== null && event?.pointerId !== undefined && event.pointerId !== comparePointerId) return;
+    const pointerId = comparePointerId;
+    comparePointerId = null;
+    if (pointerId !== null) {
+      try {
+        if (compareButton.hasPointerCapture?.(pointerId)) compareButton.releasePointerCapture(pointerId);
+      } catch {}
+    }
+    setCompareHeld(false);
+  };
 
   compareButton.addEventListener('pointerdown', event => {
+    if (event.button !== 0) return;
     event.preventDefault();
+    comparePointerId = event.pointerId;
+    try { compareButton.setPointerCapture(event.pointerId); } catch {}
     setCompareHeld(true);
   }, listenerOptions);
-  compareButton.addEventListener('pointerup', () => setCompareHeld(false), listenerOptions);
-  compareButton.addEventListener('pointerleave', () => setCompareHeld(false), listenerOptions);
-  window.addEventListener('pointerup', () => setCompareHeld(false), listenerOptions);
-  window.addEventListener('blur', () => setCompareHeld(false), listenerOptions);
+  compareButton.addEventListener('pointerup', releaseCompare, listenerOptions);
+  compareButton.addEventListener('pointercancel', releaseCompare, listenerOptions);
+  compareButton.addEventListener('lostpointercapture', releaseCompare, listenerOptions);
+  window.addEventListener('pointerup', releaseCompare, listenerOptions);
+  window.addEventListener('pointercancel', releaseCompare, listenerOptions);
+  window.addEventListener('blur', () => releaseCompare(), listenerOptions);
 
   document.addEventListener('keydown', event => {
     if (!overlay.classList.contains('visible')) return;
@@ -961,7 +1075,8 @@ export function initBgRemovalTool({
     activeStroke = null;
     panning = false;
     panStart = null;
-    setCompareHeld(false);
+    endPointerInteraction();
+    releaseCompare();
     setParamsOpen(false);
     setSuccessState(false, { restoreFocus: false });
     modelSelectControl?.close();

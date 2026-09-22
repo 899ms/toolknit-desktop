@@ -2,11 +2,12 @@ import { t } from '../../i18n.js';
 import { bindToolPageChrome, mountToolPageBackground, toolTopbarMarkup } from '../../shared/tool-page-shell.js';
 import { createColorSpaceCompareController } from './controller.js';
 import './color-space-compare.css';
+import './color-space-compare-light.css';
 
 function renderColorSpaceCompareMarkup() {
-  return `<div class="tool-page-v2-shell color-space-compare-shell">
+  return `<div class="tool-page-v2-shell tool-page-v2-light color-space-compare-shell">
     ${toolTopbarMarkup({
-      tag: 'CREATIVE TOOLS · TOOL PAGE 2.3',
+      tag: 'CREATIVE TOOLS · TOOL PAGE 3.0',
       title: t('home.toolNames.colorSpaceCompare'),
       closeAttr: 'data-csc-close',
     })}
@@ -20,7 +21,11 @@ function renderColorSpaceCompareMarkup() {
           <div class="color-space-compare-preview-row">
             <div class="color-space-compare-preview" data-role="preview"></div>
             <div class="color-space-compare-preview-meta">
-              <strong class="color-space-compare-hex" data-role="hex">#808080</strong>
+              <label class="color-space-compare-hex-row" data-role="hex-row">
+                <span aria-hidden="true">#</span>
+                <input class="color-space-compare-hex-input" data-role="hex-input" type="text" value="808080" spellcheck="false" autocomplete="off" autocapitalize="characters" aria-label="${t('home.colorSpaceCompare.hexLabel')}">
+              </label>
+              <strong class="color-space-compare-hex" data-role="hex" hidden>#808080</strong>
               <div data-role="gamut-badge"></div>
             </div>
           </div>
@@ -39,6 +44,7 @@ function renderColorSpaceCompareMarkup() {
           <p data-csc-i18n="home.colorSpaceCompare.workspaceDesc">${t('home.colorSpaceCompare.workspaceDesc')}</p>
         </header>
         <div class="color-space-compare-controls">
+          <div class="color-space-compare-wheels" data-role="wheels"></div>
           <div class="color-space-compare-sliders" data-role="sliders"></div>
         </div>
       </section>
@@ -89,4 +95,3 @@ export function initColorSpaceCompareTool({
   const disposeChrome = bindToolPageChrome(shell, api.close);
   return api;
 }
-

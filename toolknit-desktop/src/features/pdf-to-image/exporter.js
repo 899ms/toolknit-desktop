@@ -194,7 +194,7 @@ export function createPdfToImageExporter({
           outputDir,
           outputName: plan.sourceName,
           format: plan.format,
-          mode: mode === 'long' ? 'long' : 'images',
+          mode: mode === 'long-horizontal' ? 'long-horizontal' : mode === 'grid' ? 'grid' : mode === 'long' ? 'long' : 'images',
           pagesPerLongImage: PDF_TO_IMAGE_LIMITS.maxPagesPerLongImage,
           jpegQuality: plan.formatConfig.quality == null
             ? 94

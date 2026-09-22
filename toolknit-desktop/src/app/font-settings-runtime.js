@@ -3,8 +3,8 @@ import { createLifecycleScope } from './tool-lifecycle.js';
 const CUSTOM_FONT_DEFAULTS = Object.freeze({
   'cn-medium': Object.freeze({ family: 'ToolKnitRuntimeCn', weight: '100 500', path: '/assets/fonts/Alibaba-PuHuiTi-Medium.ttf', name: 'Alibaba PuHuiTi Medium' }),
   'cn-bold': Object.freeze({ family: 'ToolKnitRuntimeCn', weight: '600 900', path: '/assets/fonts/Alibaba-PuHuiTi-Bold.ttf', name: 'Alibaba PuHuiTi Bold' }),
-  'en-regular': Object.freeze({ family: 'ToolKnitRuntimeEn', weight: '100 500', path: '/assets/fonts/Fonarto-Regular.otf', name: 'Fonarto Regular' }),
-  'en-bold': Object.freeze({ family: 'ToolKnitRuntimeEn', weight: '600 900', path: '/assets/fonts/Fonarto-Bold.otf', name: 'Fonarto Bold' })
+  'en-regular': Object.freeze({ family: 'ToolKnitRuntimeEn', weight: '100 500', path: '/assets/fonts/Montserrat-Regular.otf', name: 'Montserrat Regular' }),
+  'en-bold': Object.freeze({ family: 'ToolKnitRuntimeEn', weight: '600 900', path: '/assets/fonts/Montserrat-Bold.otf', name: 'Montserrat Bold' })
 });
 
 /** Owns local interface font assets and FontFace lifecycle. */
@@ -176,13 +176,14 @@ export function createFontSettingsRuntime({
     bindEvent(slotElement.querySelector?.('[data-font-upload]'), 'click', () => void chooseCustomFont(slot));
     bindEvent(slotElement.querySelector?.('[data-font-reset]'), 'click', () => void restoreDefaultFont(slot));
   });
-  void refreshCustomFonts().catch(error => {
+  const ready = refreshCustomFonts().catch(error => {
     onError(error);
     setInterfaceFontFamilies(false);
     renderCustomFontSlots();
   });
 
   return Object.freeze({
+    ready,
     applyCustomInterfaceFonts,
     chooseCustomFont,
     dispose: scope.dispose,

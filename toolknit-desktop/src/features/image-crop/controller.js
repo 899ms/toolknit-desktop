@@ -34,6 +34,118 @@ function errorMessage(error) {
   return `导出失败：${code.replace('image-crop:', '')}`;
 }
 
+const BROWSER_MIME_BY_FORMAT = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  webp: 'image/webp',
+  bmp: 'image/bmp'
+};
+
+function browserFormatFromMime(mimeType, fallback = 'png') {
+  if (mimeType === 'image/jpeg') return 'jpg';
+  if (mimeType === 'image/webp') return 'webp';
+  if (mimeType === 'image/bmp') return 'bmp';
+  if (mimeType === 'image/png') return 'png';
+  return fallback;
+}
+
+function sanitizeBrowserFileStem(value, fallback = 'cropped-image') {
+  const stem = String(value || '')
+    .replace(/\.[^.]+$/, '')
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_')
+    .trim()
+    .replace(/[. ]+$/, '');
+  return stem || fallback;
+}
+
+function downloadBrowserBlob(blob, fileName, owner) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.hidden = true;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  const revoke = () => URL.revokeObjectURL(url);
+  owner?.use?.(revoke);
+  owner?.timeout?.(revoke, 1500);
+}
+
+async function renderBrowserCrop({
+  image,
+  source,
+  crop,
+  rotation,
+  flipHorizontal,
+  flipVertical,
+  format,
+  quality,
+  background
+}) {
+  const imageSize = transformedImageSize(source.width, source.height, rotation);
+  const orientedCanvas = document.createElement('canvas');
+  orientedCanvas.width = Math.max(1, Math.round(imageSize.width));
+  orientedCanvas.height = Math.max(1, Math.round(imageSize.height));
+  const orientedContext = orientedCanvas.getContext('2d');
+  if (!orientedContext) throw new Error('image-crop:canvas-unavailable');
+
+  const outputCanvas = document.createElement('canvas');
+  outputCanvas.width = Math.max(1, Math.round(crop.width));
+  outputCanvas.height = Math.max(1, Math.round(crop.height));
+  const outputContext = outputCanvas.getContext('2d');
+  if (!outputContext) throw new Error('image-crop:canvas-unavailable');
+
+  try {
+    orientedContext.translate(orientedCanvas.width / 2, orientedCanvas.height / 2);
+    orientedContext.scale(flipHorizontal ? -1 : 1, flipVertical ? -1 : 1);
+    orientedContext.rotate(rotation * Math.PI / 180);
+    orientedContext.imageSmoothingEnabled = true;
+    orientedContext.imageSmoothingQuality = 'high';
+    orientedContext.drawImage(image, -source.width / 2, -source.height / 2, source.width, source.height);
+
+    if (format === 'jpg' || format === 'bmp') {
+      outputContext.fillStyle = background || '#ffffff';
+      outputContext.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+    }
+    outputContext.imageSmoothingEnabled = true;
+    outputContext.imageSmoothingQuality = 'high';
+    outputContext.drawImage(
+      orientedCanvas,
+      crop.x,
+      crop.y,
+      crop.width,
+      crop.height,
+      0,
+      0,
+      outputCanvas.width,
+      outputCanvas.height
+    );
+
+    const requestedMime = BROWSER_MIME_BY_FORMAT[format] || BROWSER_MIME_BY_FORMAT.png;
+    const blob = await new Promise((resolve, reject) => {
+      outputCanvas.toBlob(
+        value => value ? resolve(value) : reject(new Error('image-crop:encode-failed')),
+        requestedMime,
+        format === 'png' ? undefined : Math.min(1, Math.max(0, Number(quality) / 100))
+      );
+    });
+    const mimeType = blob.type || requestedMime;
+    return {
+      blob,
+      mimeType,
+      format: browserFormatFromMime(mimeType, format),
+      width: outputCanvas.width,
+      height: outputCanvas.height
+    };
+  } finally {
+    orientedCanvas.width = 1;
+    orientedCanvas.height = 1;
+    outputCanvas.width = 1;
+    outputCanvas.height = 1;
+  }
+}
+
 export function createImageCropController({
   overlay,
   successOverlay,
@@ -50,7 +162,7 @@ export function createImageCropController({
   handleWindowAction = () => {},
   refreshIcons = () => {}
 } = {}) {
-  if (!overlay || !successOverlay || typeof getOutputDir !== 'function') {
+  if (!overlay || !successOverlay || (isTauri && typeof getOutputDir !== 'function')) {
     return { open() {}, close() {}, dispose() {} };
   }
 
@@ -123,6 +235,7 @@ export function createImageCropController({
   const isCurrentLoad = (owner, requestId) => isOpenSession(owner) && requestId === loadSequence;
   const isCurrentOperation = operation => operation && activeOperation === operation
     && isOpenSession(operation.owner) && operation.id === operationSequence;
+  const hasExportSource = () => Boolean(source?.path || source?.file);
 
   function currentSize() {
     if (!source) return { width: 1, height: 1 };
@@ -441,6 +554,7 @@ export function createImageCropController({
       image = decoded;
       source = {
         path,
+        file: typeof nextSource === 'string' ? null : nextSource,
         name,
         width: Number(width) || decoded.naturalWidth,
         height: Number(height) || decoded.naturalHeight
@@ -457,7 +571,7 @@ export function createImageCropController({
       history = [snapshot()];
       historyIndex = 0;
       stageShell?.classList.add('has-image');
-      if (exportButton) exportButton.disabled = !path;
+      if (exportButton) exportButton.disabled = !hasExportSource();
       if (fileMeta) fileMeta.textContent = `${name} · ${source.width} × ${source.height} px`;
       if (outputName) outputName.value = `${name.replace(/\.[^.]+$/, '')}_crop`;
       if (pickLabel) pickLabel.textContent = '替换图片';
@@ -520,7 +634,7 @@ export function createImageCropController({
   }
 
   async function exportImage() {
-    if (!source?.path || !cropRect || busy || !isOpenSession(session)) return;
+    if (!hasExportSource() || !cropRect || busy || !isOpenSession(session)) return;
     const operation = { id: ++operationSequence, owner: session };
     activeOperation = operation;
     busy = true;
@@ -529,6 +643,33 @@ export function createImageCropController({
     updateHistoryButtons();
     try {
       const crop = exportCropRect(cropRect, currentSize());
+      if (!isTauri) {
+        const rendered = await renderBrowserCrop({
+          image,
+          source,
+          crop,
+          rotation,
+          flipHorizontal,
+          flipVertical,
+          format,
+          quality: quality?.value,
+          background: background?.value || '#ffffff'
+        });
+        if (!isCurrentOperation(operation)) return;
+        const outputFormat = rendered.format;
+        const extension = outputFormat === 'jpg' ? 'jpg' : outputFormat;
+        const stem = sanitizeBrowserFileStem(
+          outputName?.value.trim() || `${source.name.replace(/\.[^.]+$/, '')}_crop`
+        );
+        const fileName = `${stem}.${extension}`;
+        downloadBrowserBlob(rendered.blob, fileName, operation.owner);
+        lastOutputPath = fileName;
+        if (successMeta) successMeta.textContent = `${outputFormat.toUpperCase()} · ${formatFileSize(rendered.blob.size)}`;
+        if (successSize) successSize.textContent = `${rendered.width} × ${rendered.height} px`;
+        if (successPath) successPath.textContent = displayFilesystemPath(lastOutputPath);
+        successOverlay.classList.add('visible');
+        return;
+      }
       const outputDir = await getOutputDir('Images/Image Crop');
       if (!isCurrentOperation(operation)) return;
       const result = await invoke('crop_image', {
@@ -560,7 +701,7 @@ export function createImageCropController({
       if (!shouldRestore) return;
       busy = false;
       processing?.classList.remove('visible');
-      exportButton.disabled = !source?.path;
+      exportButton.disabled = !hasExportSource();
       updateHistoryButtons();
     }
   }

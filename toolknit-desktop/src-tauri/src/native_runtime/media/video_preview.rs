@@ -330,11 +330,13 @@ pub(crate) fn validate_video_preview_clip_range(start_ms: u64, end_ms: u64) -> R
 pub(crate) async fn render_video_preview_frame(
     input_path: String,
     timestamp_ms: u64,
+    request_id: Option<String>,
 ) -> Result<VideoPreviewFrame, String> {
     use base64::Engine;
 
     const MAX_TIMESTAMP_MS: u64 = 24 * 60 * 60 * 1000;
     const MAX_PREVIEW_BYTES: usize = 8 * 1024 * 1024;
+    let job = super::preview_jobs::PreviewJob::register(request_id)?;
 
     let input = validate_audio_extract_input(&input_path)?;
     if timestamp_ms > MAX_TIMESTAMP_MS {
@@ -347,11 +349,11 @@ pub(crate) async fn render_video_preview_frame(
         .arg("-nostdin")
         .arg("-loglevel")
         .arg("error")
-        .arg("-i")
-        .arg(&input)
-        // Put -ss after the input so keyboard frame stepping matches export.
+        // Input seeking remains accurate when transcoding; avoid decoding from zero.
         .arg("-ss")
         .arg(format!("{:.3}", timestamp_ms as f64 / 1000.0))
+        .arg("-i")
+        .arg(&input)
         .arg("-map")
         .arg("0:v:0")
         .arg("-frames:v")
@@ -373,23 +375,12 @@ pub(crate) async fn render_video_preview_frame(
         command.creation_flags(0x08000000);
     }
 
-    let output = command
-        .spawn()
-        .map_err(|_| "video-preview:engine-failed".to_string())?
-        .wait_with_output()
-        .await
-        .map_err(|_| "video-preview:engine-failed".to_string())?;
-    if !output.status.success() || output.stdout.is_empty() {
-        return Err("video-preview:engine-failed".to_string());
-    }
-    if output.stdout.len() > MAX_PREVIEW_BYTES {
-        return Err("video-preview:output-too-large".to_string());
-    }
+    let bytes = job.output(&mut command, MAX_PREVIEW_BYTES, std::time::Duration::from_secs(90)).await?;
 
     Ok(VideoPreviewFrame {
         image_data_url: format!(
             "data:image/jpeg;base64,{}",
-            base64::engine::general_purpose::STANDARD.encode(output.stdout)
+            base64::engine::general_purpose::STANDARD.encode(bytes)
         ),
         timestamp_ms,
     })
@@ -402,31 +393,29 @@ pub(crate) async fn render_video_preview_clip(
     input_path: String,
     start_ms: u64,
     end_ms: u64,
+    request_id: Option<String>,
 ) -> Result<VideoPreviewClip, String> {
     use base64::Engine;
 
     const MAX_PREVIEW_BYTES: usize = 10 * 1024 * 1024;
+    let mut job = super::preview_jobs::PreviewJob::register(request_id)?;
 
     validate_video_preview_clip_range(start_ms, end_ms)?;
     let input = validate_audio_extract_input(&input_path)?;
     let ffmpeg = get_ffmpeg_path()?;
-    let source_duration = probe_video_convert_duration(&ffmpeg, &input)
-        .await
-        .unwrap_or(0.0);
-    if source_duration > 0.0 && end_ms as f64 > source_duration * 1000.0 + 1.0 {
+    if job.duration(&ffmpeg, &input).await?.is_some_and(|duration| end_ms as f64 > duration * 1000.0 + 1.0) {
         return Err("video-preview:timestamp-out-of-range".to_string());
     }
-
     let mut command = tokio::process::Command::new(&ffmpeg);
     command
         .arg("-hide_banner")
         .arg("-nostdin")
         .arg("-loglevel")
         .arg("error")
-        .arg("-i")
-        .arg(&input)
         .arg("-ss")
         .arg(format!("{:.3}", start_ms as f64 / 1000.0))
+        .arg("-i")
+        .arg(&input)
         .arg("-t")
         .arg(format!("{:.3}", (end_ms - start_ms) as f64 / 1000.0))
         .arg("-map")
@@ -463,23 +452,12 @@ pub(crate) async fn render_video_preview_clip(
         command.creation_flags(0x08000000);
     }
 
-    let output = command
-        .spawn()
-        .map_err(|_| "video-preview:engine-failed".to_string())?
-        .wait_with_output()
-        .await
-        .map_err(|_| "video-preview:engine-failed".to_string())?;
-    if !output.status.success() || output.stdout.is_empty() {
-        return Err("video-preview:engine-failed".to_string());
-    }
-    if output.stdout.len() > MAX_PREVIEW_BYTES {
-        return Err("video-preview:output-too-large".to_string());
-    }
+    let bytes = job.output(&mut command, MAX_PREVIEW_BYTES, std::time::Duration::from_secs(90)).await?;
 
     Ok(VideoPreviewClip {
         media_data_url: format!(
             "data:video/mp4;base64,{}",
-            base64::engine::general_purpose::STANDARD.encode(output.stdout)
+            base64::engine::general_purpose::STANDARD.encode(bytes)
         ),
         start_ms,
         end_ms,
@@ -544,7 +522,7 @@ mod video_preview_contract_tests {
             .expect("start fixture encoder");
         assert!(generated.success(), "create preview fixture");
 
-        let preview = render_video_preview_clip(source.to_string_lossy().into_owned(), 0, 1_000)
+        let preview = render_video_preview_clip(source.to_string_lossy().into_owned(), 0, 1_000, None)
             .await
             .expect("render preview clip");
         let encoded = preview

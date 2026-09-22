@@ -25,4 +25,8 @@ assert.doesNotMatch(uiSource, /async function renderPreview/);
 assert.match(uiSource, /thumbnails\.getPageStates\(\)/);
 assert.match(uiSource, /thumbnails\.clear\(\)/);
 
+const thumbnailCss = await readFile(new URL('../src/styles/pages/pdf-editor-legacy.css', import.meta.url), 'utf8');
+assert.match(thumbnailCss, /\.pdf-editor-tile-frame\.is-ready \.pdf-editor-tile-skeleton\s*\{\s*display: none;/);
+assert.match(thumbnailCss, /\.pdf-editor-tile-index,\s*\.pdf-editor-tile-select,\s*\.pdf-editor-tile-drag\s*\{\s*z-index: 1;/);
+
 console.log('PDF editor thumbnail ownership contract passed');

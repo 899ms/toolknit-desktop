@@ -1,6 +1,6 @@
 export const COLOR_REPLACE_LIMITS = Object.freeze({
-  maxBytes: 20 * 1024 * 1024,
-  maxPixels: 40_000_000,
+  maxBytes: 100 * 1024 * 1024,
+  maxPixels: 160_000_000,
   previewMaxEdge: 960
 });
 

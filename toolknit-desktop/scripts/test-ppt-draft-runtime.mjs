@@ -82,7 +82,7 @@ const dryRun = await generatePptDraft({
 assert.equal(dryRun.tool, 'ppt.draft');
 assert.equal(dryRun.dry_run, true);
 assert.equal(dryRun.plan.requires_ai_provider, true);
-assert.equal(dryRun.plan.theme, 'minimal-mono');
+assert.equal(dryRun.plan.theme, 'minimal-light');
 
 await assert.rejects(
   generatePptDraft({ output_dir: outputDirectory, dry_run: true }),
@@ -119,7 +119,7 @@ const fromOutline = await generatePptDraft({
 });
 assert.equal(fromOutline.tool, 'ppt.draft');
 assert.equal(fromOutline.dry_run, false);
-assert.equal(fromOutline.theme, 'minimal-mono');
+assert.equal(fromOutline.theme, 'tech-blue');
 assert.equal(fromOutline.output_file, 'outline-to-pptx.pptx');
 assert.ok(await stat(fromOutline.output_path).then(file => file.size > 8000));
 assert.ok(await stat(path.join(fromOutline.output_dir, 'manifest.json')).then(file => file.size > 100));
@@ -149,7 +149,7 @@ const fromThemedOutline = await generatePptDraft({
   output_dir: outputDirectory,
   output_name: 'outline-theme-inherited'
 });
-assert.equal(fromThemedOutline.theme, 'minimal-mono');
+assert.equal(fromThemedOutline.theme, 'minimal-light');
 
 let providerAuthorization = '';
 let requestCount = 0;

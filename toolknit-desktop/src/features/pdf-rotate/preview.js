@@ -1,252 +1,115 @@
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.mjs?url';
+import { pdfjsDocumentOptions, destroyPdfDocument } from '../../shared/pdfjs-options.js';
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
-import { assertPdfRotatePageCount } from '../../pdf-rotate-core.js';
+import { createModalSession } from '../../app/modal-runtime.js';
+import { createPdfWorkbench } from '../../shared/pdf-workbench.js';
+import { assertPdfRotatePageCount, normalizePdfRotation } from '../../pdf-rotate-core.js';
 import { onLangChange, t } from '../../i18n.js';
 
-function cancelledError() {
-  return new Error('PDF rotate operation cancelled');
-}
-
-export function createPdfRotatePreview({
-  workspace,
-  workspaceClose,
-  workspaceStatus,
-  workspaceFileName,
-  pageCount,
-  pageStrip,
-  workspaceFooterStatus,
-  rotateAllButton,
-  downloadAllButton,
-  isSaving = () => false,
-  onDownloadPage = () => {},
-  onDownloadAll = () => {},
-  refreshIcons = () => {}
-} = {}) {
+export function createPdfRotatePreview({ overlay, workspace, workspaceClose, workspaceStatus,
+  workspaceFileName, pageCount, pageStrip, workspaceFooterStatus, rotateAllButton, downloadAllButton,
+  isSaving = () => false, onDownloadPage = () => {}, onDownloadAll = () => {},
+  onDownloadZip = () => {}, refreshIcons = () => {} } = {}) {
   const lifecycle = createLifecycleScope();
-  let renderScope = null;
-  let loadingTask = null;
-  let renderTask = null;
-  let loadedDocument = null;
-  let pages = [];
+  const actions = workspace.querySelector('[data-rotate-actions]');
+  const find = selector => actions.querySelector(selector);
+  let loadingTask = null, loadedDocument = null, pages = [], view = null, range = 'current';
+  const modal = createModalSession({ root: workspace, background: overlay, initialFocus: workspaceClose,
+    onClose: () => closeWorkspace(), canClose: () => !isSaving() });
+
+  function targets() {
+    return pages.map((page, index) => ({ page, index })).filter(({ page, index }) =>
+      range === 'all' || (range === 'selected' ? page.selected : index === view?.currentIndex()));
+  }
+  function updateControls() {
+    const count = pages.filter(page => page.selected).length;
+    workspace.setAttribute('aria-label', t('home.pdfRotate.workbenchTitle'));
+    actions.querySelectorAll('[data-rotate-label]').forEach(node => { node.textContent = t(node.dataset.rotateLabel); });
+    workspaceStatus.textContent = t('home.pdfRotate.workbenchTitle');
+    workspaceFileName.textContent = loadedDocument?.fileName || '';
+    pageCount.textContent = t('home.pdfRotate.pageCount', { count: pages.length });
+    workspaceFooterStatus.textContent = t('home.pdfSplit.selectionStatus', { selected: count, total: pages.length });
+    downloadAllButton.querySelector('span').textContent = t(count === pages.length ? 'home.pdfSplit.exportAll' : 'home.pdfSplit.exportSelected');
+    find('[data-rotate-select]').textContent = t(count === pages.length ? 'home.pdfSplit.clearSelection' : 'home.pdfSplit.selectAll');
+    find('[data-rotate-angle]').textContent = t('home.pdfRotate.angleStatus', { angle: pages[view?.currentIndex()]?.rotation || 0 });
+    actions.querySelectorAll('button').forEach(button => { button.disabled = isSaving() || !pages.length; });
+    actions.querySelectorAll('[data-rotate-scope]').forEach(button => {
+      const active = button.dataset.rotateScope === range;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    actions.querySelectorAll('[data-rotate-turn]').forEach(button => { button.disabled = isSaving() || !targets().length; });
+    for (const button of [downloadAllButton, find('[data-rotate-export="zip"]')]) button.disabled = isSaving() || !count;
+    workspaceClose.disabled = isSaving();
+  }
+  view = createPdfWorkbench({ root: workspace, pageStrip, back: workspaceClose, actions,
+    stageId: 'pdfRotatePageStage', tag: 'PDF ROTATOR · TOOL PAGE 3.0',
+    labels: { back: 'home.pdfSplit.backToHome', sourcePage: 'home.pdfSplit.sourcePage', selectedCount: 'home.pdfSplit.selectedCount' },
+    getRotation: page => page.rotation, onChange: updateControls, refreshIcons });
 
   function releaseResources() {
-    renderScope?.dispose();
-    renderScope = null;
-    if (renderTask) {
-      try { renderTask.cancel(); } catch {}
-      renderTask = null;
-    }
-    if (loadingTask) {
-      try { loadingTask.destroy(); } catch {}
-      loadingTask = null;
-    }
-    if (loadedDocument) {
-      try { loadedDocument.doc.destroy(); } catch {}
-      loadedDocument = null;
-    }
-    for (const { canvas } of pages) {
-      if (!canvas) continue;
-      canvas.width = 0;
-      canvas.height = 0;
-    }
-    pages = [];
-    pageStrip?.replaceChildren();
+    view.clear();
+    try { loadingTask?.destroy()?.catch(() => {}); } catch {} loadingTask = null;
+    if (loadedDocument) { try { destroyPdfDocument(loadedDocument.doc)?.catch(() => {}); } catch {} }
+    loadedDocument = null; pages = []; range = 'current';
   }
-
-  function updateRotation(page) {
-    const { canvas, previewStage, rotation } = page;
-    if (!canvas || !previewStage || !canvas.width || !canvas.height) return;
-    const quarterTurn = rotation % 180 !== 0;
-    previewStage.style.aspectRatio = quarterTurn
-      ? `${canvas.height} / ${canvas.width}`
-      : `${canvas.width} / ${canvas.height}`;
-    canvas.style.setProperty(
-      'width',
-      quarterTurn ? `${(canvas.width / canvas.height) * 100}%` : '100%',
-      'important'
-    );
-    canvas.style.setProperty('max-width', 'none', 'important');
-    canvas.style.transform = `rotate(${rotation}deg)`;
-  }
-
-  function updateControls() {
-    const count = pages.length;
-    if (workspaceStatus) workspaceStatus.textContent = t('home.pdfRotate.pageCount', { count });
-    if (workspaceFileName) workspaceFileName.textContent = loadedDocument?.fileName || '';
-    if (pageCount) pageCount.textContent = t('home.pdfRotate.pageCount', { count });
-    if (workspaceFooterStatus) workspaceFooterStatus.textContent = t('home.pdfRotate.workspaceHint');
-    if (downloadAllButton) downloadAllButton.textContent = t('home.pdfRotate.downloadAll');
-    if (rotateAllButton) rotateAllButton.textContent = t('home.pdfRotate.rotateAll');
-  }
-
-  function makeIconButton(iconName, label) {
-    const button = document.createElement('button');
-    button.className = 'pdf-page-workspace-icon-button';
-    button.type = 'button';
-    button.title = label;
-    button.setAttribute('aria-label', label);
-    const icon = document.createElement('i');
-    icon.dataset.lucide = iconName;
-    button.appendChild(icon);
-    return button;
-  }
-
-  function render() {
-    if (!pageStrip) return;
-    renderScope?.dispose();
-    renderScope = createLifecycleScope();
-    const fragment = document.createDocumentFragment();
-
-    pages.forEach((page, index) => {
-      const article = document.createElement('article');
-      article.className = 'pdf-page-workspace-tile pdf-rotate-workspace-tile';
-      article.dataset.index = String(index);
-
-      const frame = document.createElement('div');
-      frame.className = 'pdf-page-workspace-frame';
-      const stage = document.createElement('div');
-      stage.className = 'pdf-page-workspace-rotate-stage';
-      page.previewStage = stage;
-      page.canvas.style.transition = 'transform 0.2s ease';
-      stage.appendChild(page.canvas);
-      frame.appendChild(stage);
-      updateRotation(page);
-
-      const indexLabel = document.createElement('span');
-      indexLabel.className = 'pdf-page-workspace-index';
-      indexLabel.textContent = String(index + 1);
-      frame.appendChild(indexLabel);
-
-      const actions = document.createElement('div');
-      actions.className = 'pdf-page-workspace-tile-actions';
-      const rotateButton = makeIconButton('rotate-cw', t('home.pdfRotate.rotatePage'));
-      const downloadButton = makeIconButton('download', t('home.pdfRotate.downloadPage'));
-      renderScope.event(rotateButton, 'click', () => {
-        page.rotation = (page.rotation + 90) % 360;
-        updateRotation(page);
-      });
-      renderScope.event(downloadButton, 'click', () => { void onDownloadPage(index); });
-      actions.append(rotateButton, downloadButton);
-      article.append(frame, actions);
-      fragment.appendChild(article);
-    });
-
-    pageStrip.replaceChildren(fragment);
-    updateControls();
-    setSaving(isSaving());
-    refreshIcons();
-  }
-
   async function load({ file, fileData, limits, isCurrent, onProgress }) {
     releaseResources();
+    const check = () => { if (!isCurrent()) throw new Error('PDF rotate operation cancelled'); };
     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
     pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-    if (!isCurrent()) throw cancelledError();
-
-    const wasmUrl = new URL('assets/', document.baseURI).href;
-    const task = pdfjs.getDocument({ data: fileData.slice(), wasmUrl, useWasm: true });
+    check();
+    const task = pdfjs.getDocument(pdfjsDocumentOptions({ data: fileData.slice() }));
     loadingTask = task;
-    let documentHandle;
-    try {
-      documentHandle = await task.promise;
-    } finally {
-      if (loadingTask === task) loadingTask = null;
-    }
-    if (!isCurrent()) {
-      try { documentHandle.destroy(); } catch {}
-      throw cancelledError();
-    }
-
-    try {
-      assertPdfRotatePageCount(documentHandle.numPages, limits);
-    } catch (error) {
-      try { documentHandle.destroy(); } catch {}
-      throw error;
-    }
-    loadedDocument = { doc: documentHandle, fileData, fileName: file.name };
-
-    for (let pageIndex = 1; pageIndex <= documentHandle.numPages; pageIndex += 1) {
-      if (!isCurrent()) throw cancelledError();
-      onProgress?.(pageIndex, documentHandle.numPages);
-      const page = await documentHandle.getPage(pageIndex);
-      const viewport = page.getViewport({ scale: 1 });
-      const scaledViewport = page.getViewport({ scale: 240 / viewport.width });
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      if (!context) throw new Error(`Cannot create a preview for ${file.name}`);
-      canvas.width = scaledViewport.width;
-      canvas.height = scaledViewport.height;
-      const currentRender = page.render({ canvasContext: context, viewport: scaledViewport });
-      renderTask = currentRender;
-      try {
-        await currentRender.promise;
-      } finally {
-        if (renderTask === currentRender) renderTask = null;
-        page.cleanup();
-      }
-      if (!isCurrent()) {
-        canvas.width = 0;
-        canvas.height = 0;
-        throw cancelledError();
-      }
-      pages.push({ pageIndex, fileName: file.name, canvas, rotation: 0, previewStage: null });
-    }
+    let doc;
+    try { doc = await task.promise; } finally { if (loadingTask === task) loadingTask = null; }
+    if (!isCurrent()) { await destroyPdfDocument(doc); check(); }
+    try { assertPdfRotatePageCount(doc.numPages, limits); }
+    catch (failure) { await destroyPdfDocument(doc); throw failure; }
+    loadedDocument = { doc, fileData, fileName: file.name };
+    pages = Array.from({ length: doc.numPages }, (_, index) => ({
+      pageIndex: index + 1, fileName: file.name, rotation: 0, selected: true
+    }));
+    onProgress?.(doc.numPages, doc.numPages);
   }
-
   function openWorkspace() {
-    render();
-    workspace?.classList.add('visible');
-    workspace?.setAttribute('aria-hidden', 'false');
+    modal.open();
+    const doc = loadedDocument.doc;
+    view.setPages(pages, page => doc.getPage(page.pageIndex));
+    updateControls();
   }
-
   function closeWorkspace({ force = false } = {}) {
     if (!force && isSaving()) return false;
-    workspace?.classList.remove('visible');
-    workspace?.setAttribute('aria-hidden', 'true');
-    releaseResources();
-    return true;
+    modal.close({ restore: !force }); releaseResources(); return true;
   }
-
-  function rotateAll() {
+  function turn(value, entries = targets()) {
     if (isSaving()) return;
-    for (const page of pages) {
-      page.rotation = (page.rotation + 90) % 360;
-      updateRotation(page);
-    }
+    for (const { page } of entries) page.rotation = value === 'reset' ? 0 : normalizePdfRotation(page.rotation + Number(value));
+    view.refreshPages(entries.map(({ index }) => index));
   }
-
-  function setSaving(saving) {
-    for (const button of [downloadAllButton, rotateAllButton, workspaceClose]) {
-      if (button) button.disabled = saving;
-    }
-    pageStrip?.querySelectorAll('.pdf-page-workspace-icon-button').forEach(button => {
-      button.disabled = saving;
-    });
-  }
-
-  lifecycle.event(workspaceClose, 'click', () => { closeWorkspace(); });
-  lifecycle.event(rotateAllButton, 'click', rotateAll);
+  lifecycle.event(workspaceClose, 'click', () => closeWorkspace());
+  lifecycle.event(actions, 'click', event => {
+    const button = event.target.closest('button');
+    if (!button || button.disabled || isSaving()) return;
+    if (button.dataset.rotateScope) { range = button.dataset.rotateScope; updateControls(); }
+    else if (button.dataset.rotateTurn) turn(button.dataset.rotateTurn);
+    else if (button.hasAttribute('data-rotate-select')) {
+      const select = pages.some(page => !page.selected);
+      pages.forEach(page => { page.selected = select; }); view.refresh();
+    } else if (button.dataset.rotateExport === 'current') void onDownloadPage(view.currentIndex());
+    else if (button.dataset.rotateExport === 'zip') void onDownloadZip();
+  });
+  lifecycle.event(rotateAllButton, 'click', () => turn(90, pages.map((page, index) => ({ page, index }))));
   lifecycle.event(downloadAllButton, 'click', () => { void onDownloadAll(); });
-  lifecycle.use(onLangChange(() => {
-    if (workspace?.classList.contains('visible')) render();
-  }));
-
-  return {
+  lifecycle.use(onLangChange(updateControls));
+  return { load, openWorkspace, releaseResources,
     close: () => closeWorkspace({ force: true }),
-    dispose() {
-      closeWorkspace({ force: true });
-      lifecycle.dispose();
-    },
-    getExportState() {
-      return loadedDocument ? {
-        fileData: loadedDocument.fileData,
-        fileName: loadedDocument.fileName,
-        pages: pages.map(({ pageIndex, fileName, rotation }) => ({ pageIndex, fileName, rotation }))
-      } : null;
-    },
-    load,
-    openWorkspace,
-    releaseResources,
-    setSaving
+    dispose() { closeWorkspace({ force: true }); view.dispose(); lifecycle.dispose(); },
+    setSaving(value) { view.setLocked(value); updateControls(); },
+    getExportState({ index = null, selectedOnly = false } = {}) {
+      return loadedDocument ? { fileData: loadedDocument.fileData, fileName: loadedDocument.fileName,
+        pages: (Number.isInteger(index) ? pages.slice(index, index + 1) : selectedOnly ? pages.filter(page => page.selected) : pages)
+          .map(({ pageIndex, fileName, rotation }) => ({ pageIndex, fileName, rotation })) } : null;
+    }
   };
 }

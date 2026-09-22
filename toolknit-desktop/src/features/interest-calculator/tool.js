@@ -29,6 +29,16 @@ export function initInterestCalculatorTool({
 
   const input = id => q(`#${id}`);
 
+  function syncSelection() {
+    for (const [group, key, value] of [[modeTabs, 'mode', mode], [frequencyTabs, 'freq', frequency]]) {
+      group?.querySelectorAll('.mortgage-calc-method-tab').forEach(tab => {
+        const selected = tab.dataset[key] === value;
+        tab.classList.toggle('active', selected);
+        tab.setAttribute('aria-pressed', String(selected));
+      });
+    }
+  }
+
   function renderSchedule(schedule) {
     if (!scheduleBody) return;
     const fragment = document.createDocumentFragment();
@@ -113,8 +123,7 @@ export function initInterestCalculatorTool({
     if (background && !plasma) plasma = initStandardToolPlasma(background);
     mode = 'simple';
     frequency = 'yearly';
-    modeTabs?.querySelectorAll('.mortgage-calc-method-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.mode === mode));
-    frequencyTabs?.querySelectorAll('.mortgage-calc-method-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.freq === frequency));
+    syncSelection();
     updateModeFields();
     const defaults = [['interestCalcPrincipal', '10000'], ['interestCalcRegularAmount', '1000'], ['interestCalcRate', '5'], ['interestCalcTerm', '10']];
     for (const [id, value] of defaults) {
@@ -136,12 +145,14 @@ export function initInterestCalculatorTool({
     const tab = event.target.closest('.mortgage-calc-method-tab');
     if (!tab || !modeTabs.contains(tab)) return;
     mode = tab.dataset.mode || 'simple';
+    syncSelection();
     updateModeFields();
   });
   lifecycle.event(frequencyTabs, 'click', event => {
     const tab = event.target.closest('.mortgage-calc-method-tab');
     if (!tab || !frequencyTabs.contains(tab)) return;
     frequency = tab.dataset.freq || 'yearly';
+    syncSelection();
   });
   lifecycle.event(calculateButton, 'click', calculate);
   for (const id of ['interestCalcPrincipal', 'interestCalcRegularAmount', 'interestCalcRate', 'interestCalcTerm']) {

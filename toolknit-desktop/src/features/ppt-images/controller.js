@@ -1,5 +1,6 @@
 import { applyTranslations } from '../../i18n.js';
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
+import { createModalSession } from '../../app/modal-runtime.js';
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 import {
   PPT_IMAGE_EXTRACT_LIMITS,
@@ -102,7 +103,15 @@ export function createPptImagesController({
   const successPath = byPortalId('pptImagesSuccessPath');
   const successOpenFolder = byPortalId('pptImagesSuccessOpenFolder');
   const successOk = byPortalId('pptImagesSuccessOk');
+  const previewOverlay = byPortalId('pptImagesPreviewOverlay');
+  const previewImage = byPortalId('pptImagesPreviewImage');
+  const previewTitle = byPortalId('pptImagesPreviewTitle');
+  const previewMeta = byPortalId('pptImagesPreviewMeta');
+  const previewClose = byPortalId('pptImagesPreviewClose');
   const lifecycle = createLifecycleScope({ onError: error => console.error('[PPT Images] dispose error:', error) });
+  const previewModal = createModalSession({ root: previewOverlay, background: overlay,
+    initialFocus: previewClose, onClose: () => closePreview() });
+  lifecycle.use(() => previewModal.dispose());
   const guard = createOperationGuard(() => session);
   let session = null;
   let plasma = null;
@@ -113,6 +122,7 @@ export function createPptImagesController({
   let selected = new Set();
   let previewUrls = [];
   let previewRevision = 0;
+  let thumbnailScope = null;
   let lastOutputPath = '';
   let disposed = false;
 
@@ -120,9 +130,32 @@ export function createPptImagesController({
   const isOpen = owner => Boolean(owner && owner === session && !owner.disposed && overlay.classList.contains('visible'));
 
   function releasePreviewUrls() {
+    closePreview({ restore: false });
+    thumbnailScope?.dispose();
+    thumbnailScope = null;
     for (const url of previewUrls) URL.revokeObjectURL(url);
     previewUrls = [];
     previewRevision += 1;
+  }
+
+  function closePreview(options) {
+    previewModal.close(options);
+    previewImage?.removeAttribute('src');
+    if (previewImage) previewImage.alt = '';
+    if (previewTitle) previewTitle.textContent = '';
+    if (previewMeta) previewMeta.textContent = '';
+  }
+
+  function openPreview(thumb) {
+    if (busy || !isOpen(session) || thumb.disabled) return;
+    const image = thumb.querySelector('img');
+    if (!image?.complete || !image.naturalWidth) return;
+    const row = thumb.closest('.ppt-images-item');
+    previewTitle.textContent = row.querySelector('.ppt-images-info strong').textContent;
+    previewMeta.textContent = row.querySelector('.ppt-images-info > span').textContent;
+    previewImage.src = image.src;
+    previewImage.alt = previewTitle.textContent;
+    previewModal.open();
   }
 
   function setProgress(percent, message, visible = true) {
@@ -132,9 +165,7 @@ export function createPptImagesController({
   }
 
   function hideProgressSoon(owner) {
-    owner?.timeout(() => {
-      if (isOpen(owner)) setProgress(0, text('processing'), false);
-    }, 260);
+    if (isOpen(owner) && !busy) setProgress(0, text('processing'), false);
   }
 
   function summaryText() {
@@ -238,7 +269,7 @@ export function createPptImagesController({
     list.replaceChildren();
     for (const item of manifest.images) {
       const duplicateText = item.duplicate_of ? text('duplicateOf', { id: item.duplicate_of }) : text('original');
-      const row = documentRef.createElement('label');
+      const row = documentRef.createElement('article');
       row.className = `ppt-images-item${item.is_duplicate ? ' is-duplicate' : ''}`;
       row.dataset.index = String(item.index);
       const checkbox = documentRef.createElement('input');
@@ -246,8 +277,22 @@ export function createPptImagesController({
       checkbox.type = 'checkbox';
       checkbox.dataset.index = String(item.index);
       checkbox.checked = selected.has(item.index);
-      const thumb = documentRef.createElement('span');
+      checkbox.setAttribute('aria-label', text('selectImage', { name: item.original_name || item.suggested_file_name }));
+      const selection = documentRef.createElement('label');
+      selection.className = 'ppt-images-selection';
+      const checkmark = documentRef.createElement('span');
+      checkmark.className = 'ppt-images-checkmark';
+      checkmark.setAttribute('aria-hidden', 'true');
+      const checkIcon = documentRef.createElement('i');
+      checkIcon.dataset.lucide = 'check';
+      checkmark.append(checkIcon);
+      selection.append(checkbox, checkmark);
+      const thumb = documentRef.createElement('button');
+      thumb.type = 'button';
+      thumb.disabled = true;
       thumb.className = 'ppt-images-thumb';
+      thumb.setAttribute('aria-label', text('previewImage', { name: item.original_name || item.suggested_file_name }));
+      thumb.title = text('noPreview');
       thumb.dataset.mediaPath = item.media_path || '';
       thumb.dataset.extension = item.extension || '';
       const icon = documentRef.createElement('i');
@@ -261,7 +306,7 @@ export function createPptImagesController({
         createTextNode(documentRef, 'span', '', [formatSlide(item), item.extension?.toUpperCase(), formatDimensions(item), formatFileSize(item.bytes)].filter(Boolean).join(' · '))
       );
       const badge = createTextNode(documentRef, 'span', 'ppt-images-badge', duplicateText);
-      row.append(checkbox, thumb, info, badge);
+      row.append(selection, thumb, info, badge);
       list.append(row);
     }
     refreshIcons();
@@ -278,6 +323,7 @@ export function createPptImagesController({
     const owner = session;
     if (!owner || !zip || !manifest || !list || !isOpen(owner)) return;
     releasePreviewUrls();
+    thumbnailScope = createLifecycleScope();
     const revision = previewRevision;
     let rendered = 0;
     for (const item of manifest.images) {
@@ -293,10 +339,15 @@ export function createPptImagesController({
         const url = URL.createObjectURL(new Blob([bytes], { type: item.mime_type || 'application/octet-stream' }));
         previewUrls.push(url);
         const image = documentRef.createElement('img');
-        image.src = url;
         image.alt = '';
         image.draggable = false;
-        thumb.replaceChildren(image);
+        thumbnailScope.event(image, 'load', () => {
+          if (!isOpen(owner) || revision !== previewRevision) return;
+          thumb.replaceChildren(image);
+          thumb.disabled = false;
+          thumb.title = text('previewImage', { name: item.original_name || item.suggested_file_name });
+        }, { once: true });
+        image.src = url;
         rendered += 1;
         if (rendered % 12 === 0) await new Promise(resolve => queueMicrotask(resolve));
       } catch (error) {
@@ -432,7 +483,7 @@ export function createPptImagesController({
       if (!guard.isCurrent(operation)) return;
       console.error('[PPT Images] scan failed:', error);
       setProgress(0, text('processing'), false);
-      notify(errorMessage(error, text));
+      notify(errorMessage(error, text), { kind: 'error' });
     } finally {
       if (!guard.isCurrent(operation)) return;
       busy = false;
@@ -546,7 +597,7 @@ export function createPptImagesController({
     } catch (error) {
       if (!guard.isCurrent(operation)) return;
       console.error('[PPT Images] export failed:', error);
-      notify(errorMessage(error, text));
+      notify(errorMessage(error, text), { kind: 'error' });
     } finally {
       if (!guard.isCurrent(operation)) return;
       busy = false;
@@ -607,6 +658,17 @@ export function createPptImagesController({
     if (checkbox.checked) selected.add(index);
     else selected.delete(index);
     updateControls();
+  });
+  lifecycle.event(list, 'click', event => {
+    const thumb = event.target.closest?.('.ppt-images-thumb');
+    if (thumb) { openPreview(thumb); return; }
+    if (event.target.closest?.('.ppt-images-selection')) return;
+    const checkbox = event.target.closest?.('.ppt-images-item')?.querySelector('.ppt-images-check');
+    if (checkbox && !checkbox.disabled) checkbox.click();
+  });
+  lifecycle.event(previewClose, 'click', () => closePreview());
+  lifecycle.event(previewOverlay, 'click', event => {
+    if (event.target === previewOverlay) closePreview();
   });
   lifecycle.event(skipDuplicates, 'change', syncDuplicateSelection);
   lifecycle.event(pageFilter, 'input', updateControls);

@@ -274,6 +274,8 @@ pub(crate) fn normalize_pdf_to_image_mode(value: &str) -> Result<PdfToImageExpor
     match value.trim().to_ascii_lowercase().as_str() {
         "images" | "pages" => Ok(PdfToImageExportMode::Pages),
         "long" => Ok(PdfToImageExportMode::Long),
+        "long-horizontal" | "horizontal" => Ok(PdfToImageExportMode::Horizontal),
+        "grid" => Ok(PdfToImageExportMode::Grid),
         _ => Err("pdf-to-image:invalid-mode".to_string()),
     }
 }
@@ -369,6 +371,41 @@ pub(crate) fn pdf_to_image_group_layout(
     })
 }
 
+pub(crate) fn pdf_to_image_horizontal_layout(
+    pages: &[PdfToImageSourcePage],
+    max_pixels: u64,
+) -> Result<ImageStitchLayout, String> {
+    if pages.is_empty() { return Err("pdf-to-image:invalid-selection".to_string()); }
+    let width = pages.iter().try_fold(0u64, |sum, page| sum.checked_add(u64::from(page.width)))
+        .ok_or_else(|| "pdf-to-image:output-too-large".to_string())?;
+    let height = pages.iter().map(|page| page.height).max().unwrap_or(0);
+    if width > u64::from(PDF_TO_IMAGE_MAX_LONG_SIDE) || height > PDF_TO_IMAGE_MAX_LONG_SIDE { return Err("pdf-to-image:output-too-large".to_string()); }
+    let pixels = width.checked_mul(u64::from(height)).ok_or_else(|| "pdf-to-image:output-too-large".to_string())?;
+    if pixels > max_pixels || pixels.saturating_mul(6) > PDF_TO_IMAGE_MAX_ESTIMATED_WORKING_BYTES { return Err("pdf-to-image:output-too-large-for-memory".to_string()); }
+    Ok(ImageStitchLayout { sizes: pages.iter().map(|page| (page.width, page.height)).collect(), width: width as u32, height })
+}
+
+pub(crate) fn pdf_to_image_grid_layout(
+    pages: &[PdfToImageSourcePage],
+    max_pixels: u64,
+) -> Result<ImageStitchLayout, String> {
+    if pages.len() != 4 && pages.len() != 9 { return Err("pdf-to-image:invalid-grid-count".to_string()); }
+    let columns = if pages.len() == 4 { 2 } else { 3 };
+    let rows = (pages.len() + columns - 1) / columns;
+    let gap = 24u64;
+    let mut column_widths = vec![0u32; columns];
+    let mut row_heights = vec![0u32; rows];
+    for (index, page) in pages.iter().enumerate() {
+        column_widths[index % columns] = column_widths[index % columns].max(page.width);
+        row_heights[index / columns] = row_heights[index / columns].max(page.height);
+    }
+    let width = column_widths.iter().map(|value| u64::from(*value)).sum::<u64>() + gap * (columns as u64 - 1);
+    let height = row_heights.iter().map(|value| u64::from(*value)).sum::<u64>() + gap * (rows as u64 - 1);
+    let pixels = width.checked_mul(height).ok_or_else(|| "pdf-to-image:output-too-large".to_string())?;
+    if width > u64::from(PDF_TO_IMAGE_MAX_LONG_SIDE) || height > u64::from(PDF_TO_IMAGE_MAX_LONG_SIDE) || pixels > max_pixels { return Err("pdf-to-image:output-too-large-for-memory".to_string()); }
+    Ok(ImageStitchLayout { sizes: pages.iter().map(|page| (page.width, page.height)).collect(), width: width as u32, height: height as u32 })
+}
+
 pub(crate) fn build_pdf_to_image_groups(
     pages: &[PdfToImageSourcePage],
     mode: PdfToImageExportMode,
@@ -382,6 +419,11 @@ pub(crate) fn build_pdf_to_image_groups(
         return Ok(pages.iter().cloned().map(|page| vec![page]).collect());
     }
 
+    if mode == PdfToImageExportMode::Grid {
+        if pages.len() != 4 && pages.len() != 9 { return Err("pdf-to-image:invalid-grid-count".to_string()); }
+        pdf_to_image_grid_layout(pages, max_pixels)?;
+        return Ok(vec![pages.to_vec()]);
+    }
     let mut groups = Vec::new();
     let mut current = Vec::new();
     for page in pages.iter().cloned() {
@@ -390,14 +432,20 @@ pub(crate) fn build_pdf_to_image_groups(
         }
         let mut candidate = current.clone();
         candidate.push(page.clone());
-        if pdf_to_image_group_layout(&candidate, max_pixels).is_ok() {
+        let layout_ok = if mode == PdfToImageExportMode::Horizontal {
+            pdf_to_image_horizontal_layout(&candidate, max_pixels).is_ok()
+        } else {
+            pdf_to_image_group_layout(&candidate, max_pixels).is_ok()
+        };
+        if layout_ok {
             current = candidate;
             continue;
         }
         if !current.is_empty() {
             groups.push(std::mem::take(&mut current));
         }
-        pdf_to_image_group_layout(std::slice::from_ref(&page), max_pixels)?;
+        if mode == PdfToImageExportMode::Horizontal { pdf_to_image_horizontal_layout(std::slice::from_ref(&page), max_pixels)?; }
+        else { pdf_to_image_group_layout(std::slice::from_ref(&page), max_pixels)?; }
         current.push(page);
     }
     if !current.is_empty() {
@@ -406,12 +454,13 @@ pub(crate) fn build_pdf_to_image_groups(
     Ok(groups)
 }
 
-pub(crate) fn compose_pdf_to_image_group(
+pub(crate) fn compose_pdf_to_image_group_with_mode(
     pages: &[PdfToImageSourcePage],
     layout: &ImageStitchLayout,
     background: image::Rgba<u8>,
     format: &str,
     cancelled: &AtomicBool,
+    mode: PdfToImageExportMode,
 ) -> Result<image::RgbaImage, String> {
     let canvas_background = if format == "jpg" {
         image::Rgba([background.0[0], background.0[1], background.0[2], 255])
@@ -420,6 +469,16 @@ pub(crate) fn compose_pdf_to_image_group(
     };
     let mut canvas = image::RgbaImage::from_pixel(layout.width, layout.height, canvas_background);
     let mut cursor = 0u32;
+    let columns = if pages.len() == 4 { 2 } else { 3 };
+    let gap = 24u32;
+    let column_widths = if mode == PdfToImageExportMode::Grid {
+        (0..columns).map(|column| pages.iter().enumerate().filter(|(index, _)| index % columns == column).map(|(_, page)| page.width).max().unwrap_or(0)).collect::<Vec<_>>()
+    } else { Vec::new() };
+    let rows = if mode == PdfToImageExportMode::Grid { (pages.len() + columns - 1) / columns } else { 0 };
+    let row_heights = if mode == PdfToImageExportMode::Grid {
+        (0..rows).map(|row| pages.iter().skip(row * columns).take(columns).map(|page| page.height).max().unwrap_or(0)).collect::<Vec<_>>()
+    } else { Vec::new() };
+    let offset = |values: &[u32], index: usize| values.iter().take(index).copied().sum::<u32>() + gap * index as u32;
     for (page, (width, height)) in pages.iter().zip(layout.sizes.iter()) {
         if cancelled.load(Ordering::SeqCst) {
             return Err("pdf-to-image:cancelled".to_string());
@@ -430,9 +489,19 @@ pub(crate) fn compose_pdf_to_image_group(
             return Err("pdf-to-image:invalid-page".to_string());
         }
         let rendered = decoded.into_rgba8();
-        let x = (layout.width.saturating_sub(*width)) / 2;
-        image::imageops::overlay(&mut canvas, &rendered, i64::from(x), i64::from(cursor));
-        cursor = cursor.saturating_add(*height);
+        let (x, y) = match mode {
+            PdfToImageExportMode::Horizontal => (cursor, (layout.height.saturating_sub(*height)) / 2),
+            PdfToImageExportMode::Grid => {
+                let index = pages.iter().position(|candidate| candidate.page_number == page.page_number).unwrap_or(0);
+                let column = index % columns;
+                let row = index / columns;
+                (offset(&column_widths, column) + (column_widths[column].saturating_sub(*width)) / 2,
+                 offset(&row_heights, row) + (row_heights[row].saturating_sub(*height)) / 2)
+            }
+            PdfToImageExportMode::Pages | PdfToImageExportMode::Long => ((layout.width.saturating_sub(*width)) / 2, cursor)
+        };
+        image::imageops::overlay(&mut canvas, &rendered, i64::from(x), i64::from(y));
+        cursor = cursor.saturating_add(if mode == PdfToImageExportMode::Horizontal { *width } else { *height });
     }
     Ok(canvas)
 }
@@ -510,7 +579,17 @@ pub(crate) fn pdf_to_image_logical_stem(
         .map(|page| format!("{:0width$}", page.page_number, width = digits))
         .collect::<Vec<_>>()
         .join("_");
-    format!("{}_long_{:02}_pages_{}", base, output_index + 1, page_label)
+    let prefix = match mode {
+        PdfToImageExportMode::Horizontal => "horizontal",
+        PdfToImageExportMode::Grid => "grid",
+        PdfToImageExportMode::Long => "long",
+        PdfToImageExportMode::Pages => unreachable!(),
+    };
+    if mode == PdfToImageExportMode::Grid {
+        format!("{}_grid_pages_{}", base, page_label)
+    } else {
+        format!("{}_{}_{:02}_pages_{}", base, prefix, output_index + 1, page_label)
+    }
 }
 
 pub(crate) fn pdf_to_image_candidate_path(
@@ -692,10 +771,13 @@ where
     {
         return Err("pdf-to-image:invalid-selection".to_string());
     }
-    if mode == PdfToImageExportMode::Long
+    if matches!(mode, PdfToImageExportMode::Long | PdfToImageExportMode::Horizontal)
         && request.page_numbers.len() > PDF_TO_IMAGE_MAX_LONG_PAGES
     {
         return Err("pdf-to-image:too-many-long-pages".to_string());
+    }
+    if mode == PdfToImageExportMode::Grid && request.page_numbers.len() != 4 && request.page_numbers.len() != 9 {
+        return Err("pdf-to-image:invalid-grid-count".to_string());
     }
     let pages_per_long_image = usize::from(
         request
@@ -742,14 +824,20 @@ where
         if cancelled.load(Ordering::SeqCst) {
             return Err("pdf-to-image:cancelled".to_string());
         }
-        let layout = pdf_to_image_group_layout(group, max_output_pixels)?;
+        let layout = match mode {
+            PdfToImageExportMode::Horizontal => pdf_to_image_horizontal_layout(group, max_output_pixels)?,
+            PdfToImageExportMode::Grid => pdf_to_image_grid_layout(group, max_output_pixels)?,
+            PdfToImageExportMode::Pages | PdfToImageExportMode::Long => pdf_to_image_group_layout(group, max_output_pixels)?,
+        };
+        // Give each group one continuous progress slice because compose and
+        // encode are performed back-to-back inside this loop.
         progress(
             "compose",
             index,
             groups.len(),
-            12 + ((index * 65 / groups.len()) as u8),
+            12 + ((index * 72 / groups.len()) as u8),
         );
-        let canvas = compose_pdf_to_image_group(group, &layout, background, &format, cancelled)?;
+        let canvas = compose_pdf_to_image_group_with_mode(group, &layout, background, &format, cancelled, mode)?;
         let temporary = PdfToImageTemporaryFile::new(&output_directory);
         encode_pdf_to_image(canvas, &temporary.path, &format, jpeg_quality)?;
         if cancelled.load(Ordering::SeqCst) {
@@ -773,7 +861,7 @@ where
             "encode",
             index + 1,
             groups.len(),
-            12 + (((index + 1) * 73 / groups.len()) as u8),
+            12 + (((index + 1) * 72 / groups.len()) as u8),
         );
     }
 
@@ -789,6 +877,8 @@ where
         export_mode: match mode {
             PdfToImageExportMode::Pages => "images".to_string(),
             PdfToImageExportMode::Long => "long".to_string(),
+            PdfToImageExportMode::Horizontal => "long-horizontal".to_string(),
+            PdfToImageExportMode::Grid => "grid".to_string(),
         },
     })
 }

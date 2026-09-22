@@ -4,6 +4,8 @@ use super::*;
 // The re-export boundary preserves the existing Tauri command names.
 pub(super) mod ppt { use super::*; include!("office/ppt.rs"); }
 pub(super) use ppt::*;
+mod probe;
+pub(super) use probe::*;
 pub(super) mod excel { use super::*; include!("office/excel.rs"); }
 pub(super) use excel::*;
 pub(super) mod files {

@@ -132,8 +132,10 @@ if (typeof document !== 'undefined') {
   document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
 }
 
-export function applyTranslations() {
-  document.querySelectorAll('[data-i18n]').forEach(el => {
+export function applyTranslations(root = document) {
+  if (!root || typeof root.querySelectorAll !== 'function') root = document;
+  const nodes = selector => root.matches?.(selector) ? [root, ...root.querySelectorAll(selector)] : root.querySelectorAll(selector);
+  nodes('[data-i18n]').forEach(el => {
     const key = el.dataset.i18n;
     const text = t(key);
     if (el.hasAttribute('placeholder')) {
@@ -145,19 +147,19 @@ export function applyTranslations() {
     }
   });
 
-  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+  nodes('[data-i18n-title]').forEach(el => {
     el.title = t(el.dataset.i18nTitle);
   });
 
-  document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+  nodes('[data-i18n-aria-label]').forEach(el => {
     el.setAttribute('aria-label', t(el.dataset.i18nAriaLabel));
   });
 
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+  nodes('[data-i18n-placeholder]').forEach(el => {
     el.placeholder = t(el.dataset.i18nPlaceholder);
   });
 
   // Update document title
-  const titleEl = document.querySelector('title');
+  const titleEl = root.querySelector('title');
   if (titleEl) titleEl.textContent = t('app.title');
 }

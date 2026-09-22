@@ -14,6 +14,8 @@ import {
   assertPdfToImagePageCount,
   calculatePdfToImageRenderSize,
   createPdfToImageLongFileName,
+  createPdfToImageHorizontalFileName,
+  createPdfToImageGridFileName,
   createPdfToImagePageFileName,
   getPdfToImageClarityPreset,
   getPdfToImageFormatConfig,
@@ -22,6 +24,7 @@ import {
   normalizePdfToImageRequest,
   planPdfToImageExport,
   planPdfToImageLongGroups,
+  planPdfToImageGrid,
   sanitizePdfToImageBaseName
 } from '../src/pdf-to-image-core.js';
 
@@ -104,24 +107,20 @@ assert.equal(
   createPdfToImageLongFileName('report.pdf', 2, [6, 8, 10], 16, 'webp'),
   'report_long_02_pages_06_08_10.webp'
 );
+assert.equal(createPdfToImageHorizontalFileName('report.pdf', 1, [1, 2, 3], 3, 'png'), 'report_horizontal_01_pages_01_02_03.png');
+assert.equal(createPdfToImageGridFileName('report.pdf', [1, 2, 3, 4], 4, 'jpg'), 'report_grid_pages_01_02_03_04.jpg');
 assert.throws(() => createPdfToImagePageFileName('report.pdf', 0, 12, 'png'), expectCode('invalid_selection'));
 assert.throws(() => createPdfToImageLongFileName('report.pdf', 1, [1, 2, 3, 4, 5, 6], 6, 'png'), expectCode('invalid_selection'));
 
-const sixteenPages = Array.from({ length: 16 }, (_, index) => ({
+const fivePages = Array.from({ length: 5 }, (_, index) => ({
   pageNumber: index + 1,
   width: 100,
   height: 200,
   pixels: 20_000
 }));
-const fourGroups = planPdfToImageLongGroups(sixteenPages);
-assert.equal(fourGroups.length, 4);
-assert.deepEqual(fourGroups.map(group => group.items.length), [5, 5, 5, 1]);
-assert.deepEqual(fourGroups.map(group => group.pageNumbers), [
-  [1, 2, 3, 4, 5],
-  [6, 7, 8, 9, 10],
-  [11, 12, 13, 14, 15],
-  [16]
-]);
+const oneGroup = planPdfToImageLongGroups(fivePages);
+assert.equal(oneGroup.length, 1);
+assert.deepEqual(oneGroup[0].items.map(item => item.pageNumber), [1, 2, 3, 4, 5]);
 
 const mixedGroup = planPdfToImageLongGroups([
   { pageNumber: 1, width: 100, height: 200, pixels: 20_000 },
@@ -131,6 +130,23 @@ const mixedGroup = planPdfToImageLongGroups([
 assert.equal(mixedGroup.width, 200);
 assert.equal(mixedGroup.height, 380);
 assert.deepEqual(mixedGroup.items.map(item => [item.x, item.y]), [[50, 0], [0, 200], [40, 300]]);
+const horizontal = planPdfToImageLongGroups([
+  { pageNumber: 1, width: 100, height: 200, pixels: 20_000 },
+  { pageNumber: 2, width: 200, height: 100, pixels: 20_000 },
+  { pageNumber: 3, width: 120, height: 80, pixels: 9_600 }
+], undefined, 'horizontal')[0];
+assert.equal(horizontal.width, 420);
+assert.equal(horizontal.height, 200);
+assert.deepEqual(horizontal.items.map(item => [item.x, item.y]), [[0, 0], [100, 50], [300, 60]]);
+const grid = planPdfToImageGrid([
+  { pageNumber: 1, width: 100, height: 200, pixels: 20_000 },
+  { pageNumber: 2, width: 200, height: 100, pixels: 20_000 },
+  { pageNumber: 3, width: 120, height: 80, pixels: 9_600 },
+  { pageNumber: 4, width: 90, height: 180, pixels: 16_200 }
+]);
+assert.deepEqual([grid.columns, grid.rows, grid.items.length], [2, 2, 4]);
+assert.ok(grid.items.every(item => item.x >= 0 && item.y >= 0));
+assert.throws(() => planPdfToImageGrid(fivePages.slice(0, 3)), expectCode('invalid_grid_count'));
 
 const dynamicallySplit = planPdfToImageLongGroups(
   Array.from({ length: 6 }, (_, index) => ({ pageNumber: index + 1, width: 100, height: 100, pixels: 10_000 })),
@@ -171,16 +187,28 @@ assert.equal(individualPlan.formatConfig.quality, 0.9);
 
 const longPlan = planPdfToImageExport({
   sourceName: 'demo.pdf',
-  pageCount: 16,
-  pages: Array.from({ length: 16 }, (_, index) => index + 1),
-  pageMetrics: Array.from({ length: 16 }, (_, index) => ({ pageNumber: index + 1, width: 100, height: 200 })),
+  pageCount: 5,
+  pages: Array.from({ length: 5 }, (_, index) => index + 1),
+  pageMetrics: Array.from({ length: 5 }, (_, index) => ({ pageNumber: index + 1, width: 100, height: 200 })),
   mode: 'long',
   format: 'png',
   clarity: 'standard'
 });
-assert.equal(longPlan.outputCount, 4);
+assert.equal(longPlan.outputCount, 1);
 assert.equal(longPlan.outputs[0].fileName, 'demo_long_01_pages_01_02_03_04_05.png');
-assert.equal(longPlan.outputs[3].fileName, 'demo_long_04_pages_16.png');
+const gridPlan = planPdfToImageExport({
+  sourceName: 'demo.pdf', pageCount: 4, pages: [1, 2, 3, 4],
+  pageMetrics: Array.from({ length: 4 }, (_, index) => ({ pageNumber: index + 1, width: 100 + index, height: 200 - index })),
+  mode: 'grid', format: 'png', clarity: 'standard'
+});
+assert.equal(gridPlan.outputCount, 1);
+assert.equal(gridPlan.outputs[0].kind, 'grid');
+assert.equal(gridPlan.outputs[0].fileName, 'demo_grid_pages_01_02_03_04.png');
+assert.throws(() => planPdfToImageExport({
+  sourceName: 'demo.pdf', pageCount: 6, pages: [1, 2, 3, 4, 5, 6],
+  pageMetrics: Array.from({ length: 6 }, (_, index) => ({ pageNumber: index + 1, width: 100, height: 200 })),
+  mode: 'grid', format: 'png', clarity: 'standard'
+}), expectCode('invalid_grid_count'));
 
 assert.deepEqual(normalizePdfToImageRequest({
   page_count: 2,

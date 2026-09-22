@@ -48,6 +48,7 @@ export function createVideoGifController({
   const previewImage = byId('videoGifPreviewImage');
   const rangePreview = byId('videoGifRangePreview');
   const previewToggle = byId('videoGifPreviewToggle');
+  const expandToggle = byId('videoGifExpandToggle');
   const timelineWrap = byId('videoGifTimelineWrap');
   const timeline = byId('videoGifTimeline');
   const previewTime = byId('videoGifPreviewTime');
@@ -141,7 +142,6 @@ export function createVideoGifController({
     const total = Math.max(1, maxMs());
     timelineWrap?.style.setProperty('--gif-start', `${Math.max(0, Math.min(100, startMs / total * 100)).toFixed(3)}%`);
     timelineWrap?.style.setProperty('--gif-end', `${Math.max(0, Math.min(100, endMs / total * 100)).toFixed(3)}%`);
-    timelineWrap?.style.setProperty('--gif-cursor', `${Math.max(0, Math.min(100, cursorMs / total * 100)).toFixed(3)}%`);
   }
 
   function updateSelection() {
@@ -176,6 +176,20 @@ export function createVideoGifController({
     }
     if (previewImage) previewImage.hidden = false;
     updateToggle();
+  }
+
+  function setExpanded(expanded) {
+    const sidebar = overlay.querySelector('.video-media-v2-sidebar');
+    if (expanded && sidebar?.contains(documentRef.activeElement)) expandToggle?.focus();
+    overlay.classList.toggle('is-expanded', expanded);
+    sidebar?.toggleAttribute('inert', expanded);
+    sidebar?.setAttribute('aria-hidden', String(expanded));
+    expandToggle?.setAttribute('aria-pressed', String(expanded));
+    const label = t(expanded ? 'home.videoFrame.collapse' : 'home.videoFrame.expand');
+    expandToggle?.setAttribute('aria-label', label);
+    expandToggle?.setAttribute('title', label);
+    expandToggle?.querySelector('[data-expand-icon="expand"]')?.toggleAttribute('hidden', expanded);
+    expandToggle?.querySelector('[data-expand-icon="collapse"]')?.toggleAttribute('hidden', !expanded);
   }
 
   async function playSelection() {
@@ -243,6 +257,7 @@ export function createVideoGifController({
       empty && (empty.hidden = true);
       editor && (editor.hidden = false);
       overlay.classList.add('is-editing');
+      setExpanded(true);
       activePoint = 'start';
       seek(0, true);
       updateSelection();
@@ -321,8 +336,8 @@ export function createVideoGifController({
     const action = (id, handler) => { const node = byId(id); if (node) lifecycle.event(node, 'click', event => { event.stopPropagation(); handler(event); }); };
     action('videoGifBack', close);
     action('videoGifV2Settings', openSettings);
-    action('videoGifPick', () => { void chooseFile(); });
     action('videoGifChange', () => { void chooseFile(); });
+    overlay.querySelectorAll('[data-video-pick="gif"]').forEach(node => lifecycle.event(node, 'click', () => { void chooseFile(); }));
     action('videoGifPrev', () => setPoint(activePoint, (activePoint === 'start' ? startMs : endMs) - stepMs));
     action('videoGifNext', () => setPoint(activePoint, (activePoint === 'start' ? startMs : endMs) + stepMs));
     action('videoGifExport', () => { void exportGif(); });
@@ -330,6 +345,7 @@ export function createVideoGifController({
     action('videoGifSuccessOk', () => success?.classList.remove('visible'));
     action('videoGifOpenFolder', () => { if (outputPath) void openOutputFolder(outputPath); success?.classList.remove('visible'); });
     action('videoGifPreviewToggle', () => { if (rangePreview && !rangePreview.paused && !rangePreview.ended) rangePreview.pause(); else void playSelection(); });
+    action('videoGifExpandToggle', () => setExpanded(!overlay.classList.contains('is-expanded')));
     overlay.querySelectorAll('[data-home-link="website"]').forEach(node => lifecycle.event(node, 'click', () => openExternalUrl('https://toolknit.com')));
     overlay.querySelectorAll('[data-open-support]').forEach(node => lifecycle.event(node, 'click', openSupport));
     overlay.querySelectorAll('[data-action]').forEach(node => lifecycle.event(node, 'click', () => handleWindowAction(node.dataset.action)));
@@ -343,7 +359,19 @@ export function createVideoGifController({
     lifecycle.event(rangePreview, 'pause', updateToggle);
     lifecycle.event(rangePreview, 'timeupdate', () => { if (previewRange !== selectionKey()) return; cursorMs = Math.min(endMs, startMs + Math.round(rangePreview.currentTime * 1000)); if (timeline) timeline.value = String(cursorMs); if (previewTime) previewTime.textContent = timeLabel(cursorMs); updateTimeline(); });
     lifecycle.event(rangePreview, 'ended', () => { if (previewRange === selectionKey()) { rangePreview.currentTime = 0; void rangePreview.play(); } });
-    lifecycle.use(registerLanguageChange(() => refreshIcons()));
+    lifecycle.event(documentRef, 'keydown', event => {
+      if (!overlay.classList.contains('visible') || success?.classList.contains('visible')) return;
+      if (event.key === 'Escape' && overlay.classList.contains('is-expanded')) {
+        event.preventDefault();
+        setExpanded(false);
+      }
+    });
+    lifecycle.use(registerLanguageChange(() => {
+      const expanded = overlay.classList.contains('is-expanded');
+      expandToggle?.setAttribute('aria-label', t(expanded ? 'home.videoFrame.collapse' : 'home.videoFrame.expand'));
+      expandToggle?.setAttribute('title', t(expanded ? 'home.videoFrame.collapse' : 'home.videoFrame.expand'));
+      refreshIcons();
+    }));
   }
 
   function open() {
@@ -351,6 +379,7 @@ export function createVideoGifController({
     session?.dispose();
     session = createLifecycleScope();
     overlay.classList.add('visible');
+    setExpanded(false);
     overlay.setAttribute('aria-hidden', 'false');
     if (!plasma && plasmaBackground) plasma = initStandardToolPlasma(plasmaBackground);
   }
@@ -365,6 +394,7 @@ export function createVideoGifController({
     file = null;
     duration = 0;
     stepMs = 33;
+    setExpanded(false);
     overlay.classList.remove('visible', 'is-editing');
     overlay.setAttribute('aria-hidden', 'true');
     editor && (editor.hidden = true);

@@ -36,6 +36,7 @@ const [outlineCore, providerCore] = await Promise.all([
 const {
   PptOutlineError,
   buildPptOutlineMessages,
+  createPptOutlineGuide,
   createPptOutlineManifest,
   createPptOutlineMarkdown,
   extractPptOutlineJson,
@@ -194,7 +195,7 @@ function dryRunResult(request) {
     dry_run: true,
     request,
     plan: {
-      output_files: ['outline.md', 'outline.json', 'manifest.json'],
+      output_files: ['outline.md', 'outline-guide.md', 'outline.json', 'manifest.json'],
       requires_ai_provider: true,
       slide_count: request.slide_count,
       deck_type: request.deck_type,
@@ -282,6 +283,7 @@ export async function generatePptOutline(args, options = {}) {
       throwIfAborted(options.signal);
       const outputSpecs = [
         { file: 'outline.md', kind: 'markdown', content: createPptOutlineMarkdown(outline) },
+        { file: 'outline-guide.md', kind: 'guide', content: createPptOutlineGuide(outline) },
         { file: 'outline.json', kind: 'json', content: `${JSON.stringify(outline, null, 2)}\n` }
       ];
       for (const spec of outputSpecs) {

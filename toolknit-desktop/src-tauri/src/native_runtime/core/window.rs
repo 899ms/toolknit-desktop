@@ -34,7 +34,16 @@ pub(crate) fn build_tray_menu(
     };
     let show_i = tauri::menu::MenuItem::with_id(app, "show", show_text, true, None::<&str>)?;
     let quit_i = tauri::menu::MenuItem::with_id(app, "quit", quit_text, true, None::<&str>)?;
-    tauri::menu::Menu::with_items(app, &[&show_i, &quit_i])
+    let active = app.state::<crate::clipboard_history::ClipboardHistoryState>().enabled();
+    let clipboard_label = match (lang == "zh", active) {
+        (true, true) => "剪贴板监控：暂停记录",
+        (true, false) => "剪贴板监控：开启记录",
+        (false, true) => "Clipboard: pause recording",
+        (false, false) => "Clipboard: start recording",
+    };
+    let clipboard_i = tauri::menu::MenuItem::with_id(app, "clipboard-toggle", clipboard_label, true, None::<&str>)?;
+    app.state::<crate::clipboard_history::ClipboardHistoryState>().register_tray(clipboard_i.clone(), lang);
+    tauri::menu::Menu::with_items(app, &[&show_i, &clipboard_i, &quit_i])
 }
 
 #[tauri::command]
@@ -82,9 +91,10 @@ pub(crate) fn apply_native_window_corner_radius(
 }
 
 #[tauri::command]
-pub(crate) fn set_window_corner_radius(
+pub(crate) async fn set_window_corner_radius(
     window: tauri::WebviewWindow,
     radius: u32,
+    shadow: Option<bool>,
     state: tauri::State<'_, WindowCornerRadiusState>,
 ) -> Result<(), String> {
     // The configured radius belongs to the primary application window. In
@@ -95,15 +105,26 @@ pub(crate) fn set_window_corner_radius(
         return Ok(());
     }
     let radius = radius.min(MAX_WINDOW_CORNER_RADIUS);
-    let mut stored_radius = state
-        .radius
-        .lock()
-        .map_err(|_| "Window corner radius state is unavailable".to_string())?;
-
-    // Hold the state lock while applying so a resize cannot briefly rebuild a
-    // stale region after the user has chosen a new radius.
-    apply_native_window_corner_radius(&window, radius)?;
-    *stored_radius = radius;
+    // The shadow HWND and subclass must be owned by the main UI thread. Never
+    // hold the radius mutex across Win32 calls that can reenter window events.
+    let (sender, receiver) = tokio::sync::oneshot::channel();
+    let target = window.clone();
+    window.run_on_main_thread(move || {
+        let result = (|| {
+            apply_native_window_corner_radius(&target, radius)?;
+            #[cfg(target_os = "windows")]
+            {
+                let hwnd = target.hwnd().map_err(|e| e.to_string())?;
+                platform::window_shadow::configure(windows::Win32::Foundation::HWND(hwnd.0 as isize), radius, shadow)?;
+            }
+            #[cfg(not(target_os = "windows"))]
+            let _ = shadow;
+            Ok::<(), String>(())
+        })();
+        let _ = sender.send(result);
+    }).map_err(|e| e.to_string())?;
+    receiver.await.map_err(|_| "Window surface update was cancelled".to_string())??;
+    *state.radius.lock().map_err(|_| "Window corner radius state is unavailable".to_string())? = radius;
     Ok(())
 }
 

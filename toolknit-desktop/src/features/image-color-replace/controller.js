@@ -1,9 +1,58 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
-import { tauriCorePromise } from '../../platform/tauri-runtime.js';
+import { loadTauriDialog, tauriCorePromise } from '../../platform/tauri-runtime.js';
 import { COLOR_REPLACE_LIMITS, hexToRgb, rgbToHex, sampleRgbaPixel } from './core.js';
+
+const IMAGE_FILE_ACCEPT = 'image/jpeg,image/png,image/webp,image/bmp';
+const IMAGE_FILE_PATTERN = /\.(?:jpe?g|png|webp|bmp)$/i;
+const BROWSER_MIME_BY_FORMAT = Object.freeze({
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  webp: 'image/webp',
+  bmp: 'image/bmp'
+});
+
+function browserFormatFromMime(mimeType, fallback = 'png') {
+  if (mimeType === 'image/jpeg') return 'jpg';
+  if (mimeType === 'image/webp') return 'webp';
+  if (mimeType === 'image/bmp') return 'bmp';
+  if (mimeType === 'image/png') return 'png';
+  return fallback;
+}
+
+function sanitizeBrowserFileStem(value, fallback = 'recolored-image') {
+  const stem = String(value || '')
+    .replace(/\.[^.]+$/, '')
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_')
+    .trim()
+    .replace(/[. ]+$/, '');
+  return stem || fallback;
+}
+
+function canvasToBlob(canvas, mimeType, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      blob => blob ? resolve(blob) : reject(new Error('color-replace:encode-failed')),
+      mimeType,
+      quality
+    );
+  });
+}
+
+function downloadBrowserBlob(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.hidden = true;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
 
 export function createImageColorReplaceController({
   overlay,
+  isTauri = false,
   notify = (message, options) => window.showToast?.(message, options)
 }) {
   const lifecycle = createLifecycleScope();
@@ -25,6 +74,7 @@ export function createImageColorReplaceController({
   let lifecycleId = 0;
   let loadId = 0;
   let exportOperationId = '';
+  let browserExportOperation = null;
   let source = null;
   let previewImageData = null;
   let resultImageData = null;
@@ -48,6 +98,7 @@ export function createImageColorReplaceController({
   };
 
   async function invoke(command, args) {
+    if (!isTauri) throw new Error('color-replace:native-command-unavailable');
     const tauri = await tauriCorePromise;
     return tauri.invoke(command, args);
   }
@@ -180,19 +231,43 @@ export function createImageColorReplaceController({
     else previewTimer = window.setTimeout(run, 60);
   }
 
-  async function load(path) {
+  async function load(nextSource) {
     const requestId = ++loadId;
     const sessionId = lifecycleId;
+    let objectUrl = '';
     try {
-      const [info] = await invoke('inspect_image_stitch_inputs', { inputPaths: [path] });
-      if (requestId !== loadId || sessionId !== lifecycleId) return;
-      if (!info) throw new Error('无法读取图片');
+      let path = '';
+      let file = null;
+      let name = '';
+      let width = 0;
+      let height = 0;
+      let url = '';
+      if (typeof nextSource === 'string') {
+        path = nextSource;
+        name = path.split(/[\\/]/).pop() || path;
+        const [info] = await invoke('inspect_image_stitch_inputs', { inputPaths: [path] });
+        if (requestId !== loadId || sessionId !== lifecycleId) return;
+        if (!info) throw new Error('无法读取图片');
+        url = info.preview_data_url || info.previewDataUrl;
+        width = Number(info.width) || 0;
+        height = Number(info.height) || 0;
+      } else {
+        file = nextSource;
+        name = String(file?.name || '');
+        if (!file || (!String(file.type || '').startsWith('image/') && !IMAGE_FILE_PATTERN.test(name))) {
+          throw new Error('请选择 PNG、JPG、WebP 或 BMP 图片');
+        }
+        if (Number(file.size) > COLOR_REPLACE_LIMITS.maxBytes) {
+          throw new Error(`图片不能超过 ${Math.round(COLOR_REPLACE_LIMITS.maxBytes / 1024 / 1024)} MB`);
+        }
+        objectUrl = URL.createObjectURL(file);
+        url = objectUrl;
+      }
 
-      const url = info.preview_data_url || info.previewDataUrl;
       const image = new Image();
       await new Promise((resolve, reject) => {
         image.onload = resolve;
-        image.onerror = reject;
+        image.onerror = () => reject(new Error('图片解码失败'));
         image.src = url;
       });
       if (requestId !== loadId || sessionId !== lifecycleId) {
@@ -200,31 +275,38 @@ export function createImageColorReplaceController({
         return;
       }
 
+      width ||= image.naturalWidth;
+      height ||= image.naturalHeight;
+      if (width * height > COLOR_REPLACE_LIMITS.maxPixels) {
+        throw new Error('图片像素尺寸过大，请选择更小的图片');
+      }
+
       const max = COLOR_REPLACE_LIMITS.previewMaxEdge;
       const scale = Math.min(1, max / Math.max(image.naturalWidth, image.naturalHeight));
-      const width = Math.max(1, Math.round(image.naturalWidth * scale));
-      const height = Math.max(1, Math.round(image.naturalHeight * scale));
-      previewCanvas.width = width;
-      previewCanvas.height = height;
+      const previewWidth = Math.max(1, Math.round(image.naturalWidth * scale));
+      const previewHeight = Math.max(1, Math.round(image.naturalHeight * scale));
+      previewCanvas.width = previewWidth;
+      previewCanvas.height = previewHeight;
       previewContext.imageSmoothingEnabled = true;
       previewContext.imageSmoothingQuality = 'medium';
-      previewContext.drawImage(image, 0, 0, width, height);
+      previewContext.drawImage(image, 0, 0, previewWidth, previewHeight);
       image.src = '';
-      previewImageData = previewContext.getImageData(0, 0, width, height);
+      previewImageData = previewContext.getImageData(0, 0, previewWidth, previewHeight);
       resultImageData = null;
       resultCanvas.width = 1;
       resultCanvas.height = 1;
       source = {
         path,
-        name: path.split(/[\\/]/).pop(),
-        width: Number(info.width) || width,
-        height: Number(info.height) || height,
-        previewWidth: width,
-        previewHeight: height
+        file,
+        name,
+        width,
+        height,
+        previewWidth,
+        previewHeight
       };
       state.seedX = 0;
       state.seedY = 0;
-      state.source = sampleRgbaPixel(previewImageData.data, width, height, 0, 0).slice(0, 3);
+      state.source = sampleRgbaPixel(previewImageData.data, previewWidth, previewHeight, 0, 0).slice(0, 3);
       history = [];
       pushHistory();
       q('[data-cr-file]').textContent = source.name;
@@ -242,19 +324,33 @@ export function createImageColorReplaceController({
       if (requestId === loadId && sessionId === lifecycleId) {
         notify(`无法载入图片：${String(error?.message || error)}`);
       }
+    } finally {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     }
   }
 
   async function pick() {
     const sessionId = lifecycleId;
     try {
-      const { open } = await import('@tauri-apps/plugin-dialog');
-      const path = await open({
-        multiple: false,
-        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'bmp'] }]
-      });
-      if (sessionId !== lifecycleId || !overlay.classList.contains('visible')) return;
-      if (typeof path === 'string') await load(path);
+      if (isTauri) {
+        const { open } = await loadTauriDialog();
+        const path = await open({
+          multiple: false,
+          filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'bmp'] }]
+        });
+        if (sessionId !== lifecycleId || !overlay.classList.contains('visible')) return;
+        if (typeof path === 'string') await load(path);
+        return;
+      }
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = IMAGE_FILE_ACCEPT;
+      input.addEventListener('change', () => {
+        if (sessionId === lifecycleId && overlay.classList.contains('visible') && input.files?.[0]) {
+          void load(input.files[0]);
+        }
+      }, { once: true });
+      input.click();
     } catch (error) {
       if (sessionId === lifecycleId) {
         notify(`无法选择图片：${String(error?.message || error)}`);
@@ -287,6 +383,117 @@ export function createImageColorReplaceController({
       }
     });
     message.appendChild(link);
+  }
+
+  function cancelBrowserExport() {
+    const operation = browserExportOperation;
+    if (!operation) return;
+    browserExportOperation = null;
+    operation.worker.terminate();
+    operation.reject(new Error('tool-operation:cancelled'));
+  }
+
+  function replaceBrowserPixels(imageData, width, height, options, operationId) {
+    return new Promise((resolve, reject) => {
+      const exportWorker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+      const operation = { id: operationId, worker: exportWorker, reject };
+      let settled = false;
+      browserExportOperation = operation;
+      const settle = (callback, value) => {
+        if (settled) return;
+        settled = true;
+        if (browserExportOperation === operation) browserExportOperation = null;
+        exportWorker.terminate();
+        callback(value);
+      };
+      exportWorker.addEventListener('message', event => {
+        if (event.data?.taskId !== operationId) return;
+        if (!event.data.ok) {
+          settle(reject, new Error(event.data.error || 'color-replace:worker-failed'));
+          return;
+        }
+        settle(resolve, new ImageData(new Uint8ClampedArray(event.data.buffer), width, height));
+      });
+      exportWorker.addEventListener('error', event => {
+        settle(reject, new Error(event.message || 'color-replace:worker-failed'));
+      }, { once: true });
+      const copy = new Uint8ClampedArray(imageData.data);
+      exportWorker.postMessage({
+        taskId: operationId,
+        buffer: copy.buffer,
+        width,
+        height,
+        options
+      }, [copy.buffer]);
+    });
+  }
+
+  async function renderBrowserExport(operationId) {
+    if (!source?.file) throw new Error('color-replace:missing-browser-source');
+    const objectUrl = URL.createObjectURL(source.file);
+    const image = new Image();
+    const inputCanvas = document.createElement('canvas');
+    const outputCanvas = document.createElement('canvas');
+    const encodeCanvas = document.createElement('canvas');
+    try {
+      await new Promise((resolve, reject) => {
+        image.onload = resolve;
+        image.onerror = () => reject(new Error('color-replace:decode-failed'));
+        image.src = objectUrl;
+      });
+      if (exportOperationId !== operationId) throw new Error('tool-operation:cancelled');
+      const width = image.naturalWidth;
+      const height = image.naturalHeight;
+      if (width * height > COLOR_REPLACE_LIMITS.maxPixels) throw new Error('color-replace:image-too-large');
+      inputCanvas.width = width;
+      inputCanvas.height = height;
+      const inputContext = inputCanvas.getContext('2d');
+      if (!inputContext) throw new Error('color-replace:canvas-unavailable');
+      inputContext.drawImage(image, 0, 0, width, height);
+      const seedX = Math.min(width - 1, Math.max(0, Math.floor((state.seedX + 0.5) / source.previewWidth * width)));
+      const seedY = Math.min(height - 1, Math.max(0, Math.floor((state.seedY + 0.5) / source.previewHeight * height)));
+      const replaced = await replaceBrowserPixels(
+        inputContext.getImageData(0, 0, width, height),
+        width,
+        height,
+        { ...state, seedX, seedY },
+        operationId
+      );
+      outputCanvas.width = width;
+      outputCanvas.height = height;
+      const outputContext = outputCanvas.getContext('2d');
+      if (!outputContext) throw new Error('color-replace:canvas-unavailable');
+      outputContext.putImageData(replaced, 0, 0);
+
+      let canvas = outputCanvas;
+      if (format === 'jpg' || format === 'bmp') {
+        encodeCanvas.width = width;
+        encodeCanvas.height = height;
+        const encodeContext = encodeCanvas.getContext('2d');
+        if (!encodeContext) throw new Error('color-replace:canvas-unavailable');
+        encodeContext.fillStyle = '#ffffff';
+        encodeContext.fillRect(0, 0, width, height);
+        encodeContext.drawImage(outputCanvas, 0, 0);
+        canvas = encodeCanvas;
+      }
+      const requestedMime = BROWSER_MIME_BY_FORMAT[format] || BROWSER_MIME_BY_FORMAT.png;
+      const quality = format === 'jpg'
+        ? Math.min(1, Math.max(0.5, Number(q('[data-cr-quality-input]').value) / 100))
+        : undefined;
+      const blob = await canvasToBlob(canvas, requestedMime, quality);
+      const outputFormat = browserFormatFromMime(blob.type || requestedMime, format);
+      const fileName = `${sanitizeBrowserFileStem(source.name)}_recolor.${outputFormat}`;
+      return { blob, fileName };
+    } finally {
+      image.src = '';
+      URL.revokeObjectURL(objectUrl);
+      inputCanvas.width = 1;
+      inputCanvas.height = 1;
+      outputCanvas.width = 1;
+      outputCanvas.height = 1;
+      encodeCanvas.width = 1;
+      encodeCanvas.height = 1;
+    }
   }
 
   function canvasPoint(event) {
@@ -375,6 +582,13 @@ export function createImageColorReplaceController({
     button.disabled = true;
     button.classList.add('is-busy');
     try {
+      if (!isTauri) {
+        const result = await renderBrowserExport(operationId);
+        if (sessionId !== lifecycleId || exportOperationId !== operationId) return;
+        downloadBrowserBlob(result.blob, result.fileName);
+        notify(`图片已导出：${result.fileName}`);
+        return;
+      }
       const root = await outputRoot();
       if (sessionId !== lifecycleId) return;
       const seedX = Math.min(
@@ -521,7 +735,8 @@ export function createImageColorReplaceController({
     if (exportOperationId) {
       const operationId = exportOperationId;
       exportOperationId = '';
-      void invoke('cancel_tool_operation', { operationId }).catch(() => {});
+      if (isTauri) void invoke('cancel_tool_operation', { operationId }).catch(() => {});
+      else cancelBrowserExport();
     }
     resizeObserver.disconnect();
     previewImageData = null;

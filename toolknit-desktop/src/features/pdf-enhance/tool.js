@@ -1,4 +1,5 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
+import { moveFocusOutOfHiddenRegion } from '../../shared/tool-page-shell.js';
 import { getLang, onLangChange, t } from '../../i18n.js';
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 import { getPdfEnhanceErrorCode } from '../../pdf-enhance-core.js';
@@ -9,6 +10,7 @@ const STRENGTHS = new Set(['light', 'medium', 'strong']);
 
 function setInteractiveLayer(element, visible) {
   if (!element) return;
+  if (!visible) moveFocusOutOfHiddenRegion(element);
   element.classList.toggle('visible', visible);
   element.setAttribute('aria-hidden', visible ? 'false' : 'true');
   element.inert = !visible;

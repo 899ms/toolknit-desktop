@@ -29,38 +29,6 @@
         border-radius: 999px;
       }
 
-      .ppt-text-v2-upload {
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 22px;
-        padding-bottom: 22px;
-        border-bottom: 1px solid var(--line);
-      }
-
-      .ppt-text-v2-upload h2 {
-        margin: 8px 0 0;
-        color: var(--ink);
-        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
-        font-size: 28px;
-        font-weight: 900;
-        line-height: 1.08;
-        letter-spacing: -0.045em;
-      }
-
-      .ppt-text-v2-upload p {
-        max-width: 520px;
-        margin: 10px 0 0;
-        color: rgba(255, 255, 255, 0.48);
-        font-size: 13px;
-        line-height: 1.65;
-      }
-
-      .ppt-text-v2-cta {
-        flex: 0 0 auto;
-        min-height: 44px;
-      }
-
       .ppt-text-v2-file {
         margin: -4px 0 0;
         opacity: 0;
@@ -78,11 +46,6 @@
         background:
           radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.08), transparent 34%),
           rgba(255, 255, 255, 0.018);
-      }
-
-      .ppt-text-v2 .ppt-images-panel {
-        width: 100%;
-        margin: 0;
       }
 
       .ppt-text-v2 .ppt-images-results {
@@ -133,38 +96,6 @@
         border-radius: 999px;
       }
 
-      .ppt-compress-v2-upload {
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 22px;
-        padding-bottom: 22px;
-        border-bottom: 1px solid var(--line);
-      }
-
-      .ppt-compress-v2-upload h2 {
-        margin: 8px 0 0;
-        color: var(--ink);
-        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
-        font-size: 28px;
-        font-weight: 900;
-        line-height: 1.08;
-        letter-spacing: -0.045em;
-      }
-
-      .ppt-compress-v2-upload p {
-        max-width: 520px;
-        margin: 10px 0 0;
-        color: rgba(255, 255, 255, 0.48);
-        font-size: 13px;
-        line-height: 1.65;
-      }
-
-      .ppt-compress-v2-cta {
-        flex: 0 0 auto;
-        min-height: 44px;
-      }
-
       .ppt-compress-v2-file {
         margin: -4px 0 0;
         opacity: 0;
@@ -182,11 +113,6 @@
         background:
           radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.08), transparent 34%),
           rgba(255, 255, 255, 0.018);
-      }
-
-      .ppt-compress-v2 .ppt-images-panel {
-        width: 100%;
-        margin: 0;
       }
 
       .ppt-compress-v2 .ppt-images-results {
@@ -896,3 +822,7 @@
         content: '暂无待压缩 PDF · 点击上传或拖入文件后会显示在这里';
       }
 
+/* These lazy pages are their own grid shell, not block hosts for a child shell. */
+:is(.ppt-render-v2, .ppt-images-v2, .ppt-text-v2, .ppt-compress-v2, .ppt-outline-v2, .ppt-draft-v2).pdf-merge-v2.visible {
+  display: grid;
+}

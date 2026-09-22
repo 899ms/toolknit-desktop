@@ -261,7 +261,7 @@ pub(crate) fn write_compressed_image(
             )
         }
         image::ImageFormat::Png => {
-            let encoder = PngEncoder::new_with_quality(writer, png_compression, FilterType::Sub);
+            let encoder = PngEncoder::new_with_quality(writer, png_compression, FilterType::Adaptive);
             image.write_with_encoder(encoder)
         }
         image::ImageFormat::WebP => {
@@ -275,6 +275,44 @@ pub(crate) fn write_compressed_image(
             )
         }
         _ => unreachable!("validated image compression format"),
+    }
+}
+
+fn write_compressed_image_file(
+    input: &std::path::Path,
+    output: &std::path::Path,
+    format: image::ImageFormat,
+    jpeg_quality: u8,
+) -> Result<(), String> {
+    if CANCEL_FLAG.load(Ordering::SeqCst) {
+        return Err("Image compression cancelled".to_string());
+    }
+    if format == image::ImageFormat::Png {
+        // Optimize the original PNG, preserving its metadata and exact samples.
+        // Re-encoding a decoded RGB image loses palette/bit-depth opportunities.
+        let bytes = std::fs::read(input).map_err(|error| error.to_string())?;
+        let options = oxipng::Options {
+            timeout: Some(std::time::Duration::from_secs(20)),
+            max_decompressed_size: Some((MAX_IMAGE_PIXELS * 9 + 1024) as usize),
+            optimize_alpha: false,
+            scale_16: false,
+            strip: oxipng::StripChunks::None,
+            ..oxipng::Options::from_preset(2)
+        };
+        let optimized = oxipng::optimize_from_memory(&bytes, &options)
+            .map_err(|error| error.to_string())?;
+        if CANCEL_FLAG.load(Ordering::SeqCst) {
+            return Err("Image compression cancelled".to_string());
+        }
+        std::fs::write(output, optimized).map_err(|error| error.to_string())
+    } else {
+        let decoded = decode_oriented_image(input).map_err(|error| error.to_string())?;
+        if CANCEL_FLAG.load(Ordering::SeqCst) {
+            return Err("Image compression cancelled".to_string());
+        }
+        write_compressed_image(
+            &decoded, output, format, jpeg_quality, image::codecs::png::CompressionType::Best,
+        ).map_err(|error| error.to_string())
     }
 }
 
@@ -300,17 +338,15 @@ pub(crate) fn compress_image_batch_blocking_with_progress<F>(
 where
     F: FnMut(ConvertProgress),
 {
-    use image::codecs::png::CompressionType;
-
     validate_image_compression_request(&input_paths, &quality)?;
 
     let output_dir_path = validate_image_output_dir(&output_dir)?;
 
-    // Quality presets: (jpeg_quality, png_compression)
-    let (jpeg_quality, png_compression) = match quality.as_str() {
-        "high" => (90u8, CompressionType::Fast),
-        "medium" => (65u8, CompressionType::Default),
-        "low" => (35u8, CompressionType::Best),
+    // PNG and WebP stay lossless; only JPEG changes visual quality.
+    let jpeg_quality = match quality.as_str() {
+        "high" => 90u8,
+        "medium" => 65u8,
+        "low" => 35u8,
         _ => unreachable!("validated image compression quality"),
     };
 
@@ -381,29 +417,22 @@ where
             i
         ));
 
-        let result = decode_oriented_image(&input);
-        match result {
-            Ok(img) => {
-                if CANCEL_FLAG.load(Ordering::SeqCst) {
-                    break;
+        let result = write_compressed_image_file(&input, &temporary_output_path, format, jpeg_quality)
+            .and_then(|()| {
+                let input_size = std::fs::metadata(&input).map_err(|error| error.to_string())?.len();
+                let output_size = std::fs::metadata(&temporary_output_path).map_err(|error| error.to_string())?.len();
+                if output_size == 0 {
+                    return Err("Image encoder produced an empty output".to_string());
                 }
-                let save_result = write_compressed_image(
-                    &img,
-                    &temporary_output_path,
-                    format,
-                    jpeg_quality,
-                    png_compression,
-                );
-                let input_size = std::fs::metadata(&input)
-                    .map(|metadata| metadata.len())
-                    .unwrap_or(0);
-                let output_size = std::fs::metadata(&temporary_output_path)
-                    .map(|metadata| metadata.len())
-                    .unwrap_or(0);
-                if save_result.is_ok()
-                    && !CANCEL_FLAG.load(Ordering::SeqCst)
-                    && output_size < input_size
-                {
+                Ok((input_size, output_size))
+            });
+        if CANCEL_FLAG.load(Ordering::SeqCst) {
+            let _ = std::fs::remove_file(&temporary_output_path);
+            break;
+        }
+        match result {
+            Ok((input_size, output_size)) => {
+                if output_size < input_size {
                     if let Err(error) = publish_image_output(&temporary_output_path, &output_path) {
                         fail_count += 1;
                         errors.push(format!("{}: {}", file_name, error));
@@ -418,41 +447,23 @@ where
                         continue;
                     }
                     success_count += 1;
-                    compressed_size += output_size;
-                    original_size += input_size;
-                    emit_progress(ConvertProgress {
-                        file_name,
-                        current: i + 1,
-                        total,
-                        progress: 1.0,
-                        status: "done".to_string(),
-                    });
                 } else {
-                    let cancelled = CANCEL_FLAG.load(Ordering::SeqCst);
-                    fail_count += 1;
-                    let e = save_result.err().map(|e| e.to_string()).unwrap_or_default();
-                    if !cancelled {
-                        let reason = if e.is_empty() {
-                            "no smaller output was produced"
-                        } else {
-                            &e
-                        };
-                        errors.push(format!("{}: {}", file_name, reason));
-                    }
+                    // A valid image without a smaller candidate is unchanged, not failed.
+                    // success_count remains the number of files actually published.
                     let _ = std::fs::remove_file(&temporary_output_path);
-                    emit_progress(ConvertProgress {
-                        file_name,
-                        current: i + 1,
-                        total,
-                        progress: 1.0,
-                        status: "error".to_string(),
-                    });
-                    if cancelled {
-                        break;
-                    }
                 }
+                compressed_size += output_size.min(input_size);
+                original_size += input_size;
+                emit_progress(ConvertProgress {
+                    file_name,
+                    current: i + 1,
+                    total,
+                    progress: 1.0,
+                    status: "done".to_string(),
+                });
             }
             Err(e) => {
+                let _ = std::fs::remove_file(&temporary_output_path);
                 fail_count += 1;
                 errors.push(format!("{}: {}", file_name, e));
                 emit_progress(ConvertProgress {

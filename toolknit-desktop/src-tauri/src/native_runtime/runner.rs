@@ -5,12 +5,22 @@ use super::office;
 pub fn run() {
     system_cleanup::await_previous_instance_for_elevated_relaunch();
     tauri::Builder::default()
+        .on_page_load(|_webview, _payload| {
+            #[cfg(feature = "qa-devtools")]
+            if _payload.event() == tauri::webview::PageLoadEvent::Finished {
+                crate::platform::qa_devtools::install(&_webview);
+            }
+        })
         .manage(WindowCornerRadiusState::default())
+        .manage(crate::clipboard_history::ClipboardHistoryState::default())
         .manage(onnx_segmenter::MattingState::default())
         .manage(TeleprompterRecognitionState::default())
         .invoke_handler(tauri::generate_handler![
+            crate::clipboard_history::clipboard_history,
+            crate::clipboard_history::copy_sensitive_text,
             open_url,
             ai_provider::request_private_ai_completion,
+            ai_provider::cancel_private_ai_completion,
             store_ai_api_key,
             load_ai_api_key,
             clear_ai_api_key,
@@ -49,6 +59,7 @@ pub fn run() {
             transcribe_media,
             convert_audio_batch,
             cancel_convert,
+            cancel_video_preview,
             office::open_path,
             office::open_recycle_bin,
             office::reveal_in_folder,
@@ -79,11 +90,16 @@ pub fn run() {
             get_network_devices_info,
             get_power_sensors_info,
             scan_large_files,
+            cancel_large_file_scan,
             get_cleanup_drive_space,
             move_files_to_recycle_bin,
             encrypt_pdf,
             decrypt_pdf,
             compress_pdf,
+            begin_pdf_compress_write,
+            append_pdf_compress_chunk,
+            finalize_pdf_compress_write,
+            discard_pdf_compress_write,
             trim_audio,
             probe_video,
             render_video_preview_frame,
@@ -122,6 +138,7 @@ pub fn run() {
             cancel_pdf_to_image,
             export_pdf_to_images,
             office::convert_ppt_to_pdf,
+            office::discard_ppt_to_image_preview,
             office::convert_excel_to_pdf,
             convert_video_batch,
             set_tray_lang,
@@ -206,6 +223,7 @@ pub fn run() {
                     "quit" => {
                         app.exit(0);
                     }
+                    "clipboard-toggle" => crate::clipboard_history::tray_toggle(app),
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
@@ -224,8 +242,14 @@ pub fn run() {
                 })
                 .build(app)?;
 
+            crate::clipboard_history::bootstrap(app.handle());
+
             // 同步置顶状态到托盘菜单（可选）
             if let Some(window) = app.get_webview_window("main") {
+                #[cfg(debug_assertions)]
+                if app.config().app.windows.iter().any(|config| config.label == "main" && config.devtools == Some(true)) {
+                    window.open_devtools();
+                }
                 if let Err(error) = fit_main_window_to_work_area(&window) {
                     log::warn!("Unable to fit main window to monitor work area: {error}");
                 }
@@ -242,8 +266,13 @@ pub fn run() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
+                crate::clipboard_history::on_exit_requested(app, &api, code);
+            }
+        });
 }
 
 pub(super) fn show_main_window(app: &tauri::AppHandle) {

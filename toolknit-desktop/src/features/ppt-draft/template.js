@@ -7,7 +7,7 @@ export function pptDraftPageTemplate() {
             <i data-lucide="arrow-left"></i>
             <span data-i18n="settings.back">返回首页</span>
           </button>
-          <span class="pdf-merge-v2-top-tag">PPT DRAFT AI · TOOL PAGE 2.3</span>
+          <span class="pdf-merge-v2-top-tag">PPT DRAFT AI · TOOL PAGE 3.0</span>
         </div>
         <div class="home-v2-top-actions pdf-merge-v2-top-actions">
           <button class="home-v2-nav-link" type="button" data-home-link="website">
@@ -115,6 +115,21 @@ export function pptDraftPageTemplate() {
                 <span data-i18n="home.pptDraftPage.promptLabel">主题 / 资料</span>
                 <textarea id="pptDraftPrompt" rows="7" data-i18n-placeholder="home.pptDraftPage.promptPlaceholder" placeholder="例如：做一份 8 页 ToolKnit 2.0 发布演示，重点展示 PPT 工具、AI Agent、隐私和本地处理..."></textarea>
               </label>
+              <section class="ppt-draft-assets" aria-labelledby="pptDraftAssetsTitle">
+                <div class="ppt-draft-assets-head">
+                  <div>
+                    <strong id="pptDraftAssetsTitle" data-i18n="home.pptDraftPage.assetsTitle">本地图片素材</strong>
+                    <span data-i18n="home.pptDraftPage.assetsHint">可选。生成时会优先嵌入图片，并在缺少素材的页面保留可替换占位。</span>
+                  </div>
+                  <button class="ppt-outline-secondary ppt-draft-assets-add" id="pptDraftAssetPickBtn" type="button">
+                    <i data-lucide="image-plus" aria-hidden="true"></i>
+                    <span data-i18n="home.pptDraftPage.assetsAdd">添加图片</span>
+                  </button>
+                </div>
+                <input id="pptDraftAssetFile" type="file" accept=".png,.jpg,.jpeg,.gif,image/png,image/jpeg,image/gif" multiple hidden>
+                <div class="ppt-draft-asset-list" id="pptDraftAssetList"></div>
+                <p class="ppt-text-ai-note ppt-draft-asset-status" id="pptDraftAssetStatus" data-i18n="home.pptDraftPage.assetEmpty">尚未添加图片素材。</p>
+              </section>
               <div class="ppt-outline-row">
                 <label class="ppt-outline-field">
                   <span data-i18n="home.pptDraftPage.slideCount">页数</span>
@@ -142,6 +157,21 @@ export function pptDraftPageTemplate() {
                   <option value="project-review" data-i18n="home.pptDraftPage.deckTypeProjectReview">项目复盘 / 迭代总结</option>
                 </select>
               </label>
+              <div class="ppt-outline-row ppt-draft-style-row">
+                <label class="ppt-outline-field">
+                  <span data-i18n="home.pptDraftPage.theme">草稿风格</span>
+                  <select id="pptDraftTheme">
+                    <option value="minimal-mono" data-i18n="home.pptDraftPage.themeMono">黑白极简</option>
+                    <option value="minimal-dark" data-i18n="home.pptDraftPage.themeDark">深色极简</option>
+                    <option value="minimal-light" data-i18n="home.pptDraftPage.themeLight">浅色简洁</option>
+                    <option value="tech-blue" data-i18n="home.pptDraftPage.themeBlue">科技蓝</option>
+                  </select>
+                </label>
+                <label class="ppt-outline-field">
+                  <span data-i18n="home.pptDraftPage.style">视觉要求</span>
+                  <input id="pptDraftStyle" type="text" data-i18n-placeholder="home.pptDraftPage.stylePlaceholder" placeholder="例如：少文字、大标题、每页一个视觉焦点">
+                </label>
+              </div>
               <label class="ppt-outline-field">
                 <span data-i18n="home.pptDraftPage.audience">目标受众</span>
                 <input id="pptDraftAudience" type="text" data-i18n-placeholder="home.pptDraftPage.audiencePlaceholder" placeholder="例如：开源用户、投资人、学生、内部评审">
@@ -241,7 +271,7 @@ export function pptDraftPortalTemplate() {
             <i data-lucide="arrow-left"></i>
             <span data-i18n="settings.back">返回</span>
           </button>
-           <span class="ppt-draft-editor-top-tag pdf-merge-v2-top-tag">PPT DRAFT AI · TOOL PAGE 2.3</span>
+           <span class="ppt-draft-editor-top-tag pdf-merge-v2-top-tag">PPT DRAFT AI · TOOL PAGE 3.0</span>
           <span class="ppt-draft-editor-deck-title" id="pptDraftEditorDeckTitle"></span>
         </div>
          <div class="home-v2-top-actions pdf-merge-v2-top-actions">

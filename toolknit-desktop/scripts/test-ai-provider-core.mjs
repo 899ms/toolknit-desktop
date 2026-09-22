@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createAiProviderDiagnostics, AI_DIAGNOSTIC_MAX_BYTES } from '../src/ai-provider-core.js';
 import {
   AI_PROVIDER_LIMITS,
   AiProviderError,
@@ -64,6 +65,17 @@ assert.equal(await requestAiCompletion({
 assert.equal(nativeRequest.url, 'http://172.23.20.253:3001/v1/chat/completions');
 assert.equal(nativeRequest.allowPrivateHttp, true);
 assert.equal(nativeRequest.apiKey, request.apiKey);
+
+nativeRequest = null;
+assert.equal(await requestAiCompletion({
+  ...request,
+  nativeRequestImpl: async value => {
+    nativeRequest = value;
+    return { content: 'HTTPS native response' };
+  }
+}), 'HTTPS native response');
+assert.equal(nativeRequest.url, request.url, 'Tauri native transport must cover public HTTPS providers');
+assert.equal(nativeRequest.allowPrivateHttp, false);
 
 await assert.rejects(
   requestAiCompletion({
@@ -204,3 +216,243 @@ await assert.rejects(
 );
 
 console.log('AI provider core regression checks passed');
+
+for (const [url, model, expectedEffort] of [
+  ['https://open.bigmodel.cn/api/paas/v4/chat/completions', 'glm-5.3-flash', 'low'],
+  ['https://open.bigmodel.cn/api/paas/v4/chat/completions', 'glm-5.3', 'low'],
+  ['https://open.bigmodel.cn/api/paas/v4/chat/completions', ' GLM-5.3 ', 'low'],
+  ['https://api.deepseek.com/chat/completions', 'deepseek-v4-pro', 'low'],
+  ['https://api.deepseek.com/v1/chat/completions', 'deepseek-v4-flash', 'low'],
+  ['https://api.deepseek.com/chat/completions', ' DEEPSEEK-V4-PRO ', 'low'],
+  ['https://api.deepseek.com.example.test/chat/completions', 'deepseek-v4-pro', undefined],
+  ['https://api.deepseek.com/chat/completions', 'deepseek-v4-pro-preview', undefined],
+  ['https://api.deepseek.com/chat/completions', 'glm-5.3', undefined],
+  ['https://open.bigmodel.cn/api/paas/v4/chat/completions', 'deepseek-v4-pro', undefined],
+  [request.url, 'glm-5.3-flash', undefined],
+  [request.url, 'glm-5.3', undefined],
+  ['https://open.bigmodel.cn.example.test/v1/chat/completions', 'glm-5.3', undefined],
+  ['https://open.bigmodel.cn/api/paas/v4/chat/completions', 'glm-5.3-preview', undefined],
+  ['https://open.bigmodel.cn/api/paas/v4/chat/completions', 'another-model', undefined]
+]) {
+  await requestAiCompletion({ ...request, url, model, maxTokens: 8192, reasoningEffort: 'low', timeoutMs: 180000,
+    fetchImpl: async (_url, options) => {
+      const body = JSON.parse(options.body);
+      assert.equal(body.reasoning_effort, expectedEffort);
+      assert.equal(body.max_tokens, 8192);
+      assert.equal(body.thinking, undefined, 'always-thinking models must not receive thinking:disabled');
+      assert.equal(body.timeoutMs, undefined, 'timeout is a local transport setting');
+      return { ok: true, text: async () => JSON.stringify({ choices: [{ message: { content: 'valid' }, finish_reason: 'stop' }] }) };
+    }
+  });
+}
+for (const [url, model] of [
+  ['https://api.deepseek.com/chat/completions', 'deepseek-v4-pro'],
+  ['https://api.deepseek.com/v1/chat/completions', 'deepseek-v4-flash'],
+  ['https://open.bigmodel.cn/api/paas/v4/chat/completions', 'glm-5.3'],
+  ['https://open.bigmodel.cn/api/paas/v4/chat/completions', 'glm-5.3-flash']
+]) {
+  for (const reasoningEffort of [undefined, 'low', 'high', 'max']) {
+    const expected = reasoningEffort ?? 'low';
+    await requestAiCompletion({ ...request, url, model, reasoningEffort, fetchImpl: async (_url, options) => {
+      const body = JSON.parse(options.body);
+      assert.equal(body.reasoning_effort, expected);
+      assert.equal(body.thinking, undefined);
+      assert.equal(body.max_tokens, undefined, 'do not silently change output ceilings');
+      return new Response(JSON.stringify({ choices: [{ message: { content: 'valid' }, finish_reason: 'stop' }] }));
+    } });
+    await requestAiCompletion({ ...request, url, model, reasoningEffort, nativeRequestImpl: async value => {
+      assert.equal(value.reasoningEffort, expected, 'native and fetch must use the same effective effort');
+      return { content: 'valid' };
+    } });
+  }
+  await assert.rejects(requestAiCompletion({ ...request, url, model, diagnostics: true,
+    fetchImpl: async () => new Response(JSON.stringify({ choices: [{ finish_reason: 'length',
+      message: { content: '', reasoning_content: 'synthetic private reasoning' } }] }))
+  }), error => error.code === 'response_truncated' && error.diagnostics.reasoningEffort === 'low');
+}
+await requestAiCompletion({ ...request, timeoutMs: 180000, reasoningEffort: 'low', nativeRequestImpl: async value => {
+  assert.equal(value.timeoutMs, 180000); assert.equal(value.reasoningEffort, 'low'); return { content: 'valid' };
+} });
+for (const code of ['timeout', 'response_truncated', 'empty_response']) {
+  await assert.rejects(requestAiCompletion({ ...request, nativeRequestImpl: async () => { throw `ai-provider:${code}`; } }), error => error.code === code);
+}
+for (const timeoutMs of [0, -1, 180001, Infinity, '90000']) {
+  await assert.rejects(requestAiCompletion({ ...request, timeoutMs }), error => error.code === 'invalid_request');
+}
+await assert.rejects(requestAiCompletion({ ...request, timeoutMs: 10, fetchImpl: (_url, { signal }) => new Promise((_, reject) => {
+  signal.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+}) }), error => error.code === 'timeout');
+const aborter = new AbortController(); aborter.abort();
+let dispatched = false;
+await assert.rejects(requestAiCompletion({ ...request, signal: aborter.signal, nativeRequestImpl: async () => {
+  dispatched = true; return { content: 'unexpected' };
+} }), error => error.code === 'aborted');
+assert.equal(dispatched, false);
+for (const [choice, expectedCode] of [
+  [{ message: { content: '', reasoning_content: 'not final output' }, finish_reason: 'length' }, 'response_truncated'],
+  [{ message: { content: '{partial' }, finish_reason: 'length' }, 'response_truncated'],
+  [{ message: { content: '' }, finish_reason: 'stop' }, 'empty_response']
+]) {
+  await assert.rejects(requestAiCompletion({ ...request, fetchImpl: async () => ({ ok: true, text: async () => JSON.stringify({ choices: [choice] }) }) }),
+    error => error.code === expectedCode);
+}
+console.log('Long document timeout, GLM reasoning budget, cancellation and response error contracts passed');
+
+const privateRequest = {
+  ...request, url: `${request.url}?access_token=private-query-value`,
+  apiKey: 'local-diagnostic-test-credential',
+  messages: [{ role: 'user', content: 'Private document paragraph with unique confidential content.' }]
+};
+
+const imagePart = { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,YWJj', detail: 'high' } };
+const visionMessages = [{ role: 'user', content: [{ type: 'text', text: 'Synthetic page' }, imagePart] }];
+let visionBody;
+assert.equal(await requestAiCompletion({ ...request, messages: visionMessages,
+  fetchImpl: async (_url, init) => { visionBody = JSON.parse(init.body); return new Response(JSON.stringify({ choices: [{ message: { content: 'recognized' } }] })); }
+}), 'recognized');
+assert.deepEqual(visionBody.messages, visionMessages);
+for (const content of [[], [{ type: 'image_url', image_url: { url: 'https://private.test/image.png' } }],
+  [{ type: 'image_url', image_url: { url: 'data:image/svg+xml;base64,YWJj' } }],
+  [{ type: 'image_url', image_url: { url: 'data:image/jpeg;base64,not valid' } }],
+  Array.from({ length: 9 }, () => imagePart)]) {
+  await assert.rejects(requestAiCompletion({ ...request, messages: [{ role: 'user', content }] }), error => error.code === 'invalid_request');
+}
+await assert.rejects(requestAiCompletion({ ...request, messages: [{ role: 'system', content: [imagePart] }] }), error => error.code === 'invalid_request');
+const largeImage = { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + 'a'.repeat(5 * 1024 * 1024) } };
+await assert.rejects(requestAiCompletion({ ...request, messages: [1, 2].map(() => ({ role: 'user', content: [largeImage] })) }), error => error.code === 'invalid_request');
+const diagnosticBody = JSON.stringify({
+  error: { code: 'model_not_found', type: 'invalid_request_error', message: 'The requested model does not exist.' },
+  apiKey: privateRequest.apiKey, messages: privateRequest.messages,
+  choices: [{ message: { content: 'Private generated document must not enter diagnostics.' } }]
+});
+for (const transport of ['fetch', 'native']) {
+  await assert.rejects(requestAiCompletion({
+    ...privateRequest, diagnostics: true,
+    ...(transport === 'native' ? { nativeRequestImpl: async args => {
+      assert.equal(args.diagnostics, true);
+      throw `ai-provider:http_error:404:diagnostic:${JSON.stringify({ stage: 'response_body', body: diagnosticBody })}`;
+    } } : { fetchImpl: async () => new Response(diagnosticBody, { status: 404, headers: { 'content-type': 'application/json', 'x-request-id': 'test-trace-404' } }) })
+  }), error => {
+    assert.equal(error.code, 'http_error');
+    assert.equal(error.status, 404);
+    assert.equal(error.diagnostics.transport, transport);
+    assert.equal(error.diagnostics.path, '/v1/chat/completions');
+    assert.equal(error.diagnostics.response.error.code, 'model_not_found');
+    assert.equal(error.diagnostics.response.error.message, 'The requested model does not exist.');
+    const logged = JSON.stringify(error);
+    for (const secret of [privateRequest.apiKey, 'private-query-value', 'Private document', 'Private generated']) assert.ok(!logged.includes(secret));
+    return true;
+  });
+}
+for (const message of [privateRequest.apiKey, encodeURIComponent(privateRequest.apiKey), privateRequest.messages[0].content,
+  `Invalid input: ${privateRequest.messages[0].content.slice(8, 50)}`,
+  'Authorization: Bearer unrelated-secret', 'File C:\\Users\\Private\\Document.txt', 'https://example.test/?key=secret']) {
+  const detail = createAiProviderDiagnostics({ body: JSON.stringify({ error: { message } }) }, privateRequest,
+    { code: 'http_error', status: 400, transport: 'native' });
+  assert.notEqual(detail.response.error.message, message, 'sensitive error fields must be redacted');
+}
+const nativeNetworkError = `ai-provider:network_error:diagnostic:${JSON.stringify({ stage: 'request', reason: 'connect' })}`;
+await assert.rejects(requestAiCompletion({ ...privateRequest, diagnostics: true, nativeRequestImpl: async () => { throw nativeNetworkError; } }), error => {
+  assert.equal(error.diagnostics.reason, 'connect');
+  assert.equal(error.diagnostics.response, null);
+  return true;
+});
+await assert.rejects(requestAiCompletion({ ...request, nativeRequestImpl: async () => { throw nativeNetworkError; } }), error => !error.diagnostics);
+await assert.rejects(requestAiCompletion({ ...request, diagnostics: true, nativeRequestImpl: async () => { throw 'ai-provider:http_error:404:diagnostic:{broken'; } }), error => error.status === 404 && !error.diagnostics);
+for (const [body, format] of [['Not Found', 'text'], ['<html>Private contents</html>', 'html']]) {
+  await assert.rejects(requestAiCompletion({ ...request, diagnostics: true, fetchImpl: async () => new Response(body, { status: 404 }) }), error => {
+    assert.equal(error.diagnostics.response.format, format);
+    assert.ok(!JSON.stringify(error).includes('Private contents'));
+    return true;
+  });
+}
+await assert.rejects(requestAiCompletion({ ...request, diagnostics: true,
+  fetchImpl: async () => new Response('x'.repeat(AI_DIAGNOSTIC_MAX_BYTES + 1), { status: 404 })
+}), error => error.status === 404 && error.diagnostics.truncated && error.diagnostics.response === null);
+await assert.rejects(requestAiCompletion({ ...request, diagnostics: true, fetchImpl: async () => new Response(JSON.stringify({
+  choices: [{ message: { content: 'Never log partial document text' }, finish_reason: 'length' }]
+})) }), error => error.code === 'response_truncated' && !JSON.stringify(error).includes('Never log'));
+console.log('AI diagnostic status, response projection, redaction, limits and legacy transport checks passed');
+
+let diagnosticStreamCancelled = false;
+await assert.rejects(requestAiCompletion({ ...request, diagnostics: true,
+  fetchImpl: async () => new Response(new ReadableStream({
+    start() {}, cancel() { diagnosticStreamCancelled = true; }
+  }), { status: 404 })
+}), error => error.status === 404 && error.diagnostics.reason === 'timeout' && error.diagnostics.response === null);
+assert.equal(diagnosticStreamCancelled, true, 'diagnostic deadline must cancel the response stream');
+await assert.rejects(requestAiCompletion({ ...request, diagnostics: true,
+  fetchImpl: async () => new Response('A generated private document in an unsupported response format')
+}), error => error.code === 'invalid_response' && !JSON.stringify(error).includes('generated private document'));
+console.log('Diagnostic deadlines preserve HTTP status and omit unexpected successful response bodies');
+
+const truncatedPayload = {
+  choices: [{ finish_reason: 'length', message: { content: '', reasoning_content: 'private reasoning '.repeat(2200) } }],
+  usage: { prompt_tokens: 200, completion_tokens: 8192, total_tokens: 8392,
+    completion_tokens_details: { reasoning_tokens: 8192, secret: 'never log this' } }
+};
+const summary = {
+  finishReason: 'length', contentBytes: 0,
+  reasoningBytes: new TextEncoder().encode(truncatedPayload.choices[0].message.reasoning_content).byteLength,
+  usage: { promptTokens: 200, completionTokens: 8192, totalTokens: 8392, reasoningTokens: 8192 }
+};
+for (const transport of ['fetch', 'native']) {
+  await assert.rejects(requestAiCompletion({
+    ...request, url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', model: 'glm-5.3',
+    maxTokens: 8192, reasoningEffort: 'low', diagnostics: true,
+    ...(transport === 'fetch' ? { fetchImpl: async () => new Response(JSON.stringify(truncatedPayload)) }
+      : { nativeRequestImpl: async () => { throw `ai-provider:response_truncated:diagnostic:${JSON.stringify({
+        stage: 'completion', status: 200, completion: summary, truncated: true
+      })}`; } })
+  }), error => {
+    assert.equal(error.code, 'response_truncated');
+    assert.equal(error.status, null, 'existing domain error status is unchanged');
+    assert.equal(error.diagnostics.status, 200, 'diagnostics retain the actual successful HTTP status');
+    assert.equal(error.diagnostics.maxTokens, 8192);
+    assert.equal(error.diagnostics.reasoningEffort, 'low');
+    assert.deepEqual(error.diagnostics.completion, summary);
+    assert.equal(error.diagnostics.truncated, true, 'large body omission must not discard token counters');
+    assert.ok(!JSON.stringify(error).includes('private reasoning'));
+    assert.ok(!JSON.stringify(error).includes('never log this'));
+    return true;
+  });
+}
+const invalidSummary = createAiProviderDiagnostics({ status: 'secret-status', completion: {
+  finishReason: 'private content', contentBytes: -1, reasoningBytes: 'secret-text',
+  usage: { promptTokens: 'secret-value', completionTokens: Infinity, totalTokens: -1, reasoningTokens: Number.MAX_SAFE_INTEGER + 1 }
+} }, request, { code: 'response_truncated', status: null, transport: 'native' });
+assert.deepEqual(invalidSummary.completion, {});
+assert.equal(invalidSummary.status, null);
+assert.ok(!JSON.stringify(invalidSummary).includes('secret'));
+console.log('GLM-5.3 reasoning and bounded completion telemetry checks passed');
+
+// Verify the app adapter forwards cancellation to the native owner and releases its listener.
+const { createAiRequestRuntime } = await import('../src/app/ai-request-runtime.js');
+const previousWindow = globalThis.window;
+let nativeStarted;
+const started = new Promise(resolve => { nativeStarted = resolve; });
+let rejectNative, nativeId;
+const cancelledIds = [];
+globalThis.window = { __TAURI_INTERNALS__: { invoke: (command, args) => {
+  if (command === 'request_private_ai_completion') {
+    nativeId = args.request.requestId;
+    nativeStarted();
+    return new Promise((_resolve, reject) => { rejectNative = reject; });
+  }
+  if (command === 'cancel_private_ai_completion') {
+    cancelledIds.push(args.requestId); rejectNative('ai-provider:aborted'); return Promise.resolve();
+  }
+  throw new Error('Unexpected command');
+} } };
+try {
+  const runtime = createAiRequestRuntime({ getApiKey: async () => request.apiKey, getConfig: () => request, isTauri: true });
+  await assert.rejects(runtime(visionMessages, new AbortController().signal, 4096, { expectedProvider: { ...request, url: 'https://changed.test/api' } }), error => error.code === 'provider_changed');
+  const controller = new AbortController();
+  const pending = runtime(visionMessages, controller.signal, 4096);
+  await started;
+  controller.abort();
+  await assert.rejects(pending, error => error.code === 'aborted');
+  assert.deepEqual(cancelledIds, [nativeId]);
+  assert.match(nativeId, /^[a-z0-9-]{36}$/);
+} finally { if (previousWindow === undefined) delete globalThis.window; else globalThis.window = previousWindow; }
+console.log('Multimodal validation and native cancellation bridge passed');

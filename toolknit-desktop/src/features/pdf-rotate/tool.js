@@ -74,6 +74,7 @@ export function initPdfRotateTool({
   }
 
   const preview = createPdfRotatePreview({
+    overlay,
     workspace: byId('pdfRotateWorkspace'),
     workspaceClose: byId('pdfRotateWorkspaceClose'),
     workspaceStatus: byId('pdfRotateWorkspaceStatus'),
@@ -86,12 +87,14 @@ export function initPdfRotateTool({
     isSaving: () => Boolean(exporter?.busy),
     onDownloadPage: index => exporter?.downloadSingle(index),
     onDownloadAll: () => exporter?.downloadAll(),
+    onDownloadZip: () => exporter?.downloadZip(),
     refreshIcons
   });
 
   exporter = createPdfRotateExporter({
     isTauri,
     preview,
+    workspace: byId('pdfRotateWorkspace'),
     processMask,
     setProgress,
     successOverlay: byId('pdfRotateSuccessOverlay'),
@@ -308,7 +311,7 @@ export function initPdfRotateTool({
         processing = false;
         activeRunId = 0;
       }
-      if (isOpenSession(owner)) {
+      if (runId === runRevision && isOpenSession(owner)) {
         processMask?.classList.remove('visible');
         setProgress(0);
       }
@@ -371,6 +374,14 @@ export function initPdfRotateTool({
     input.value = '';
   });
   lifecycle.event(processButton, 'click', () => { void processSelection(); });
+  lifecycle.event(processMask?.querySelector('[data-rotate-cancel]'), 'click', () => {
+    if (exporter.busy) { exporter.cancel(); return; }
+    if (!processing) return;
+    runRevision++; activeRunId = 0; processing = false;
+    preview.releaseResources();
+    processMask.classList.remove('visible');
+    setProgress(0);
+  });
   lifecycle.event(processButton, 'transitionend', event => {
     if (event.propertyName === 'opacity' && !processButton.classList.contains('visible')) {
       processButton.style.display = 'none';

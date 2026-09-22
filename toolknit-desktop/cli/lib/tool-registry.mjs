@@ -206,8 +206,13 @@ export const TOOL_DEFINITIONS = Object.freeze([
   },
   {
     name: 'toolknit_pdf_compress',
-    description: 'Create a smaller PDF using qpdf. If optimization cannot reduce the file size, no output file is created and a warning is returned.',
-    inputSchema: { type: 'object', additionalProperties: false, required: ['input_path', 'output_path'], properties: { input_path: PDF_PATH, output_path: OUTPUT_PATH, level: { enum: ['low', 'medium', 'high'], default: 'medium' }, overwrite: OVERWRITE } }
+    description: 'Compress a PDF locally. structure preserves document objects; raster explicitly creates an image-only PDF and loses searchable text, links, forms and bookmarks. target_bytes is a strict upper limit. Already compliant, no-reduction and target-not-reached results create no output.',
+    inputSchema: { type: 'object', additionalProperties: false, required: ['input_path', 'output_path'], properties: {
+      input_path: PDF_PATH, output_path: OUTPUT_PATH, level: { enum: ['low', 'medium', 'high'], default: 'medium' },
+      mode: { enum: ['structure', 'raster'], default: 'structure' },
+      clarity: { enum: ['readable', 'compact'], default: 'readable', description: 'Raster resolution floor: readable 72 DPI, compact 36 DPI. Compact can blur small text; neither option guarantees readability.' },
+      target_bytes: { type: 'integer', minimum: 51200, maximum: 52428800, description: 'Optional final PDF byte cap. A missed cap never publishes an oversized file.' }, overwrite: OVERWRITE
+    } }
   },
   {
     name: 'toolknit_pdf_enhance',

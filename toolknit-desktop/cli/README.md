@@ -35,6 +35,9 @@ toolknit pdf split --input "D:\Backup\下载\朱自清-背影，荷塘月色.pdf
 # PDF：合并多个文件
 toolknit pdf merge --input ".\a.pdf" --input ".\b.pdf" --output ".\output\merged.pdf"
 
+# PDF：有损图像化压缩到不超过 500 KB（会移除文字搜索、链接和表单等结构）
+toolknit pdf compress --input ".\report.pdf" --output ".\output\small.pdf" --mode raster --target-kb 500 --clarity readable --json
+
 # PPT：提取内嵌图片素材，保留原始格式并生成清单
 toolknit ppt images --input ".\demo.pptx" --output-dir ".\output\ppt-assets" --skip-duplicates --json
 

@@ -54,13 +54,19 @@ export function buildPresentationRels(slideCount) {
 </Relationships>`;
 }
 
-export function buildContentTypes(slideCount) {
+export function buildContentTypes(slideCount, imageExtensions = []) {
   const slides = Array.from({ length: slideCount }, (_, index) => `<Override PartName="/ppt/slides/slide${index + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join('');
+  const imageDefaults = [...new Set((Array.isArray(imageExtensions) ? imageExtensions : [])
+    .map(value => String(value || '').toLowerCase().replace(/^\./, ''))
+    .filter(value => ['png', 'jpg', 'jpeg', 'gif'].includes(value)))]
+    .map(extension => `<Default Extension="${extension}" ContentType="${extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg' : `image/${extension}`}"/>`)
+    .join('');
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Default Extension="svg" ContentType="image/svg+xml"/>
+  ${imageDefaults}
   <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
   <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
   <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>

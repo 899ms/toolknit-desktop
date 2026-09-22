@@ -100,12 +100,12 @@
   display: grid !important;
   place-items: center;
   padding: 0 !important;
-  border: 1px solid rgba(255,255,255,.24) !important;
+  border: 1px solid var(--crypto-icon-border, rgba(255,255,255,.24)) !important;
   border-radius: 50% !important;
   background: rgba(255,255,255,.04);
 }
 .crypto-shell [data-random]:hover,
-.crypto-shell [data-copy]:hover { border-color: #fff !important; background: rgba(255,255,255,.1); }
+.crypto-shell [data-copy]:hover { border-color: var(--crypto-icon-hover-border, #fff) !important; background: rgba(255,255,255,.1); }
 .crypto-shell [data-random] svg,
 .crypto-shell [data-copy] svg { width: 15px; height: 15px; }
 

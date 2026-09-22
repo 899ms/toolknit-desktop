@@ -10,8 +10,10 @@ const [
   lazySpecs,
   polish,
   polishStyles,
+  polishLightStyles,
   translate,
   translateStyles,
+  translateLightStyles,
   sharedStyles,
   workbenchStyles
 ] = await Promise.all([
@@ -21,8 +23,10 @@ const [
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-polish/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-polish/ai-polish.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/ai-polish/ai-polish-light.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-translate/tool.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-translate/ai-translate.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/features/ai-translate/ai-translate-light.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-text/ai-text-shared.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/ai-workbench/ai-workbench-shared.css', import.meta.url), 'utf8')
 ]);
@@ -55,20 +59,30 @@ for (const [name, source] of [['polish', polish], ['translate', translate]]) {
   assert.match(source, /lifecycle\.isCurrent\(token\)/);
   assert.match(source, /requestController\?\.abort\(\)/);
   assert.match(source, /onLangChange\(\(\) =>/);
+  assert.match(source, /const REQUEST_TIMEOUT_MS = AI_PROVIDER_LIMITS\.maxTimeoutMs/);
+  assert.match(source, /error instanceof AiProviderError/);
+  assert.match(source, /error\?\.code === 'timeout'/);
+  const configuredRequests = source.match(/request\.controller\.signal, undefined, \{ timeoutMs: REQUEST_TIMEOUT_MS, reasoningEffort: 'low' \}/g) || [];
+  assert.equal(configuredRequests.length, name === 'polish' ? 2 : 1,
+    `${name}: each request must use the shared deadline and preserve the provider's output-token default`);
   assert.doesNotMatch(source, /onDragDropEvent/, `${name} must use the shared drop lifecycle`);
   assert.doesNotMatch(source, /\.innerHTML\s*=/, `${name} must build model content without HTML injection`);
 }
 
-assert.match(polish, /const REQUEST_TIMEOUT_MS = 90_000/);
 assert.match(polish, /保持原文核心意思不变/);
 assert.match(polish, /import '\.\/ai-polish\.css'/);
-assert.match(translate, /const REQUEST_TIMEOUT_MS = 90_000/);
+assert.match(polish, /import '\.\/ai-polish-light\.css'/);
 assert.match(translate, /逐句翻译，保持句子对应关系/);
 assert.match(translate, /import '\.\/ai-translate\.css'/);
+assert.match(translate, /import '\.\/ai-translate-light\.css'/);
 assert.doesNotMatch(translate, /aiTranslatePairsData/);
 assert.match(sharedStyles, /\.ai-polish-overlay/);
 assert.match(polishStyles, /\.ai-polish-v2/);
+assert.match(polishLightStyles, /html\[data-theme="light"\] \.ai-polish-v2/);
+assert.match(polishLightStyles, /html\[data-theme="light"\] #aiPolishMask/);
 assert.match(translateStyles, /\.ai-translate-v2/);
 assert.match(translateStyles, /\.ai-translate-sentence/);
+assert.match(translateLightStyles, /html\[data-theme="light"\] \.ai-translate-v2/);
+assert.match(translateLightStyles, /html\[data-theme="light"\] #aiTranslateMask/);
 
 console.log('AI text tools lazy-loading, gate, injection and lifecycle contracts passed');

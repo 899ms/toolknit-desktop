@@ -1,13 +1,17 @@
 export const HELP_CONTENT_EN = {
+  'clipboard-history': {
+    title: 'Clipboard History',
+    html: `<div class="help-doc"><h2>Clipboard History</h2><p>Enable monitoring in the Windows desktop app to capture subsequent copies of text, images and file paths. Existing clipboard content and Win+V history are not imported.</p><h3>Timeline and reuse</h3><p>Search content or source apps and filter by type, date or favorites. Details show the observation timestamp, milliseconds, capture timezone, source and size. Unknown sources are not guessed. Files are stored as paths only; copying them never restores a cut operation.</p><h3>Background and privacy</h3><p>Recording continues on other pages and in the tray. Pausing or quitting stops it. Launch-time monitoring is off by default; settings can resume monitoring that was active on exit. Content is encrypted locally and is not uploaded.</p><p>Defaults: 7 days, 2000 records and 256 MB. Favorites do not expire; recording pauses when they fill the limit. Clearing history keeps favorites by default and does not clear the system clipboard or delete original files.</p><p>Application privacy markers and process-name exclusions are respected. Not all sensitive data is marked: pause before copying it. Rapid updates, busy clipboards and unsupported formats can be missed; skipped and failed counts remain visible. Browser previews cannot monitor the system clipboard.</p></div>`
+  },
   'overview': {
     title: 'Overview',
     html: `<div class="help-doc">
       <h2>ToolKnit Overview</h2>
-      <p>ToolKnit 2.3 is a <strong>local-first</strong> Windows toolbox with 65 desktop tools across 12 categories and 46 capabilities exposed to IDE Agents through CLI / MCP. PDF, PPT, image, media, text, calculator, creative, developer, cleanup, and hardware work is performed locally by default.</p>
+      <p>ToolKnit 3.0 is a <strong>local-first</strong> Windows toolbox with 68 desktop tools across 12 categories and 46 capabilities exposed to IDE Agents through CLI / MCP. Basic file processing stays local; AI tools send the necessary content to your selected provider only when explicitly invoked.</p>
 
       <h3>Tool Categories</h3>
       <div class="help-tool-grid">
-        <div class="help-tool-card"><div class="help-tool-card-name">PDF Tools</div><div class="help-tool-card-desc">Edit, merge, split, add page numbers, export images, rotate, encrypt, decrypt, compress, enhance text, and convert Excel to PDF</div></div>
+        <div class="help-tool-card"><div class="help-tool-card-name">PDF Tools</div><div class="help-tool-card-desc">Edit, merge, split, add page numbers, export images, extract text to Markdown locally, AI PDF to Markdown, rotate, encrypt, decrypt, compress, enhance text, and convert Excel to PDF</div></div>
         <div class="help-tool-card"><div class="help-tool-card-name">PPT Tools</div><div class="help-tool-card-desc">PDF/image export, asset and text extraction, compression, AI outlines and monochrome drafts</div></div>
         <div class="help-tool-card"><div class="help-tool-card-name">Image Tools</div><div class="help-tool-card-desc">Conversion, compression, stitching, icon generation, image and screen color picking</div></div>
         <div class="help-tool-card"><div class="help-tool-card-name">Audio Tools</div><div class="help-tool-card-desc">Format conversion, BPM detection, clipping, video audio extraction</div></div>
@@ -16,13 +20,13 @@ export const HELP_CONTENT_EN = {
         <div class="help-tool-card"><div class="help-tool-card-name">Calculator</div><div class="help-tool-card-desc">Body fat, timestamp, mortgage, interest, password generation</div></div>
         <div class="help-tool-card"><div class="help-tool-card-name">Creative Tools</div><div class="help-tool-card-desc">Color extraction, typing test</div></div>
         <div class="help-tool-card"><div class="help-tool-card-name">Cleanup Tools</div><div class="help-tool-card-desc">Large-file scanning, AI metadata suggestions, Recycle Bin cleanup</div></div>
-        <div class="help-tool-card"><div class="help-tool-card-name">Hardware Tools</div><div class="help-tool-card-desc">Read-only system, CPU, memory, GPU, board, disk, network, and sensor info</div></div>
+        <div class="help-tool-card"><div class="help-tool-card-name">Hardware and System Tools</div><div class="help-tool-card-desc">Read-only system, CPU, memory, GPU, board, disk, network, and sensor info; opt-in clipboard history monitoring</div></div>
         <div class="help-tool-card"><div class="help-tool-card-name">AI Tools</div><div class="help-tool-card-desc">AI polish, translate, editable documents, editable tables</div></div>
       </div>
 
       <h3>Key Features</h3>
       <ul>
-        <li><strong>Local-first processing</strong>: Source files stay on the device; only an explicitly invoked AI tool sends the required text or metadata to your selected provider</li>
+        <li><strong>Local-first processing</strong>: Source files stay on the device; only an explicitly invoked AI tool sends the required text, metadata or page images to your selected provider</li>
         <li><strong>Batch Processing</strong>: Support for batch file processing to boost productivity</li>
         <li><strong>Drag & Drop</strong>: Drag files directly onto tool pages for instant processing</li>
         <li><strong>Bilingual Interface</strong>: Supports Chinese and English switching</li>
@@ -243,6 +247,34 @@ export const HELP_CONTENT_EN = {
 
       <div class="help-note">
         <p>Each run accepts one PDF up to 150 MB and 200 pages. Use PDF Decrypt first for password-protected files. You can cancel an export while it is running; ToolKnit removes unfinished temporary files.</p>
+      </div>
+    </div>`
+  },
+
+  'pdf-text-markdown': {
+    title: 'PDF Text Extraction / Markdown',
+    html: `<div class="help-doc">
+      <h2>PDF Text Extraction / Markdown</h2>
+      <p>Read the embedded text layer from an electronic PDF, rebuild page reading order, and generate Markdown. Everything is parsed locally without modifying or uploading the source file.</p>
+
+      <h3>How to Use</h3>
+      <ol class="help-steps">
+        <li>Choose one PDF that contains selectable text</li>
+        <li>Review the page and file details, then click “Extract Markdown”</li>
+        <li>Wait while headings, paragraphs, lists, and basic tables are reconstructed page by page</li>
+        <li>Choose “Open in Markdown Editor” to preview, edit, copy, or export the generated .md document</li>
+      </ol>
+
+      <h3>Output and Limits</h3>
+      <ul>
+        <li>Each page keeps a source-page comment so you can trace content back to the original PDF</li>
+        <li>Switch source pages in the result preview, showing up to 2,000 characters per page. The editor receives the complete document. Reset clears the current result.</li>
+        <li>Two-column layouts, rotated pages, and complex tables are reconstructed on a best-effort basis from PDF text coordinates</li>
+        <li>Each run accepts one PDF up to 150 MB, 300 pages, and 2 million extracted characters</li>
+      </ul>
+
+      <div class="help-note">
+        <p>Scanned or image-only PDFs have no text layer, so this tool will not create an empty Markdown document. Use the AI vision version for page-by-page recognition instead.</p>
       </div>
     </div>`
   },
@@ -753,6 +785,16 @@ toolknit ppt draft --outline-file outline.json --output-dir out --theme minimal-
     html: `<div class="help-doc"><h2>Typing Test</h2><p>Choose Chinese or English, a difficulty level, and a duration, then type against the prompt to measure speed and accuracy.</p><h3>How to use it</h3><ol class="help-steps"><li>Set language, difficulty, and duration</li><li>Select Start Test, then focus the input area to type</li><li>Review WPM and accuracy when it finishes; use Restart to try again</li></ol><div class="help-note"><p>This interactive tool is desktop-only and is not exposed to CLI or IDE Agents.</p></div></div>`
   },
 
+  'pdf-ai-markdown': {
+    title: 'AI PDF to Markdown',
+    html: `<div class="help-doc">
+      <h2>AI PDF to Markdown</h2>
+      <p>For scans, image PDFs, tables and complex layouts. Pages are rendered locally; starting conversion sends images and recognized content to your configured AI service. Requires an OpenAI-compatible model with image input and an API key.</p>
+      <ol class="help-steps"><li>Select one PDF, up to 150 MB and 120 pages. Decrypt protected files first.</li><li>Review the model and service address. Only process documents you may share. The provider may charge for image and text usage.</li><li>Recognize text, headings, lists, tables, image descriptions and formulas page by page, followed by a separate reading guide built from the entire document in batches.</li><li>Review page previews and notes, then open the Markdown editor to edit, copy or export .md.</li></ol>
+      <h3>Results and recovery</h3><ul><li>Source page markers are preserved. Preview shows 3,000 characters per page; the editor receives the complete result.</li><li>Retry unfinished pages without requesting successful pages again. A failed guide does not discard recognized text.</li><li>Cancel stops further processing and preserves completed pages in this session. Closing, returning or choosing another file clears the session.</li><li>Charts are retained as descriptions. No remote images are downloaded or unreadable values invented. Review complex tables and formulas.</li></ul>
+      <div class="help-note"><p>Text-only models cannot read images. Accuracy depends on image quality and model capabilities. For text-layer PDFs, consider the offline PDF Text Extraction / Markdown tool.</p></div>
+    </div>`
+  },
   'ai-polish': {
     title: 'AI Polish',
     html: `<div class="help-doc">
@@ -1221,7 +1263,7 @@ toolknit ppt draft --outline-file outline.json --output-dir out --theme minimal-
 
   'developer-tools': {
     title: 'Developer Tools',
-    html: `<div class="help-doc"><h2>Developer Tools in 2.3</h2><p>This release adds local-first tools that load on demand and release Workers, canvases, and temporary jobs when closed.</p><h3>Markdown Document Editor</h3><p>GFM, task lists, Mermaid, math, outline navigation, draft recovery, and offline Markdown/HTML export are supported. Local images are organized into an assets folder during export.</p><h3>Smart Color Replacement</h3><p>Sample source and target colors, tune perceptual tolerance, feathering, luminance preservation, and 8-connected smart protection. Preview work runs in a Worker; Rust exports at original resolution.</p><h3>Hash &amp; Crypto</h3><p>Includes common hashes, HMAC, SM algorithms, AES file encryption, RSA, and SM2. Legacy algorithms are compatibility-only, and sensitive inputs are not persisted.</p></div>`
+    html: `<div class="help-doc"><h2>Developer Tools in 3.0</h2><p>This release adds local-first tools that load on demand and release Workers, canvases, and temporary jobs when closed.</p><h3>Markdown Document Editor</h3><p>GFM, task lists, Mermaid, math, outline navigation, draft recovery, and offline Markdown/HTML export are supported. Local images are organized into an assets folder during export.</p><h3>Smart Color Replacement</h3><p>Sample source and target colors, tune perceptual tolerance, feathering, luminance preservation, and 8-connected smart protection. Preview work runs in a Worker; Rust exports at original resolution.</p><h3>Hash &amp; Crypto</h3><p>Includes common hashes, HMAC, SM algorithms, AES file encryption, RSA, and SM2. Legacy algorithms are compatibility-only, and sensitive inputs are not persisted.</p></div>`
   },
   'hardware-tools': {
     title: 'Hardware Tools Overview',

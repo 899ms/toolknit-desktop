@@ -368,6 +368,16 @@
   display: none;
 }
 
+.pdf-editor-tile-frame.is-ready .pdf-editor-tile-skeleton {
+  display: none;
+}
+
+.pdf-editor-tile-index,
+.pdf-editor-tile-select,
+.pdf-editor-tile-drag {
+  z-index: 1;
+}
+
 .pdf-editor-tile-error {
   display: none;
   padding: 12px;

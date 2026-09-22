@@ -462,6 +462,15 @@ Required JSON shape:
         "chart": "${chartEnum}",
         "visual_focus": "what the eye should notice first"
       },
+      "asset_slots": [
+        {
+          "role": "hero|supporting|background",
+          "asset_id": "optional id from supplied local asset metadata",
+          "fit": "cover|contain|fill",
+          "focal_point": "center or a short focal-point instruction",
+          "caption": "optional caption"
+        }
+      ],
       "speaker_note": "concise presenter note",
       "transition": "why the next slide follows",
       "data_needed": ["missing fact to confirm"]
@@ -694,6 +703,27 @@ function normalizeSlide(slide, index, slides) {
   });
   const role = normalizeSlideRole(item.role || item.type, index, total);
   const visualSuggestion = cleanInline(item.visual_suggestion || item.visualSuggestion, { maxChars: 360 });
+  const assetSlots = Array.isArray(item.asset_slots || item.assetSlots)
+    ? (item.asset_slots || item.assetSlots).slice(0, 4).map((slot, slotIndex) => {
+      const value = slot && typeof slot === 'object' && !Array.isArray(slot) ? slot : {};
+      const role = cleanInline(value.role, { maxChars: 60 });
+      const assetId = cleanInline(value.asset_id || value.assetId, { maxChars: 80 });
+      const fit = ['cover', 'contain', 'fill'].includes(String(value.fit || '').toLowerCase())
+        ? String(value.fit).toLowerCase()
+        : 'cover';
+      const focalPoint = cleanInline(value.focal_point || value.focalPoint, { maxChars: 40, fallback: 'center' });
+      const caption = cleanInline(value.caption, { maxChars: 180 });
+      if (!role && !assetId && !caption) return null;
+      return {
+        slot: slotIndex + 1,
+        role,
+        asset_id: assetId,
+        fit,
+        focal_point: focalPoint,
+        caption
+      };
+    }).filter(Boolean)
+    : [];
   return {
     page,
     role,
@@ -709,6 +739,7 @@ function normalizeSlide(slide, index, slides) {
     }),
     speaker_note: cleanInline(item.speaker_note || item.speakerNote, { maxChars: 500 }),
     transition: cleanInline(item.transition, { maxChars: 260 }),
+    asset_slots: assetSlots,
     data_needed: normalizeStringArray(item.data_needed || item.dataNeeded, {
       maxItems: PPT_OUTLINE_LIMITS.maxSlideDataItems,
       itemMaxChars: 220
@@ -992,6 +1023,130 @@ export function createPptOutlineMarkdown(result) {
   return `${lines.join('\n').replace(/\n{4,}/g, '\n\n\n')}\n`;
 }
 
+function guideList(items, fallback) {
+  const values = Array.isArray(items) ? items.map(item => String(item || '').trim()).filter(Boolean) : [];
+  return values.length ? [...new Set(values)] : [fallback];
+}
+
+function guideSlideReason(role, zh) {
+  const reasons = {
+    cover: zh ? '先让观众知道这份 PPT 要讲什么，并建立第一印象。' : 'Establish what this deck is about and create the first impression.',
+    context: zh ? '交代背景和问题，让后面的方案有明确的起点。' : 'Set the context and problem so the later solution has a clear starting point.',
+    problem: zh ? '把用户真正需要解决的困难讲清楚，说明为什么现在要行动。' : 'Make the real problem clear and show why action is needed now.',
+    recommendation: zh ? '给出核心方案，让观众知道应该采取什么方向。' : 'Present the central recommendation and the direction to take.',
+    evidence: zh ? '用事实、案例或数据支撑前面的判断。' : 'Support the earlier judgment with facts, examples, or data.',
+    workflow: zh ? '把复杂过程拆成可以理解和执行的步骤。' : 'Break the complex process into understandable and actionable steps.',
+    comparison: zh ? '把不同方案或前后变化放在一起，帮助观众快速判断。' : 'Place alternatives or before-and-after states side by side for a quick judgment.',
+    insight: zh ? '提炼前面信息背后的结论，帮助观众形成判断。' : 'Turn the earlier information into a clear conclusion.',
+    closing: zh ? '收束全篇，并明确下一步行动、决策或讨论方向。' : 'Close the story and make the next action, decision, or discussion clear.'
+  };
+  return reasons[String(role || '').toLowerCase()] || (zh ? '推进整份 PPT 的叙事，并补充一个清晰的结论。' : 'Advance the story and add one clear conclusion.');
+}
+
+export function createPptOutlineGuideModel(result = {}) {
+  const locale = result?.request?.locale || 'zh-CN';
+  const zh = locale !== 'en';
+  const factBank = result.fact_bank || {};
+  const quality = result.quality_check || {};
+  const narrative = result.narrative || {};
+  const request = result.request || {};
+  const missingFacts = [...new Set([
+    ...(Array.isArray(factBank.missing_facts) ? factBank.missing_facts : []),
+    ...(Array.isArray(quality.missing_info) ? quality.missing_info : [])
+  ].map(item => String(item || '').trim()).filter(Boolean))];
+  const nextSteps = guideList(
+    [...(Array.isArray(quality.next_steps) ? quality.next_steps : []), ...missingFacts.slice(0, 3)],
+    zh ? '确认待补资料后，再进入 PPTX 草稿生成。' : 'Confirm the missing details before moving to PPTX draft generation.'
+  );
+  const slides = (Array.isArray(result.slides) ? result.slides : []).map(slide => ({
+    page: slide.page,
+    title: slide.title || (zh ? '未命名页面' : 'Untitled slide'),
+    role: slide.role || slide.type || 'content',
+    purpose: guideSlideReason(slide.role || slide.type, zh),
+    remember: slide.claim || slide.body?.[0] || (zh ? '本页结论待补充。' : 'The conclusion for this slide is still to be added.'),
+    materials: slide.visual_suggestion || slide.layout_intent?.visual_focus || (zh ? '暂未指定素材。' : 'No specific asset has been requested.'),
+    speaking: slide.speaker_note || slide.claim || (slide.body || []).join(zh ? '；' : '; ') || (zh ? '按页面标题展开说明。' : 'Explain the slide from its title.')
+  }));
+  const model = {
+    title: result.title || (zh ? 'PPT 大纲说明' : 'Presentation outline guide'),
+    locale,
+    oneSentence: narrative.central_takeaway || result.purpose || request.prompt || (zh ? '这份 PPT 的主题待确认。' : 'The deck topic is still to be confirmed.'),
+    audience: result.audience || request.audience || (zh ? '待确认' : 'Not provided'),
+    purpose: result.purpose || request.purpose || (zh ? '待确认' : 'Not provided'),
+    story: narrative.arc || narrative.communication_job || (zh ? '从背景出发，经过问题、证据和方案，最后落到行动。' : 'Move from context through problem, evidence, and solution to action.'),
+    knownFacts: guideList(factBank.known_facts, zh ? '暂未标出明确事实。' : 'No explicit facts were marked.'),
+    evidence: guideList(factBank.evidence, zh ? '暂未标出证据或资料。' : 'No evidence or source notes were marked.'),
+    assumptions: guideList(factBank.assumptions, zh ? '暂无规划假设。' : 'No planning assumptions were marked.'),
+    missingFacts: guideList(missingFacts, zh ? '暂无明确待确认项，但生成前仍建议人工复核。' : 'No explicit missing item was marked, but review before generation is still recommended.'),
+    nextSteps,
+    qualityScore: quality.self_check?.score ?? 0,
+    slides
+  };
+  return model;
+}
+
+export function createPptOutlineGuide(result = {}) {
+  const model = createPptOutlineGuideModel(result);
+  const zh = model.locale !== 'en';
+  const lines = [
+    `# ${zh ? '大白话说明：' : 'Plain-language guide: '}${model.title}`,
+    '',
+    zh ? '## 先用一句话理解' : '## Understand it in one sentence',
+    '',
+    model.oneSentence,
+    '',
+    zh ? '## 这份 PPT 服务谁、要达成什么' : '## Audience and purpose',
+    '',
+    `- ${zh ? '目标受众' : 'Audience'}：${model.audience}`,
+    `- ${zh ? '演示目标' : 'Purpose'}：${model.purpose}`,
+    '',
+    zh ? '## 故事怎么推进' : '## How the story moves',
+    '',
+    model.story,
+    '',
+    zh ? '## 哪些内容已经有依据' : '## What is supported',
+    '',
+    `### ${zh ? '已知事实' : 'Known facts'}`,
+    '',
+    ...model.knownFacts.map(item => `- ${item}`),
+    '',
+    `### ${zh ? '证据 / 资料' : 'Evidence / source notes'}`,
+    '',
+    ...model.evidence.map(item => `- ${item}`),
+    '',
+    `### ${zh ? '规划假设' : 'Planning assumptions'}`,
+    '',
+    ...model.assumptions.map(item => `- ${item}`),
+    '',
+    zh ? '## 生成前还要确认什么' : '## What to confirm before generation',
+    '',
+    ...model.missingFacts.map(item => `- ${item}`),
+    '',
+    zh ? '## 每一页的大白话说明' : '## Plain-language explanation for each slide',
+    ''
+  ];
+  for (const slide of model.slides) {
+    lines.push(
+      `### ${zh ? `第 ${slide.page} 页：${slide.title}` : `Slide ${slide.page}: ${slide.title}`}`,
+      '',
+      `- **${zh ? '这一页讲什么' : 'What it says'}**：${slide.remember}`,
+      `- **${zh ? '为什么放这一页' : 'Why it is here'}**：${slide.purpose}`,
+      `- **${zh ? '需要准备什么' : 'What to prepare'}**：${slide.materials}`,
+      `- **${zh ? '讲解时可以怎么说' : 'How to present it'}**：${slide.speaking}`,
+      ''
+    );
+  }
+  lines.push(
+    zh ? '## 当前质量和下一步' : '## Quality and next steps',
+    '',
+    `- ${zh ? '质量分' : 'Quality score'}：${model.qualityScore}/100`,
+    ...model.nextSteps.map(item => `- ${item}`),
+    '',
+    zh ? '建议先确认上面的待补资料，再继续生成 PPTX 草稿。导入 outline.json 后，PPTX 工具会沿用这份结构继续生成。' : 'Confirm the missing details above before generating the PPTX draft. Import outline.json to continue with the same structure.'
+  );
+  return `${lines.join('\n').replace(/\n{4,}/g, '\n\n\n')}\n`;
+}
+
 export function createPptOutlineManifest(result) {
   return {
     schema: result.schema,
@@ -1012,6 +1167,7 @@ export function createPptOutlineManifest(result) {
       style_characters: result.request?.style?.length || 0
     },
     quality_score: result.quality_check?.self_check?.score ?? 0,
+    guide_file: 'outline-guide.md',
     fact_bank: result.fact_bank,
     quality_check: result.quality_check
   };

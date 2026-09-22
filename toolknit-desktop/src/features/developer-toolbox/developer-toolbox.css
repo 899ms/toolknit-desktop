@@ -33,7 +33,7 @@
 .developer-toolbox-jwt-grid { grid-template-columns: 1fr; }
 }
 .developer-toolbox-overlay { background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-.developer-toolbox-shell { background: transparent !important; }
+.developer-toolbox-shell { background: transparent; }
 .developer-toolbox-main { grid-template-columns: minmax(286px, 330px) minmax(0,1fr) !important; }
 .developer-toolbox-nav { gap: 0; padding: 28px; overflow-y: auto; scrollbar-gutter: stable; }
 .developer-toolbox-nav-index { min-height: 0; margin-top: auto; padding-top: 8px; }
@@ -216,7 +216,7 @@
 @media (max-width: 760px) { .developer-toolbox-topbar { height: 60px; grid-template-columns: auto minmax(0,1fr); padding: 0 12px; }.developer-toolbox-privacy { display: none; }.developer-toolbox-main { height: calc(100% - 60px); grid-template-columns: 1fr; }.developer-toolbox-nav { padding: 8px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.09); }.developer-toolbox-nav-label { display: none; }.developer-toolbox-nav nav { display: flex; overflow-x: auto; }.developer-toolbox-nav button { min-width: 130px; }.developer-toolbox-workspace { padding: 20px 14px; }.developer-toolbox-io-grid,
 .developer-toolbox-jwt-grid { grid-template-columns: 1fr; }.developer-toolbox-heading h1 { font-size: 24px; } }
 .developer-toolbox-overlay { background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-.developer-toolbox-shell { background: transparent !important; }
+.developer-toolbox-shell { background: transparent; }
 .developer-toolbox-main { grid-template-columns: minmax(286px, 330px) minmax(0,1fr) !important; }
 .developer-toolbox-nav { gap: 0; padding: 28px; overflow-y: auto; scrollbar-gutter: stable; }
 .developer-toolbox-nav-index { min-height: 0; margin-top: auto; padding-top: 8px; }
@@ -365,3 +365,57 @@
 
 /* The shared final layer originally overrode the legacy rail divider. */
 .developer-toolbox-nav { border-color: rgba(255,255,255,.13); }
+
+/* Each editor owns its label row, scrollable content, and separate actions. */
+.developer-toolbox-shell .developer-toolbox-panel { border-radius: 0; }
+.developer-toolbox-shell .developer-toolbox-heading > div { min-width: 0; }
+.developer-toolbox-shell .developer-toolbox-heading h1 { font-size: 28px; letter-spacing: 0; }
+.developer-toolbox-shell .developer-toolbox-status {
+  max-width: 45%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.developer-toolbox-shell .developer-toolbox-editor:has(.developer-toolbox-jwt-grid) {
+  grid-template-rows: minmax(100px, .65fr) minmax(160px, 1fr) auto;
+}
+.developer-toolbox-shell .developer-toolbox-jwt-grid article {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+.developer-toolbox-shell .developer-toolbox-jwt-grid pre {
+  height: 100%;
+  max-height: none;
+  box-sizing: border-box;
+}
+.developer-toolbox-shell .developer-toolbox-single > textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 160px;
+  padding: 13px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 4px;
+  background: rgba(0,0,0,.2);
+  color: #ffffff;
+  font: 14px/1.6 Consolas, "Cascadia Code", monospace;
+  resize: none;
+}
+.developer-toolbox-shell .developer-toolbox-single > textarea:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}
+.developer-toolbox-shell .developer-toolbox-control-row { flex-wrap: wrap; gap: 12px; }
+.developer-toolbox-shell .developer-toolbox-nav nav { display: grid; gap: 6px; }
+@media (max-width: 760px) {
+  /* Override the legacy fixed desktop column at this breakpoint. */
+  .developer-toolbox-shell .developer-toolbox-main { grid-template-columns: minmax(0, 1fr) !important; }
+  .developer-toolbox-shell .developer-toolbox-editor:has(.developer-toolbox-jwt-grid) { grid-template-rows: auto auto auto; }
+  .developer-toolbox-shell .developer-toolbox-jwt-grid { height: auto; }
+  .developer-toolbox-shell .developer-toolbox-jwt-grid pre { height: 200px; }
+  .developer-toolbox-shell .developer-toolbox-single > textarea { height: 360px; }
+  .developer-toolbox-shell .developer-toolbox-nav { padding: 16px; }
+  .developer-toolbox-shell .developer-toolbox-nav > :not(.developer-toolbox-nav-index) { display: none; }
+  .developer-toolbox-shell .developer-toolbox-nav-index { padding: 0; }
+  .developer-toolbox-shell .developer-toolbox-nav nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

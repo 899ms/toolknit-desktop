@@ -40,8 +40,13 @@ assert.doesNotMatch(main, /AI Table Tool|aiTableOverlay|openAiTableOverlay|AI_TA
 assert.match(tool, /createAiTableEditor/);
 assert.match(tool, /createAiTableExporter/);
 assert.match(tool, /createSerializedRequestSession/);
+assert.match(tool, /REQUEST_TIMEOUT_MS = AI_PROVIDER_LIMITS\.maxTimeoutMs/);
+assert.match(tool, /timeoutMs: REQUEST_TIMEOUT_MS, reasoningEffort: 'low'/);
+assert.match(tool, /error instanceof AiProviderError/);
+assert.match(tool, /error\.code === 'timeout'/);
 assert.match(tool, /import '\.\.\/ai-workbench\/ai-workbench-shared\.css'/);
 assert.match(tool, /import '\.\/ai-table\.css'/);
+assert.match(tool, /import '\.\/ai-table\.css';\s*import '\.\.\/\.\.\/styles\/components\/ai-workbench-light\.css';\s*import '\.\/ai-table-light\.css'/);
 assert.match(tool, /requests\.cancel\(\)/);
 assert.match(tool, /owner\.use\(\(\) => requests\.cancel\(request\.id\)\)/);
 assert.match(tool, /releaseRequest\(\)/);
@@ -51,6 +56,8 @@ assert.doesNotMatch(tool, /\.innerHTML\s*=/);
 assert.match(tool, /fillUserAvatar = container => appendToolKnitAvatar/);
 
 assert.match(editor, /renderScope\.event\(/);
+assert.match(editor, /event\.key !== 'Escape'[\s\S]*?scroll\?\.contains\(cell\)[\s\S]*?event\.preventDefault\(\);[\s\S]*?cell\.blur\(\)/,
+  'cell-edit Escape must not trigger tool-page fallback navigation');
 assert.match(editor, /lifecycle\.event\(window, 'toolknit-interface-font-change'/);
 assert.match(editor, /charts\.reset\(\)/);
 assert.match(editor, /renderScope\?\.dispose\(\)/);

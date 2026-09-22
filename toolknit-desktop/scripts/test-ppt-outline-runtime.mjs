@@ -140,7 +140,7 @@ assert.equal(exported.outline.version, 2);
 assert.equal(exported.outline.deck_type, 'product-launch');
 assert.equal(exported.outline.fact_bank.known_facts[0], 'ToolKnit 支持 PPT 大纲生成');
 assert.equal(exported.outline.slides[0].role, 'cover');
-assert.equal(exported.outputs.length, 2);
+assert.equal(exported.outputs.length, 3);
 assert.ok(await stat(path.join(exported.output_dir, 'outline.md')).then(file => file.size > 100));
 assert.ok(await stat(path.join(exported.output_dir, 'outline.json')).then(file => file.size > 100));
 assert.ok(await stat(path.join(exported.output_dir, 'manifest.json')).then(file => file.size > 100));
@@ -148,7 +148,7 @@ const manifest = JSON.parse(await readFile(path.join(exported.output_dir, 'manif
 assert.equal(manifest.slide_count, 4);
 assert.equal(manifest.deck_type, 'product-launch');
 assert.equal(manifest.quality_score, 100);
-assert.equal(manifest.outputs.length, 2);
+assert.equal(manifest.outputs.length, 3);
 
 const cancelledOutputName = 'cancelled-outline';
 const cancellation = new AbortController();

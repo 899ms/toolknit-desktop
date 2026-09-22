@@ -1,7 +1,7 @@
 .feature-tool-overlay.audio-extract-feature-host { background: #060607 !important; }
 .audio-extract-feature { min-height: 100%; display: grid; grid-template-rows: 68px minmax(0, 1fr); background: #060607; color: var(--ink); }
 .audio-extract-feature .pdf-merge-v2-poster::after { content: 'EXTR'; right: 18px; font-size: 96px; }
-.audio-extract-feature .audio-extract-body { z-index: 1; min-height: 0; display: grid; grid-template-columns: minmax(286px, 360px) minmax(0, 1fr); gap: 24px; padding: 22px 28px 30px; overflow: hidden; }
+.audio-extract-feature .audio-extract-body { z-index: 2; min-height: 0; display: grid; grid-template-columns: minmax(286px, 360px) minmax(0, 1fr); gap: 24px; padding: 22px 28px 30px; overflow: hidden; }
 .audio-extract-feature .audio-extract-v2-workspace { grid-template-rows: auto minmax(220px, 1fr) auto auto; }
 .audio-extract-feature .audio-extract-v2-state { min-height: 0; display: grid; align-items: stretch; padding: 24px 0 22px; border-bottom: 1px solid var(--line); }
 .audio-extract-feature .audio-extract-hero-top, .audio-extract-feature .audio-extract-info { width: 100%; min-height: 210px; display: grid; place-items: center; gap: 14px; padding: 24px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.026); }
@@ -29,7 +29,7 @@
 .audio-extract-feature .audio-extract-track-select { width: 100%; min-height: 40px; padding: 0 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; color: rgba(255,255,255,.82); background: rgba(255,255,255,.045); outline: none; }
 .audio-extract-feature .audio-extract-track-select option { background: #111113; color: #fff; }
 .audio-extract-feature .audio-extract-actions { display: flex; justify-content: flex-end; margin-top: auto; padding-top: 2px; }
-.audio-extract-feature .audio-extract-start { min-width: 150px; margin: 0; }
+.audio-extract-feature .audio-extract-start { min-width: 150px; margin: 0; opacity: 1; transform: none; }
 .audio-extract-feature .audio-extract-cta { animation: none; }
 .audio-extract-feature .audio-extract-cta::before { display: none; }
 .audio-extract-feature .audio-extract-cta:disabled { opacity: .36; cursor: default; transform: none; box-shadow: none; }

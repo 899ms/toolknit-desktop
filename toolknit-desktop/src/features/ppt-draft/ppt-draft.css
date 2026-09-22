@@ -1,5 +1,185 @@
 /* PPT Draft feature styles. Kept local to the lazy PPT Draft entry. */
 /* Preview and result cards */
+      .ppt-draft-assets {
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.11);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .ppt-draft-assets-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .ppt-draft-assets-head > div {
+        flex: 1 1 220px;
+        min-width: 0;
+        display: grid;
+        gap: 4px;
+      }
+
+      .ppt-draft-assets-head strong {
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 13px;
+      }
+
+      .ppt-draft-assets-head span,
+      .ppt-draft-asset-status {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
+      .ppt-draft-assets-head .ppt-draft-assets-add {
+        flex: 0 0 auto;
+        width: auto;
+        max-width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 34px;
+        padding: 7px 11px;
+        white-space: nowrap;
+      }
+
+      .ppt-draft-assets-add svg,
+      .ppt-draft-asset-remove svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      .ppt-draft-asset-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .ppt-draft-asset-item {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr) 30px;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.045);
+      }
+
+      .ppt-draft-asset-thumb {
+        width: 44px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .ppt-draft-asset-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .ppt-draft-asset-thumb.is-empty {
+        color: rgba(255, 255, 255, 0.42);
+      }
+
+      .ppt-draft-asset-copy {
+        min-width: 0;
+        display: grid;
+        gap: 3px;
+      }
+
+      .ppt-draft-asset-copy strong,
+      .ppt-draft-asset-copy span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .ppt-draft-asset-copy strong {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 12px;
+      }
+
+      .ppt-draft-asset-copy span {
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 10px;
+      }
+
+      .ppt-draft-asset-remove {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 9px;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.62);
+        cursor: pointer;
+      }
+
+      .ppt-draft-asset-remove:hover {
+        border-color: rgba(255, 255, 255, 0.3);
+        color: #fff;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .ppt-draft-visual-slot.is-image {
+        padding: 0;
+        border: 1px solid color-mix(in srgb, var(--pd-line), white 12%);
+        background: var(--pd-panel);
+      }
+
+      .ppt-draft-visual-slot.is-image::before {
+        display: none;
+      }
+
+      .ppt-draft-visual-slot.is-image .ppt-draft-visual-slot-image {
+        object-fit: cover;
+      }
+
+      .ppt-draft-visual-slot-badge {
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: 7px;
+        overflow: hidden;
+        padding: 4px 6px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.66);
+        color: #fff !important;
+        font-size: 9px !important;
+        font-weight: 700;
+        letter-spacing: 0 !important;
+        text-overflow: ellipsis;
+        text-transform: none !important;
+        white-space: nowrap;
+      }
+
+      .ppt-draft-slide-asset-status {
+        justify-self: start;
+        padding: 4px 7px;
+        border: 1px solid rgba(255, 190, 120, 0.24);
+        border-radius: 999px;
+        color: rgba(255, 212, 166, 0.86);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .ppt-draft-slide-asset-status.is-ready {
+        border-color: rgba(124, 220, 173, 0.24);
+        color: rgba(161, 239, 196, 0.9);
+      }
+
       .ppt-draft-preview-result {
         gap: 18px;
       }
@@ -1233,7 +1413,7 @@
         border-radius: 20px;
         background: rgba(255, 255, 255, 0.06);
         color: rgba(255, 255, 255, 0.9);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+        box-shadow: none;
       }
 
       .ppt-draft-v2 .ppt-outline-empty strong {
@@ -1349,6 +1529,45 @@
         .ppt-draft-v2 .ppt-outline-row {
           grid-template-columns: 1fr;
         }
+        .ppt-draft-v2 .ppt-outline-compose,
+        .ppt-draft-v2 .ppt-outline-preview {
+          overflow: visible;
+          padding-right: 0;
+        }
+      }
+
+      /* Keep the draft page usable in the same narrow stacked layout as the
+         other PPT tools. This must come after the v2 workspace declaration so
+         its fixed two-column grid cannot override the mobile breakpoint. */
+      @media (max-width: 980px) {
+        .ppt-draft-v2 .pdf-merge-v2-body {
+          grid-template-columns: 1fr;
+          grid-template-rows: max-content max-content;
+          align-content: start;
+          overflow-y: auto;
+        }
+
+        .ppt-draft-v2 .pdf-merge-v2-poster,
+        .ppt-draft-v2 .ppt-draft-v2-workspace {
+          min-height: 0;
+          overflow: hidden;
+        }
+
+        .ppt-draft-v2 .pdf-merge-v2-poster {
+          height: auto !important;
+          min-height: max-content !important;
+        }
+
+        .ppt-draft-v2 .ppt-draft-v2-workspace {
+          height: auto;
+          overflow: visible;
+        }
+
+        .ppt-draft-v2 .ppt-outline-grid {
+          height: auto;
+          overflow: visible;
+        }
+
         .ppt-draft-v2 .ppt-outline-compose,
         .ppt-draft-v2 .ppt-outline-preview {
           overflow: visible;

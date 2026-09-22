@@ -6,7 +6,7 @@
             <i data-lucide="arrow-left"></i>
             <span data-i18n="settings.back">返回首页</span>
           </button>
-          <span class="pdf-merge-v2-top-tag">CLEANUP STUDIO · TOOL PAGE 2.3</span>
+          <span class="pdf-merge-v2-top-tag">CLEANUP STUDIO · TOOL PAGE 3.0</span>
         </div>
         <div class="home-v2-top-actions pdf-merge-v2-top-actions">
           <button class="home-v2-nav-link" type="button" data-home-link="website">
@@ -41,7 +41,10 @@
           <div class="cleanup-v2-field">
             <span class="cleanup-v2-label" data-i18n="home.cleanupLargeFilesPage.selectedFolder">当前目录</span>
             <span class="cleanup-v2-path" id="largeFileCleanupFolder" data-i18n="home.cleanupLargeFilesPage.folderPlaceholder">请选择一个文件夹开始扫描</span>
-            <button class="cleanup-v2-btn" id="largeFileCleanupChooseFolder" type="button" data-i18n="home.cleanupLargeFilesPage.pickFolder">选择扫描目录</button>
+            <div class="cleanup-large-files-folder-actions">
+              <button class="cleanup-v2-btn" id="largeFileCleanupChooseFolder" type="button" data-i18n="home.cleanupLargeFilesPage.pickFolder">选择扫描目录</button>
+              <button class="cleanup-v2-btn cleanup-large-files-drive-btn" id="largeFileCleanupScanSystemDrive" type="button" data-i18n="home.cleanupLargeFilesPage.scanSystemDrive">扫描 C 盘</button>
+            </div>
           </div>
 
           <div class="cleanup-v2-field">
@@ -53,6 +56,11 @@
               </div>
             </div>
             <div class="cleanup-v2-hint" data-i18n="home.cleanupLargeFilesPage.thresholdHint">默认 50MB，可按需提高到 100MB、500MB 或更高。</div>
+          </div>
+
+          <div class="cleanup-large-files-safety-note" role="note">
+            <strong data-i18n="home.cleanupLargeFilesPage.safetyTitle">整盘扫描安全边界</strong>
+            <p data-i18n="home.cleanupLargeFilesPage.safetyDesc">C 盘扫描只读取文件元数据，会跳过 Windows、程序安装目录、启动目录、AppData 和系统属性文件。AI 只提供建议，任何文件都需要你逐项确认后才会移入回收站。</p>
           </div>
 
           <div class="cleanup-v2-field">
@@ -89,14 +97,17 @@
           </div>
           </div>
 
-          <button class="cleanup-v2-scan-btn cleanup-large-files-action-primary" id="largeFileCleanupScanBtn" type="button" data-i18n="home.cleanupLargeFilesPage.scan">开始扫描</button>
+          <div class="cleanup-large-files-scan-actions">
+            <button class="cleanup-v2-scan-btn cleanup-large-files-action-primary" id="largeFileCleanupScanBtn" type="button" data-i18n="home.cleanupLargeFilesPage.scan">开始扫描</button>
+            <button class="cleanup-v2-btn" id="largeFileCleanupCancel" type="button" hidden data-i18n="common.cancel">取消</button>
+          </div>
         </aside>
 
         <main class="cleanup-v2-main" aria-label="扫描结果选取">
           <div class="cleanup-v2-main-head">
             <div class="cleanup-v2-main-title">
               <span class="pdf-merge-v2-section-kicker">SCAN RESULT</span>
-              <h2>候选文件</h2>
+              <h2 data-i18n="home.cleanupLargeFilesPage.results">候选列表</h2>
             </div>
             <div class="cleanup-large-files-actions cleanup-v2-actions">
               <button class="cleanup-large-files-action" id="largeFileCleanupSelectAllBtn" type="button" data-i18n="home.cleanupLargeFilesPage.selectAll">全选</button>
@@ -105,6 +116,26 @@
             </div>
           </div>
           <div class="cleanup-large-files-summary" id="largeFileCleanupSummary"></div>
+          <div class="cleanup-large-files-filters">
+            <label class="cleanup-large-files-search"><span data-i18n="home.cleanupLargeFilesPage.search">文件名 / 目录</span><input type="search" id="largeFileCleanupSearch"></label>
+            <label><span data-i18n="home.cleanupLargeFilesPage.columnsRisk">风险</span><select id="largeFileCleanupRiskFilter">
+              <option value="all" data-i18n="home.cleanupLargeFilesPage.filterAll">全部</option>
+              <option value="low" data-i18n="home.cleanupLargeFilesPage.risk_low">低风险</option>
+              <option value="medium" data-i18n="home.cleanupLargeFilesPage.risk_medium">需确认</option>
+              <option value="high" data-i18n="home.cleanupLargeFilesPage.risk_high">高风险</option>
+            </select></label>
+            <label><span data-i18n="home.cleanupLargeFilesPage.columnsCategory">类别</span><select id="largeFileCleanupCategoryFilter">
+              <option value="all" data-i18n="home.cleanupLargeFilesPage.filterAll">全部</option>
+              <option value="video" data-i18n="home.cleanupLargeFilesPage.category_video">视频</option>
+              <option value="archives" data-i18n="home.cleanupLargeFilesPage.category_archives">压缩包</option>
+              <option value="installers" data-i18n="home.cleanupLargeFilesPage.category_installers">安装包</option>
+              <option value="documents" data-i18n="home.cleanupLargeFilesPage.category_documents">文档</option>
+              <option value="images" data-i18n="home.cleanupLargeFilesPage.category_images">图片</option>
+              <option value="audio" data-i18n="home.cleanupLargeFilesPage.category_audio">音频</option>
+              <option value="models" data-i18n="home.cleanupLargeFilesPage.category_models">模型</option>
+            </select></label>
+          </div>
+          <p class="cleanup-large-files-scan-stats" id="largeFileCleanupScanStats" role="status"></p>
           <div class="cleanup-large-files-list-wrap">
             <table class="cleanup-large-files-table">
               <thead>
@@ -137,7 +168,7 @@
       </div>
     </div>
 
-<div class="audio-convert-success-overlay cleanup-large-files-success-overlay" id="largeFileCleanupSuccessOverlay">
+<div class="audio-convert-success-overlay cleanup-large-files-success-overlay" id="largeFileCleanupSuccessOverlay" role="dialog" aria-modal="true" aria-hidden="true" inert>
       <div class="audio-convert-success-dialog">
         <div class="audio-convert-success-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
@@ -170,7 +201,7 @@
       </div>
     </div>
 
-<div class="ffmpeg-overlay cleanup-drive-root-overlay" id="largeFileCleanupDriveRootOverlay" aria-hidden="true">
+<div class="ffmpeg-overlay cleanup-drive-root-overlay" id="largeFileCleanupDriveRootOverlay" role="dialog" aria-modal="true" aria-labelledby="largeFileCleanupDriveRootTitle" aria-hidden="true" inert>
       <div class="ffmpeg-overlay-bg"></div>
       <div class="ffmpeg-overlay-content">
         <div class="tk-mascot-lg" aria-hidden="true"></div>
@@ -181,9 +212,13 @@
           <span data-i18n="home.cleanupLargeFilesPage.dataRootTipProtected">仍会跳过保护目录</span>
           <span data-i18n="home.cleanupLargeFilesPage.dataRootTipConfirm">删除前仍需确认</span>
         </div>
+        <label class="cleanup-drive-root-ack">
+          <input id="largeFileCleanupDriveRootAck" type="checkbox">
+          <span data-i18n="home.cleanupLargeFilesPage.dataRootAck">我了解整盘扫描可能耗时较长，并会逐项检查结果</span>
+        </label>
         <div class="ffmpeg-overlay-actions">
           <button class="ffmpeg-overlay-btn ffmpeg-overlay-cancel" id="largeFileCleanupDriveRootCancel" data-i18n="home.cleanupLargeFilesPage.dataRootCancel">改选文件夹</button>
-          <button class="ffmpeg-overlay-btn ffmpeg-overlay-confirm" id="largeFileCleanupDriveRootConfirm" data-i18n="home.cleanupLargeFilesPage.dataRootConfirm">继续扫描</button>
+          <button class="ffmpeg-overlay-btn ffmpeg-overlay-confirm" id="largeFileCleanupDriveRootConfirm" disabled data-i18n="home.cleanupLargeFilesPage.dataRootConfirm">继续扫描</button>
         </div>
       </div>
     </div>
@@ -196,7 +231,7 @@
             <i data-lucide="arrow-left"></i>
             <span data-i18n="settings.back">返回首页</span>
           </button>
-          <span class="pdf-merge-v2-top-tag">SYSTEM CLEANUP · TOOL PAGE 2.3</span>
+          <span class="pdf-merge-v2-top-tag">SYSTEM CLEANUP · TOOL PAGE 3.0</span>
         </div>
         <div class="home-v2-top-actions pdf-merge-v2-top-actions">
           <button class="home-v2-nav-link" type="button" data-home-link="website">

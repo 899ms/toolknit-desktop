@@ -1,4 +1,5 @@
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.mjs?url';
+import { pdfjsDocumentOptions, destroyPdfDocument } from '../../shared/pdfjs-options.js';
 import {
   PDF_CROP_FULL_RECT,
   assertPdfCropPageCount
@@ -7,7 +8,7 @@ import {
 export async function releasePdfCropSource(source) {
   if (!source) return;
   try {
-    if (source.pdfDoc) await source.pdfDoc.destroy();
+    if (source.pdfDoc) await destroyPdfDocument(source.pdfDoc);
     else await source.loadingTask?.destroy?.();
   } catch (_) {}
   source.pdfDoc = null;
@@ -29,11 +30,7 @@ export async function stagePdfCropDocument({
     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
     assertOperation(active);
     pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-    source.loadingTask = pdfjs.getDocument({
-      data: bytes.slice(),
-      wasmUrl: new URL('assets/', document.baseURI).href,
-      useWasm: true
-    });
+    source.loadingTask = pdfjs.getDocument(pdfjsDocumentOptions({ data: bytes.slice() }));
     active.loadingTasks.add(source.loadingTask);
     try { source.pdfDoc = await source.loadingTask.promise; }
     finally { active.loadingTasks.delete(source.loadingTask); }

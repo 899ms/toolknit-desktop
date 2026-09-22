@@ -1,4 +1,5 @@
 import { createLifecycleScope } from './tool-lifecycle.js';
+import { moveFocusOutOfHiddenRegion } from '../shared/tool-page-shell.js';
 
 /** Owns help, feedback and legal overlays without coupling them to app startup. */
 export function createHelpCenterRuntime({
@@ -11,8 +12,11 @@ export function createHelpCenterRuntime({
   getLegalContent = () => ({}),
   escapeHtml = value => String(value ?? ''),
   initLightRays,
+  getTheme = () => 'dark',
+  onThemeChange = () => () => {},
   settingsOverlay,
   settingsContent,
+  pageTransition = null,
   syncCustomBackgroundPreviewPlayback = () => {}
 } = {}) {
   const scope = createLifecycleScope();
@@ -46,19 +50,27 @@ export function createHelpCenterRuntime({
   let helpSearchCache = null;
   let lightraysInstance = null;
 
+  const runTransition = action => pageTransition?.run
+    ? pageTransition.run(action)
+    : Promise.resolve().then(action);
+
   function closeSettingsForHelp() {
     if (!settingsOverlay?.classList.contains('visible')) return;
+    moveFocusOutOfHiddenRegion(settingsOverlay);
     settingsOverlay.classList.remove('visible');
     settingsOverlay.style.zIndex = '';
     syncCustomBackgroundPreviewPlayback();
   }
 
   function closeHelpOverlay() {
-    if (!helpOverlay) return;
-    helpOverlay.classList.remove('visible');
-    if (helpSearchInput) helpSearchInput.value = '';
-    helpNav?.querySelectorAll('.help-nav-item').forEach(item => { item.style.display = ''; });
-    helpNav?.querySelectorAll('.help-nav-group').forEach(group => { group.style.display = ''; });
+    return runTransition(() => {
+      if (!helpOverlay) return;
+      moveFocusOutOfHiddenRegion(helpOverlay);
+      helpOverlay.classList.remove('visible');
+      if (helpSearchInput) helpSearchInput.value = '';
+      helpNav?.querySelectorAll('.help-nav-item').forEach(item => { item.style.display = ''; });
+      helpNav?.querySelectorAll('.help-nav-group').forEach(group => { group.style.display = ''; });
+    });
   }
 
   function buildHelpSearchCache() {
@@ -89,15 +101,20 @@ export function createHelpCenterRuntime({
   }
 
   function openHelpOverlay(sectionId = 'overview') {
-    if (!helpOverlay) return;
-    closeSettingsForHelp();
-    helpOverlay.classList.add('visible');
-    showHelpSection(sectionId || 'overview');
+    return runTransition(() => {
+      if (!helpOverlay) return;
+      closeSettingsForHelp();
+      helpOverlay.classList.add('visible');
+      showHelpSection(sectionId || 'overview');
+    });
   }
 
-  function openFeedbackOverlay() {
-    if (!feedbackOverlay) return;
-    feedbackOverlay.classList.add('visible');
+  function syncFeedbackBackground() {
+    if (getTheme() === 'light' || !feedbackOverlay?.classList.contains('visible')) {
+      lightraysInstance?.destroy?.();
+      lightraysInstance = null;
+      return;
+    }
     if (lightraysBg && !lightraysInstance && typeof initLightRays === 'function') {
       lightraysInstance = initLightRays(lightraysBg, {
         raysOrigin: 'top-center', raysColor: '#ffffff', raysSpeed: 0.6,
@@ -106,11 +123,23 @@ export function createHelpCenterRuntime({
       });
     }
   }
+  scope.use(onThemeChange(syncFeedbackBackground));
+
+  function openFeedbackOverlay() {
+    return runTransition(() => {
+      if (!feedbackOverlay) return;
+      feedbackOverlay.classList.add('visible');
+      syncFeedbackBackground();
+    });
+  }
 
   function closeFeedbackOverlay() {
-    feedbackOverlay?.classList.remove('visible');
-    lightraysInstance?.destroy?.();
-    lightraysInstance = null;
+    return runTransition(() => {
+      moveFocusOutOfHiddenRegion(feedbackOverlay);
+      feedbackOverlay?.classList.remove('visible');
+      lightraysInstance?.destroy?.();
+      lightraysInstance = null;
+    });
   }
 
   function getReviewers() {
@@ -136,7 +165,7 @@ export function createHelpCenterRuntime({
     const cards = getReviewers().map((reviewer, index) => {
       const initial = reviewer.name.charAt(0).toUpperCase();
       const [c1, c2] = palettes[index % palettes.length];
-      const avatar = `<div class="marquee-avatar" style="background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;">${escapeHtml(initial)}</div>`;
+      const avatar = `<div class="marquee-avatar" style="background:var(--feedback-avatar-bg,linear-gradient(135deg,${c1},${c2}));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;">${escapeHtml(initial)}</div>`;
       return `<div class="marquee-card"><div class="marquee-card-header">${avatar}<div class="marquee-info"><div class="marquee-name">${escapeHtml(reviewer.name)}</div><div class="marquee-stars">${stars}</div></div></div><p class="marquee-text">${escapeHtml(reviewer.text)}</p></div>`;
     }).join('');
     marqueeTrack.innerHTML = cards + cards;
@@ -157,12 +186,17 @@ export function createHelpCenterRuntime({
   }
 
   function openLegalOverlay(sectionId = 'declaration') {
-    legalOverlay?.classList.add('visible');
-    showLegalSection(sectionId);
+    return runTransition(() => {
+      legalOverlay?.classList.add('visible');
+      showLegalSection(sectionId);
+    });
   }
 
   function closeLegalOverlay() {
-    legalOverlay?.classList.remove('visible');
+    return runTransition(() => {
+      moveFocusOutOfHiddenRegion(legalOverlay);
+      legalOverlay?.classList.remove('visible');
+    });
   }
 
   helpLinks.forEach(button => on(button, 'click', event => {

@@ -1,4 +1,5 @@
 import { readAppMarkup } from './lib/app-markup.mjs';
+import './test-pdfjs-assets.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
@@ -44,7 +45,7 @@ assert.match(html, /data-category="pdf"[\s\S]*data-tool="excel-to-pdf"/);
 assert.match(html, /id="excelToPdfOverlay"/);
 assert.match(lazyTools, /'excel-to-pdf':[\s\S]*import\('\.\/excel-to-pdf\/tool\.js'\)[\s\S]*initExcelToPdfTool/);
 assert.match(main, /createLazyToolRegistry\([\s\S]*specs:\s*LAZY_TOOL_SPECS/);
-assert.match(main, /currentPhase === 'installing'[\s\S]*home\.dependencies\.installingDetail/);
+assert.match(main, /currentPhase === 'installing'\s*\? dependencyInstallingDetail\(currentName, currentProgress\)/);
 assert.match(main, /currentPhase === 'verifying'[\s\S]*home\.dependencies\.verifyingDetail/);
 assert.match(main, /dataset\.indeterminate = isPostDownload/);
 assert.match(tool, /from ['"]\.\/template\.js['"]/);
@@ -62,6 +63,10 @@ assert.match(controller, /sheetRange:\s*settings\.sheets/);
 assert.match(controller, /createLifecycleScope\(\)/);
 assert.match(controller, /owner\.use\(unlisten\)/);
 assert.match(controller, /isOpenSession\(owner\)/);
+assert.ok(controller.indexOf('processing = true;') < controller.indexOf('await ensureLibreOfficeAvailable()'), 'lock before the first runtime check');
+assert.match(controller, /moveFocusOutOfHiddenRegion\(successOverlay/);
+assert.match(controller, /if \(nativeStarted\) void invoke\('cancel_convert'/);
+assert.match(rust, /prop\("ReadOnly", True\)/);
 assert.match(controller, /filesContainer\.replaceChildren\(fragment\)/);
 assert.doesNotMatch(controller, /filesContainer\.innerHTML/);
 assert.match(controller, /from ['"]\.\.\/\.\.\/platform\/tauri-runtime\.js['"]/);

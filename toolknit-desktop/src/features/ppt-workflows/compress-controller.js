@@ -1,5 +1,6 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
 import { applyTranslations } from '../../i18n.js';
+import { enhanceToolSelect } from '../../tool-custom-select.js';
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 import {
   PPT_COMPRESS_LIMITS,
@@ -7,7 +8,7 @@ import {
   createPptCompressManifest,
   sanitizePptCompressBaseName
 } from '../../ppt-compress-core.js';
-import { bindPptChrome, choosePptxFile, createOperationGuard, dragHasExternalFiles, isPptxFile, readPptxFile, registerNativePptxDrop, setInteractiveLayer, uniqueOutputDirectory, writeUniqueFile } from './shared.js';
+import { bindPptChrome, choosePptxFile, createOperationGuard, dragHasExternalFiles, isPptxFile, readPptxFile, registerNativePptxDrop, retainBrowserObjectUrl, setInteractiveLayer, uniqueOutputDirectory, writeUniqueFile } from './shared.js';
 
 function createElement(documentRef, tag, className, text) {
   const element = documentRef.createElement(tag);
@@ -69,6 +70,9 @@ export function createPptCompressController({
   const successOpenFolder = byId('pptCompressSuccessOpenFolder');
   const successOk = byId('pptCompressSuccessOk');
   const lifecycle = createLifecycleScope({ onError: error => console.error('[PPT Compress] dispose error:', error) });
+  const levelSelect = enhanceToolSelect(level);
+  lifecycle.use(() => levelSelect?.dispose());
+  refreshIcons();
   let session = null;
   const guard = createOperationGuard(() => session);
   let plasma = null;
@@ -88,6 +92,9 @@ export function createPptCompressController({
     if (progressFill) progressFill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
     if (processText) processText.textContent = message || text('processing');
     setInteractiveLayer(processMask, visible);
+  };
+  const hideProgressSoon = owner => {
+    if (isOpen(owner) && !busy) setProgress(0, text('processing'), false);
   };
 
   function renderStats() {
@@ -112,6 +119,8 @@ export function createPptCompressController({
   }
 
   function updateControls() {
+    if (level) level.disabled = busy;
+    levelSelect?.refresh();
     if (exportButton) {
       const canExport = Boolean(analysis && !busy);
       exportButton.disabled = !canExport;
@@ -133,7 +142,9 @@ export function createPptCompressController({
     dropZone?.classList.remove('visible');
     if (exportButton) { exportButton.disabled = true; exportButton.hidden = true; }
     scrollTop?.classList.remove('visible'); if (workspace) workspace.scrollTop = 0;
+    setInteractiveLayer(successOverlay, false);
     setProgress(0, text('processing'), false);
+    updateControls();
   }
 
   function open() {
@@ -147,6 +158,7 @@ export function createPptCompressController({
   }
 
   function close() {
+    levelSelect?.close();
     guard.cancel(); session?.dispose(); session = null; busy = false;
     setInteractiveLayer(successOverlay, false); setInteractiveLayer(processMask, false);
     overlay.classList.remove('visible'); overlay.setAttribute('aria-hidden', 'true');
@@ -168,16 +180,17 @@ export function createPptCompressController({
     } catch (error) {
       if (!guard.isCurrent(operation)) return null;
       console.error('[PPT Compress] analysis failed:', error); setProgress(0, text('processing'), false);
-      const message = String(error?.userMessage || error?.message || error); notify(message.includes('invalid_extension') ? text('unsupportedFormat') : message); return null;
+      const message = String(error?.userMessage || error?.message || error); notify(message.includes('invalid_extension') ? text('unsupportedFormat') : message, { kind: 'error' }); return null;
     }
   }
 
   async function handleFile(nextFile) {
     if (!nextFile || busy || !isOpen(session)) return;
     if (!isPptxFile(nextFile)) { notify(text('unsupportedFormat')); return; }
+    const owner = session;
     const operation = guard.begin(); if (!operation) return;
     operation.scope = createLifecycleScope(); operation.signal = operation.scope.abortController().signal;
-    busy = true; setProgress(12, text('reading'));
+    busy = true; updateControls(); setProgress(12, text('reading'));
     try {
       const bytes = await readPptxFile(nextFile, { isTauri, maxBytes: PPT_COMPRESS_LIMITS.maxInputBytes, errorPrefix: 'ppt-compress' });
       guard.assertCurrent(operation); file = nextFile; inputBytes = bytes; const label = cta?.querySelector('span'); if (label) label.textContent = text('replace');
@@ -185,11 +198,11 @@ export function createPptCompressController({
     } catch (error) {
       if (guard.isCurrent(operation)) {
         const message = String(error?.userMessage || error?.message || error);
-        notify(message.includes('invalid_extension') ? text('unsupportedFormat') : message);
+        notify(message.includes('invalid_extension') ? text('unsupportedFormat') : message, { kind: 'error' });
       }
     } finally {
       if (!guard.isCurrent(operation)) return;
-      busy = false; guard.finish(operation); updateControls();
+      busy = false; guard.finish(operation); updateControls(); hideProgressSoon(owner);
     }
   }
 
@@ -197,6 +210,7 @@ export function createPptCompressController({
     if (!file || !inputBytes || busy) return;
     const operation = guard.begin(); if (!operation) return;
     operation.scope = createLifecycleScope(); operation.signal = operation.scope.abortController().signal;
+    const owner = operation.session;
     busy = true; updateControls(); setProgress(18, usesImageCompression() ? text('compressingImages') : text('compressing'));
     try {
       const result = analysis?.level === currentLevel() ? analysis : await compressPptxBytes(inputBytes, { sourceName: file.name || file.path || 'presentation.pptx', level: currentLevel(), signal: operation.signal, imageCompressor: task => compressPptImageForBrowser(task, operation.signal) });
@@ -214,13 +228,13 @@ export function createPptCompressController({
         await writeUniqueFile(invoke, outputDir, 'manifest.json', new TextEncoder().encode(JSON.stringify(publicResult, null, 2)));
       } else {
         const JSZip = (await import('jszip')).default; const zip = new JSZip(); const downloadName = `${baseName}_ppt_compress.zip`; zip.file(outputFile, result.bytes); zip.file('manifest.json', JSON.stringify(publicResult, null, 2));
-        const blob = await zip.generateAsync({ type: 'blob' }); guard.assertCurrent(operation); const url = URL.createObjectURL(blob); const anchor = createElement(documentRef, 'a'); anchor.href = url; anchor.download = downloadName; anchor.hidden = true; documentRef.body.append(anchor); anchor.click(); anchor.remove(); session.timeout(() => URL.revokeObjectURL(url), 1000);
+        const blob = await zip.generateAsync({ type: 'blob' }); guard.assertCurrent(operation); const url = URL.createObjectURL(blob); const anchor = createElement(documentRef, 'a'); anchor.href = url; anchor.download = downloadName; anchor.hidden = true; documentRef.body.append(anchor); anchor.click(); anchor.remove(); retainBrowserObjectUrl(owner, url);
       }
       guard.assertCurrent(operation); lastOutputPath = outputDir;
       if (successMeta) successMeta.textContent = result.already_optimized ? text('successOptimizedMeta') : text('successMeta');
       if (successOriginal) successOriginal.textContent = formatSize(result.original_bytes); if (successCompressed) successCompressed.textContent = formatSize(result.compressed_bytes); if (successSaved) successSaved.textContent = savingText(result); if (successPath) successPath.textContent = displayFilesystemPath(outputDir);
       setInteractiveLayer(successOverlay, true); setProgress(100, text('writing')); notify(text('exportDone', { saved: savingText(result) }));
-    } catch (error) { if (guard.isCurrent(operation)) { console.error('[PPT Compress] export failed:', error); notify(String(error?.userMessage || error?.message || error)); } }
+    } catch (error) { if (guard.isCurrent(operation)) { console.error('[PPT Compress] export failed:', error); notify(String(error?.userMessage || error?.message || error), { kind: 'error' }); } }
     finally { if (!guard.isCurrent(operation)) return; busy = false; guard.finish(operation); setProgress(0, text('processing'), false); updateControls(); }
   }
 
@@ -252,13 +266,19 @@ export function createPptCompressController({
   bindPptChrome(lifecycle, overlay, { onClose: close, openSettings, openSupport, openExternalUrl, handleWindowAction });
   lifecycle.event(cta, 'click', () => { if (!busy) void choosePptxFile({ isTauri, input, onSelected: handleFile, onError: error => notify(String(error?.message || error)) }); });
   lifecycle.event(input, 'change', event => { const selected = event.target.files?.[0]; if (selected) void handleFile(selected); });
-  lifecycle.event(level, 'change', () => { if (!inputBytes || busy) return; const operation = guard.begin(); if (!operation) return; operation.scope = createLifecycleScope(); operation.signal = operation.scope.abortController().signal; busy = true; setProgress(16, usesImageCompression() ? text('compressingImages') : text('analyzing')); void analyze(operation).finally(() => { if (!guard.isCurrent(operation)) return; busy = false; guard.finish(operation); updateControls(); }); });
+  lifecycle.event(level, 'change', () => { if (!inputBytes || busy) return; const owner = session; const operation = guard.begin(); if (!operation) return; operation.scope = createLifecycleScope(); operation.signal = operation.scope.abortController().signal; busy = true; updateControls(); setProgress(16, usesImageCompression() ? text('compressingImages') : text('analyzing')); void analyze(operation).finally(() => { if (!guard.isCurrent(operation)) return; busy = false; guard.finish(operation); updateControls(); hideProgressSoon(owner); }); });
+  lifecycle.event(documentRef, 'keydown', event => {
+    if (event.defaultPrevented || event.key !== 'Escape' || !isOpen(session)) return;
+    if (!overlay.querySelector('.tool-custom-select.is-open')) return;
+    event.preventDefault();
+    levelSelect?.close({ restoreFocus: true });
+  });
   lifecycle.event(exportButton, 'click', () => { void exportResult(); });
   lifecycle.event(workspace, 'scroll', () => scrollTop?.classList.toggle('visible', workspace.scrollTop > 160), { passive: true });
   lifecycle.event(scrollTop, 'click', () => workspace?.scrollTo({ top: 0, behavior: 'smooth' }));
   lifecycle.event(successOk, 'click', () => setInteractiveLayer(successOverlay, false));
   lifecycle.event(successOpenFolder, 'click', async () => { if (isTauri && lastOutputPath) await openOutputFolder(lastOutputPath); });
-  lifecycle.use(onLangChange(() => { if (!isOpen(session)) return; applyTranslations(); if (analysis && fileName && file) fileName.textContent = `${file.name || file.path || 'presentation.pptx'} · ${text('summary', { slides: analysis.slide_count, media: analysis.media_count, original: formatSize(analysis.original_bytes) })}`; renderStats(); }));
+  lifecycle.use(onLangChange(() => { if (!isOpen(session)) return; applyTranslations(); levelSelect?.refresh(); if (analysis && fileName && file) fileName.textContent = `${file.name || file.path || 'presentation.pptx'} · ${text('summary', { slides: analysis.slide_count, media: analysis.media_count, original: formatSize(analysis.original_bytes) })}`; renderStats(); }));
 
   return { open, close, dispose() { close(); lifecycle.dispose(); }, get busy() { return busy; } };
 }

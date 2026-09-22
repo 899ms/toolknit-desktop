@@ -1,4 +1,5 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
+import { destroyPdfDocument } from '../../shared/pdfjs-options.js';
 import { calculatePdfPageNumberLayout } from '../../pdf-page-number-core.js';
 
 const THUMB_WIDTH = 116;
@@ -17,7 +18,7 @@ async function destroySource(source) {
   if (!source || source.destroyed) return;
   source.destroyed = true;
   try {
-    if (source.pdfDoc) await source.pdfDoc.destroy();
+    if (source.pdfDoc) await destroyPdfDocument(source.pdfDoc);
     else await source.loadingTask?.destroy?.();
   } catch (_) {}
   source.pdfDoc = null;

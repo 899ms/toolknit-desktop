@@ -16,7 +16,20 @@ export const PPT_DRAFT_LIMITS = Object.freeze({
   maxSpeakerNoteChars: 220
 });
 
-export const PPT_DRAFT_THEMES = Object.freeze(['minimal-mono']);
+export const PPT_DRAFT_ASSET_LIMITS = Object.freeze({
+  maxAssets: 24,
+  maxBytesPerAsset: 24 * 1024 * 1024,
+  maxTotalBytes: 96 * 1024 * 1024,
+  supportedMimeTypes: Object.freeze(['image/png', 'image/jpeg', 'image/gif'])
+});
+
+export const PPT_DRAFT_THEMES = Object.freeze(['minimal-mono', 'minimal-dark', 'minimal-light', 'tech-blue']);
+
+const PPT_DRAFT_ASSET_EXTENSIONS = Object.freeze({
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/gif': 'gif'
+});
 
 const EMU_PER_INCH = 914400;
 const SLIDE_WIDTH = 13.333333;
@@ -57,11 +70,6 @@ function derivePosterMediaHeight(width, format) {
 }
 
 const THEME_TOKENS = Object.freeze({
-  // Single-template product decision: every deck is generated in a strict
-  // black/white minimal system. The palette is a grayscale ramp where pure
-  // white dominates the canvas and near-black is reserved for accents and
-  // primary text. Secondary accents are deliberately neutral grays rather
-  // than hue-based so the result stays cohesive regardless of subject.
   'minimal-mono': {
     id: 'minimal-mono',
     name: 'Minimal Monochrome',
@@ -79,7 +87,71 @@ const THEME_TOKENS = Object.freeze({
     line: 'D8D8D8',
     grid: 'ECECEC',
     surface: 'F5F5F5'
+  },
+  'minimal-dark': {
+    id: 'minimal-dark',
+    name: 'Minimal Dark',
+    background: '111827',
+    panel: '1F2937',
+    panelAlt: '273449',
+    text: 'F9FAFB',
+    muted: 'B7C0CD',
+    accent: 'F9FAFB',
+    accentSoft: 'D1D5DB',
+    warm: '94A3B8',
+    success: '86EFAC',
+    danger: 'FB7185',
+    violet: 'C4B5FD',
+    line: '475569',
+    grid: '334155',
+    surface: '172033'
+  },
+  'minimal-light': {
+    id: 'minimal-light',
+    name: 'Minimal Light',
+    background: 'FFFFFF',
+    panel: 'F7F8FA',
+    panelAlt: 'EDF0F4',
+    text: '16202A',
+    muted: '5D6875',
+    accent: '111827',
+    accentSoft: '3A4653',
+    warm: '7A8794',
+    success: '1F7A59',
+    danger: 'B42318',
+    violet: '3466D3',
+    line: 'D7DDE4',
+    grid: 'E8EDF2',
+    surface: 'F3F5F8'
+  },
+  'tech-blue': {
+    id: 'tech-blue',
+    name: 'Tech Blue',
+    background: 'F7FBFF',
+    panel: 'EAF3FF',
+    panelAlt: 'D9E9FF',
+    text: '10243E',
+    muted: '526A86',
+    accent: '1167D8',
+    accentSoft: '2F83E7',
+    warm: '00A3A3',
+    success: '167A5C',
+    danger: 'C53D3D',
+    violet: '1167D8',
+    line: 'C9DDF2',
+    grid: 'E3F1FF',
+    surface: 'F0F7FF'
   }
+});
+
+const THEME_ALIASES = Object.freeze({
+  minimal: 'minimal-mono',
+  mono: 'minimal-mono',
+  dark: 'minimal-dark',
+  light: 'minimal-light',
+  blue: 'tech-blue',
+  'clean-business': 'minimal-light',
+  'editorial-warm': 'minimal-light'
 });
 
 const INTERIOR_SPACE_KEYWORDS = Object.freeze([
@@ -124,14 +196,76 @@ function cleanInline(value, { maxChars = 240, fallback = '' } = {}) {
     .slice(0, maxChars) || fallback;
 }
 
-function cleanTheme() {
-  // Legacy and user-provided theme hints are intentionally ignored. The
-  // product exposes a single black/white minimal template, so any incoming
-  // theme value is normalized to that canonical token rather than rejected.
-  return 'minimal-mono';
+function assetExtension(mime, name = '') {
+  const normalizedMime = String(mime || '').toLowerCase().split(';')[0].trim();
+  if (PPT_DRAFT_ASSET_EXTENSIONS[normalizedMime]) return PPT_DRAFT_ASSET_EXTENSIONS[normalizedMime];
+  const extension = String(name || '').toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] || '';
+  return ['png', 'jpg', 'jpeg', 'gif'].includes(extension) ? (extension === 'jpeg' ? 'jpg' : extension) : '';
 }
 
-export function inferPptDraftTheme() {
+function binaryAssetBytes(value) {
+  if (value instanceof Uint8Array) return value;
+  if (value instanceof ArrayBuffer) return new Uint8Array(value);
+  if (ArrayBuffer.isView(value)) return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+  if (Array.isArray(value)) return Uint8Array.from(value);
+  return null;
+}
+
+function safeAssetId(value, fallback) {
+  const cleaned = String(value || '')
+    .trim()
+    .replace(/[^a-z0-9_-]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase()
+    .slice(0, 64);
+  return cleaned || fallback;
+}
+
+export function normalizePptDraftAssets(value = []) {
+  const source = Array.isArray(value) ? value : [];
+  const result = [];
+  const ids = new Set();
+  let totalBytes = 0;
+  for (const [index, item] of source.entries()) {
+    if (result.length >= PPT_DRAFT_ASSET_LIMITS.maxAssets) break;
+    const candidate = item && typeof item === 'object' ? item : {};
+    const name = cleanInline(candidate.name || candidate.fileName, { maxChars: 180, fallback: `asset-${index + 1}` });
+    const mime = String(candidate.mime || candidate.type || '').toLowerCase().split(';')[0].trim();
+    const extension = assetExtension(mime, name);
+    const bytes = binaryAssetBytes(candidate.bytes || candidate.data);
+    if (!extension || !PPT_DRAFT_ASSET_LIMITS.supportedMimeTypes.includes(mime) || !bytes?.byteLength) continue;
+    if (bytes.byteLength > PPT_DRAFT_ASSET_LIMITS.maxBytesPerAsset || totalBytes + bytes.byteLength > PPT_DRAFT_ASSET_LIMITS.maxTotalBytes) break;
+    let id = safeAssetId(candidate.id || name.replace(/\.[^.]+$/, ''), `asset-${index + 1}`);
+    while (ids.has(id)) id = `${id}-${index + 1}`;
+    ids.add(id);
+    totalBytes += bytes.byteLength;
+    result.push({
+      id,
+      name,
+      mime,
+      extension,
+      bytes,
+      size: bytes.byteLength,
+      width: Number.isFinite(Number(candidate.width)) ? Math.max(0, Math.round(Number(candidate.width))) : 0,
+      height: Number.isFinite(Number(candidate.height)) ? Math.max(0, Math.round(Number(candidate.height))) : 0,
+      preview_url: String(candidate.preview_url || candidate.previewUrl || '')
+    });
+  }
+  return result;
+}
+
+function cleanTheme(value = 'minimal-mono') {
+  const candidate = String(value || '').trim().toLowerCase();
+  return THEME_TOKENS[candidate] ? candidate : (THEME_ALIASES[candidate] || 'minimal-mono');
+}
+
+export function inferPptDraftTheme(args = {}) {
+  const explicit = String(args.theme || '').trim();
+  if (explicit) return cleanTheme(explicit);
+  const hint = `${args.style || ''} ${args.theme_hint || ''} ${args.prompt || ''}`.toLowerCase();
+  if (/科技蓝|tech\s*blue|blue|科技感|ai|software|developer/i.test(hint)) return 'tech-blue';
+  if (/深色|dark|黑底|夜间|暗色/i.test(hint)) return 'minimal-dark';
+  if (/浅色|白底|light|商务|培训|教育|简洁/i.test(hint)) return 'minimal-light';
   return 'minimal-mono';
 }
 
@@ -502,7 +636,8 @@ function applyPptDraftVisualStyle(theme) {
 }
 
 export function resolvePptDraftThemeTokens(themeValue = 'minimal-mono', outline = {}) {
-  return THEME_TOKENS[cleanTheme(themeValue || outline?.request?.theme)] || THEME_TOKENS['minimal-mono'];
+  const theme = cleanTheme(themeValue || outline?.request?.theme || inferPptDraftTheme(outline));
+  return THEME_TOKENS[theme] || THEME_TOKENS['minimal-mono'];
 }
 
 export function sanitizePptDraftBaseName(value) {
@@ -868,10 +1003,40 @@ export function placeholderSvg(theme, label = '替换为你的图片', format = 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" data-format="${mediaFormat.id}"><rect width="${width}" height="${height}" fill="#ECECEC"/>${labelXml}<text x="${Math.round(width / 2)}" y="${ratioY}" fill="#B6B6B6" font-family="Microsoft YaHei,Arial" font-size="${portrait ? 19 : 21}" letter-spacing="2" text-anchor="middle">${aspectRatioLabel}</text></svg>`;
 }
 
-function createSlideAssetContext(assetRegistry, slideIndex = 1) {
+function imageSourceCrop(asset, frameWidth, frameHeight, fit = 'cover') {
+  if (fit !== 'cover' || !asset?.width || !asset?.height || !frameWidth || !frameHeight) return '';
+  const sourceRatio = Number(asset.width) / Number(asset.height);
+  const frameRatio = Number(frameWidth) / Number(frameHeight);
+  if (!Number.isFinite(sourceRatio) || !Number.isFinite(frameRatio) || sourceRatio <= 0 || frameRatio <= 0) return '';
+  if (sourceRatio > frameRatio) {
+    const visible = frameRatio / sourceRatio;
+    const side = Math.max(0, (1 - visible) / 2 * 100000);
+    return ` l="${Math.round(side)}" r="${Math.round(side)}"`;
+  }
+  const visible = sourceRatio / frameRatio;
+  const side = Math.max(0, (1 - visible) / 2 * 100000);
+  return ` t="${Math.round(side)}" b="${Math.round(side)}"`;
+}
+
+function createSlideAssetContext(assetRegistry, slideIndex = 1, slide = {}, assets = [], assignmentState = {}) {
   const refs = [];
   const refMap = new Map();
   const placeholders = [];
+  const media = [];
+  const slideAssetSlots = Array.isArray(slide?.asset_slots) ? slide.asset_slots : [];
+  const usedAssetIds = assignmentState.usedAssetIds || (assignmentState.usedAssetIds = new Set());
+  const resolveImageAsset = placeholderIndex => {
+    const slot = slideAssetSlots.find(item => Number(item?.slot) === Number(placeholderIndex)) || slideAssetSlots[Number(placeholderIndex) - 1];
+    const requestedId = String(slot?.asset_id || '').trim();
+    if (requestedId) {
+      const explicit = assets.find(asset => asset.id === requestedId);
+      return explicit ? { asset: explicit, fit: slot?.fit || 'cover', source: 'outline' } : { asset: null, fit: slot?.fit || 'cover', source: 'missing' };
+    }
+    const next = assets.find(asset => !usedAssetIds.has(asset.id));
+    if (!next) return { asset: null, fit: slot?.fit || 'cover', source: 'missing' };
+    usedAssetIds.add(next.id);
+    return { asset: next, fit: slot?.fit || 'cover', source: 'automatic' };
+  };
   return {
     slideIndex,
     useSvg(key, data) {
@@ -880,11 +1045,33 @@ function createSlideAssetContext(assetRegistry, slideIndex = 1) {
       if (!refMap.has(safeKey)) refMap.set(safeKey, `rId${refs.length + 2}`), refs.push({ id: refMap.get(safeKey), target: `../media/${safeKey}.svg` });
       return refMap.get(safeKey);
     },
+    useImage(asset) {
+      const safeKey = `asset-${safeAssetId(asset?.id || asset?.name, 'image')}`;
+      if (!assetRegistry.has(safeKey)) assetRegistry.set(safeKey, {
+        path: `ppt/media/${safeKey}.${asset.extension}`,
+        data: asset.bytes,
+        extension: asset.extension,
+        assetId: asset.id
+      });
+      if (!refMap.has(safeKey)) {
+        refMap.set(safeKey, `rId${refs.length + 2}`);
+        refs.push({ id: refMap.get(safeKey), target: `../media/${safeKey}.${asset.extension}` });
+      }
+      return refMap.get(safeKey);
+    },
+    resolveImageAsset,
+    registerMedia(meta) {
+      media.push({ ...meta });
+      if (meta.asset_id) usedAssetIds.add(meta.asset_id);
+    },
     registerPlaceholder(meta) {
       placeholders.push({ ...meta });
     },
     placeholderManifest() {
       return placeholders.map(item => ({ ...item }));
+    },
+    mediaManifest() {
+      return media.map(item => ({ ...item }));
     },
     relationships() {
       const images = refs.map(ref => `<Relationship Id="${ref.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${ref.target}"/>`).join('');
@@ -912,6 +1099,12 @@ function svgPicture(ctx, id, name, x, y, w, h, key, svg, { placeholder = false, 
     });
   }
   return `<p:pic><p:nvPicPr><p:cNvPr id="${id}" name="${xmlEscape(name)}" descr="${xmlEscape(alt || name)}"/><p:cNvPicPr preferRelativeResize="0"><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr>${ph}</p:nvPr></p:nvPicPr><p:blipFill><a:blip r:embed="${relId}"/><a:srcRect/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="${pct(x)}" y="${pct(y)}"/><a:ext cx="${pct(w)}" cy="${pct(h)}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>`;
+}
+
+function imagePicture(ctx, id, name, x, y, w, h, asset, { fit = 'cover', alt = '' } = {}) {
+  const relId = ctx.useImage(asset);
+  const crop = imageSourceCrop(asset, w, h, fit);
+  return `<p:pic><p:nvPicPr><p:cNvPr id="${id}" name="${xmlEscape(name)}" descr="${xmlEscape(alt || asset.name || name)}"/><p:cNvPicPr preferRelativeResize="0"><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${relId}"/><a:srcRect${crop}/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="${pct(x)}" y="${pct(y)}"/><a:ext cx="${pct(w)}" cy="${pct(h)}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>`;
 }
 
 function imagePlaceholder(ctx, id, name, x, y, w, h, theme, label = '替换为你的图片', slideIndex = null, placeholderIndex = 1, format = 'landscape') {
@@ -1358,8 +1551,41 @@ function posterMediaSlot(ctx, id, {
     aspectRatio: mediaFormat.aspectRatio,
     aspectRatioLabel: mediaFormat.aspectRatioLabel
   };
+  const resolved = ctx.resolveImageAsset?.(placeholderIndex) || { asset: null, fit: 'cover', source: 'missing' };
+  if (resolved.asset) {
+    ctx.registerMedia?.({
+      slide: Math.max(1, Number(slideIndex) || 1),
+      placeholder_index: Math.max(1, Number(placeholderIndex) || 1),
+      asset_id: resolved.asset.id,
+      asset_name: resolved.asset.name,
+      status: 'embedded',
+      source: resolved.source,
+      fit: resolved.fit,
+      width: resolved.asset.width,
+      height: resolved.asset.height,
+      format: resolved.asset.extension,
+      aspect_ratio: mediaFormat.aspectRatioLabel
+    });
+  } else {
+    ctx.registerMedia?.({
+      slide: Math.max(1, Number(slideIndex) || 1),
+      placeholder_index: Math.max(1, Number(placeholderIndex) || 1),
+      asset_id: '',
+      asset_name: '',
+      status: 'placeholder',
+      source: resolved.source || 'missing',
+      fit: resolved.fit || 'cover',
+      width: 0,
+      height: 0,
+      format: '',
+      aspect_ratio: mediaFormat.aspectRatioLabel,
+      label: label
+    });
+  }
   const parts = [
-    imagePlaceholder(ctx, id++, 'Editable image placeholder', frame.x, frame.y, frame.w, frame.h, theme, label, slideIndex, placeholderIndex, mediaFormat.id),
+    resolved.asset
+      ? imagePicture(ctx, id++, 'Embedded image asset', frame.x, frame.y, frame.w, frame.h, resolved.asset, { fit: resolved.fit, alt: label })
+      : imagePlaceholder(ctx, id++, 'Editable image placeholder', frame.x, frame.y, frame.w, frame.h, theme, label, slideIndex, placeholderIndex, mediaFormat.id),
     lineShape(id++, 'Media top rule', frame.x + 0.18, frame.y + 0.18, frame.x + 1.15, frame.y + 0.18, accent, 1.7),
     lineShape(id++, 'Media corner rule', frame.x + frame.w - 0.78, frame.y + frame.h - 0.18, frame.x + frame.w - 0.18, frame.y + frame.h - 0.18, theme.warm, 1.2)
   ];
@@ -1926,6 +2152,7 @@ function buildPosterClosing(slide, outline, theme, index, total, text, ctx) {
 export async function buildPptDraftPptx(outlineValue, options = {}) {
   return buildPptDraftPptxExport(outlineValue, options, {
     PPT_DRAFT_LIMITS,
+    normalizePptDraftAssets,
     normalizePptDraftOutline,
     resolvePptDraftThemeTokens,
     createSlideAssetContext,
@@ -1954,7 +2181,7 @@ export function createPptDraftMarkdown(outline) {
   return createPptOutlineMarkdown(outline).replace(/^# /, '# PPTX 草稿大纲 / ');
 }
 
-export function createPptDraftManifest({ outline, theme, outputFile, outputBytes, outputs = [] }) {
+export function createPptDraftManifest({ outline, theme, outputFile, outputBytes, outputs = [], assets = [], assetManifest = [] }) {
   return {
     schema: 'toolknit.ppt-draft',
     version: 1,
@@ -1965,6 +2192,16 @@ export function createPptDraftManifest({ outline, theme, outputFile, outputBytes
     output_file: outputFile || 'draft.pptx',
     output_bytes: outputBytes || 0,
     image_placeholders: outline.image_placeholders || [],
+    assets: Array.isArray(assets) ? assets.map(asset => ({
+      id: asset.id,
+      name: asset.name,
+      mime: asset.mime,
+      extension: asset.extension,
+      size: asset.size,
+      width: asset.width,
+      height: asset.height
+    })) : [],
+    asset_manifest: Array.isArray(assetManifest) ? assetManifest.map(item => ({ ...item })) : (outline.asset_manifest || []),
     outputs,
     request: {
       slide_count: outline.request?.slide_count,

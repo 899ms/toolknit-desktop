@@ -405,6 +405,132 @@ fn restore_letterboxed_mask(
         .to_luma8()
 }
 
+#[derive(Clone, Copy, Debug)]
+struct MaskSignal {
+    mean_alpha: f32,
+    visible_fraction: f32,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct FlatBackgroundProfile {
+    rgb: [f32; 3],
+    noise: f32,
+}
+
+fn mask_signal(mask: &image::GrayImage) -> MaskSignal {
+    let pixel_count = u64::from(mask.width()).saturating_mul(u64::from(mask.height()));
+    if pixel_count == 0 {
+        return MaskSignal {
+            mean_alpha: 0.0,
+            visible_fraction: 0.0,
+        };
+    }
+    let mut alpha_sum = 0_u64;
+    let mut visible = 0_u64;
+    for pixel in mask.pixels() {
+        let alpha = u64::from(pixel.0[0]);
+        alpha_sum += alpha;
+        if alpha >= 32 {
+            visible += 1;
+        }
+    }
+    MaskSignal {
+        mean_alpha: alpha_sum as f32 / (pixel_count as f32 * 255.0),
+        visible_fraction: visible as f32 / pixel_count as f32,
+    }
+}
+
+fn flat_background_profile(source: &image::RgbaImage) -> Option<FlatBackgroundProfile> {
+    let (width, height) = source.dimensions();
+    if width < 3 || height < 3 {
+        return None;
+    }
+    let band = (width.min(height) / 64).clamp(1, 16);
+    let inner_width = width.saturating_sub(band.saturating_mul(2));
+    let inner_height = height.saturating_sub(band.saturating_mul(2));
+    let border_pixels = u64::from(width)
+        .saturating_mul(u64::from(height))
+        .saturating_sub(u64::from(inner_width).saturating_mul(u64::from(inner_height)));
+    let mut samples = 0_u64;
+    let mut sums = [0_f64; 3];
+    let mut square_sums = [0_f64; 3];
+    for (x, y, pixel) in source.enumerate_pixels() {
+        if x >= band && x < width - band && y >= band && y < height - band {
+            continue;
+        }
+        if pixel.0[3] < 245 {
+            continue;
+        }
+        samples += 1;
+        for channel in 0..3 {
+            let value = f64::from(pixel.0[channel]);
+            sums[channel] += value;
+            square_sums[channel] += value * value;
+        }
+    }
+    if samples < border_pixels.max(8) / 2 {
+        return None;
+    }
+    let divisor = samples as f64;
+    let mut rgb = [0_f32; 3];
+    let mut variance_sum = 0_f64;
+    for channel in 0..3 {
+        let mean = sums[channel] / divisor;
+        rgb[channel] = mean as f32;
+        variance_sum += (square_sums[channel] / divisor - mean * mean).max(0.0);
+    }
+    let noise = (variance_sum / 3.0).sqrt() as f32;
+    (noise <= 14.0).then_some(FlatBackgroundProfile { rgb, noise })
+}
+
+fn flat_background_mask(
+    source: &image::RgbaImage,
+    profile: FlatBackgroundProfile,
+) -> image::GrayImage {
+    let low = (10.0 + profile.noise * 1.5).clamp(10.0, 30.0);
+    let high = (low + 28.0 + profile.noise).clamp(36.0, 72.0);
+    let mut mask = image::GrayImage::new(source.width(), source.height());
+    for (source_pixel, target) in source.pixels().zip(mask.pixels_mut()) {
+        if source_pixel.0[3] == 0 {
+            target.0[0] = 0;
+            continue;
+        }
+        let distance = ((f32::from(source_pixel.0[0]) - profile.rgb[0]).powi(2)
+            + (f32::from(source_pixel.0[1]) - profile.rgb[1]).powi(2)
+            + (f32::from(source_pixel.0[2]) - profile.rgb[2]).powi(2))
+        .sqrt();
+        let amount = ((distance - low) / (high - low)).clamp(0.0, 1.0);
+        let smoothed = amount * amount * (3.0 - 2.0 * amount);
+        target.0[0] = (smoothed * 255.0).round() as u8;
+    }
+    mask
+}
+
+fn recover_catastrophic_mask(
+    source: &image::RgbaImage,
+    predicted: image::GrayImage,
+) -> (image::GrayImage, bool) {
+    let predicted_signal = mask_signal(&predicted);
+    if predicted_signal.mean_alpha >= 0.035 || predicted_signal.visible_fraction >= 0.08 {
+        return (predicted, false);
+    }
+    let Some(profile) = flat_background_profile(source) else {
+        return (predicted, false);
+    };
+    let recovered = flat_background_mask(source, profile);
+    let recovered_signal = mask_signal(&recovered);
+    let plausible_coverage = recovered_signal.visible_fraction >= 0.005
+        && recovered_signal.visible_fraction <= 0.92
+        && recovered_signal.mean_alpha <= 0.90;
+    let materially_better = recovered_signal.mean_alpha
+        >= (predicted_signal.mean_alpha * 2.5).max(predicted_signal.mean_alpha + 0.015);
+    if plausible_coverage && materially_better {
+        (recovered, true)
+    } else {
+        (predicted, false)
+    }
+}
+
 fn run_segmentation(
     session: &mut Session,
     source_image: &image::DynamicImage,
@@ -439,7 +565,7 @@ fn run_segmentation(
         );
     }
     let mask = decode_mask(data, &dims)?;
-    let alpha = restore_letterboxed_mask(&mask, letterbox, output_size);
+    let predicted_alpha = restore_letterboxed_mask(&mask, letterbox, output_size);
     let mut matte = source_image
         .resize_exact(
             output_size.0,
@@ -447,6 +573,7 @@ fn run_segmentation(
             image::imageops::FilterType::Triangle,
         )
         .to_rgba8();
+    let (alpha, _) = recover_catastrophic_mask(&matte, predicted_alpha);
     for (alpha_pixel, pixel) in alpha.pixels().zip(matte.pixels_mut()) {
         pixel.0[3] = ((u16::from(pixel.0[3]) * u16::from(alpha_pixel.0[0]) + 127) / 255) as u8;
     }
@@ -570,7 +697,7 @@ pub async fn download_matting_model(
 
     let partial = target.with_extension("onnx.part");
     let client = reqwest::Client::builder()
-        .user_agent("ToolKnit/2.3.1 matting-model-manager")
+        .user_agent("ToolKnit/3.0.0 matting-model-manager")
         .build()
         .map_err(|error| format!("matting:download-init-failed:{error}"))?;
     let requested = source.unwrap_or_else(|| "auto".to_string());
@@ -1010,6 +1137,50 @@ mod matting_tests {
         let restored = restore_letterboxed_mask(&mask, letterbox, (800, 450));
         assert_eq!(restored.dimensions(), (800, 450));
         assert!(restored.pixels().all(|pixel| pixel.0[0] == 255));
+    }
+
+    #[test]
+    fn flat_background_fallback_recovers_dark_graphic() {
+        let mut source = image::RgbaImage::from_pixel(64, 64, image::Rgba([250, 250, 250, 255]));
+        for y in 18..46 {
+            for x in 14..50 {
+                source.put_pixel(x, y, image::Rgba([8, 8, 8, 255]));
+            }
+        }
+        let predicted = image::GrayImage::from_pixel(64, 64, image::Luma([0]));
+        let (recovered, used_fallback) = recover_catastrophic_mask(&source, predicted);
+        assert!(used_fallback);
+        assert!(recovered.get_pixel(2, 2).0[0] < 4);
+        assert!(recovered.get_pixel(32, 32).0[0] > 250);
+    }
+
+    #[test]
+    fn valid_model_mask_is_never_replaced() {
+        let source = image::RgbaImage::from_pixel(64, 64, image::Rgba([250, 250, 250, 255]));
+        let mut predicted = image::GrayImage::from_pixel(64, 64, image::Luma([0]));
+        for y in 12..52 {
+            for x in 18..46 {
+                predicted.put_pixel(x, y, image::Luma([255]));
+            }
+        }
+        let expected = predicted.clone();
+        let (result, used_fallback) = recover_catastrophic_mask(&source, predicted);
+        assert!(!used_fallback);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn varied_border_does_not_trigger_flat_background_fallback() {
+        let mut source = image::RgbaImage::new(64, 64);
+        for (x, y, pixel) in source.enumerate_pixels_mut() {
+            let value = ((x * 37 + y * 53) % 256) as u8;
+            *pixel = image::Rgba([value, 255_u8.saturating_sub(value), value / 2, 255]);
+        }
+        let predicted = image::GrayImage::from_pixel(64, 64, image::Luma([0]));
+        let expected = predicted.clone();
+        let (result, used_fallback) = recover_catastrophic_mask(&source, predicted);
+        assert!(!used_fallback);
+        assert_eq!(result, expected);
     }
 
     #[test]

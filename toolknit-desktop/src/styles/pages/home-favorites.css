@@ -410,10 +410,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .weave-stage {
-    order: -1;
-    min-height: 360px;
-  }
 
   .tool-finder-head {
     grid-template-columns: 1fr;
@@ -487,4 +483,3 @@
 /* The picker is a separate native window; keep its static markup hidden in the main app
    until the lazy color-extractor entry loads it. */
 html:not([data-screen-picker]) #screenPickerOverlay { display: none !important; }
-

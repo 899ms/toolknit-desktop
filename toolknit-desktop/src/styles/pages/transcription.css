@@ -12,7 +12,7 @@
       }
 
       .transcription-v2 .transcription-v2-workspace {
-        grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+        grid-template-rows: minmax(0, 1fr);
       }
 
       .transcription-v2 .transcription-v2-options {
@@ -41,37 +41,12 @@
         line-height: 1.5;
       }
 
-      .transcription-v2 .transcription-v2-queue {
-        min-height: 0;
-        display: grid;
-        grid-template-rows: auto auto minmax(0, 1fr) auto auto;
-        gap: 10px;
-        padding: 16px 0 14px;
-      }
-
-      .transcription-v2 .transcription-v2-files {
-        max-height: 92px;
-      }
-
-      .transcription-v2 #transcriptionFiles:empty {
-        display: grid;
-        place-items: center;
-        min-height: 42px;
-        padding: 0;
-      }
-
-      .transcription-v2 #transcriptionFiles:empty::before {
-        content: attr(data-empty);
-        max-width: none;
-        font-size: 12px;
-      }
-
       .transcription-v2 .transcription-selected-file {
         width: 100%;
         min-height: 38px;
         margin: 0;
         display: grid;
-        grid-template-columns: 26px minmax(0, 1fr);
+        grid-template-columns: 26px minmax(0, 1fr) 30px;
         align-items: center;
         gap: 8px;
         padding: 7px 10px;
@@ -99,8 +74,69 @@
         white-space: nowrap;
       }
 
+      .transcription-v2 .transcription-selected-file-remove {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        margin: 0;
+        padding: 0;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        color: rgba(255, 255, 255, 0.62);
+        background: transparent;
+        cursor: pointer;
+        transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+      }
+
+      .transcription-v2 .transcription-selected-file-remove:hover {
+        color: rgba(255, 255, 255, 0.95);
+        border-color: rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .transcription-v2 .transcription-selected-file-remove:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+      }
+
+      .transcription-v2 .transcription-selected-file-remove svg {
+        width: 15px;
+        height: 15px;
+        margin: 0;
+        color: currentColor;
+      }
+
       .transcription-v2 .transcription-selected-file[hidden] {
         display: none;
+      }
+
+      .transcription-v2 .transcription-v2-result-head {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+      }
+
+      .transcription-v2 .transcription-v2-result-copy h2 {
+        color: rgba(255, 255, 255, 0.94);
+        font-size: 25px;
+        line-height: 1.2;
+      }
+
+      .transcription-v2 .transcription-v2-result-copy p {
+        color: rgba(255, 255, 255, 0.54);
+        font-size: 12px;
+      }
+
+      .transcription-v2 .transcription-v2-result-source {
+        border: 1px solid rgba(255, 255, 255, 0.095);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.032);
+        color: rgba(255, 255, 255, 0.84);
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .transcription-v2 .transcription-v2-result-source :is(svg, i) {
+        color: rgba(255, 255, 255, 0.68);
       }
 
       .transcription-v2 .transcription-v2-preview {
@@ -164,7 +200,7 @@
 
       .transcription-v2 .transcription-v2-segment {
         display: grid;
-        grid-template-columns: minmax(132px, 158px) minmax(0, 1fr);
+        grid-template-columns: minmax(214px, 228px) minmax(0, 1fr);
         align-items: start;
         gap: 14px;
         min-height: 44px;
@@ -192,6 +228,8 @@
         font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
         font-size: 11px;
         letter-spacing: 0.035em;
+        overflow: hidden;
+        text-overflow: ellipsis;
         white-space: nowrap;
       }
 
@@ -223,26 +261,6 @@
         color: rgba(255, 255, 255, 0.52);
         font-size: 12px;
         text-align: center;
-      }
-
-      .transcription-v2 .transcription-v2-attachment-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        min-height: 34px;
-        color: var(--muted);
-        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
-        font-size: 12px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      .transcription-v2 .transcription-v2-attachment-actions {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        gap: 8px;
       }
 
       .transcription-v2 .transcription-v2-copy-btn {
@@ -282,101 +300,14 @@
         cursor: default;
       }
 
-      .transcription-v2 .transcription-v2-files.has-files {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        align-content: start;
-        gap: 8px;
-        padding: 8px;
-        overflow-y: auto;
-      }
-
-      .transcription-v2 .transcription-v2-files .audio-convert-file-item {
-        min-height: 38px;
-        padding: 7px 9px;
-        gap: 8px;
-        border-radius: 12px;
-        cursor: default;
-      }
-
-      .transcription-v2 .transcription-v2-files .audio-convert-file-name {
-        flex: 1 1 auto;
-        min-width: 0;
-        font-size: 12px;
-      }
-
-      .transcription-v2 .transcription-result-type {
-        flex: 0 0 auto;
-        display: inline-flex;
-        align-items: center;
-        min-height: 22px;
-        padding: 0 8px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 999px;
-        color: rgba(255, 255, 255, 0.58);
-        background: rgba(255, 255, 255, 0.035);
-        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
-        font-size: 10px;
-        letter-spacing: 0.04em;
-        white-space: nowrap;
-      }
-
-      .transcription-v2 .transcription-v2-info {
-        padding-top: 14px;
-        padding-bottom: 16px;
-        transition: opacity 180ms ease, max-height 180ms ease, padding 180ms ease, border-color 180ms ease;
-      }
-
-      .transcription-v2 .transcription-v2-info .pdf-merge-info-item {
-        min-height: 56px;
-      }
-
-      .transcription-v2.has-result .transcription-v2-info {
-        max-height: 0;
-        padding-top: 0;
-        padding-bottom: 0;
-        border-bottom-color: transparent;
-        opacity: 0;
-        overflow: hidden;
-        pointer-events: none;
-      }
-
       .transcription-v2 .transcription-v2-actions {
         padding-top: 16px;
       }
 
       @media (max-width: 1120px) {
-        .transcription-v2 .transcription-v2-files.has-files {
-          grid-template-columns: 1fr;
-        }
-
         .transcription-v2 .transcription-v2-segment {
           grid-template-columns: 1fr;
           gap: 8px;
-        }
-
-        .transcription-v2 .transcription-v2-attachment-head {
-          align-items: flex-start;
-          flex-direction: column;
-        }
-
-        .transcription-v2 .transcription-v2-attachment-actions {
-          justify-content: flex-start;
-        }
-      }
-
-      @media (max-height: 860px) {
-        .transcription-v2 .transcription-v2-queue {
-          padding-top: 12px;
-          padding-bottom: 12px;
-        }
-
-        .transcription-v2 .transcription-v2-info {
-          display: none;
-        }
-
-        .transcription-v2 .transcription-v2-files {
-          max-height: 74px;
         }
       }
 

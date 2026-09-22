@@ -12,7 +12,6 @@ export function initImageStitchTool(context = {}) {
   refreshIcons();
   const controller = createImageStitchController({
     ...context,
-    openHelpOverlay: context.openHelp,
     overlay
   });
   return {

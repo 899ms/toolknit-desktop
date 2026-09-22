@@ -3,8 +3,60 @@
    controls created when the lazy feature mounts. */
 .crypto-shell [data-crypto-warning][hidden] { display: none !important; }
 .crypto-shell [data-crypto-panel] [hidden] { display: none !important; }
-.crypto-shell [data-crypto-panel] textarea { field-sizing: content; }
+.crypto-shell [data-crypto-panel] textarea { field-sizing: fixed; }
 .crypto-shell [data-crypto-panel] .crypto-file-progress i { will-change: width; }
 @media (prefers-reduced-motion: reduce) {
   .crypto-shell [data-crypto-panel] .crypto-file-progress i { transition: none; }
+}
+
+/* Explicit rows keep a hidden warning from shifting the editor into an auto row. */
+.crypto-shell .crypto-workspace-head { grid-row: 1; }
+.crypto-shell .crypto-legacy-warning { grid-row: 2; }
+.crypto-shell .crypto-panel { grid-row: 3; min-height: 0; height: 100%; }
+.crypto-shell .crypto-session-log { grid-row: 4; }
+.crypto-shell .crypto-workspace-head > div { min-width: 0; }
+.crypto-shell .crypto-status { max-width: 45%; overflow-wrap: anywhere; }
+.crypto-shell .crypto-io {
+  min-height: 200px;
+  grid-template-rows: auto minmax(160px, 1fr);
+  gap: 8px;
+}
+.crypto-shell .crypto-io > span { min-height: 36px; gap: 6px; flex-wrap: wrap; }
+.crypto-shell .crypto-io textarea { box-sizing: border-box; }
+.crypto-shell .crypto-panel > .crypto-io-grid,
+.crypto-shell .crypto-panel > [data-symmetric-text] > .crypto-io-grid { min-height: 204px; flex-shrink: 0; }
+.crypto-shell .crypto-panel > [data-symmetric-text],
+.crypto-shell .crypto-panel > .crypto-file-hash { min-height: auto; flex-shrink: 0; }
+.crypto-shell .crypto-panel > [data-symmetric-file]:not([hidden]) {
+  min-height: auto;
+  flex-shrink: 0;
+  grid-template-rows: auto auto auto minmax(40px, 1fr) auto;
+}
+.crypto-shell .crypto-file-progress { align-content: start; }
+.crypto-shell .crypto-file-mode > .crypto-operation,
+.crypto-shell .crypto-file-progress { margin: 0; }
+.crypto-shell .crypto-config-row,
+.crypto-shell .crypto-mode-tabs,
+.crypto-shell .crypto-field,
+.crypto-shell .crypto-actions { margin: 0; }
+.crypto-shell .crypto-mode-tabs,
+.crypto-shell .crypto-operation { align-self: flex-start; width: fit-content; }
+.crypto-shell .crypto-key-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.crypto-shell .crypto-key-grid label { min-width: 0; }
+.crypto-shell .crypto-key-grid textarea { width: 100%; box-sizing: border-box; }
+.crypto-shell .crypto-sidebar nav { max-height: none; display: grid; gap: 5px; }
+.crypto-shell .crypto-sidebar-index { flex-shrink: 0; }
+.crypto-shell .crypto-sidebar .tool-page-v2-rail-kicker { letter-spacing: 0; }
+@media (max-width: 1100px) {
+  .crypto-shell .crypto-secret-grid,
+  .crypto-shell .crypto-key-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .crypto-shell .crypto-main { grid-template-columns: minmax(0, 1fr) !important; }
+  .crypto-shell .crypto-sidebar { height: auto; max-height: 230px; padding: 16px; }
+  .crypto-shell .crypto-sidebar > :not(.crypto-sidebar-index) { display: none; }
+  .crypto-shell .crypto-sidebar-index { padding: 0; }
+  .crypto-shell .crypto-sidebar nav { height: auto; padding: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .crypto-shell .crypto-nav-group { display: block; grid-column: 1 / -1; }
+  .crypto-shell .crypto-session-log { grid-template-columns: minmax(0, 1fr); }
 }

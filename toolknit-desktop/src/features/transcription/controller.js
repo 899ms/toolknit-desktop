@@ -2,6 +2,7 @@ import { createIcons, icons } from 'lucide';
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
 import { tauriCorePromise, tauriEventPromise, loadTauriDialog, loadTauriWebview } from '../../platform/tauri-runtime.js';
 import { escapeHtml } from '../../shared/html.js';
+import { simplifyChineseText } from '../../core/chinese-text.js';
 import { parseRefinedTranscriptionResponse, parseTranscriptionSrt } from './core.js';
 
 function createNoopTool() {
@@ -37,12 +38,17 @@ export function initTranscriptionTool({
   const transcriptionCta = byId('transcriptionCta');
   const transcriptionCtaText = byId('transcriptionCtaText');
   const transcriptionInput = byId('transcriptionInput');
-  const transcriptionFiles = byId('transcriptionFiles');
+  const transcriptionOperationView = byId('transcriptionOperationView');
+  const transcriptionResultView = byId('transcriptionResultView');
+  const transcriptionEmptyState = byId('transcriptionEmptyState');
   const transcriptionPreview = byId('transcriptionPreview');
+  const transcriptionResetBtn = byId('transcriptionResetBtn');
   const transcriptionCopyTextBtn = byId('transcriptionCopyTextBtn');
   const transcriptionOpenFolderBtn = byId('transcriptionOpenFolderBtn');
   const transcriptionSelectedFile = byId('transcriptionSelectedFile');
   const transcriptionSelectedFileName = byId('transcriptionSelectedFileName');
+  const transcriptionResultFileName = byId('transcriptionResultFileName');
+  const transcriptionRemoveFileBtn = byId('transcriptionRemoveFileBtn');
   const transcriptionProcessBtn = byId('transcriptionProcessBtn');
   const transcriptionProcessMask = byId('transcriptionProcessMask');
   const transcriptionProcessText = byId('transcriptionProcessText');
@@ -80,8 +86,31 @@ export function initTranscriptionTool({
   }
 
   function syncTranscriptionInlineLabels() {
-    if (transcriptionFiles) transcriptionFiles.dataset.empty = t('home.transcription.emptyOutputs');
     setTranscriptionCopyButtonState(false);
+  }
+
+  function setTranscriptionView(view, { focus = false } = {}) {
+    const showingResult = view === 'result';
+    const nextView = showingResult ? transcriptionResultView : transcriptionOperationView;
+    const previousView = showingResult ? transcriptionOperationView : transcriptionResultView;
+
+    if (nextView) {
+      nextView.hidden = false;
+      nextView.setAttribute('aria-hidden', 'false');
+      nextView.removeAttribute('inert');
+    }
+    transcriptionOverlay?.classList.toggle('has-result', showingResult);
+
+    if (focus) {
+      const focusTarget = showingResult ? transcriptionResetBtn : transcriptionCta;
+      focusTarget?.focus({ preventScroll: true });
+    }
+
+    if (previousView) {
+      previousView.hidden = true;
+      previousView.setAttribute('aria-hidden', 'true');
+      previousView.setAttribute('inert', '');
+    }
   }
 
   function setTranscriptionProgress(progress, message) {
@@ -106,29 +135,39 @@ export function initTranscriptionTool({
         if (transcriptionCtaText) transcriptionCtaText.textContent = ctaLabel;
         if (transcriptionCta) transcriptionCta.setAttribute('aria-label', ctaLabel);
         if (transcriptionSelectedFile) transcriptionSelectedFile.hidden = !hasFile;
+        if (transcriptionEmptyState) {
+          transcriptionEmptyState.hidden = hasFile;
+          transcriptionEmptyState.setAttribute('aria-hidden', hasFile ? 'true' : 'false');
+        }
         if (transcriptionSelectedFileName) {
           transcriptionSelectedFileName.textContent = hasFile ? transcriptionFile.name : '';
           transcriptionSelectedFileName.title = hasFile ? transcriptionFile.name : '';
         }
+        if (transcriptionResultFileName) {
+          transcriptionResultFileName.textContent = hasFile ? transcriptionFile.name : '';
+          transcriptionResultFileName.title = hasFile ? transcriptionFile.name : '';
+        }
       }
 
       function renderTranscriptionFile() {
-        transcriptionOverlay?.classList.remove('has-result');
-        if (transcriptionFiles) {
-          transcriptionFiles.replaceChildren();
-          transcriptionFiles.classList.remove('has-files');
-        }
         setTranscriptionOutputDir('');
-        renderTranscriptionPreviewEmpty();
+        clearTranscriptionPreview();
         updateTranscriptionUploadState();
+        setTranscriptionView('operation');
       }
 
-      function renderTranscriptionPreviewEmpty() {
+      function clearTranscriptionPreview() {
         transcriptionPreviewText = '';
         setTranscriptionCopyButtonState(false);
         if (!transcriptionPreview) return;
-        transcriptionPreview.classList.add('is-empty');
         transcriptionPreview.replaceChildren();
+        transcriptionPreview.classList.remove('is-empty');
+      }
+
+      function renderTranscriptionPreviewEmpty() {
+        clearTranscriptionPreview();
+        if (!transcriptionPreview) return;
+        transcriptionPreview.classList.add('is-empty');
         const empty = document.createElement('div');
         empty.className = 'transcription-v2-preview-empty';
         empty.innerHTML = `
@@ -152,6 +191,33 @@ export function initTranscriptionTool({
         transcriptionFile = file;
         renderTranscriptionFile();
         updateTranscriptionProcessButton();
+      }
+
+      function clearTranscriptionFile() {
+        if (transcriptionProcessing) return;
+        transcriptionFile = null;
+        if (transcriptionInput) transcriptionInput.value = '';
+        renderTranscriptionFile();
+        updateTranscriptionProcessButton();
+        refreshIcons?.();
+      }
+
+      function resetTranscriptionSession({ focus = false, resetOptions = false } = {}) {
+        if (transcriptionProcessing) return;
+        setTranscriptionSuccessVisible(false);
+        transcriptionFile = null;
+        if (transcriptionInput) transcriptionInput.value = '';
+        if (resetOptions) {
+          transcriptionLanguage = 'auto';
+          transcriptionLanguageOptions?.querySelectorAll('[data-language]').forEach(button => {
+            button.classList.toggle('active', button.dataset.language === 'auto');
+          });
+          if (transcriptionRefine) transcriptionRefine.checked = false;
+        }
+        renderTranscriptionFile();
+        updateTranscriptionProcessButton();
+        if (focus) setTranscriptionView('operation', { focus: true });
+        refreshIcons?.();
       }
 
       function showTranscriptionTool() {
@@ -181,10 +247,7 @@ export function initTranscriptionTool({
     lifecycle.invalidate();
     transcriptionProcessing = false;
     transcriptionOverlay?.classList.remove('visible');
-    setTranscriptionSuccessVisible(false);
-    transcriptionFile = null;
-        renderTranscriptionFile();
-        updateTranscriptionProcessButton();
+        resetTranscriptionSession({ resetOptions: true });
         if (transcriptionPlasmaDispose) { transcriptionPlasmaDispose(); transcriptionPlasmaDispose = null; }
       }
 
@@ -196,6 +259,8 @@ export function initTranscriptionTool({
           if (typeof selected === 'string') addTranscriptionFile({ path: selected, name: selected.split(/[\\/]/).pop() || selected });
         } else transcriptionInput?.click();
       });
+      lifecycle.event(transcriptionRemoveFileBtn, 'click', clearTranscriptionFile);
+      lifecycle.event(transcriptionResetBtn, 'click', () => resetTranscriptionSession({ focus: true, resetOptions: true }));
       lifecycle.event(transcriptionInput, 'change', () => { const file = transcriptionInput.files?.[0]; if (file) addTranscriptionFile(file); transcriptionInput.value = ''; });
       transcriptionLanguageOptions?.querySelectorAll('[data-language]').forEach(button => lifecycle.event(button, 'click', () => {
         transcriptionLanguage = button.dataset.language || 'auto';
@@ -242,7 +307,7 @@ export function initTranscriptionTool({
       }
 
       function renderTranscriptionPreview(segments, textValue = '') {
-        const normalizedText = String(textValue || '').trim();
+        const normalizedText = simplifyChineseText(textValue).trim();
         transcriptionPreviewText = normalizedText || segments.map(segment => segment.text.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
         setTranscriptionCopyButtonState(false);
         if (!transcriptionPreview) return;
@@ -323,11 +388,6 @@ export function initTranscriptionTool({
       }
 
       async function showTranscriptionResult(result, refined = null) {
-        transcriptionOverlay?.classList.add('has-result');
-        if (transcriptionFiles) {
-          transcriptionFiles.replaceChildren();
-          transcriptionFiles.classList.add('has-files');
-        }
         const outputDir = String(result?.raw_srt_path || result?.raw_txt_path || '').replace(/[/\\][^/\\]+$/, '');
         setTranscriptionOutputDir(outputDir);
         const previewSrtPath = refined?.srtPath || result.raw_srt_path;
@@ -342,34 +402,7 @@ export function initTranscriptionTool({
           console.error('Cannot preview transcription result:', error);
           renderTranscriptionPreview([], '');
         }
-        const paths = [
-          [t('home.transcription.rawJson'), result.raw_json_path],
-          [t('home.transcription.rawSrt'), result.raw_srt_path],
-          [t('home.transcription.rawTxt'), result.raw_txt_path],
-          ...(refined ? [[t('home.transcription.refinedSrt'), refined.srtPath], [t('home.transcription.refinedTxt'), refined.txtPath]] : [])
-        ];
-        paths.forEach(([label, path], index) => {
-          if (!transcriptionFiles) return;
-          const filePath = String(path || '');
-          const item = document.createElement('div');
-          item.className = 'audio-convert-file-item';
-          item.title = displayFilesystemPath(filePath);
-          item.innerHTML = `
-            <span class="audio-convert-file-index">${index + 1}</span>
-            <span class="audio-convert-file-name">${escapeHtml(filePath.split(/[\\/]/).pop() || label)}</span>
-            <span class="transcription-result-type">${escapeHtml(label)}</span>
-          `;
-          lifecycle.event(item, 'dblclick', async () => {
-            if (!isTauri || !filePath) return;
-            try {
-              const { invoke } = await tauriCorePromise;
-              await invoke('open_path', { path: filePath });
-            } catch (error) {
-              console.error('Cannot open transcription output file:', error);
-            }
-          });
-          transcriptionFiles.append(item);
-        });
+        setTranscriptionView('result', { focus: true });
       }
 
       lifecycle.event(transcriptionCopyTextBtn, 'click', async () => {
@@ -461,7 +494,16 @@ export function initTranscriptionTool({
           setTranscriptionProgress(100, transcriptionProgressLabel('complete'));
         } catch (error) {
           console.error('Transcription failed:', error);
-          notify?.(t('common.errorOccurred', { error: String(error?.message || error) }));
+          const errorCode = String(error?.message || error);
+          const errorMessage = {
+            'transcription:no-audio-stream': t('home.transcription.noAudioStream'),
+            'transcription:prepare-failed': t('home.transcription.prepareFailed'),
+            'transcription:model-load-failed': t('home.transcription.modelLoadFailed'),
+            'transcription:audio-read-failed': t('home.transcription.audioReadFailed'),
+            'transcription:output-failed': t('home.transcription.outputFailed'),
+            'transcription:engine-failed': t('home.transcription.engineFailed')
+          }[errorCode] || errorCode;
+          notify?.(t('common.errorOccurred', { error: errorMessage }));
         } finally {
           unlisten?.();
           if (!lifecycle.isCurrent(operationToken)) return;

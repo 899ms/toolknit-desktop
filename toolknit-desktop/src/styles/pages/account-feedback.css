@@ -413,7 +413,7 @@
         padding: 0 14px;
         margin: 0;
         border: 1px solid var(--line-strong);
-        border-radius: 10px;
+        border-radius: var(--tk-nav-button-radius, 10px);
         color: var(--ink);
         background: rgba(255, 255, 255, 0.03);
         font: inherit;

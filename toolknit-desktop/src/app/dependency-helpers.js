@@ -26,7 +26,46 @@ export function dependencyProgressPercent(progress) {
   )));
 }
 
+const dependencyFields = Object.freeze({
+  ffmpeg: ['needsFfmpeg', 'ffmpegProgress', 'ffmpegComplete'],
+  model: ['needsModel', 'modelProgress', 'modelComplete'],
+  libreoffice: ['needsLibreOffice', 'libreOfficeProgress', 'libreOfficeComplete']
+});
+
+export function updateDependencyProgress(state, type, progress) {
+  const fields = dependencyFields[type];
+  if (!fields || !state?.downloading || !state[fields[0]]) return false;
+  state[fields[1]] = progress || null;
+  state[fields[2]] = progress?.phase === 'complete';
+  return true;
+}
+
+export function overallDependencyProgress(state) {
+  const fields = Object.values(dependencyFields).filter(([needed]) => state?.[needed]);
+  return fields.length ? Math.round(fields.reduce((sum, [, progress, complete]) =>
+    sum + (state[complete] ? 100 : dependencyProgressPercent(state[progress])), 0) / fields.length) : 100;
+}
+
 export function createDependencyHelpers({ translate = key => key, getLanguage = () => 'zh', displayPath = value => value } = {}) {
+  const dependencyErrorMessage = error => {
+    const message = String(error?.message || error || '');
+    const match = /^libreoffice-runtime:([a-z-]+)(?::([A-Za-z0-9_.=-]+))?$/.exec(message);
+    if (!match) return message;
+    const key = {
+      'missing-library': 'officeMissingLibrary',
+      'incompatible-system': 'officeIncompatibleSystem',
+      'invalid-architecture': 'officeInvalidArchitecture',
+      'timeout': 'officeTimeout',
+      'runtime-files': 'officeRuntimeFiles',
+      'extract': 'officeExtract',
+      'extract-stalled': 'officeExtractStalled',
+      'extract-timeout': 'officeExtractTimeout',
+      'installer-busy': 'officeInstallerBusy',
+      'installer-policy': 'officeInstallerPolicy',
+      'publish': 'officePublish'
+    }[match[1]] || 'officeStartup';
+    return `${translate(`home.dependencies.${key}`)} (${match[1]}${match[2] ? `: ${match[2]}` : ''})`;
+  };
   const detectedRuntimeLabel = status => {
     if (!status?.installed) return '';
     if (!isManagedRuntime(status)) return getLanguage() === 'en' ? 'Detected system dependency' : '已检测到系统依赖';
@@ -38,12 +77,23 @@ export function createDependencyHelpers({ translate = key => key, getLanguage = 
   const runtimeMetadata = status => status?.installed
     ? [status.version, displayPath(status.path)].filter(Boolean).join(' · ')
     : '';
-  const dependencyStatusText = (type, progress, complete) => {
+  const dependencyStatusText = (type, progress, complete, failed = false) => {
+    if (failed) return translate('home.dependencies.failedStatus');
     if (complete || progress?.phase === 'complete') return translate('home.dependencies.ready');
     if (!progress) return translate('home.dependencies.waiting');
     if (progress.phase === 'installing') return translate('home.dependencies.installing');
     if (progress.phase === 'verifying') return translate('home.dependencies.verifying');
     return `${translate('home.dependencies.downloading')} ${dependencyProgressPercent(progress)}%`;
   };
-  return Object.freeze({ detectedRuntimeLabel, dependencyStatusText, runtimeMetadata });
+  const dependencyInstallingDetail = (name, progress) => {
+    const extraction = progress?.extraction;
+    if (!extraction || !Number.isFinite(extraction.elapsed_seconds)) return translate('home.dependencies.installingDetail', { name });
+    const seconds = Math.max(0, Math.floor(extraction.elapsed_seconds));
+    const elapsed = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+    const files = Math.max(0, Math.floor(Number(extraction.extracted_files) || 0));
+    return files > 0
+      ? translate('home.dependencies.officeExtractingDetail', { files, size: formatDependencyBytes(extraction.extracted_bytes), elapsed })
+      : translate('home.dependencies.officePreparingDetail', { elapsed });
+  };
+  return Object.freeze({ detectedRuntimeLabel, dependencyStatusText, dependencyErrorMessage, dependencyInstallingDetail, runtimeMetadata });
 }

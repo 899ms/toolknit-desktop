@@ -124,7 +124,7 @@ export function createColorExtractorController({
   }
 
   function renderDetail(color) {
-    if (detailSwatch) detailSwatch.style.backgroundColor = color?.hex || 'rgba(255,255,255,.04)';
+    if (detailSwatch) detailSwatch.style.backgroundColor = color?.hex || '';
     if (detailHex) detailHex.textContent = color?.hex || '—';
     if (detailRgb) detailRgb.textContent = color ? `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})` : '—';
     if (detailHsl) detailHsl.textContent = color ? `hsl(${color.hsl.h}, ${color.hsl.s}%, ${color.hsl.l}%)` : '—';
@@ -332,6 +332,19 @@ export function createColorExtractorController({
   scope.event(screenModeButton, 'click', () => setMode('screen'));
   scope.event(screenStartButton, 'click', () => { void startScreenPicker(); });
   scope.event(screenCopyButton, 'click', () => void copyText(screenHex?.textContent).then(() => notify(t('home.colorExtractor.copySuccess'))).catch(() => notify(t('home.colorExtractor.copyFailed'))));
+  const detailValues = { hex: detailHex, rgb: detailRgb, hsl: detailHsl };
+  overlay.querySelectorAll('.color-extractor-v2-detail-code[data-code]').forEach(button => {
+    scope.event(button, 'click', () => {
+      if (!open || !colors[selectedIndex]) return;
+      const value = detailValues[button.dataset.code]?.textContent;
+      if (!value) return;
+      const revision = requestRevision;
+      void copyText(value).then(
+        () => { if (open && revision === requestRevision) notify(t('home.colorExtractor.copySuccess')); },
+        () => { if (open && revision === requestRevision) notify(t('home.colorExtractor.copyFailed')); }
+      );
+    });
+  });
   scope.event(window, 'toolknit:screen-color-picked', event => renderScreenResult(event.detail));
   scope.event(replaceButton, 'click', () => fileInput?.click());
   scope.event(fileInput, 'change', event => { const file = event.target.files?.[0]; if (file) void handleFile(file); });

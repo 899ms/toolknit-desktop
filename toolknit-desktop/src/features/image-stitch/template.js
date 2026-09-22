@@ -6,7 +6,7 @@ const PAGE = String.raw`
             <i data-lucide="arrow-left"></i>
             <span data-i18n="settings.back">返回首页</span>
           </button>
-          <span class="pdf-merge-v2-top-tag image-stitch-v2-top-tag">IMAGE STITCH · TOOL PAGE 2.3</span>
+          <span class="pdf-merge-v2-top-tag image-stitch-v2-top-tag">IMAGE STITCH · TOOL PAGE 3.0</span>
         </div>
         <div class="home-v2-top-actions pdf-merge-v2-top-actions">
           <button class="home-v2-nav-link" type="button" data-home-link="website">
@@ -39,7 +39,6 @@ const PAGE = String.raw`
           <div class="image-stitch-command-grid">
             <button class="image-stitch-text-button primary" id="imageStitchPick" type="button"><i data-lucide="plus"></i><span data-i18n="home.imageStitch.add">添加图片</span></button>
             <button class="image-stitch-text-button" id="imageStitchPdfPick" type="button"><i data-lucide="file-text"></i><span data-i18n="home.imageStitch.addPdf">从 PDF 导入</span></button>
-            <button class="image-stitch-icon-button" id="imageStitchHelp" type="button" title="使用帮助" aria-label="使用帮助"><i data-lucide="circle-help"></i></button>
             <button class="image-stitch-text-button danger" id="imageStitchClear" type="button" disabled><i data-lucide="trash-2"></i><span data-i18n="home.imageStitch.clear">全部清空</span></button>
           </div>
           <aside class="image-stitch-queue-panel">
@@ -61,7 +60,7 @@ const PAGE = String.raw`
             <span data-i18n="home.imageStitch.preview">实时预览</span>
             <strong id="imageStitchEstimate">-- × --</strong>
           </div>
-          <div class="image-stitch-preview-viewport" id="imageStitchPreviewViewport">
+          <div class="image-stitch-preview-viewport tk-vertical-stripe-surface" id="imageStitchPreviewViewport">
             <div class="image-stitch-preview-empty" id="imageStitchPreviewEmpty">
               <span>2+</span>
               <p data-i18n="home.imageStitch.previewEmpty">图片会按左侧顺序在这里组合</p>
@@ -80,6 +79,10 @@ const PAGE = String.raw`
             <div class="audio-convert-format-options" id="imageStitchMode">
               <button class="audio-convert-format-option active" data-mode="vertical" type="button" data-i18n="home.imageStitch.vertical">上下拼接</button>
               <button class="audio-convert-format-option" data-mode="horizontal" type="button" data-i18n="home.imageStitch.horizontal">左右拼接</button>
+              <button class="audio-convert-format-option" data-mode="grid-2" type="button">2x2</button>
+              <button class="audio-convert-format-option" data-mode="grid-3" type="button">3x3</button>
+              <button class="audio-convert-format-option" data-mode="grid-4" type="button">4x4</button>
+              <button class="audio-convert-format-option" data-mode="grid-5" type="button">5x5</button>
             </div>
           </div>
           <div class="image-stitch-setting-group">
@@ -91,8 +94,8 @@ const PAGE = String.raw`
             </div>
           </div>
           <div class="image-stitch-settings-grid">
-            <label class="image-stitch-number-setting"><span data-i18n="home.imageStitch.spacing">间距</span><input id="imageStitchSpacing" type="number" min="0" max="500" value="0"><em>px</em></label>
-            <label class="image-stitch-number-setting"><span data-i18n="home.imageStitch.scale">比例</span><input id="imageStitchScale" type="number" min="10" max="100" value="100"><em>%</em></label>
+            <label class="image-stitch-number-setting"><span data-i18n="home.imageStitch.spacing">间距</span><span class="image-stitch-number-field"><input id="imageStitchSpacing" type="number" min="0" max="500" value="0"><em>px</em></span></label>
+            <label class="image-stitch-number-setting"><span data-i18n="home.imageStitch.scale">比例</span><span class="image-stitch-number-field"><input id="imageStitchScale" type="number" min="10" max="100" value="100"><em>%</em></span></label>
           </div>
           <div class="image-stitch-setting-group">
             <span class="image-stitch-setting-label" data-i18n="home.imageStitch.format">格式</span>
@@ -101,7 +104,7 @@ const PAGE = String.raw`
               <button class="audio-convert-format-option" data-format="jpg" type="button">JPG</button>
             </div>
           </div>
-          <label class="image-stitch-number-setting" id="imageStitchQualityWrap" hidden><span data-i18n="home.imageStitch.quality">质量</span><input id="imageStitchQuality" type="number" min="60" max="100" value="92"><em>%</em></label>
+          <label class="image-stitch-number-setting" id="imageStitchQualityWrap" hidden><span data-i18n="home.imageStitch.quality">质量</span><span class="image-stitch-number-field"><input id="imageStitchQuality" type="number" min="60" max="100" value="92"><em>%</em></span></label>
           <label class="image-stitch-name-setting"><span data-i18n="home.imageStitch.outputName">文件名</span><input id="imageStitchOutputName" type="text" maxlength="96" placeholder="stitched_image" autocomplete="off" spellcheck="false"></label>
           <footer class="image-stitch-footer">
             <span><i data-lucide="shield-check"></i><span data-i18n="home.imageStitch.local">图片仅在本机处理，源文件不会被修改</span></span>

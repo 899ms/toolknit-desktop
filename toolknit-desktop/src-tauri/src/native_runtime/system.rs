@@ -1,4 +1,6 @@
 use super::*;
+#[path = "cleanup_guard.rs"]
+mod cleanup_guard;
 
 #[cfg(target_os = "windows")]
 pub(super) const HARDWARE_PROVIDER_PREAMBLE: &str = r#"
@@ -163,7 +165,10 @@ pub(super) fn append_hardware_debug(line: &str) {
 pub(super) fn append_hardware_debug(_line: &str) {}
 
 #[cfg(target_os = "windows")]
-pub(super) fn run_windows_powershell_json(script: &str, context: &str) -> Result<serde_json::Value, String> {
+pub(super) fn run_windows_powershell_json(
+    script: &str,
+    context: &str,
+) -> Result<serde_json::Value, String> {
     use std::os::windows::process::CommandExt;
 
     let provider_script = script.replace("Get-CimInstance", "Get-ToolKnitInstance");
@@ -206,9 +211,7 @@ Set-Content -LiteralPath $env:TOOLKNIT_HW_ERR -Value $_.Exception.ToString() -En
 exit 1
 }}
 "#,
-        HARDWARE_PROVIDER_PREAMBLE,
-        provider_script,
-        PROVIDER_ATTACH,
+        HARDWARE_PROVIDER_PREAMBLE, provider_script, PROVIDER_ATTACH,
     );
 
     let output = match std::process::Command::new("powershell.exe")
@@ -248,7 +251,11 @@ exit 1
                 err_flat.chars().take(700).collect::<String>()
             )
         } else if !stderr.is_empty() {
-            format!("exit={}; stderr={}", exit, stderr.chars().take(480).collect::<String>())
+            format!(
+                "exit={}; stderr={}",
+                exit,
+                stderr.chars().take(480).collect::<String>()
+            )
         } else {
             format!("exit={}", exit)
         };
@@ -261,10 +268,7 @@ exit 1
     }
 
     let payload = match std::fs::read_to_string(&out_path) {
-        Ok(payload) => payload
-            .trim_start_matches('\u{FEFF}')
-            .trim()
-            .to_string(),
+        Ok(payload) => payload.trim_start_matches('\u{FEFF}').trim().to_string(),
         Err(error) => {
             cleanup_paths();
             return Err(format!("{} failed to read output: {}", context, error));
@@ -1012,30 +1016,86 @@ pub(super) async fn scan_large_files(
     root_path: String,
     min_size_mb: Option<u64>,
     mode: Option<String>,
+    allow_system_drive_root: Option<bool>,
+    scan_id: String,
 ) -> Result<LargeFileScanResult, String> {
-    tokio::task::spawn_blocking(move || collect_large_files(root_path, min_size_mb, mode))
-        .await
-        .map_err(|error| format!("Large file scan worker failed: {}", error))?
+    let session = cleanup_guard::begin(&scan_id)?;
+    tokio::task::spawn_blocking(move || {
+        let result = collect_large_files_with_session(
+            root_path,
+            min_size_mb,
+            mode,
+            allow_system_drive_root.unwrap_or(false),
+            Some(&session),
+        );
+        match result {
+            Ok(mut result) => {
+                session.check()?;
+                session.finish();
+                result.scan_id = scan_id;
+                Ok(result)
+            }
+            Err(error) => {
+                cleanup_guard::cancel(&scan_id);
+                Err(error)
+            }
+        }
+    })
+    .await
+    .map_err(|error| format!("Large file scan worker failed: {}", error))?
 }
 
+#[tauri::command]
+pub(super) fn cancel_large_file_scan(scan_id: String) {
+    cleanup_guard::cancel(&scan_id);
+}
+
+#[cfg(test)]
 pub(super) fn collect_large_files(
     root_path: String,
     min_size_mb: Option<u64>,
     mode: Option<String>,
+    allow_system_drive_root: bool,
 ) -> Result<LargeFileScanResult, String> {
-    let root = canonical_scan_root(&root_path)?;
+    collect_large_files_with_session(root_path, min_size_mb, mode, allow_system_drive_root, None)
+}
+
+fn collect_large_files_with_session(
+    root_path: String,
+    min_size_mb: Option<u64>,
+    mode: Option<String>,
+    allow_system_drive_root: bool,
+    session: Option<&cleanup_guard::ScanSession>,
+) -> Result<LargeFileScanResult, String> {
+    let started = std::time::Instant::now();
+    let root = canonical_scan_root(&root_path, allow_system_drive_root)?;
+    if let Some(session) = session {
+        session.check()?;
+        session.set_root(&root);
+    }
     let min_size_mb = min_size_mb.unwrap_or(50).clamp(10, 102_400);
     let min_size_bytes = min_size_mb.saturating_mul(1024 * 1024);
     let mode = normalize_large_file_mode(mode.as_deref());
     let mut scanned_files = 0_u64;
     let mut skipped_dirs = 0_u64;
+    let mut protected_dirs = 0_u64;
+    let mut protected_files = 0_u64;
+    let mut denied_dirs = 0_u64;
     let mut candidates = Vec::new();
     let mut stack = vec![root.clone()];
     const MAX_SCAN_FILES: u64 = 250_000;
     const MAX_RESULTS: usize = 1200;
 
     while let Some(directory) = stack.pop() {
-        if should_skip_cleanup_dir(&directory, &root) {
+        if let Some(session) = session {
+            session.check()?;
+        }
+        if cleanup_guard::reject_links(&directory).is_err() {
+            protected_dirs += 1;
+            skipped_dirs += 1;
+            continue;
+        }
+        if should_skip_cleanup_dir(&directory, &root, &mut protected_dirs) {
             skipped_dirs += 1;
             continue;
         }
@@ -1043,19 +1103,49 @@ pub(super) fn collect_large_files(
             Ok(entries) => entries,
             Err(_) => {
                 skipped_dirs += 1;
+                denied_dirs += 1;
                 continue;
             }
         };
         for entry in entries.flatten() {
+            if let Some(session) = session {
+                session.check()?;
+            }
             if scanned_files >= MAX_SCAN_FILES {
                 break;
             }
             let path = entry.path();
+            if cleanup_path_is_reparse_point(&path) {
+                if entry
+                    .file_type()
+                    .map(|file_type| file_type.is_dir())
+                    .unwrap_or(false)
+                {
+                    protected_dirs += 1;
+                } else {
+                    protected_files += 1;
+                }
+                continue;
+            }
             let metadata = match entry.metadata() {
                 Ok(metadata) => metadata,
-                Err(_) => continue,
+                Err(_) => {
+                    if entry
+                        .file_type()
+                        .map(|file_type| file_type.is_dir())
+                        .unwrap_or(false)
+                    {
+                        denied_dirs += 1;
+                    }
+                    continue;
+                }
             };
             if metadata.is_dir() {
+                if cleanup_guard::protected_attributes(&metadata, true) {
+                    protected_dirs += 1;
+                    skipped_dirs += 1;
+                    continue;
+                }
                 stack.push(path);
                 continue;
             }
@@ -1063,6 +1153,10 @@ pub(super) fn collect_large_files(
                 continue;
             }
             scanned_files += 1;
+            if is_protected_cleanup_file(&path, &metadata) {
+                protected_files += 1;
+                continue;
+            }
             let size_bytes = metadata.len();
             if size_bytes < min_size_bytes {
                 continue;
@@ -1090,6 +1184,16 @@ pub(super) fn collect_large_files(
                 .and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok())
                 .and_then(|duration| i64::try_from(duration.as_millis()).ok());
             let (risk, local_reason) = cleanup_local_risk(&path, category, size_bytes);
+            let identity = match cleanup_guard::file_identity(&path) {
+                Ok(identity) => identity,
+                Err(_) => {
+                    protected_files += 1;
+                    continue;
+                }
+            };
+            if let Some(session) = session {
+                session.record(&path, &metadata, identity);
+            }
             candidates.push(LargeFileCandidate {
                 id: format!("lf-{}", candidates.len() + 1),
                 path: cleanup_display_path(&path),
@@ -1120,23 +1224,34 @@ pub(super) fn collect_large_files(
         .ok()
         .flatten();
     Ok(LargeFileScanResult {
+        scan_id: String::new(),
+        policy_version: cleanup_guard::POLICY_VERSION.to_string(),
+        elapsed_ms: started.elapsed().as_millis() as u64,
+        truncated: scanned_files >= MAX_SCAN_FILES || candidates.len() >= MAX_RESULTS,
         root_path: cleanup_display_path(&root),
         min_size_bytes,
         mode,
         scanned_files,
         skipped_dirs,
+        protected_dirs,
+        protected_files,
+        denied_dirs,
         drive_space,
         candidates,
     })
 }
 
 #[tauri::command]
-pub(super) fn get_cleanup_drive_space(root_path: String) -> Result<Option<CleanupDriveSpace>, String> {
+pub(super) fn get_cleanup_drive_space(
+    root_path: String,
+) -> Result<Option<CleanupDriveSpace>, String> {
     cleanup_drive_space_from_path(&root_path)
 }
 
 #[cfg(target_os = "windows")]
-pub(super) fn cleanup_drive_space_from_path(root_path: &str) -> Result<Option<CleanupDriveSpace>, String> {
+pub(super) fn cleanup_drive_space_from_path(
+    root_path: &str,
+) -> Result<Option<CleanupDriveSpace>, String> {
     use std::os::windows::process::CommandExt;
 
     if root_path.contains('\0') {
@@ -1190,7 +1305,9 @@ if ($null -ne $disk) {{
 }
 
 #[cfg(not(target_os = "windows"))]
-pub(super) fn cleanup_drive_space_from_path(_root_path: &str) -> Result<Option<CleanupDriveSpace>, String> {
+pub(super) fn cleanup_drive_space_from_path(
+    _root_path: &str,
+) -> Result<Option<CleanupDriveSpace>, String> {
     Ok(None)
 }
 
@@ -1208,17 +1325,23 @@ pub(super) fn cleanup_drive_root_letter_from_input(root_path: &str) -> Option<ch
     cleanup_drive_root_letter(std::path::Path::new(root_path))
 }
 
-pub(super) fn canonical_scan_root(root_path: &str) -> Result<std::path::PathBuf, String> {
+pub(super) fn canonical_scan_root(
+    root_path: &str,
+    allow_system_drive_root: bool,
+) -> Result<std::path::PathBuf, String> {
     if root_path.contains('\0') {
         return Err("Invalid scan folder".to_string());
     }
+    cleanup_guard::reject_links(std::path::Path::new(root_path))?;
     let root = std::path::PathBuf::from(root_path)
         .canonicalize()
         .map_err(|error| format!("Cannot access scan folder: {}", error))?;
     if !root.is_dir() {
         return Err("Scan target must be a folder".to_string());
     }
-    if is_broad_or_protected_cleanup_root(&root) {
+    if is_broad_or_protected_cleanup_root(&root)
+        && !(allow_system_drive_root && cleanup_guard::system_drive_root(&root))
+    {
         return Err("System drive root is blocked. Please choose a user folder such as Downloads, Desktop, Videos, or a project export folder.".to_string());
     }
     Ok(root)
@@ -1257,7 +1380,8 @@ pub(super) fn is_broad_or_protected_cleanup_root(path: &std::path::Path) -> bool
     #[cfg(target_os = "windows")]
     {
         if let Some(drive) = cleanup_drive_root_letter(path) {
-            return drive == 'C';
+            let _ = drive;
+            return cleanup_guard::system_drive_root(path);
         }
     }
     let mut normal_components = 0_usize;
@@ -1274,17 +1398,7 @@ pub(super) fn is_broad_or_protected_cleanup_root(path: &std::path::Path) -> bool
     if (has_root_or_prefix && normal_components == 0) || text == r"\" || text == "/" {
         return true;
     }
-    protected_cleanup_dir_names(path).iter().any(|name| {
-        matches!(
-            name.as_str(),
-            "windows"
-                | "program files"
-                | "program files (x86)"
-                | "programdata"
-                | "$recycle.bin"
-                | "system volume information"
-        )
-    })
+    cleanup_guard::protected_path(path)
 }
 
 #[cfg(target_os = "windows")]
@@ -1333,8 +1447,13 @@ pub(super) fn protected_cleanup_dir_names(path: &std::path::Path) -> Vec<String>
         .collect()
 }
 
-pub(super) fn should_skip_cleanup_dir(path: &std::path::Path, root: &std::path::Path) -> bool {
+pub(super) fn should_skip_cleanup_dir(
+    path: &std::path::Path,
+    root: &std::path::Path,
+    protected_dirs: &mut u64,
+) -> bool {
     if path != root && is_broad_or_protected_cleanup_root(path) {
+        *protected_dirs = protected_dirs.saturating_add(1);
         return true;
     }
     let name = path
@@ -1342,7 +1461,7 @@ pub(super) fn should_skip_cleanup_dir(path: &std::path::Path, root: &std::path::
         .and_then(|value| value.to_str())
         .unwrap_or("")
         .to_ascii_lowercase();
-    matches!(
+    let protected_by_name = matches!(
         name.as_str(),
         ".git"
             | "node_modules"
@@ -1356,21 +1475,112 @@ pub(super) fn should_skip_cleanup_dir(path: &std::path::Path, root: &std::path::
             | "cache"
             | "tmp"
             | "temp"
-    )
+            | "appdata"
+            | "recovery"
+            | "boot"
+            | "efi"
+            | "config.msi"
+            | "system32"
+            | "syswow64"
+            | "winsxs"
+            | "systemapps"
+            | "apprepository"
+    );
+    if protected_by_name {
+        *protected_dirs = protected_dirs.saturating_add(1);
+    }
+    protected_by_name
+}
+
+pub(super) fn cleanup_path_is_reparse_point(path: &std::path::Path) -> bool {
+    let metadata = match std::fs::symlink_metadata(path) {
+        Ok(metadata) => metadata,
+        Err(_) => return true,
+    };
+    if metadata.file_type().is_symlink() {
+        return true;
+    }
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::fs::MetadataExt;
+        return metadata.file_attributes() & 0x400 != 0;
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        false
+    }
+}
+
+pub(super) fn is_protected_cleanup_file(
+    path: &std::path::Path,
+    metadata: &std::fs::Metadata,
+) -> bool {
+    if cleanup_path_is_reparse_point(path) || metadata.permissions().readonly() {
+        return true;
+    }
+    let name = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    let extension = path
+        .extension()
+        .and_then(|value| value.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    if matches!(
+        extension.as_str(),
+        "sys" | "dll" | "ocx" | "efi" | "cat" | "cpl" | "drv" | "mui" | "msu" | "cab"
+    ) {
+        return true;
+    }
+    if matches!(
+        name.as_str(),
+        "pagefile.sys"
+            | "hiberfil.sys"
+            | "swapfile.sys"
+            | "memory.dmp"
+            | "bootmgr"
+            | "bootnxt"
+            | "bootsect.bak"
+            | "dumpstack.log.tmp"
+            | "dumpstack.log"
+    ) {
+        return true;
+    }
+    cleanup_guard::protected_attributes(metadata, false)
 }
 
 pub(super) fn cleanup_folder_hint(path: &std::path::Path, root: &std::path::Path) -> String {
     let parent = path.parent().unwrap_or(root);
-    let relative = parent.strip_prefix(root).unwrap_or(parent);
+    let relative = parent
+        .strip_prefix(root)
+        .unwrap_or(std::path::Path::new(""));
     let hint = relative.to_string_lossy().trim().to_string();
     if hint.is_empty() || hint == "." {
         "selected folder".to_string()
     } else {
-        hint
+        // Avoid sending the user account name during a drive-root scan.
+        let mut parts: Vec<String> = relative
+            .components()
+            .map(|part| part.as_os_str().to_string_lossy().into_owned())
+            .collect();
+        if parts
+            .first()
+            .is_some_and(|part| part.eq_ignore_ascii_case("users"))
+            && parts.len() > 1
+        {
+            parts[1] = "[user]".into();
+        }
+        parts.join("/")
     }
 }
 
-pub(super) fn cleanup_local_risk(path: &std::path::Path, category: &str, size_bytes: u64) -> (String, String) {
+pub(super) fn cleanup_local_risk(
+    path: &std::path::Path,
+    category: &str,
+    size_bytes: u64,
+) -> (String, String) {
     let text = path.to_string_lossy().to_ascii_lowercase();
     let file_name = path
         .file_name()
@@ -1427,56 +1637,117 @@ pub(super) fn cleanup_local_risk(path: &std::path::Path, category: &str, size_by
     )
 }
 
+pub(super) fn canonical_cleanup_scope(
+    scan_root: Option<&str>,
+) -> Result<Option<std::path::PathBuf>, String> {
+    let scan_root = scan_root
+        .filter(|value| !value.trim().is_empty())
+        .ok_or("A scan scope is required")?;
+    if scan_root.contains('\0') {
+        return Err("Invalid scan scope".to_string());
+    }
+    let root = std::path::PathBuf::from(scan_root)
+        .canonicalize()
+        .map_err(|error| format!("Cannot access scan scope: {}", error))?;
+    if !root.is_dir() {
+        return Err("Scan scope must be a folder".to_string());
+    }
+    Ok(Some(root))
+}
+
+pub(super) fn validate_cleanup_delete_path(
+    path: &str,
+    scan_scope: Option<&std::path::Path>,
+) -> Result<(std::path::PathBuf, u64), String> {
+    if path.contains('\0') {
+        return Err("Invalid file path".to_string());
+    }
+    let input = std::path::Path::new(path);
+    cleanup_guard::reject_links(input)?;
+    if cleanup_path_is_reparse_point(input) {
+        return Err("Links and reparse points are not allowed".to_string());
+    }
+    let canonical = input
+        .canonicalize()
+        .map_err(|error| format!("Cannot access file: {}", error))?;
+    if let Some(scope) = scan_scope {
+        if !canonical.starts_with(scope) {
+            return Err("File is outside the current scan scope".to_string());
+        }
+    }
+    let metadata = std::fs::metadata(&canonical)
+        .map_err(|error| format!("Cannot access file metadata: {}", error))?;
+    if !metadata.is_file() {
+        return Err("Target is not a regular file".to_string());
+    }
+    if is_broad_or_protected_cleanup_root(&canonical)
+        || is_protected_cleanup_file(&canonical, &metadata)
+    {
+        return Err("Protected file path is not allowed".to_string());
+    }
+    Ok((canonical, metadata.len()))
+}
+
 #[tauri::command]
-pub(super) async fn move_files_to_recycle_bin(paths: Vec<String>) -> Result<RecycleBinMoveResult, String> {
-    tokio::task::spawn_blocking(move || move_files_to_recycle_bin_blocking(paths))
-        .await
-        .map_err(|error| format!("Recycle bin worker failed: {}", error))?
+pub(super) async fn move_files_to_recycle_bin(
+    paths: Vec<String>,
+    scan_root: Option<String>,
+    scan_id: String,
+) -> Result<RecycleBinMoveResult, String> {
+    let session = cleanup_guard::get(&scan_id)?;
+    tokio::task::spawn_blocking(move || {
+        move_files_to_recycle_bin_checked(paths, scan_root, Some(&session))
+    })
+    .await
+    .map_err(|error| format!("Recycle bin worker failed: {}", error))?
 }
 
 #[cfg(target_os = "windows")]
-pub(super) fn move_files_to_recycle_bin_blocking(paths: Vec<String>) -> Result<RecycleBinMoveResult, String> {
+#[cfg(test)]
+pub(super) fn move_files_to_recycle_bin_blocking(
+    paths: Vec<String>,
+    scan_root: Option<String>,
+) -> Result<RecycleBinMoveResult, String> {
+    move_files_to_recycle_bin_checked(paths, scan_root, None)
+}
+
+#[cfg(target_os = "windows")]
+fn move_files_to_recycle_bin_checked(
+    paths: Vec<String>,
+    scan_root: Option<String>,
+    session: Option<&cleanup_guard::ScanSession>,
+) -> Result<RecycleBinMoveResult, String> {
+    if paths.len() > 200 {
+        return Err("Select at most 200 files per operation".into());
+    }
+    let scan_scope = canonical_cleanup_scope(scan_root.as_deref())?;
     let mut items = Vec::new();
     let mut moved = 0_usize;
     let mut failed = 0_usize;
     let mut freed_bytes = 0_u64;
 
     for path in paths.into_iter().take(200) {
-        if path.contains('\0') {
-            failed += 1;
-            items.push(RecycleBinMoveItem {
-                path,
-                ok: false,
-                error: Some("Invalid file path".to_string()),
+        let original_path = path.clone();
+        let validated =
+            validate_cleanup_delete_path(&path, scan_scope.as_deref()).and_then(|value| {
+                match session {
+                    Some(session) => session.validate(&path),
+                    None => Ok(value),
+                }
             });
-            continue;
-        }
-        let canonical = match std::path::PathBuf::from(&path).canonicalize() {
-            Ok(path) => path,
+        let canonical = match validated {
+            Ok((canonical, _)) => canonical,
             Err(error) => {
                 failed += 1;
                 items.push(RecycleBinMoveItem {
-                    path,
+                    path: original_path,
                     ok: false,
-                    error: Some(format!("Cannot access file: {}", error)),
+                    error: Some(error),
                 });
                 continue;
             }
         };
         let display_path = cleanup_display_path(&canonical);
-        if !canonical.is_file() || is_broad_or_protected_cleanup_root(&canonical) {
-            failed += 1;
-            items.push(RecycleBinMoveItem {
-                path: display_path,
-                ok: false,
-                error: Some(if canonical.is_file() {
-                    "Protected file path is not allowed".to_string()
-                } else {
-                    "Target is not a regular file".to_string()
-                }),
-            });
-            continue;
-        }
         let size = std::fs::metadata(&canonical)
             .map(|metadata| metadata.len())
             .unwrap_or(0);
@@ -1520,212 +1791,59 @@ pub(super) fn move_files_to_recycle_bin_blocking(paths: Vec<String>) -> Result<R
 
 #[cfg(target_os = "windows")]
 pub(super) fn move_single_file_to_recycle_bin(path: &std::path::Path) -> Result<(), String> {
-    use windows::core::PCWSTR;
+    use windows::core::HSTRING;
+    use windows::Win32::System::Com::{
+        CoCreateInstance, CoInitializeEx, CoUninitialize, CLSCTX_INPROC_SERVER,
+        COINIT_APARTMENTTHREADED,
+    };
     use windows::Win32::UI::Shell::{
-        SHFileOperationW, FOF_ALLOWUNDO, FOF_NOCONFIRMATION, FOF_NOERRORUI, FOF_SILENT, FO_DELETE,
-        SHFILEOPSTRUCTW,
+        FileOperation, IFileOperation, IShellItem, SHCreateItemFromParsingName, FOFX_ADDUNDORECORD,
+        FOFX_EARLYFAILURE, FOFX_RECYCLEONDELETE, FOF_NOERRORUI, FOF_SILENT,
     };
-
-    // SHFileOperationW expects a double-null-terminated UTF-16 path list.
-    // Use the display path instead of the canonical \\?\ form because the
-    // legacy Shell operation is more reliable with normal absolute paths.
-    let display_path = cleanup_display_path(path);
-    let mut from: Vec<u16> = display_path.encode_utf16().collect();
-    from.push(0);
-    from.push(0);
-
-    let mut operation = SHFILEOPSTRUCTW::default();
-    operation.wFunc = FO_DELETE;
-    operation.pFrom = PCWSTR(from.as_ptr());
-    operation.fFlags =
-        (FOF_ALLOWUNDO.0 | FOF_NOCONFIRMATION.0 | FOF_NOERRORUI.0 | FOF_SILENT.0) as u16;
-
-    let result = unsafe { SHFileOperationW(&mut operation) };
-    if result != 0 {
-        return Err(format!(
-            "Windows Recycle Bin API failed with code {}",
-            result
-        ));
-    }
-    if operation.fAnyOperationsAborted.as_bool() {
-        return Err("Recycle bin operation was cancelled or blocked by Windows".to_string());
-    }
-    Ok(())
-}
-
-#[cfg(target_os = "windows")]
-#[allow(dead_code)]
-pub(super) fn move_files_to_recycle_bin_blocking_powershell_fallback(
-    paths: Vec<String>,
-) -> Result<RecycleBinMoveResult, String> {
-    use std::io::Write;
-    use std::os::windows::process::CommandExt;
-
-    let mut entries = Vec::new();
-    let mut preflight_items = Vec::new();
-    for path in paths.into_iter().take(200) {
-        if path.contains('\0') {
-            preflight_items.push(RecycleBinMoveItem {
-                path,
-                ok: false,
-                error: Some("Invalid file path".to_string()),
-            });
-            continue;
-        }
-        let canonical = match std::path::PathBuf::from(&path).canonicalize() {
-            Ok(path) => path,
-            Err(error) => {
-                preflight_items.push(RecycleBinMoveItem {
-                    path,
-                    ok: false,
-                    error: Some(format!("Cannot access file: {}", error)),
-                });
-                continue;
+    // Request recycling explicitly; never retry with a permanent-delete API.
+    unsafe {
+        CoInitializeEx(None, COINIT_APARTMENTTHREADED)
+            .ok()
+            .map_err(|error| error.to_string())?;
+        struct ComScope;
+        impl Drop for ComScope {
+            fn drop(&mut self) {
+                unsafe {
+                    CoUninitialize();
+                }
             }
+        }
+        let _scope = ComScope;
+        let run = || -> windows::core::Result<bool> {
+            let operation: IFileOperation =
+                CoCreateInstance(&FileOperation, None, CLSCTX_INPROC_SERVER)?;
+            operation.SetOperationFlags(
+                FOFX_RECYCLEONDELETE
+                    | FOFX_EARLYFAILURE
+                    | FOFX_ADDUNDORECORD
+                    | FOF_NOERRORUI
+                    | FOF_SILENT,
+            )?;
+            let item: IShellItem =
+                SHCreateItemFromParsingName(&HSTRING::from(cleanup_display_path(path)), None)?;
+            operation.DeleteItem(&item, None)?;
+            operation.PerformOperations()?;
+            Ok(operation.GetAnyOperationsAborted()?.as_bool())
         };
-        if !canonical.is_file() || is_broad_or_protected_cleanup_root(&canonical) {
-            preflight_items.push(RecycleBinMoveItem {
-                path: cleanup_display_path(&canonical),
-                ok: false,
-                error: Some(if canonical.is_file() {
-                    "Protected file path is not allowed".to_string()
-                } else {
-                    "Target is not a regular file".to_string()
-                }),
-            });
-            continue;
+        match run() {
+            Ok(false) => Ok(()),
+            Ok(true) => Err("Recycle bin operation was cancelled or blocked by Windows".into()),
+            Err(error) => Err(format!("Windows Recycle Bin API failed: {}", error.code())),
         }
-        let size = std::fs::metadata(&canonical)
-            .map(|metadata| metadata.len())
-            .unwrap_or(0);
-        entries.push(serde_json::json!({
-            "path": cleanup_display_path(&canonical),
-            "size": size
-        }));
     }
-    if entries.is_empty() {
-        return Ok(RecycleBinMoveResult {
-            requested: preflight_items.len(),
-            moved: 0,
-            failed: preflight_items.len(),
-            freed_bytes: 0,
-            items: preflight_items,
-        });
-    }
-    let payload = serde_json::to_string(&entries).map_err(|error| error.to_string())?;
-    const SCRIPT: &str = r#"
-$ErrorActionPreference = 'SilentlyContinue'
-$items = ConvertFrom-Json ([Console]::In.ReadToEnd())
-Add-Type -AssemblyName Microsoft.VisualBasic
-$ui = [Microsoft.VisualBasic.FileIO.UIOption]::OnlyErrorDialogs
-$recycle = [Microsoft.VisualBasic.FileIO.RecycleOption]::SendToRecycleBin
-$result = @()
-foreach ($item in @($items)) {
-  $path = [string]$item.path
-  $ok = $false
-  $err = $null
-    try {
-    if (Test-Path -LiteralPath $path -PathType Leaf) {
-      [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($path, $ui, $recycle)
-      $ok = -not (Test-Path -LiteralPath $path -PathType Leaf)
-      if (-not $ok -and -not $err) {
-        $err = 'Windows did not move the file to the Recycle Bin. The file may be in use, protected, or blocked by permissions.'
-      }
-    } else {
-      $err = 'File no longer exists'
-    }
-  } catch {
-    $err = $_.Exception.Message
-  }
-  $result += [ordered]@{ path = $path; ok = [bool]$ok; error = $err; size = [Int64]$item.size }
-}
-$result | ConvertTo-Json -Depth 4 -Compress
-"#;
-    let mut child = std::process::Command::new("powershell.exe")
-        .args([
-            "-NoProfile",
-            "-NonInteractive",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-Command",
-            SCRIPT,
-        ])
-        .stdin(std::process::Stdio::piped())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .creation_flags(0x08000000)
-        .spawn()
-        .map_err(|error| format!("Cannot start recycle bin operation: {}", error))?;
-    if let Some(stdin) = child.stdin.as_mut() {
-        stdin
-            .write_all(payload.as_bytes())
-            .map_err(|error| format!("Cannot send recycle bin payload: {}", error))?;
-    }
-    let output = child
-        .wait_with_output()
-        .map_err(|error| format!("Recycle bin operation failed: {}", error))?;
-    if !output.status.success() {
-        let details = String::from_utf8_lossy(&output.stderr)
-            .trim()
-            .replace(['\r', '\n'], " ");
-        return Err(if details.is_empty() {
-            "Recycle bin operation failed".to_string()
-        } else {
-            format!(
-                "Recycle bin operation failed: {}",
-                details.chars().take(240).collect::<String>()
-            )
-        });
-    }
-    let raw = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    let parsed: serde_json::Value = serde_json::from_str(&raw)
-        .map_err(|error| format!("Recycle bin operation returned invalid data: {}", error))?;
-    let rows = match parsed {
-        serde_json::Value::Array(rows) => rows,
-        serde_json::Value::Object(_) => vec![parsed],
-        _ => Vec::new(),
-    };
-    let mut moved = 0_usize;
-    let mut failed = preflight_items.len();
-    let mut freed_bytes = 0_u64;
-    let mut items = preflight_items;
-    for row in rows {
-        let path = row
-            .get("path")
-            .and_then(|value| value.as_str())
-            .unwrap_or("")
-            .to_string();
-        let ok = row
-            .get("ok")
-            .and_then(|value| value.as_bool())
-            .unwrap_or(false);
-        let size = row
-            .get("size")
-            .and_then(|value| value.as_u64())
-            .unwrap_or(0);
-        let error = row
-            .get("error")
-            .and_then(|value| value.as_str())
-            .map(|value| value.to_string());
-        if ok {
-            moved += 1;
-            freed_bytes = freed_bytes.saturating_add(size);
-        } else {
-            failed += 1;
-        }
-        items.push(RecycleBinMoveItem { path, ok, error });
-    }
-    Ok(RecycleBinMoveResult {
-        requested: items.len(),
-        moved,
-        failed,
-        freed_bytes,
-        items,
-    })
 }
 
 #[cfg(not(target_os = "windows"))]
-pub(super) fn move_files_to_recycle_bin_blocking(_paths: Vec<String>) -> Result<RecycleBinMoveResult, String> {
+fn move_files_to_recycle_bin_checked(
+    _paths: Vec<String>,
+    _scan_root: Option<String>,
+    _session: Option<&cleanup_guard::ScanSession>,
+) -> Result<RecycleBinMoveResult, String> {
     Err("Recycle bin cleanup is currently available on Windows only".to_string())
 }
 
@@ -1741,12 +1859,14 @@ mod cleanup_large_file_tests {
             .duration_since(std::time::UNIX_EPOCH)
             .expect("system clock")
             .as_nanos();
-        let dir = std::env::temp_dir().join(format!(
-            "toolknit-cleanup-{}-{}-{}",
-            label,
-            std::process::id(),
-            nanos
-        ));
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../tmp/cleanup-native-tests")
+            .join(format!(
+                "toolknit-cleanup-{}-{}-{}",
+                label,
+                std::process::id(),
+                nanos
+            ));
         std::fs::create_dir_all(&dir).expect("create cleanup test dir");
         dir
     }
@@ -1771,6 +1891,7 @@ mod cleanup_large_file_tests {
             dir.to_string_lossy().into_owned(),
             Some(10),
             Some("video".to_string()),
+            false,
         )
         .expect("scan video mode");
 
@@ -1793,6 +1914,7 @@ mod cleanup_large_file_tests {
             dir.to_string_lossy().into_owned(),
             Some(10),
             Some("all".to_string()),
+            false,
         )
         .expect("scan all mode");
         let names: Vec<_> = result
@@ -1809,7 +1931,7 @@ mod cleanup_large_file_tests {
     }
 
     #[test]
-    fn cleanup_scan_rejects_system_drive_root_only() {
+    fn cleanup_scan_requires_explicit_system_drive_authorization() {
         #[cfg(target_os = "windows")]
         {
             assert!(is_broad_or_protected_cleanup_root(std::path::Path::new(
@@ -1818,11 +1940,15 @@ mod cleanup_large_file_tests {
             assert!(!is_broad_or_protected_cleanup_root(std::path::Path::new(
                 "D:\\"
             )));
-            let error =
-                match collect_large_files("C:\\".to_string(), Some(10), Some("all".to_string())) {
-                    Ok(_) => panic!("system drive root should be rejected"),
-                    Err(error) => error,
-                };
+            let error = match collect_large_files(
+                "C:\\".to_string(),
+                Some(10),
+                Some("all".to_string()),
+                false,
+            ) {
+                Ok(_) => panic!("system drive root should be rejected"),
+                Err(error) => error,
+            };
             assert!(error.contains("System drive root is blocked"));
         }
     }
@@ -1834,15 +1960,236 @@ mod cleanup_large_file_tests {
         let file_path = dir.join("delete-me.tmp");
         make_sparse_file(&file_path, 1024);
 
-        let result =
-            move_files_to_recycle_bin_blocking(vec![file_path.to_string_lossy().into_owned()])
-                .expect("move temp file to recycle bin");
+        let result = move_files_to_recycle_bin_blocking(
+            vec![file_path.to_string_lossy().into_owned()],
+            Some(dir.to_string_lossy().into_owned()),
+        )
+        .expect("move temp file to recycle bin");
 
         assert_eq!(result.requested, 1);
         assert_eq!(result.moved, 1);
         assert_eq!(result.failed, 0);
         assert!(!file_path.exists());
         let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn cleanup_policy_scans_only_unprotected_files_and_enforces_session() {
+        let dir = cleanup_test_dir("policy");
+        make_sparse_file(&dir.join("Windows").join("system.mp4"), 11 * MB);
+        make_sparse_file(&dir.join("AppData").join("database.zip"), 11 * MB);
+        make_sparse_file(&dir.join("Recovery").join("restore.iso"), 11 * MB);
+        make_sparse_file(&dir.join("module.dll"), 11 * MB);
+        let allowed = dir.join("WindowsBackup").join("record.mp4");
+        make_sparse_file(&allowed, 11 * MB);
+        let id = format!(
+            "cleanup-policy-{}",
+            dir.file_name().unwrap().to_string_lossy()
+        );
+        let id = id.chars().take(80).collect::<String>();
+        let session = cleanup_guard::begin(&id).unwrap();
+        let result = collect_large_files_with_session(
+            dir.to_string_lossy().into_owned(),
+            Some(10),
+            Some("all".into()),
+            false,
+            Some(&session),
+        )
+        .unwrap();
+        session.finish();
+        assert_eq!(result.candidates.len(), 1);
+        assert_eq!(result.candidates[0].name, "record.mp4");
+        assert!(result.protected_dirs >= 3);
+        assert!(result.protected_files >= 1);
+        assert!(session.validate(&allowed.to_string_lossy()).is_ok());
+        assert!(validate_cleanup_delete_path(
+            &dir.join("AppData/database.zip").to_string_lossy(),
+            Some(&dir.canonicalize().unwrap())
+        )
+        .is_err());
+        let unscanned = dir.join("unscanned.mp4");
+        make_sparse_file(&unscanned, 11 * MB);
+        assert!(session.validate(&unscanned.to_string_lossy()).is_err());
+        make_sparse_file(&allowed, 12 * MB);
+        assert!(
+            session.validate(&allowed.to_string_lossy()).is_err(),
+            "changed file must be rejected"
+        );
+        cleanup_guard::cancel(&id);
+        assert!(session.check().is_err());
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn cleanup_policy_rejects_readonly_and_outside_scope() {
+        let dir = cleanup_test_dir("scope");
+        let nested = dir.join("scope");
+        std::fs::create_dir_all(&nested).unwrap();
+        let file = dir.join("outside.mp4");
+        make_sparse_file(&file, 11 * MB);
+        assert!(validate_cleanup_delete_path(
+            &file.to_string_lossy(),
+            Some(&nested.canonicalize().unwrap())
+        )
+        .is_err());
+        assert!(canonical_cleanup_scope(None).is_err());
+        let original = std::fs::metadata(&file).unwrap().permissions();
+        let mut readonly = original.clone();
+        readonly.set_readonly(true);
+        std::fs::set_permissions(&file, readonly).unwrap();
+        assert!(validate_cleanup_delete_path(
+            &file.to_string_lossy(),
+            Some(&dir.canonicalize().unwrap())
+        )
+        .is_err());
+        std::fs::set_permissions(&file, original).unwrap();
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn cleanup_session_recycle_rechecks_each_file() {
+        let dir = cleanup_test_dir("session-recycle");
+        let stable = dir.join("stable.mp4");
+        let changed = dir.join("changed.mp4");
+        make_sparse_file(&stable, 11 * MB);
+        make_sparse_file(&changed, 11 * MB);
+        let id = format!(
+            "session-recycle-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        );
+        let session = cleanup_guard::begin(&id).unwrap();
+        collect_large_files_with_session(
+            dir.to_string_lossy().into_owned(),
+            Some(10),
+            Some("all".into()),
+            false,
+            Some(&session),
+        )
+        .unwrap();
+        session.finish();
+        make_sparse_file(&changed, 12 * MB);
+        let result = move_files_to_recycle_bin_checked(
+            vec![
+                stable.to_string_lossy().into_owned(),
+                changed.to_string_lossy().into_owned(),
+            ],
+            Some(dir.to_string_lossy().into_owned()),
+            Some(&session),
+        )
+        .unwrap();
+        assert_eq!(result.moved, 1);
+        assert_eq!(result.failed, 1);
+        assert!(!stable.exists());
+        assert!(
+            changed.exists(),
+            "changed file must survive the cleanup request"
+        );
+        cleanup_guard::cancel(&id);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn cleanup_cancel_before_start_and_repeated_scans() {
+        let prefix = format!(
+            "cleanup-cancel-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        );
+        cleanup_guard::cancel(&prefix);
+        assert!(cleanup_guard::begin(&prefix).is_err());
+        for index in 0..40 {
+            let id = format!("{prefix}-{index}");
+            let session = cleanup_guard::begin(&id).unwrap();
+            cleanup_guard::cancel(&id);
+            assert!(session.check().is_err());
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn cleanup_policy_excludes_hardlinks_hidden_files_and_junctions() {
+        use std::os::windows::process::CommandExt;
+        use windows::core::HSTRING;
+        use windows::Win32::Storage::FileSystem::{
+            SetFileAttributesW, FILE_ATTRIBUTE_HIDDEN, FILE_ATTRIBUTE_NORMAL,
+        };
+        let dir = cleanup_test_dir("links");
+        let original = dir.join("original.mp4");
+        make_sparse_file(&original, 11 * MB);
+        std::fs::hard_link(&original, dir.join("alias.mp4")).unwrap();
+        assert!(cleanup_guard::file_identity(&original).is_err());
+        let hidden = dir.join("hidden.mp4");
+        make_sparse_file(&hidden, 11 * MB);
+        unsafe {
+            SetFileAttributesW(
+                &HSTRING::from(hidden.to_string_lossy().as_ref()),
+                FILE_ATTRIBUTE_HIDDEN,
+            )
+            .unwrap();
+        }
+        let target = dir.join("source");
+        std::fs::create_dir_all(&target).unwrap();
+        make_sparse_file(&target.join("visible.mp4"), 11 * MB);
+        let junction = dir.join("redirect");
+        let status = std::process::Command::new("cmd.exe")
+            .args(["/C", "mklink", "/J"])
+            .arg(&junction)
+            .arg(&target)
+            .creation_flags(0x08000000)
+            .output()
+            .unwrap();
+        assert!(status.status.success(), "fixture junction creation failed");
+        assert!(canonical_scan_root(&junction.to_string_lossy(), false).is_err());
+        assert!(cleanup_guard::reject_links(&junction.join("visible.mp4")).is_err());
+        let result = collect_large_files(
+            dir.to_string_lossy().into_owned(),
+            Some(10),
+            Some("all".into()),
+            false,
+        )
+        .unwrap();
+        assert_eq!(result.candidates.len(), 1);
+        assert_eq!(result.candidates[0].name, "visible.mp4");
+        unsafe {
+            SetFileAttributesW(
+                &HSTRING::from(hidden.to_string_lossy().as_ref()),
+                FILE_ATTRIBUTE_NORMAL,
+            )
+            .unwrap();
+        }
+        std::fs::remove_dir(&junction).unwrap();
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn cleanup_policy_system_root_authorization_does_not_open_system_folders() {
+        assert!(canonical_scan_root("C:\\", false).is_err());
+        assert!(canonical_scan_root("C:\\", true).is_ok());
+        assert!(canonical_scan_root("C:\\Windows", true).is_err());
+        for path in [
+            "c:\\WINDOWS\\a.mp4",
+            "C:\\Users\\sample\\AppData\\a.zip",
+            "C:\\ProgramData\\a.zip",
+            "C:\\Recovery\\a.iso",
+            "C:\\EFI\\boot.zip",
+        ] {
+            assert!(cleanup_guard::protected_path(std::path::Path::new(path)));
+        }
+        assert!(!cleanup_guard::protected_path(std::path::Path::new(
+            "C:\\WindowsBackup\\a.mp4"
+        )));
+        let hint = cleanup_folder_hint(
+            std::path::Path::new("C:\\Users\\private-name\\Downloads\\video.mp4"),
+            std::path::Path::new("C:\\"),
+        );
+        assert_eq!(hint, "Users/[user]/Downloads");
     }
 
     #[cfg(target_os = "windows")]
@@ -1852,9 +2199,11 @@ mod cleanup_large_file_tests {
         let file_path = dir.join("error [レッドゾーン] (1080p_60fps_H264-128kbit_AAC).mp4");
         make_sparse_file(&file_path, 1024);
 
-        let result =
-            move_files_to_recycle_bin_blocking(vec![file_path.to_string_lossy().into_owned()])
-                .expect("move unicode video file to recycle bin");
+        let result = move_files_to_recycle_bin_blocking(
+            vec![file_path.to_string_lossy().into_owned()],
+            Some(dir.to_string_lossy().into_owned()),
+        )
+        .expect("move unicode video file to recycle bin");
 
         assert_eq!(result.requested, 1);
         assert_eq!(
@@ -1868,4 +2217,3 @@ mod cleanup_large_file_tests {
         let _ = std::fs::remove_dir_all(dir);
     }
 }
-

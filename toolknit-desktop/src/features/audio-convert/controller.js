@@ -3,7 +3,8 @@ import { bindSortableFileList } from '../../shared/sortable-file-list.js';
 import { formatFileSize } from '../../shared/file-size.js';
 import { onLangChange, t as defaultTranslate } from '../../i18n.js';
 import { loadTauriDialog, loadTauriWebview, tauriCorePromise, tauriEventPromise } from '../../platform/tauri-runtime.js';
-import { AudioConvertError, normalizeAudioTargetFormat, validateAudioBatchSelection } from '../../audio-convert-core.js';
+import { normalizeAudioTargetFormat, validateAudioBatchSelection } from '../../audio-convert-core.js';
+import { readNativeAudioFiles } from './selection.js';
 
 export function createAudioConvertController({
   overlay,
@@ -24,6 +25,7 @@ export function createAudioConvertController({
   onLangChange: registerLanguageChange = onLangChange,
   documentRef = globalThis.document,
   tauriCore = tauriCorePromise,
+  loadDialog = loadTauriDialog,
   tauriEvents = tauriEventPromise
 } = {}) {
   if (!overlay) throw new Error('audio-convert:missing-overlay');
@@ -39,6 +41,7 @@ export function createAudioConvertController({
   let plasmaInstance = null;
   let nativeDropUnlisten = null;
   let disposed = false;
+  let selectionRevision = 0;
   const audioConvertDropZone = query('[data-audio-convert-drop-zone]');
   const audioConvertFiles = query('[data-audio-convert-files]');
   const audioConvertCta = query('[data-audio-convert-action="choose"]');
@@ -63,6 +66,23 @@ export function createAudioConvertController({
   const audioConvertSuccessOk = query('[data-audio-convert-action="success-ok"]');
   const audioConvertFormatOptions = query('[data-audio-convert-formats]');
 
+  function selectionError(error) {
+    const key = { invalid_input: 'invalidInput', invalid_input_size: 'invalidInput', missing_input: 'invalidInput',
+      unsupported_input: 'unsupportedInput', input_too_large: 'inputTooLarge', too_many_files: 'tooManyFiles' }[error?.code];
+    return t(`home.audioConvert.${key || 'conversionError'}`);
+  }
+
+  async function addNativeAudioPaths(paths, revision = selectionRevision) {
+    const isCurrent = () => !disposed && revision === selectionRevision && page?.classList.contains('visible') && !processingAudio;
+    try {
+      const { invoke } = await tauriCore;
+      const files = await readNativeAudioFiles(paths, invoke, isCurrent);
+      if (files && isCurrent()) addAudioFiles(files);
+    } catch (error) {
+      if (isCurrent()) notify(selectionError(error));
+    }
+  }
+
       function addAudioFiles(fileList) {
         if (!fileList || fileList.length === 0) return;
         const nextFiles = [...selectedAudioFiles];
@@ -78,7 +98,7 @@ export function createAudioConvertController({
           validateAudioBatchSelection(nextFiles);
         } catch (error) {
           console.error('Audio selection validation failed:', error);
-          notify(error instanceof AudioConvertError ? error.message : t('home.audioConvert.conversionError'));
+          notify(selectionError(error));
           return;
         }
         selectedAudioFiles = nextFiles;
@@ -91,6 +111,7 @@ export function createAudioConvertController({
       }
 
       function clearAudioFiles() {
+        selectionRevision += 1;
         selectedAudioFiles = [];
         renderAudioFiles();
       }
@@ -177,9 +198,10 @@ export function createAudioConvertController({
 
       if (audioConvertCta) {
         lifecycle.event(audioConvertCta, 'click', async () => {
+          const revision = selectionRevision;
           if (isTauri) {
             try {
-              const { open } = await loadTauriDialog();
+              const { open } = await loadDialog();
               const selected = await open({
                 multiple: true,
                 filters: [{
@@ -187,10 +209,7 @@ export function createAudioConvertController({
                   extensions: ['mp3', 'aac', 'm4a', 'wav', 'flac', 'alac', 'ogg', 'wma']
                 }]
               });
-              if (selected && Array.isArray(selected)) {
-                const fileList = selected.map(path => ({ name: path.split(/[\\/]/).pop() || path, path, size: 0 }));
-                addAudioFiles(fileList);
-              }
+              if (selected) await addNativeAudioPaths(selected, revision);
             } catch (e) {
               console.error('Audio file selection error', e);
             }
@@ -200,7 +219,7 @@ export function createAudioConvertController({
             input.multiple = true;
             input.accept = 'audio/*';
             input.addEventListener('change', () => {
-              addAudioFiles(input.files);
+              if (!disposed && revision === selectionRevision && page?.classList.contains('visible')) addAudioFiles(input.files);
               input.value = '';
             });
             input.click();
@@ -286,7 +305,7 @@ export function createAudioConvertController({
           validateAudioBatchSelection(selectedAudioFiles);
           targetAudioFormat = normalizeAudioTargetFormat(targetAudioFormat);
         } catch (error) {
-          notify(error instanceof AudioConvertError ? error.message : t('home.audioConvert.conversionError'));
+          notify(selectionError(error));
           return;
         }
         const runId = ++audioConversionRunId;
@@ -488,10 +507,8 @@ export function createAudioConvertController({
         else if (payload.type === 'drop') {
           hideAudioDropZone();
           const paths = Array.isArray(payload.paths) ? payload.paths : [];
-          const fileList = paths
-            .filter(value => ['mp3','aac','m4a','wav','flac','alac','ogg','wma'].some(ext => String(value).toLowerCase().endsWith('.' + ext)))
-            .map(path => ({ name: String(path).split(/[\\/]/).pop() || String(path), path: String(path), size: 0 }));
-          if (fileList.length) addAudioFiles(fileList);
+          const audioPaths = paths.filter(value => ['mp3','aac','m4a','wav','flac','alac','ogg','wma'].some(ext => String(value).toLowerCase().endsWith('.' + ext)));
+          if (audioPaths.length) void addNativeAudioPaths(audioPaths);
         }
       });
       if (disposed) unlisten?.();

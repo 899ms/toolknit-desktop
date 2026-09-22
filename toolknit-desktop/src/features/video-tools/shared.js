@@ -1,4 +1,5 @@
 import { loadTauriWebview, tauriCorePromise } from '../../platform/tauri-runtime.js';
+import { createPreviewRequest } from './preview-request.js';
 
 export const VIDEO_EXTENSIONS = Object.freeze([
   'mp4', 'avi', 'mkv', 'mov', 'webm', 'flv', 'wmv', 'ts', 'm4v'
@@ -27,12 +28,13 @@ export function firstSupportedVideoPath(paths) {
 }
 
 export function createPreviewQueue() {
-  return { token: 0, timer: null, pending: null, inFlight: false, errorShown: false };
+  return { token: 0, timer: null, pending: null, inFlight: false, job: null, errorShown: false };
 }
 
 export function clearQueuedVideoPreview(state, image) {
   if (!state) return;
   state.token += 1;
+  state.job?.cancel();
   if (state.timer !== null) clearTimeout(state.timer);
   state.timer = null;
   state.pending = null;
@@ -48,11 +50,12 @@ async function runQueuedVideoPreview(state, { notify = () => {}, invoke = null }
   state.inFlight = true;
   request.image?.classList.add('is-loading');
   try {
-    const api = invoke ? { invoke } : await tauriCorePromise;
-    const result = await api.invoke('render_video_preview_frame', {
+    const job = createPreviewRequest('render_video_preview_frame', {
       inputPath: request.inputPath,
       timestampMs: request.timestampMs
-    });
+    }, async () => invoke || (await tauriCorePromise).invoke);
+    state.job = job;
+    const result = await job.promise;
     const dataUrl = result?.image_data_url || result?.imageDataUrl;
     if (!dataUrl) throw new Error('video-preview:empty-result');
     if (request.token !== state.token) return;
@@ -67,6 +70,7 @@ async function runQueuedVideoPreview(state, { notify = () => {}, invoke = null }
     }
   } finally {
     state.inFlight = false;
+    state.job = null;
     if (request.token === state.token) request.image?.classList.remove('is-loading');
     if (state.pending) void runQueuedVideoPreview(state, { notify, invoke });
   }
@@ -81,6 +85,7 @@ export function scheduleVideoPreview(state, image, inputPath, timestampMs, {
   if (!state || !image || !inputPath) return;
   const token = state.token + 1;
   state.token = token;
+  state.job?.cancel();
   state.pending = { token, image, inputPath, timestampMs };
   if (state.timer !== null) clearTimeout(state.timer);
   const start = () => {

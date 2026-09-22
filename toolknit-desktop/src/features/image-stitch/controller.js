@@ -1,7 +1,9 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
 import { tauriCorePromise, tauriEventPromise } from '../../platform/tauri-runtime.js';
-import { calculateImageStitchLayout, normalizeImageStitchRequest } from '../../image-stitch-core.js';
+import { calculateStitchLayout, normalizeStitchSettings, IMAGE_STITCH_GRIDS } from './core.js';
+import { bindPointerSortableFileList } from '../../shared/sortable-file-list.js';
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.mjs?url';
+import { pdfjsDocumentOptions } from '../../shared/pdfjs-options.js';
 import { createIcons, icons } from 'lucide';
 
 function escapeHtml(value) {
@@ -20,7 +22,6 @@ export function createImageStitchController({
   disposeStandardToolPlasma = instance => instance,
   getOutputDir = async () => '',
   openOutputFolder = async () => false,
-  openHelpOverlay = () => {},
   tauriCore = tauriCorePromise,
   tauriEvents = tauriEventPromise,
   refreshIcons = () => {},
@@ -61,7 +62,9 @@ export function createImageStitchController({
   let imageStitchReference = 'first';
   let imageStitchFormat = 'png';
   let imageStitchBusy = false;
-  let imageStitchDragIndex = -1;
+  let queueScope = null;
+  let suppressNativeDropUntil = 0;
+  lifecycle.use(() => queueScope?.dispose());
   let imageStitchJobId = '';
   let imageStitchProgressUnlisten = null;
   let lastImageStitchOutputPath = '';
@@ -92,6 +95,7 @@ export function createImageStitchController({
   }
   
   function closeImageStitchOverlay() {
+    queueScope?.dispose();
     imageStitchSessionRevision += 1;
     imageStitchCancelRequested = true;
     imageStitchPdfImportCancelled = true;
@@ -120,7 +124,7 @@ export function createImageStitchController({
   }
   
   function imageStitchSettings() {
-    return normalizeImageStitchRequest({
+    return normalizeStitchSettings({
       mode: imageStitchMode,
       reference: imageStitchReference,
       spacing_px: Number(byId('imageStitchSpacing')?.value),
@@ -146,6 +150,10 @@ export function createImageStitchController({
   
   function imageStitchErrorMessage(error) {
     const message = String(error?.message || error || '');
+    if (message.includes('invalid-grid-count')) {
+      const side = IMAGE_STITCH_GRIDS[imageStitchMode];
+      return t('home.imageStitch.gridCountError', { count: side * side });
+    }
     if (message.includes('animated')) return t('home.imageStitch.animatedError');
     if (message.includes('Duplicate')) return t('home.imageStitch.duplicateError');
     if (message.includes('output-too-large-for-memory')) return t('home.imageStitch.memoryError');
@@ -160,7 +168,7 @@ export function createImageStitchController({
   function currentImageStitchLayout() {
     if (imageStitchFiles.length < 2) return null;
     try {
-      return calculateImageStitchLayout(imageStitchFiles, imageStitchSettings());
+      return calculateStitchLayout(imageStitchFiles, imageStitchSettings());
     } catch (error) {
       imageStitchEstimate.textContent = imageStitchErrorMessage(error);
       return null;
@@ -169,11 +177,13 @@ export function createImageStitchController({
   
   function fitImageStitchScaleToSafeLayout(notify = false) {
     if (imageStitchFiles.length < 2) return true;
+    const side = IMAGE_STITCH_GRIDS[imageStitchMode];
+    if (side && imageStitchFiles.length !== side * side) return true;
     const scaleInput = byId('imageStitchScale');
     const startingScale = Math.min(100, Math.max(10, Number(scaleInput?.value) || 100));
     for (let scale = startingScale; scale >= 10; scale -= 1) {
       try {
-        calculateImageStitchLayout(imageStitchFiles, { ...imageStitchSettings(), scale_percent: scale });
+        calculateStitchLayout(imageStitchFiles, { ...imageStitchSettings(), scale_percent: scale });
         if (scale !== startingScale && scaleInput) {
           scaleInput.value = String(scale);
           if (notify) window.showToast?.(t('home.imageStitch.autoScaled').replace('{scale}', scale));
@@ -233,6 +243,8 @@ export function createImageStitchController({
     }
     imageStitchEstimate.textContent = `${layout.width.toLocaleString()} × ${layout.height.toLocaleString()} px`;
     imageStitchPreview.className = `image-stitch-preview-composition ${layout.mode}`;
+    imageStitchPreview.classList.toggle('is-grid', Boolean(layout.columns));
+    imageStitchPreview.style.aspectRatio = layout.columns ? `${layout.width} / ${layout.height}` : '';
     imageStitchPreviewViewport?.classList.toggle('is-horizontal', layout.mode === 'horizontal');
     imageStitchPreview.style.background = layout.background_rgba;
     const previewAxis = layout.mode === 'vertical' ? 440 : 320;
@@ -241,7 +253,8 @@ export function createImageStitchController({
     imageStitchPreview.innerHTML = layout.items.map((item, index) => {
       const ratio = `${item.target_width} / ${item.target_height}`;
       const previewUrl = item.preview_data_url || item.previewDataUrl || item.thumbnail_data_url || item.thumbnailDataUrl || '';
-      return `<div class="image-stitch-preview-item" style="aspect-ratio:${ratio}" title="${escapeHtml(item.name)}"><img src="${previewUrl}" alt=""></div>`;
+      const position = layout.columns ? `left:${item.x / layout.width * 100}%;top:${item.y / layout.height * 100}%;width:${item.target_width / layout.width * 100}%;height:${item.target_height / layout.height * 100}%;` : '';
+      return `<div class="image-stitch-preview-item" style="${position}aspect-ratio:${ratio}" title="${escapeHtml(item.name)}"><img src="${previewUrl}" alt="" draggable="false"></div>`;
     }).join('');
   }
   
@@ -249,12 +262,15 @@ export function createImageStitchController({
     if (imageStitchBusy || from === to || from < 0 || to < 0 || from >= imageStitchFiles.length || to >= imageStitchFiles.length) return;
     const [file] = imageStitchFiles.splice(from, 1);
     imageStitchFiles.splice(to, 0, file);
-  
+    renderImageStitchQueue();
   }
   
   function renderImageStitchQueue() {
-    if (!imageStitchQueue) return;
-    imageStitchCount.textContent = `${imageStitchFiles.length} / 100`;
+    if (disposed || !imageStitchQueue) return;
+    queueScope?.dispose();
+    queueScope = createLifecycleScope();
+    const side = IMAGE_STITCH_GRIDS[imageStitchMode];
+    imageStitchCount.textContent = `${imageStitchFiles.length} / ${side ? side * side : 100}`;
     imageStitchQueueEmpty.hidden = imageStitchFiles.length > 0;
     imageStitchQueue.hidden = imageStitchFiles.length === 0;
     imageStitchClear.disabled = imageStitchBusy || imageStitchFiles.length === 0;
@@ -262,7 +278,7 @@ export function createImageStitchController({
     imageStitchQueue.innerHTML = imageStitchFiles.map((file, index) => `
       <div class="image-stitch-row" draggable="${!imageStitchBusy}" data-index="${index}">
         <span class="image-stitch-row-index">${String(index + 1).padStart(2, '0')}</span>
-        <span class="image-stitch-row-thumb"><img src="${file.thumbnail_data_url}" alt=""></span>
+        <span class="image-stitch-row-thumb"><img src="${file.thumbnail_data_url}" alt="" draggable="false"></span>
         <span class="image-stitch-row-info"><strong title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</strong><span>${file.width} × ${file.height}</span></span>
         <span class="image-stitch-row-actions">
           <button type="button" data-action="up" title="${t('home.imageStitch.moveUp')}" ${index === 0 || imageStitchBusy ? 'disabled' : ''}><i data-lucide="chevron-up"></i></button>
@@ -272,31 +288,20 @@ export function createImageStitchController({
       </div>`).join('');
     imageStitchQueue.querySelectorAll('.image-stitch-row').forEach((row) => {
       const index = Number(row.dataset.index);
-      row.querySelector('[data-action="up"]')?.addEventListener('click', () => moveImageStitchFile(index, index - 1));
-      row.querySelector('[data-action="down"]')?.addEventListener('click', () => moveImageStitchFile(index, index + 1));
-      row.querySelector('[data-action="remove"]')?.addEventListener('click', () => {
+      queueScope.event(row.querySelector('[data-action="up"]'), 'click', () => moveImageStitchFile(index, index - 1));
+      queueScope.event(row.querySelector('[data-action="down"]'), 'click', () => moveImageStitchFile(index, index + 1));
+      queueScope.event(row.querySelector('[data-action="remove"]'), 'click', () => {
+        if (imageStitchBusy) return;
         imageStitchFiles.splice(index, 1);
         renderImageStitchQueue();
         void releaseUnusedImageStitchPdfSessions();
       });
-      row.addEventListener('dragstart', (event) => {
-        imageStitchDragIndex = index;
-        row.classList.add('dragging');
-        event.dataTransfer.effectAllowed = 'move';
-      });
-      row.addEventListener('dragend', () => {
-        imageStitchDragIndex = -1;
-        imageStitchQueue.querySelectorAll('.image-stitch-row').forEach(item => item.classList.remove('dragging', 'drag-target'));
-      });
-      row.addEventListener('dragover', (event) => {
-        event.preventDefault();
-        imageStitchQueue.querySelectorAll('.image-stitch-row').forEach(item => item.classList.remove('drag-target'));
-        if (imageStitchDragIndex !== index) row.classList.add('drag-target');
-      });
-      row.addEventListener('drop', (event) => {
-        event.preventDefault();
-        moveImageStitchFile(imageStitchDragIndex, index);
-      });
+    });
+    bindPointerSortableFileList({
+      scope: queueScope, container: imageStitchQueue, items: imageStitchFiles,
+      rowSelector: ':scope > .image-stitch-row', render: renderImageStitchQueue,
+      isLocked: () => imageStitchBusy || !isOpen(),
+      guardNativeDrop: ms => { suppressNativeDropUntil = Date.now() + ms; }
     });
     renderImageStitchPreview();
     if (typeof createIcons === 'function') createIcons({ icons });
@@ -396,9 +401,8 @@ export function createImageStitchController({
       const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
       if (!isCurrentOperation(operation)) throw new Error('image-stitch:pdf-import-cancelled');
       pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-      const wasmUrl = new URL('assets/', documentRef.baseURI).href;
       const bytes = Array.isArray(rawBytes) ? Uint8Array.from(rawBytes) : new Uint8Array(rawBytes);
-      imageStitchPdfLoadingTask = pdfjsLib.getDocument({ data: bytes, wasmUrl, useWasm: true });
+      imageStitchPdfLoadingTask = pdfjsLib.getDocument(pdfjsDocumentOptions({ data: bytes }, documentRef.baseURI));
       const documentProxy = await imageStitchPdfLoadingTask.promise;
       if (!isCurrentOperation(operation)) throw new Error('image-stitch:pdf-import-cancelled');
       if (documentProxy.numPages < 1 || imageStitchFiles.length + documentProxy.numPages > 100) {
@@ -482,7 +486,6 @@ export function createImageStitchController({
       window.showToast?.(imageStitchErrorMessage(error));
     }
   });
-  listen(byId('imageStitchHelp'), 'click', () => openHelpOverlay('image-stitch'));
   listen(imageStitchClear, 'click', () => {
     if (imageStitchBusy) return;
     imageStitchFiles = [];
@@ -629,7 +632,11 @@ export function createImageStitchController({
   listen(byId('imageStitchSuccessOk'), 'click', () => byId('imageStitchSuccessOverlay')?.classList.remove('visible'));
   listen(byId('imageStitchOpenFolder'), 'click', () => { if (lastImageStitchOutputPath) openOutputFolder(lastImageStitchOutputPath).catch(() => {}); byId('imageStitchSuccessOverlay')?.classList.remove('visible'); });
   listen(byId('imageStitchBack'), 'click', closeImageStitchOverlay);
-  listen(imageStitchOverlay, 'dragover', event => { event.preventDefault(); if (!imageStitchBusy) imageStitchDropZone?.classList.add('visible'); });
+  listen(imageStitchOverlay, 'dragover', event => {
+    if (!Array.from(event.dataTransfer?.types || []).includes('Files') || Date.now() < suppressNativeDropUntil) return;
+    event.preventDefault();
+    if (!imageStitchBusy) imageStitchDropZone?.classList.add('visible');
+  });
   listen(imageStitchOverlay, 'dragleave', event => { if (!imageStitchOverlay.contains(event.relatedTarget)) imageStitchDropZone?.classList.remove('visible'); });
   listen(imageStitchOverlay, 'drop', event => { event.preventDefault(); imageStitchDropZone?.classList.remove('visible'); });
   renderImageStitchQueue();
@@ -640,7 +647,7 @@ export function createImageStitchController({
       try {
         const { getCurrentWebview } = await import('@tauri-apps/api/webview');
         const unlisten = await getCurrentWebview().onDragDropEvent(async event => {
-          if (!isOpen() || imageStitchBusy) return;
+          if (!isOpen() || imageStitchBusy || Date.now() < suppressNativeDropUntil) return;
           const payload = event.payload || {};
           if (payload.type === 'over' || payload.type === 'enter') imageStitchDropZone?.classList.add('visible');
           else if (payload.type === 'leave') imageStitchDropZone?.classList.remove('visible');

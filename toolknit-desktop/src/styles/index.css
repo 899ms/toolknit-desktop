@@ -6,10 +6,14 @@
 @import url('./components/dialogs.css');
 @import url('./components/tool-cards.css');
 @import url('./components/navigation.css');
+@import url('./components/vertical-stripe-surface.css');
+@import url('./components/tool-empty-hero.css');
+@import url('./components/page-transitions.css');
 @import url('./components/forms.css');
 @import url('./components/progress.css');
 @import url('./components/window-controls.css');
 @import url('./components/dependency-overlays.css');
+@import url('./components/toasts.css');
 @import url('./pages/settings.css');
 @import url('./pages/account-feedback.css');
 @import url('./components/tool-pages.css');
@@ -36,4 +40,5 @@
 @import url('./pages/home-refinement.css');
 @import url('./compatibility.css');
 @import url('./legacy.css');
+@import url('./components/control-geometry.css');
 @import url('./pages/donation.css');

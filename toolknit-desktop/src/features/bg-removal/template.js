@@ -6,7 +6,7 @@ export function bgRemovalTemplate() {
         <button class="settings-v2-back settings-back pdf-merge-v2-back" type="button" data-bgr-action="back" data-bgr-title="backTitle" title="返回">
           <i data-lucide="arrow-left"></i><span data-bgr-text="backTitle">返回</span>
         </button>
-        <span class="pdf-merge-v2-top-tag">BACKGROUND REMOVAL · TOOL PAGE 2.3</span>
+        <span class="pdf-merge-v2-top-tag">BACKGROUND REMOVAL · TOOL PAGE 3.0</span>
       </div>
       <div class="home-v2-top-actions pdf-merge-v2-top-actions">
         <button class="home-v2-nav-link" type="button" data-bgr-action="website" data-bgr-title="website">
@@ -100,11 +100,12 @@ export function bgRemovalTemplate() {
             </div>
           </div>
 
-          <button class="bg-removal-empty" type="button" data-bgr-empty data-bgr-action="upload">
-            <span class="bg-removal-empty-icon"><i data-lucide="image-up"></i></span>
+          <button class="bg-removal-empty tk-empty-hero" type="button" data-bgr-empty data-bgr-action="upload">
+            <span class="bg-removal-empty-icon tk-empty-hero-icon"><i data-lucide="image-up"></i></span>
+            <span class="tk-empty-hero-kicker">LOCAL AI WORKSPACE</span>
             <strong data-bgr-text="emptyTitle">选择一张图片开始</strong>
-            <span data-bgr-text="emptyDesc">支持 JPG、PNG、WebP、BMP，也可以直接拖入。</span>
-            <em data-bgr-text="emptyAction">选择图片</em>
+            <span class="tk-empty-hero-description" data-bgr-text="emptyDesc">支持 JPG、PNG、WebP、BMP，也可以直接拖入。</span>
+            <em><i data-lucide="upload"></i><span data-bgr-text="emptyAction">选择图片</span></em>
           </button>
 
           <div class="bg-removal-progress" data-bgr-progress hidden>

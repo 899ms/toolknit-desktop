@@ -80,11 +80,18 @@ pub(crate) struct LargeFileCandidate {
 
 #[derive(serde::Serialize)]
 pub(crate) struct LargeFileScanResult {
+    pub(crate) scan_id: String,
+    pub(crate) policy_version: String,
+    pub(crate) elapsed_ms: u64,
+    pub(crate) truncated: bool,
     pub(crate) root_path: String,
     pub(crate) min_size_bytes: u64,
     pub(crate) mode: String,
     pub(crate) scanned_files: u64,
     pub(crate) skipped_dirs: u64,
+    pub(crate) protected_dirs: u64,
+    pub(crate) protected_files: u64,
+    pub(crate) denied_dirs: u64,
     pub(crate) drive_space: Option<CleanupDriveSpace>,
     pub(crate) candidates: Vec<LargeFileCandidate>,
 }

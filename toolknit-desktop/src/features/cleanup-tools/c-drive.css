@@ -560,3 +560,81 @@
 .settings-v2-update-open {
   margin-top: 10px;
 }
+
+/* Keep both work areas usable when the desktop window is short. */
+@media (max-width: 1100px), (max-height: 700px) {
+  .c-drive-cleanup-overlay .c-drive-cleanup-body {
+    overflow-y: auto;
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  }
+
+  .c-drive-cleanup-overlay .c-drive-cleanup-side {
+    overflow-y: auto;
+  }
+
+  .c-drive-cleanup-overlay .c-drive-cleanup-main {
+    min-height: 480px;
+    overflow: visible;
+  }
+
+  .c-drive-cleanup-overlay .c-drive-cleanup-detail {
+    overflow-y: visible;
+  }
+
+  .c-drive-cleanup-overlay .c-drive-cleanup-tips {
+    margin-top: 22px;
+  }
+}
+
+@media (max-width: 980px) {
+  .c-drive-cleanup-overlay .c-drive-cleanup-body {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .c-drive-cleanup-overlay :is(.c-drive-cleanup-side, .c-drive-cleanup-main) {
+    flex: none;
+    overflow: visible;
+  }
+
+  .c-drive-cleanup-overlay .c-drive-cleanup-side {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .c-drive-cleanup-overlay .c-drive-cleanup-main {
+    min-height: auto;
+  }
+
+  .c-drive-cleanup-overlay .c-drive-cleanup-detail {
+    overflow: visible;
+  }
+}
+
+@media (max-width: 640px) {
+  .c-drive-cleanup-overlay .c-drive-cleanup-side,
+  .c-drive-cleanup-overlay .c-drive-cleanup-main {
+    padding: 18px;
+  }
+
+  .c-drive-cleanup-overlay .c-drive-cleanup-footer {
+    padding: 16px 0 0;
+  }
+
+  .c-drive-cleanup-overlay .c-drive-cleanup-confirm {
+    width: 100%;
+  }
+
+  .c-drive-cleanup-overlay .c-drive-cleanup-how-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .c-drive-cleanup-overlay .c-drive-cleanup-dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .c-drive-cleanup-overlay .c-drive-cleanup-dialog-actions button {
+    width: 100%;
+  }
+}

@@ -632,4 +632,10 @@ pub(crate) struct PdfCompressResult {
     pub(crate) compressed_size: u64,
     pub(crate) output_path: Option<String>,
     pub(crate) output_dir: String,
+    pub(crate) target_size_mb: Option<u32>,
+    pub(crate) target_reached: Option<bool>,
+    pub(crate) target_bytes: Option<u64>,
+    pub(crate) status: String,
+    pub(crate) page_count: u32,
+    pub(crate) candidate_size: Option<u64>,
 }

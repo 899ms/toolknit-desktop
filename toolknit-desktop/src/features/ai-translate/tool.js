@@ -1,4 +1,5 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
+import { AiProviderError, AI_PROVIDER_LIMITS } from '../../ai-provider-core.js';
 import {
   AI_TRANSLATE_LIMITS,
   AiTranslateError,
@@ -16,9 +17,10 @@ import {
 import { TEXT_STATS_LIMITS } from '../../text-stats-core.js';
 import '../ai-text/ai-text-shared.css';
 import './ai-translate.css';
+import './ai-translate-light.css';
 
 const EMPTY_SOURCE = Object.freeze({ type: 'manual', name: '', bytes: 0, kind: '' });
-const REQUEST_TIMEOUT_MS = 90_000;
+const REQUEST_TIMEOUT_MS = AI_PROVIDER_LIMITS.maxTimeoutMs;
 const LANGUAGES = Object.freeze([
   { code: 'en', name: 'English', nativeNameKey: 'home.aiTranslate.langEnglish' },
   { code: 'zh', name: 'Chinese', nativeNameKey: 'home.aiTranslate.langChinese' },
@@ -385,10 +387,12 @@ export function initAiTranslateTool({
 
   function reportRequestError(error, controller, timedOut) {
     console.error('[AI Translate] Error:', error);
-    if (controller.signal.aborted) {
-      if (timedOut) alert(copy('requestTimeout'));
+    if (controller.signal.aborted || error?.code === 'timeout') {
+      if (timedOut || error?.code === 'timeout') alert(copy('requestTimeout'));
     } else if (error instanceof AiTranslateError) {
       alert(copy(error.code === 'result_too_large' ? 'resultTooLarge' : 'parseError'));
+    } else if (error instanceof AiProviderError) {
+      alert(error.message);
     } else {
       alert(copy('networkError'));
     }
@@ -410,7 +414,7 @@ export function initAiTranslateTool({
       const content = await requestAi([
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
-      ], request.controller.signal);
+      ], request.controller.signal, undefined, { timeoutMs: REQUEST_TIMEOUT_MS, reasoningEffort: 'low' });
       if (request.id !== requestId || !isCurrent(request.token)) return;
       if (typeof content !== 'string' || !content.trim()) {
         throw new AiTranslateError('invalid_result', 'AI returned an empty response.');

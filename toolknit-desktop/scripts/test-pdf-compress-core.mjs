@@ -10,7 +10,9 @@ import {
   assertPdfCompressLevel,
   assertPdfCompressSelection,
   getPdfCompressErrorCode,
-  summarizePdfCompressResults
+  summarizePdfCompressResults,
+  normalizePdfCompressTarget,
+  PDF_COMPRESS_TARGETS_MB
 } from '../src/pdf-compress-core.js';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -56,6 +58,10 @@ assert.throws(() => assertPdfCompressSelection([{ name: 'large.pdf', size: PDF_C
 assert.throws(() => assertPdfCompressSelection(Array.from({ length: PDF_COMPRESS_LIMITS.maxFiles + 1 }, () => ({ name: 'file.pdf', size: 1 }))));
 assert.throws(() => assertPdfCompressLevel('invalid'));
 assert.doesNotThrow(() => assertPdfCompressLevel('high'));
+assert.deepEqual(PDF_COMPRESS_TARGETS_MB, [5, 10, 15, 20, 50]);
+assert.equal(normalizePdfCompressTarget('10'), 10);
+assert.equal(normalizePdfCompressTarget('auto'), null);
+assert.throws(() => normalizePdfCompressTarget(25));
 assert.equal(getPdfCompressErrorCode('pdf-compress:input-too-large'), 'input-too-large');
 const resultSummary = summarizePdfCompressResults([
   { name: 'saved.pdf', outputPath: 'C:\\output\\saved.pdf', originalSize: 100, compressedSize: 60 },
@@ -67,5 +73,6 @@ assert.equal(resultSummary.noOutputCount, 1);
 assert.deepEqual(resultSummary.savedResults.map(result => result.name), ['saved.pdf']);
 assert.deepEqual(resultSummary.noOutputResults.map(result => result.name), ['unchanged.pdf']);
 assert.equal(summarizePdfCompressResults([{ outputPath: null }]).savedCount, 0);
+assert.match(await readFile(join(projectRoot, 'src-tauri', 'src', 'native_runtime', 'pdf', 'compress.rs'), 'utf8'), /Recompress flate streams for every preset/);
 
 console.log('PDF compress core and qpdf regression checks passed');

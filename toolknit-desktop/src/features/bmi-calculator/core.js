@@ -57,45 +57,50 @@ export function calculateBmi({
   const isMale = gender === 'male';
   const heightM = safeHeight / 100;
   const bmi = safeWeight / (heightM * heightM);
-  let bodyFat = 0;
+  let bodyFat = null;
+  let bodyFatError = null;
 
   if (mode === 'advanced') {
-    const safeWaist = clampBmiInput(waist, 'waist');
-    const safeNeck = clampBmiInput(neck, 'neck');
-    const safeHip = clampBmiInput(hip, 'hip');
-    if (safeWaist && safeNeck && safeHeight) {
-      if (isMale && safeWaist > safeNeck) {
-        const logVal = Math.log10(safeWaist - safeNeck);
-        bodyFat = 495 / (1.0324 - 0.19077 * logVal + 0.15456 * Math.log10(safeHeight)) - 450;
-      } else if (!isMale && safeHip && safeWaist + safeHip > safeNeck) {
-        const logVal = Math.log10(safeWaist + safeHip - safeNeck);
-        bodyFat = 495 / (1.29579 - 0.35004 * logVal + 0.22100 * Math.log10(safeHeight)) - 450;
-      }
+    const measurements = isMale ? { waist, neck } : { waist, neck, hip };
+    if (Object.values(measurements).some(value => value == null || String(value).trim() === '')) {
+      bodyFatError = 'missing_measurements';
+    } else if (Object.entries(measurements).some(([field, value]) => {
+      const number = Number(value);
+      return !Number.isFinite(number) || number < BMI_INPUT_LIMITS[field].min || number > BMI_INPUT_LIMITS[field].max;
+    })) {
+      bodyFatError = 'invalid_measurements';
+    } else {
+      const circumference = Number(waist) - Number(neck) + (isMale ? 0 : Number(hip));
+      const density = circumference > 0 ? (isMale
+        ? 1.0324 - 0.19077 * Math.log10(circumference) + 0.15456 * Math.log10(safeHeight)
+        : 1.29579 - 0.35004 * Math.log10(circumference) + 0.22100 * Math.log10(safeHeight)) : NaN;
+      const estimate = density > 0 ? 495 / density - 450 : NaN;
+      if (Number.isFinite(estimate) && estimate >= 0 && estimate < 100) bodyFat = estimate;
+      else bodyFatError = 'invalid_measurements';
     }
+  } else {
+    bodyFat = Math.max(0, 1.20 * bmi + 0.23 * (safeAge || 25) - 10.8 * (isMale ? 1 : 0) - 5.4);
   }
-  if (!bodyFat || !Number.isFinite(bodyFat) || bodyFat < 0) {
-    bodyFat = 1.20 * bmi + 0.23 * (safeAge || 25) - 10.8 * (isMale ? 1 : 0) - 5.4;
-  }
-  bodyFat = Math.max(0, bodyFat);
 
   const bmr = isMale
     ? 10 * safeWeight + 6.25 * safeHeight - 5 * (safeAge || 25) + 5
     : 10 * safeWeight + 6.25 * safeHeight - 5 * (safeAge || 25) - 161;
   const idealWeight = heightM * heightM * 22;
   const weightDiff = safeWeight - idealWeight;
-  const fatMass = safeWeight * bodyFat / 100;
-  const leanMass = safeWeight - fatMass;
+  const fatMass = bodyFat === null ? null : safeWeight * bodyFat / 100;
+  const leanMass = fatMass === null ? null : safeWeight - fatMass;
 
   return {
     bmi,
     bmiInfo: classifyBmi(bmi),
     bodyFat,
-    bodyFatInfo: classifyBodyFat(bodyFat, gender),
+    bodyFatInfo: bodyFat === null ? null : classifyBodyFat(bodyFat, gender),
+    bodyFatError,
     bmr,
     idealWeight,
     weightDiff,
     fatMass,
     leanMass,
-    barPercent: Math.min(100, Math.max(0, (bodyFat / 40) * 100))
+    barPercent: bodyFat === null ? null : Math.min(100, Math.max(0, (bodyFat / 40) * 100))
   };
 }

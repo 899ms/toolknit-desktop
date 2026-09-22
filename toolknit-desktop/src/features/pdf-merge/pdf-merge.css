@@ -1,3 +1,87 @@
 .pdf-merge-v2:not(.pdf-split-v2) .pdf-merge-v2-poster::after {
   content: 'PDF';
 }
+
+/* Merge panel geometry; shared workbench owns navigation and button themes. */
+#pdfMergeWorkbenchActions {
+  gap: 0;
+  flex: 0 0 auto;
+  overflow: visible;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+#pdfMergeWorkspace .pdf-editor-tool-panel { overflow-y: auto; scrollbar-width: thin; }
+#pdfMergeWorkbenchActions .pdf-merge-workbench-section,
+#pdfMergeWorkbenchActions .pdf-merge-workbench-export {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 22px 0;
+  border-top: 1px solid var(--line, #343438);
+  flex-shrink: 0;
+}
+#pdfMergeWorkbenchActions .pdf-merge-workbench-overview { padding-top: 4px; border-top: 0; }
+#pdfMergeWorkbenchActions .pdf-merge-workbench-export { padding-bottom: 4px; }
+#pdfMergeWorkbenchActions .pdf-merge-workbench-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22px;
+  letter-spacing: 0;
+}
+#pdfMergeWorkbenchActions svg { flex: 0 0 16px; width: 16px; height: 16px; }
+#pdfMergeWorkbenchActions .pdf-merge-workbench-stats { display: grid; gap: 12px; margin: 2px 0 0; }
+#pdfMergeWorkbenchActions .pdf-merge-workbench-stats > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 26px;
+}
+#pdfMergeWorkbenchActions dt,
+#pdfMergeWorkbenchActions .pdf-merge-workbench-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted, #a6a6ad);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+}
+#pdfMergeWorkbenchActions dd {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 26px;
+}
+#pdfMergeWorkbenchActions .pdf-merge-workbench-selection,
+#pdfMergeWorkbenchActions .pdf-merge-workbench-export-meta { color: var(--muted, #a6a6ad); font-size: 12px; line-height: 20px; }
+#pdfMergeWorkbenchActions .pdf-merge-workbench-button-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+#pdfMergeWorkbenchActions .pdf-editor-tool {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 44px;
+  height: auto;
+  padding: 10px;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: normal;
+}
+#pdfMergeWorkbenchActions .pdf-editor-tool span { min-width: 0; overflow-wrap: anywhere; }
+#pdfMergeWorkbenchActions .pdf-merge-delete-button:not(:disabled) { color: #f3a8a8; }
+html[data-theme="light"] #pdfMergeWorkbenchActions .pdf-merge-delete-button:not(:disabled) { color: #a52d36; }
+@media (max-height: 760px) {
+  #pdfMergeWorkbenchActions .pdf-merge-workbench-section,
+  #pdfMergeWorkbenchActions .pdf-merge-workbench-export { padding-block: 14px; gap: 10px; }
+  #pdfMergeWorkbenchActions .pdf-merge-workbench-overview { padding-top: 0; }
+  #pdfMergeWorkbenchActions .pdf-merge-workbench-stats { gap: 8px; }
+}

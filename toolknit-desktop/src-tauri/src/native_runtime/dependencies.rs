@@ -1,4 +1,8 @@
 use super::*;
+#[path = "dependencies/libreoffice_install.rs"]
+mod libreoffice_install;
+#[path = "dependencies/libreoffice_extract.rs"]
+mod libreoffice_extract;
 
 // ===== Audio Conversion =====
 
@@ -97,8 +101,8 @@ pub(super) fn terminate_conversion_process(pid: u32) {
 }
 
 pub(super) const MAX_IMAGE_BATCH_FILES: usize = 100;
-pub(super) const MAX_IMAGE_FILE_BYTES: u64 = 20 * 1024 * 1024;
-pub(super) const MAX_IMAGE_PIXELS: u64 = 40_000_000;
+pub(super) const MAX_IMAGE_FILE_BYTES: u64 = 100 * 1024 * 1024;
+pub(super) const MAX_IMAGE_PIXELS: u64 = 160_000_000;
 
 pub(super) struct ConversionGuard;
 
@@ -470,7 +474,7 @@ pub(super) async fn download_ffmpeg_runtime(
         .to_ascii_lowercase();
     let candidates = ffmpeg_download_candidates(&requested)?;
     let client = reqwest::Client::builder()
-        .user_agent("ToolKnit/2.3.1 ffmpeg-runtime-manager")
+        .user_agent("ToolKnit/3.0.0 ffmpeg-runtime-manager")
         .connect_timeout(std::time::Duration::from_secs(12))
         .build()
         .map_err(|error| format!("Cannot initialize FFmpeg download: {}", error))?;
@@ -730,6 +734,13 @@ pub(super) struct LibreOfficeDownloadProgress {
     phase: String,
 }
 
+#[derive(Clone, serde::Serialize)]
+struct LibreOfficeInstallProgress {
+    #[serde(flatten)]
+    download: LibreOfficeDownloadProgress,
+    extraction: libreoffice_extract::ExtractionProgress,
+}
+
 pub(super) struct LibreOfficeDownloadGuard;
 
 impl Drop for LibreOfficeDownloadGuard {
@@ -817,6 +828,11 @@ pub(super) fn resolve_libreoffice_runtime_quick() -> Option<LibreOfficeRuntimeIn
         if !metadata.is_file() {
             continue;
         }
+        if source == "managed" && libreoffice_install::ensure_app_local_libraries(
+            candidate.parent()?.parent()?
+        ).is_err() {
+            continue;
+        }
         return Some(LibreOfficeRuntimeInfo {
             available: true,
             command: Some(candidate.to_string_lossy().into_owned()),
@@ -894,49 +910,20 @@ pub(super) fn libreoffice_download_candidates(
 }
 
 #[cfg(target_os = "windows")]
-pub(super) fn extract_libreoffice_msi(
+fn extract_libreoffice_msi(
     archive: &std::path::Path,
     destination: &std::path::Path,
+    report: impl FnMut(&str, libreoffice_extract::ExtractionProgress),
 ) -> Result<(), String> {
-    let staged = destination.with_extension("installing");
-    if staged.exists() {
-        let _ = std::fs::remove_dir_all(&staged);
-    }
-    std::fs::create_dir_all(&staged)
-        .map_err(|error| format!("Cannot prepare PPT runtime directory: {}", error))?;
-    let mut command = std::process::Command::new("msiexec.exe");
-    command
-        .arg("/a")
-        .arg(archive)
-        .arg("/qn")
-        .arg("TARGETDIR=".to_string() + &staged.to_string_lossy());
-    use std::os::windows::process::CommandExt;
-    command.creation_flags(0x08000000);
-    let output = command
-        .output()
-        .map_err(|error| format!("Cannot start LibreOffice extraction: {}", error))?;
-    if !output.status.success() {
-        let _ = std::fs::remove_dir_all(&staged);
-        return Err(format!(
-            "LibreOffice extraction failed: {}",
-            String::from_utf8_lossy(&output.stderr).trim()
-        ));
-    }
-    let extracted = staged.join("program").join("soffice.com");
-    if !extracted.is_file() {
-        let _ = std::fs::remove_dir_all(&staged);
-        return Err("LibreOffice extraction did not produce soffice.com".to_string());
-    }
-    if destination.exists() {
-        std::fs::remove_dir_all(destination)
-            .map_err(|error| format!("Cannot replace old PPT runtime: {}", error))?;
-    }
-    std::fs::rename(&staged, destination)
-        .map_err(|error| format!("Cannot finalize PPT runtime: {}", error))
+    libreoffice_install::extract_and_validate(archive, destination, report)
 }
 
 #[cfg(not(target_os = "windows"))]
-pub(super) fn extract_libreoffice_msi(_: &std::path::Path, _: &std::path::Path) -> Result<(), String> {
+fn extract_libreoffice_msi(
+    _: &std::path::Path,
+    _: &std::path::Path,
+    _: impl FnMut(&str, libreoffice_extract::ExtractionProgress),
+) -> Result<(), String> {
     Err("Managed LibreOffice download is currently available on Windows only".to_string())
 }
 
@@ -966,7 +953,7 @@ pub(super) async fn download_libreoffice_runtime(
         .to_ascii_lowercase();
     let candidates = libreoffice_download_candidates(&requested)?;
     let client = reqwest::Client::builder()
-        .user_agent("ToolKnit/2.3.1 libreoffice-runtime-manager")
+        .user_agent("ToolKnit/3.0.0 libreoffice-runtime-manager")
         .connect_timeout(std::time::Duration::from_secs(15))
         .build()
         .map_err(|error| format!("Cannot initialize PPT runtime download: {}", error))?;
@@ -982,79 +969,84 @@ pub(super) async fn download_libreoffice_runtime(
             let _ = std::fs::remove_file(&archive);
             resume_from = 0;
         }
-        let mut request = client.get(url);
-        if resume_from > 0 {
-            request = request.header(reqwest::header::RANGE, format!("bytes={}-", resume_from));
-        }
-        let mut response = match request.send().await {
-            Ok(response) if response.status().is_success() => response,
-            Ok(response) => {
-                last_error = Some(format!("{}: HTTP {}", candidate, response.status()));
-                continue;
+        let mut downloaded = resume_from;
+        // A verified-length archive may be left by a failed startup check.
+        // Recheck its hash below instead of requesting an invalid EOF range.
+        if resume_from < LIBREOFFICE_ARCHIVE_BYTES {
+            let mut request = client.get(url);
+            if resume_from > 0 {
+                request = request.header(reqwest::header::RANGE, format!("bytes={}-", resume_from));
             }
-            Err(error) => {
-                last_error = Some(format!("{}: {}", candidate, error));
-                continue;
-            }
-        };
-        let append = resume_from > 0 && response.status() == reqwest::StatusCode::PARTIAL_CONTENT;
-        if !append && resume_from > 0 {
-            resume_from = 0;
-        }
-        let mut downloaded = if append { resume_from } else { 0 };
-        let mut file = std::fs::OpenOptions::new()
-            .create(true)
-            .write(true)
-            .append(append)
-            .truncate(!append)
-            .open(&archive)
-            .map_err(|error| format!("Cannot create PPT runtime download: {}", error))?;
-        let _ = app_handle.emit(
-            "libreoffice-runtime-download-progress",
-            LibreOfficeDownloadProgress {
-                downloaded_bytes: downloaded,
-                total_bytes: LIBREOFFICE_ARCHIVE_BYTES,
-                phase: "downloading".to_string(),
-            },
-        );
-        let mut failed = None;
-        loop {
-            if CANCEL_LIBREOFFICE_DOWNLOAD.load(Ordering::SeqCst) {
-                let _ = file.sync_all();
-                return Err("dependency-download:cancelled".to_string());
-            }
-            match response.chunk().await {
-                Ok(Some(chunk)) => {
-                    downloaded = downloaded.saturating_add(chunk.len() as u64);
-                    if downloaded > LIBREOFFICE_ARCHIVE_BYTES {
-                        failed = Some("PPT runtime package is larger than expected".to_string());
-                        break;
-                    }
-                    if let Err(error) = file.write_all(&chunk) {
-                        failed = Some(format!("Cannot write PPT runtime download: {}", error));
-                        break;
-                    }
-                    let _ = app_handle.emit(
-                        "libreoffice-runtime-download-progress",
-                        LibreOfficeDownloadProgress {
-                            downloaded_bytes: downloaded,
-                            total_bytes: LIBREOFFICE_ARCHIVE_BYTES,
-                            phase: "downloading".to_string(),
-                        },
-                    );
+            let mut response = match request.send().await {
+                Ok(response) if response.status().is_success() => response,
+                Ok(response) => {
+                    last_error = Some(format!("{}: HTTP {}", candidate, response.status()));
+                    continue;
                 }
-                Ok(None) => break,
                 Err(error) => {
-                    failed = Some(format!("PPT runtime download interrupted: {}", error));
-                    break;
+                    last_error = Some(format!("{}: {}", candidate, error));
+                    continue;
+                }
+            };
+            let append = resume_from > 0 && response.status() == reqwest::StatusCode::PARTIAL_CONTENT;
+            if !append && resume_from > 0 {
+                resume_from = 0;
+            }
+            downloaded = if append { resume_from } else { 0 };
+            let mut file = std::fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .append(append)
+                .truncate(!append)
+                .open(&archive)
+                .map_err(|error| format!("Cannot create PPT runtime download: {}", error))?;
+            let _ = app_handle.emit(
+                "libreoffice-runtime-download-progress",
+                LibreOfficeDownloadProgress {
+                    downloaded_bytes: downloaded,
+                    total_bytes: LIBREOFFICE_ARCHIVE_BYTES,
+                    phase: "downloading".to_string(),
+                },
+            );
+            let mut failed = None;
+            loop {
+                if CANCEL_LIBREOFFICE_DOWNLOAD.load(Ordering::SeqCst) {
+                    let _ = file.sync_all();
+                    return Err("dependency-download:cancelled".to_string());
+                }
+                match response.chunk().await {
+                    Ok(Some(chunk)) => {
+                        downloaded = downloaded.saturating_add(chunk.len() as u64);
+                        if downloaded > LIBREOFFICE_ARCHIVE_BYTES {
+                            failed = Some("PPT runtime package is larger than expected".to_string());
+                            break;
+                        }
+                        if let Err(error) = file.write_all(&chunk) {
+                            failed = Some(format!("Cannot write PPT runtime download: {}", error));
+                            break;
+                        }
+                        let _ = app_handle.emit(
+                            "libreoffice-runtime-download-progress",
+                            LibreOfficeDownloadProgress {
+                                downloaded_bytes: downloaded,
+                                total_bytes: LIBREOFFICE_ARCHIVE_BYTES,
+                                phase: "downloading".to_string(),
+                            },
+                        );
+                    }
+                    Ok(None) => break,
+                    Err(error) => {
+                        failed = Some(format!("PPT runtime download interrupted: {}", error));
+                        break;
+                    }
                 }
             }
-        }
-        let _ = file.sync_all();
-        drop(file);
-        if let Some(error) = failed {
-            last_error = Some(error);
-            continue;
+            let _ = file.sync_all();
+            drop(file);
+            if let Some(error) = failed {
+                last_error = Some(error);
+                continue;
+            }
         }
         if downloaded != LIBREOFFICE_ARCHIVE_BYTES {
             last_error = Some(format!(
@@ -1080,6 +1072,9 @@ pub(super) async fn download_libreoffice_runtime(
             last_error = Some("PPT runtime integrity check failed".to_string());
             continue;
         }
+        if CANCEL_LIBREOFFICE_DOWNLOAD.load(Ordering::SeqCst) {
+            return Err("dependency-download:cancelled".to_string());
+        }
         let _ = app_handle.emit(
             "libreoffice-runtime-download-progress",
             LibreOfficeDownloadProgress {
@@ -1090,36 +1085,32 @@ pub(super) async fn download_libreoffice_runtime(
         );
         let archive_for_extract = archive.clone();
         let destination_for_extract = destination.clone();
+        let extraction_app = app_handle.clone();
         let extraction = tokio::task::spawn_blocking(move || {
-            extract_libreoffice_msi(&archive_for_extract, &destination_for_extract)
+            extract_libreoffice_msi(
+                &archive_for_extract,
+                &destination_for_extract,
+                |phase, progress| {
+                    let _ = extraction_app.emit(
+                        "libreoffice-runtime-download-progress",
+                        LibreOfficeInstallProgress {
+                            download: LibreOfficeDownloadProgress {
+                                downloaded_bytes: LIBREOFFICE_ARCHIVE_BYTES,
+                                total_bytes: LIBREOFFICE_ARCHIVE_BYTES,
+                                phase: phase.to_string(),
+                            },
+                            extraction: progress,
+                        },
+                    );
+                },
+            )
         })
         .await
         .map_err(|error| format!("Cannot install PPT runtime: {}", error))?;
-        if let Err(error) = extraction {
-            last_error = Some(error);
-            continue;
-        }
+        // Extraction includes app-local CRT deployment and startup validation.
+        // Keep the verified archive on failure so retry does not download again.
+        extraction?;
         let _ = std::fs::remove_file(&archive);
-        let executable = libreoffice_runtime_path()?;
-        let _ = app_handle.emit(
-            "libreoffice-runtime-download-progress",
-            LibreOfficeDownloadProgress {
-                downloaded_bytes: downloaded,
-                total_bytes: LIBREOFFICE_ARCHIVE_BYTES,
-                phase: "verifying".to_string(),
-            },
-        );
-        let valid = tokio::task::spawn_blocking(move || {
-            probe_libreoffice(&executable, "managed").is_some()
-        })
-        .await
-        .map_err(|error| format!("Cannot validate PPT runtime: {}", error))?;
-        if !valid {
-            let _ = std::fs::remove_dir_all(libreoffice_runtime_dir()?);
-            return Err(
-                "PPT runtime validation failed; the downloaded runtime was removed".to_string(),
-            );
-        }
         let _ = app_handle.emit(
             "libreoffice-runtime-download-progress",
             LibreOfficeDownloadProgress {

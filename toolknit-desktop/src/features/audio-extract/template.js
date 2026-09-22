@@ -1,15 +1,15 @@
 export function audioExtractTemplate() {
-  return `<div class="audio-extract-v2 audio-extract-feature">
+  return `<div class="audio-extract-v2 audio-extract-feature tool-page-v2-shell tool-page-v2-light">
     <div class="plasma-bg pdf-merge-v2-bg" data-audio-extract-bg></div>
     <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" data-audio-extract-drop-zone>
       <span class="drop-hint" data-audio-extract-text="dropHint">松手即可上传</span>
     </div>
-    <header class="pdf-merge-v2-topbar audio-extract-v2-topbar" data-tauri-drag-region>
+    <header class="pdf-merge-v2-topbar audio-extract-v2-topbar tool-page-v2-topbar" data-tauri-drag-region>
       <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
         <button class="settings-v2-back settings-back pdf-merge-v2-back" type="button" data-audio-extract-action="back" data-audio-extract-title="back">
           <i data-lucide="arrow-left"></i><span data-audio-extract-text="back">返回首页</span>
         </button>
-        <span class="pdf-merge-v2-top-tag">AUDIO EXTRACTOR · TOOL PAGE 2.3</span>
+        <span class="pdf-merge-v2-top-tag">AUDIO EXTRACTOR · TOOL PAGE 3.0</span>
       </div>
       <div class="home-v2-top-actions pdf-merge-v2-top-actions">
         <button class="home-v2-nav-link" type="button" data-audio-extract-action="website" data-audio-extract-title="website"><i data-lucide="globe-2"></i><span data-audio-extract-text="website">网页版本</span></button>

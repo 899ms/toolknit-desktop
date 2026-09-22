@@ -1,5 +1,5 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
-import { onLangChange, t } from '../../i18n.js';
+import { applyTranslations, onLangChange, t } from '../../i18n.js';
 import { BMI_INPUT_LIMITS, calculateBmi } from './core.js';
 import './bmi-calculator.css';
 
@@ -90,10 +90,14 @@ export function initBmiCalculatorTool({
       bmiTag.textContent = bmiLabel(result.bmiInfo.level);
       bmiTag.className = tagClass(result.bmiInfo.level);
     }
-    if (bodyFatValue) bodyFatValue.textContent = `${result.bodyFat.toFixed(1)}%`;
+    const hasBodyFat = Number.isFinite(result.bodyFat);
+    if (bodyFatValue) bodyFatValue.textContent = hasBodyFat ? `${result.bodyFat.toFixed(1)}%` : '--';
     if (bodyFatTag) {
-      bodyFatTag.textContent = bmiLabel(result.bodyFatInfo.level);
-      bodyFatTag.className = tagClass(result.bodyFatInfo.level);
+      bodyFatTag.textContent = hasBodyFat ? bmiLabel(result.bodyFatInfo.level)
+        : t(`home.bmiCalc.${result.bodyFatError === 'missing_measurements' ? 'advancedMissing' : 'advancedInvalid'}`);
+      bodyFatTag.className = hasBodyFat ? tagClass(result.bodyFatInfo.level) : 'bmi-calc-card-tag';
+      bodyFatTag.title = hasBodyFat ? '' : t('home.bmiCalc.advancedCheck');
+      bodyFatTag.setAttribute('role', 'status');
     }
     if (bmrValue) bmrValue.textContent = String(Math.round(result.bmr));
     if (idealWeightValue) idealWeightValue.textContent = `${result.idealWeight.toFixed(1)} kg`;
@@ -102,9 +106,12 @@ export function initBmiCalculatorTool({
       idealWeightDiff.textContent = diffText;
       idealWeightDiff.className = `bmi-calc-card-tag tag-${Math.abs(result.weightDiff) < 3 ? 'normal' : result.weightDiff > 0 ? 'high' : 'low'}`;
     }
-    if (fatMassValue) fatMassValue.textContent = `${result.fatMass.toFixed(1)} kg`;
-    if (leanMassValue) leanMassValue.textContent = `${result.leanMass.toFixed(1)} kg`;
-    if (resultBarMarker) resultBarMarker.style.left = `${result.barPercent}%`;
+    if (fatMassValue) fatMassValue.textContent = hasBodyFat ? `${result.fatMass.toFixed(1)} kg` : '--';
+    if (leanMassValue) leanMassValue.textContent = hasBodyFat ? `${result.leanMass.toFixed(1)} kg` : '--';
+    if (resultBarMarker) {
+      resultBarMarker.hidden = !hasBodyFat;
+      resultBarMarker.style.left = hasBodyFat ? `${result.barPercent}%` : '';
+    }
   }
 
   function showWarning(field) {
@@ -139,6 +146,7 @@ export function initBmiCalculatorTool({
   }
 
   function setMode(nextMode) {
+    clearWarnings();
     mode = nextMode;
     modeTabs?.querySelectorAll('.bmi-calc-mode-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.mode === mode));
     if (advancedFields) advancedFields.style.display = mode === 'advanced' ? '' : 'none';
@@ -146,6 +154,7 @@ export function initBmiCalculatorTool({
   }
 
   function setGender(nextGender) {
+    clearWarnings();
     gender = nextGender;
     genderTabs?.querySelectorAll('.bmi-calc-gender-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.gender === gender));
     if (hipField) hipField.style.display = gender === 'female' ? '' : 'none';
@@ -154,6 +163,7 @@ export function initBmiCalculatorTool({
 
   function open() {
     lifecycle.invalidate();
+    applyTranslations();
     overlay.classList.add('visible');
     overlay.setAttribute('aria-hidden', 'false');
     if (background && !plasma) plasma = initStandardToolPlasma(background);

@@ -35,7 +35,7 @@ use media_runtime::*;
 pub(super) mod system_runtime;
 use system_runtime::*;
 mod office;
-use office::{libreoffice_candidates, probe_libreoffice, LibreOfficeRuntimeInfo};
+use office::{libreoffice_candidates, LibreOfficeRuntimeInfo};
 mod runner;
 pub use runner::run;
 use runner::{minimize_main_window, show_main_window};

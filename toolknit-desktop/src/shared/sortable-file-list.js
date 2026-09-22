@@ -60,11 +60,12 @@ export function bindPointerSortableFileList({
   container,
   items,
   render,
+  rowSelector = ':scope > .audio-convert-file-item',
   isLocked = () => false,
   guardNativeDrop = () => {}
 } = {}) {
   if (!scope?.event || !container || !Array.isArray(items) || typeof render !== 'function') return;
-  const rows = Array.from(container.querySelectorAll(':scope > .audio-convert-file-item'));
+  const rows = Array.from(container.querySelectorAll(rowSelector));
   const sortable = rows.length > 1 && !isLocked();
 
   const clearDropTargets = () => {

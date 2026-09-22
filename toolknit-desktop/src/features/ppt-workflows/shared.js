@@ -1,4 +1,5 @@
 import { loadTauriDialog, loadTauriWebview, tauriCorePromise } from '../../platform/tauri-runtime.js';
+import { setModalInteractivity } from '../../app/modal-runtime.js';
 
 export const PPTX_ACCEPT = '.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation';
 
@@ -37,8 +38,7 @@ export function joinPath(directory, fileName) {
 export function setInteractiveLayer(element, visible) {
   if (!element) return;
   element.classList.toggle('visible', visible);
-  element.setAttribute('aria-hidden', visible ? 'false' : 'true');
-  element.inert = !visible;
+  setModalInteractivity(element, visible);
 }
 
 export function waitForScope(scope, delay) {
@@ -60,6 +60,19 @@ export function waitForScope(scope, delay) {
       resolve(false);
     });
   });
+}
+
+export function retainBrowserObjectUrl(scope, url, delay = 1000) {
+  if (!scope || !url || typeof globalThis.URL?.revokeObjectURL !== 'function') return () => {};
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
+    globalThis.URL.revokeObjectURL(url);
+  };
+  scope.use(release);
+  scope.timeout(release, delay);
+  return release;
 }
 
 export function createOperationGuard(getSession) {

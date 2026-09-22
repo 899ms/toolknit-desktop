@@ -1,10 +1,13 @@
 import { spawnSync } from 'node:child_process';
 
 const releaseTests = [
+  'test:source-inventory',
   'test:security-release',
   'test:release-version',
   'test:update-service',
   'test:window-radius',
+  'test:theme',
+  'test:startup',
   'test:architecture',
   'test:animation-policy',
   'test:system-cleanup',
@@ -16,6 +19,9 @@ const releaseTests = [
   'test:pdf-split-tool-contract',
   'test:pdf-to-image',
   'test:pdf-to-image-tool-contract',
+  'test:pdf-text-markdown',
+  'test:pdf-ai-markdown',
+  'test:clipboard-history',
   'test:pdf-rotate',
   'test:pdf-rotate-tool-contract',
   'test:pdf-encrypt',
@@ -88,7 +94,8 @@ const releaseTests = [
   'test:cli-package',
   'test:cli-clean-worktree',
   'test:cli-agent',
-  'build'
+  'build',
+  'test:release-artifacts'
 ];
 
 const npmCli = process.env.npm_execpath;

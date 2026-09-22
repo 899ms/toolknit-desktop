@@ -33,7 +33,7 @@ C:\Users\<你的用户名>\AppData\Roaming\npm\node_modules\@toolknit\cli\toolkn
 - `toolknit_pdf_rotate`：旋转 PDF 页面方向。
 - `toolknit_pdf_encrypt`：给 PDF 加密码和权限。
 - `toolknit_pdf_decrypt`：解锁受密码保护的 PDF。
-- `toolknit_pdf_compress`：压缩 PDF 文件体积。
+- `toolknit_pdf_compress`：默认保结构压缩；显式 `mode=raster` 才有损图像化。`target_bytes` 为严格大小上限，不达标不导出；调用者检查 `status` 与 `outputs`。
 - `toolknit_pdf_enhance`：增强扫描件可读性。
 - `toolknit_pdf_to_image`：把 PDF 页面导出为逐页图像，或按页码拼成长图。
 - `toolknit_ai_document`：创建 PDF、可编辑工程、干净预览、编号图和首个修订。

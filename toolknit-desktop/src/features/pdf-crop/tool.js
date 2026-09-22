@@ -57,6 +57,7 @@ export function initPdfCropTool({
   const replaceButton = byId('pdfCropReplace');
   const unitSelect = byId('pdfCropUnit');
   const outputNameInput = byId('pdfCropOutputName');
+  const exportCurrentButton = byId('pdfCropExportCurrent');
   const exportButton = byId('pdfCropExport');
   const processMask = byId('pdfCropProcessMask');
   const processText = byId('pdfCropProcessText');
@@ -71,7 +72,7 @@ export function initPdfCropTool({
   const successOk = byId('pdfCropSuccessOk');
 
   if (!overlay || !byId('pdfCropFilmstrip') || !byId('pdfCropPreviewCanvas')
-    || !byId('pdfCropInteractionLayer') || !exportButton) {
+    || !byId('pdfCropInteractionLayer') || !exportCurrentButton || !exportButton) {
     return { open() {}, close() {}, dispose() {} };
   }
   if (typeof getOutputDir !== 'function') throw new Error('pdf-crop:missing-output-directory');
@@ -88,6 +89,7 @@ export function initPdfCropTool({
   let operationSequence = 0;
   let plasmaInstance = null;
   let overlayReturnFocus = null;
+  let successReturnFocus = null;
   const isDemo = import.meta.env.DEV
     && new URLSearchParams(window.location.search).get('pdf-crop-demo') === '1';
 
@@ -221,6 +223,7 @@ export function initPdfCropTool({
     overlay.querySelectorAll('input[name="pdfCropOutputMode"], #pdfCropOutputName').forEach(input => {
       input.disabled = busy || !hasDocument;
     });
+    exportCurrentButton.disabled = busy || !hasDocument || !workspace.hasCurrentCrop();
     exportButton.disabled = busy || !hasDocument || !workspace.hasCrop();
   }
 
@@ -280,9 +283,11 @@ export function initPdfCropTool({
     }
   }
 
-  async function exportDocument(owner = session) {
-    if (!isOpenSession(owner) || activeOperation || !workspace.hasDocument() || !workspace.hasCrop()) return;
-    const operation = beginOperation('export', owner);
+  async function exportDocument(target = 'all', owner = session) {
+    const canExport = target === 'current' ? workspace.hasCurrentCrop() : workspace.hasCrop();
+    if (!isOpenSession(owner) || activeOperation || !workspace.hasDocument() || !canExport) return;
+    const trigger = target === 'current' ? exportCurrentButton : exportButton;
+    const operation = beginOperation(target === 'current' ? 'export-current' : 'export-all', owner);
     view.setProcessState(true);
     view.setProgress(3, t('home.pdfCrop.preparingExport'));
     try {
@@ -292,12 +297,14 @@ export function initPdfCropTool({
         ...state,
         outputName: outputNameInput?.value || state.sourceName,
         mode: outputMode(),
+        target,
         assertOperation,
         setProgress: (percent, label) => view.setProgress(percent, label),
         text: t
       });
       assertOperation(operation);
       view.setProgress(100, t('home.pdfCrop.complete'));
+      successReturnFocus = trigger;
       view.showSuccess(result);
       view.focus(successOk || successOpenFolder);
     } catch (error) {
@@ -390,7 +397,8 @@ export function initPdfCropTool({
       event.stopPropagation();
       if (successOverlay?.classList.contains('visible')) {
         view.closeSuccess();
-        view.focus(exportButton);
+        view.focus(successReturnFocus || exportButton);
+        successReturnFocus = null;
       } else if (activeOperation) {
         cancelOperation();
       } else if (!workspace.cancelReframe()) {
@@ -438,6 +446,7 @@ export function initPdfCropTool({
   async function closeTool({ restoreFocus = true } = {}) {
     const returnFocus = overlayReturnFocus;
     overlayReturnFocus = null;
+    successReturnFocus = null;
     if (activeOperation) cancelOperation({ silent: true, detach: true });
     const owner = session;
     session = null;
@@ -457,9 +466,14 @@ export function initPdfCropTool({
   listen(emptyAdd, 'click', requestFile);
   listen(replaceButton, 'click', requestFile);
   listen(fileInput, 'change', event => { void loadFile(event.target.files, session); });
-  listen(exportButton, 'click', () => { void exportDocument(session); });
+  listen(exportCurrentButton, 'click', () => { void exportDocument('current', session); });
+  listen(exportButton, 'click', () => { void exportDocument('all', session); });
   listen(processCancel, 'click', () => cancelOperation());
-  listen(successOk, 'click', () => { view.closeSuccess(); view.focus(exportButton); });
+  listen(successOk, 'click', () => {
+    view.closeSuccess();
+    view.focus(successReturnFocus || exportButton);
+    successReturnFocus = null;
+  });
   listen(successOpenFolder, 'click', () => { void openOutputFolder(); });
   listen(document, 'keydown', handleKeydown);
   listen(overlay, 'dragover', event => {

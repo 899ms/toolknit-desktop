@@ -22,6 +22,7 @@ import { encodeIco as compatibleEncodeIco } from '../src/icon-gen-core.js';
 import { LAZY_TOOL_SPECS } from '../src/features/lazy-tools.js';
 import { toolTopbarMarkup as sharedToolTopbarMarkup } from '../src/shared/tool-page-shell.js';
 import { toolTopbarMarkup as compatibleToolTopbarMarkup } from '../src/tool-page-shell.js';
+import * as toolPageShell from '../src/shared/tool-page-shell.js';
 
 const [
   mainSource,
@@ -122,6 +123,7 @@ const [
   readFile(new URL('../src/tool-page-v2-final.css', import.meta.url), 'utf8'),
   ...[]
 ]);
+const applicationRuntimeSource = await readFile(new URL('../src/application-runtime.js', import.meta.url), 'utf8');
 
 assert.equal(readCompatibleResponse, readCoreResponse, 'the legacy bounded-response path must re-export the core implementation');
 assert.equal(formatCompatibleJson, formatFeatureJson, 'the legacy developer toolbox core path must re-export the feature implementation');
@@ -132,6 +134,8 @@ assert.equal(compatibleImageColorRgbToHex, featureImageColorRgbToHex, 'the legac
 assert.equal(compatibleMarkdownAction, featureMarkdownAction, 'the legacy Markdown core path must re-export the feature implementation');
 assert.equal(compatibleEncodeIco, featureEncodeIco, 'the legacy icon generator core path must re-export the feature implementation');
 assert.equal(compatibleToolTopbarMarkup, sharedToolTopbarMarkup, 'the legacy tool shell path must re-export the shared implementation');
+assert.equal(typeof toolPageShell.bindGlobalToolPageChrome, 'function', 'tool chrome must expose one global lazy-overlay delegate');
+assert.equal(typeof toolPageShell.moveFocusOutOfHiddenRegion, 'function', 'tool chrome must expose a focus-safe close helper');
 assert.match(cryptoControllerSource, /from ['"]\.\.\/\.\.\/shared\/tool-page-shell\.js['"]/, 'crypto must consume the shared tool shell');
 assert.match(cryptoControllerSource, /from ['"]\.\.\/\.\.\/platform\/tauri-runtime\.js['"]/, 'crypto must consume the platform boundary');
 assert.doesNotMatch(cryptoControllerSource, /from ['"]@tauri-apps\//, 'crypto must not bypass the platform boundary');
@@ -211,7 +215,7 @@ assert.match(markdownControllerSource, /createLifecycleScope\(\)/, 'the Markdown
 assert.match(markdownControllerSource, /lifecycle\.use\(bindToolPageChrome\(shell, close\)\)/, 'the Markdown controller must release shared page chrome listeners');
 assert.match(markdownControllerSource, /from ['"]\.\.\/\.\.\/platform\/tauri-runtime\.js['"]/, 'the Markdown controller must use the platform boundary');
 assert.doesNotMatch(markdownControllerSource, /from ['"]@tauri-apps\//, 'the Markdown controller must not bypass the platform boundary');
-assert.match(markdownControllerSource, /return \{ open, close, dispose \}/, 'the Markdown controller must implement the complete lifecycle contract');
+assert.match(markdownControllerSource, /return \{ open, close, dispose, importMarkdown \}/, 'the Markdown controller must implement the lifecycle and import contract');
 assert.match(markdownTemplateSource, /data-lucide="save"/, 'the Markdown draft state must use a registered Lucide icon');
 assert.doesNotMatch(markdownTemplateSource, /data-lucide="cloud-check"/, 'the removed Lucide cloud-check icon must not emit runtime warnings');
 assert.match(markdownPreviewSecuritySource, /template\.content\.querySelectorAll\(['"]img['"]\)/, 'the Markdown preview must inspect every image');
@@ -279,6 +283,7 @@ for (const [toolId, overlayId] of Object.entries({
   assert.match(LAZY_TOOL_SPECS[toolId].load.toString(), /\.\/hardware-inspector\/tool\.js/, `${toolId} must load the hardware feature entry`);
 }
 assert.match(mainSource, /LAZY_TOOL_SPECS/, 'main must use the shared lazy registry');
+assert.match(applicationRuntimeSource, /createLazyToolRegistry\(\{[\s\S]*?refreshIcons:\s*\(\)\s*=>\s*createIcons\(\{\s*icons\s*\}\)/, 'application runtime must inject the lazy icon refresh fallback');
 assert.doesNotMatch(mainSource, /from ['"]\.\/pdf-editor-ui\.js['"]/, 'PDF Editor must not be statically imported by main');
 assert.match(mainSource, /pdfWorkerUrl,/, 'lazy features must receive the PDF worker URL through context');
 assert.throws(() => validateLazyToolSpecs({ broken: { overlayId: 'x', init: 'init' } }), /load/);
@@ -379,11 +384,11 @@ registry.bind();
 const preventToolEscape = event => event.preventDefault();
 root.addEventListener('keydown', preventToolEscape);
 root.dispatch('keydown', { key: 'Escape' });
-await Promise.resolve();
+await new Promise(resolve => setTimeout(resolve, 5));
 assert.equal(registry.activeToolId, 'sharedTwo', 'a tool-owned Escape action must not close the active tool');
 root.removeEventListener('keydown', preventToolEscape);
 root.dispatch('keydown', { key: 'Escape' });
-await Promise.resolve();
+await new Promise(resolve => setTimeout(resolve, 5));
 assert.equal(registry.activeToolId, '');
 await registry.dispose();
 await registry.dispose();
@@ -424,6 +429,8 @@ function createTemplateRoot() {
 const mountedTemplate = createTemplateRoot();
 let sharedMarkupLoads = 0;
 let mountedInitializerOverlay = null;
+let mountedTemplateIconRefreshes = 0;
+let mountedInitializerIconRefreshes = 0;
 const templateRegistry = createLazyToolRegistry({
   specs: {
     templateOne: {
@@ -453,13 +460,21 @@ const templateRegistry = createLazyToolRegistry({
     }
   },
   root: mountedTemplate.root,
+  refreshIcons: () => { mountedTemplateIconRefreshes += 1; },
+  createContext: () => ({
+    refreshIcons: () => { mountedInitializerIconRefreshes += 1; }
+  }),
   onError: error => errors.push(error)
 });
 assert.ok(await templateRegistry.open('templateOne'), 'a missing lazy overlay must mount before initialization');
 assert.equal(mountedInitializerOverlay, mountedTemplate.elements.get('template-overlay'), 'initialization must receive the mounted overlay');
+assert.equal(mountedTemplateIconRefreshes, 1, 'lazy template mounting must refresh icons once');
+assert.equal(mountedInitializerIconRefreshes, 1, 'lazy initialization must refresh icons once');
 assert.ok(await templateRegistry.open('templateTwo'));
 assert.equal(sharedMarkupLoads, 1, 'tools sharing one instance must not mount their shared template twice');
 assert.equal(mountedTemplate.elements.size, 1, 'shared markup must produce one overlay');
+assert.equal(mountedTemplateIconRefreshes, 1, 'reopening a shared template must not refresh the mount twice');
+assert.equal(mountedInitializerIconRefreshes, 1, 'reopening a shared instance must not reinitialize icons');
 await templateRegistry.dispose();
 
 const pendingMarkup = deferred();
@@ -564,6 +579,54 @@ allowClose.resolve();
 await secondOpen;
 assert.deepEqual(transitionOrder, ['first:open', 'first:close:start', 'first:close:end', 'second:open']);
 await transitionRegistry.dispose();
+
+let allowVetoClose = false;
+let vetoCloseCount = 0;
+let runDeferredClose = null;
+const vetoOverlay = {};
+const vetoRegistry = createLazyToolRegistry({
+  root: { getElementById: () => vetoOverlay },
+  specs: { veto: { overlayId: 'vetoOverlay', init: 'initTool', load: async () => ({
+    initTool: () => ({ open() {}, close() { vetoCloseCount += 1; return allowVetoClose; } })
+  }) } },
+  pageTransition: { run(action) { return runDeferredClose ? runDeferredClose(action) : action(); } }
+});
+await vetoRegistry.open('veto');
+assert.equal(await vetoRegistry.closeActive(), false);
+assert.equal(vetoRegistry.activeToolId, 'veto', 'close veto must preserve registry ownership');
+assert.equal(vetoRegistry.closeFromChrome({}), false, 'nested/unregistered back must remain feature-owned');
+const curtain = deferred();
+let closing;
+runDeferredClose = action => { closing = curtain.promise.then(action); return closing; };
+assert.equal(vetoRegistry.closeFromChrome(vetoOverlay), true);
+assert.equal(vetoCloseCount, 1, 'close must not run before the curtain finishes covering');
+allowVetoClose = true;
+curtain.resolve();
+await closing;
+assert.equal(vetoCloseCount, 2, 'one return click invokes one close');
+assert.equal(vetoRegistry.activeToolId, '');
+await vetoRegistry.dispose();
 assert.equal(errors.length, 0);
 
+const cargoConfig = await readFile(new URL('../src-tauri/Cargo.toml', import.meta.url), 'utf8');
+assert.match(cargoConfig, /\[features\]\s+default = \["custom-protocol"\]\s+custom-protocol = \["tauri\/custom-protocol"\]/,
+  'tauri dev --no-default-features must use devUrl while release retains embedded assets');
+assert.doesNotMatch(cargoConfig, /tauri = \{[^\n]*features:?[ =]*\[[^\n]*"custom-protocol"/,
+  'the Tauri dependency must not force production protocol into development');
+const compatibilityCss = await readFile(new URL('../src/styles/compatibility.css', import.meta.url), 'utf8');
+assert.match(compatibilityCss, /:where\(\.feature-tool-overlay\) button \{ color: inherit;/);
+assert.doesNotMatch(compatibilityCss, /^\.feature-tool-overlay button \{ color: inherit;/m,
+  'host inheritance must not override component foreground colors');
+const controlGeometryCss = await readFile(new URL('../src/styles/components/control-geometry.css', import.meta.url), 'utf8');
+const globalStyleIndexSource = await readFile(new URL('../src/styles/index.css', import.meta.url), 'utf8');
+assert.match(appStyles, /Shared control geometry[\s\S]*?App and tool topbars use one stable text\/icon box/s,
+  'the global stylesheet must include the shared control geometry component');
+assert.match(globalStyleIndexSource, /@import url\('\.\/legacy\.css'\);\s*@import url\('\.\/components\/control-geometry\.css'\);/s,
+  'shared control geometry must be applied after compatibility and legacy styles');
+assert.match(controlGeometryCss, /\.tool-page-v2-back/,
+  'shared control geometry must cover the shared tool-page shell');
+assert.match(controlGeometryCss, /flex: 0 0 15px/,
+  'shared control geometry must keep Lucide icons from shrinking');
+assert.doesNotMatch(controlGeometryCss, /(?:^|[;{])\s*(?:color|background(?:-color)?|border(?:-color)?):/m,
+  'shared control geometry must not own component colors or state');
 console.log('V3 app architecture lifecycle and lazy registry checks passed');

@@ -1,4 +1,5 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
+import { AiProviderError, AI_PROVIDER_LIMITS } from '../../ai-provider-core.js';
 import {
   AI_POLISH_LIMITS,
   AiPolishError,
@@ -15,9 +16,10 @@ import {
 import { TEXT_STATS_LIMITS } from '../../text-stats-core.js';
 import '../ai-text/ai-text-shared.css';
 import './ai-polish.css';
+import './ai-polish-light.css';
 
 const EMPTY_SOURCE = Object.freeze({ type: 'manual', name: '', bytes: 0, kind: '' });
-const REQUEST_TIMEOUT_MS = 90_000;
+const REQUEST_TIMEOUT_MS = AI_PROVIDER_LIMITS.maxTimeoutMs;
 
 async function writeClipboardText(text) {
   if (navigator.clipboard?.writeText) {
@@ -286,10 +288,12 @@ export function initAiPolishTool({
 
   function reportRequestError(error, controller, timedOut, phase) {
     console.error(`[AI Polish] ${phase} error:`, error);
-    if (controller.signal.aborted) {
-      if (timedOut) alert(copy('requestTimeout'));
+    if (controller.signal.aborted || error?.code === 'timeout') {
+      if (timedOut || error?.code === 'timeout') alert(copy('requestTimeout'));
     } else if (error instanceof AiPolishError) {
       alert(copy(error.code === 'result_too_large' ? 'resultTooLarge' : 'parseError'));
+    } else if (error instanceof AiProviderError) {
+      alert(error.message);
     } else {
       alert(copy('networkError'));
     }
@@ -313,7 +317,7 @@ export function initAiPolishTool({
       const content = await requestAi([
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
-      ], request.controller.signal);
+      ], request.controller.signal, undefined, { timeoutMs: REQUEST_TIMEOUT_MS, reasoningEffort: 'low' });
       if (request.id !== requestId || !isCurrent(request.token)) return;
       if (typeof content !== 'string' || !content.trim() || content.length > AI_POLISH_LIMITS.maxResponseChars) {
         throw new AiPolishError('result_too_large', 'AI response exceeds the supported size.');
@@ -350,7 +354,7 @@ export function initAiPolishTool({
       const result = await requestAi([
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
-      ], request.controller.signal);
+      ], request.controller.signal, undefined, { timeoutMs: REQUEST_TIMEOUT_MS, reasoningEffort: 'low' });
       if (request.id !== requestId || !isCurrent(request.token)) return;
       const safeResult = normalizeAiPolishedText(result);
       clearDirectionBindings();

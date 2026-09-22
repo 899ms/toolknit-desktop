@@ -16,6 +16,12 @@ import {
 import { createPdfToImageExporter } from './exporter.js';
 import { createPdfToImagePreview, isPdfRenderCancellation } from './preview.js';
 import { createPdfToImageView } from './view.js';
+import {
+  PDF_TO_IMAGE_WORKSPACE_LIMITS,
+  isPdfToImageGridCount,
+  syncPdfToImageExportModes,
+  validatePdfToImageExportMode
+} from './export-modes.js';
 import './pdf-to-image.css';
 
 export function initPdfToImageTool({
@@ -23,6 +29,7 @@ export function initPdfToImageTool({
   isTauri = false,
   getOutputDir,
   displayFilesystemPath,
+  refreshIcons = () => {},
   initStandardToolPlasma = () => null,
   disposeStandardToolPlasma = instance => instance
 } = {}) {
@@ -34,8 +41,8 @@ export function initPdfToImageTool({
   const dropZone = document.getElementById('pdfToImageDropZone');
   const workspace = document.getElementById('pdfToImageWorkspace');
   const workspaceClose = document.getElementById('pdfToImageWorkspaceClose');
-  const workspaceStatus = document.getElementById('pdfToImageWorkspaceStatus');
-  const workspaceHint = document.getElementById('pdfToImageWorkspaceHint');
+  let workspaceStatus = document.getElementById('pdfToImageWorkspaceStatus');
+  let workspaceHint = document.getElementById('pdfToImageWorkspaceHint');
   const pageStage = document.getElementById('pdfToImagePageStage');
   const pageStrip = document.getElementById('pdfToImagePageStrip');
   const selectedCount = document.getElementById('pdfToImageSelectedCount');
@@ -43,6 +50,8 @@ export function initPdfToImageTool({
   const selectAllBtn = document.getElementById('pdfToImageSelectAllBtn');
   const exportImagesBtn = document.getElementById('pdfToImageExportImagesBtn');
   const exportLongBtn = document.getElementById('pdfToImageExportLongBtn');
+  const exportHorizontalBtn = document.getElementById('pdfToImageExportHorizontalBtn');
+  const exportGridBtn = document.getElementById('pdfToImageExportGridBtn');
   const longImageLimitNote = workspace?.querySelector('.pdf-to-image-limit-note');
   const formatOptions = document.getElementById('pdfToImageFormatOptions');
   const clarityOptions = document.getElementById('pdfToImageClarityOptions');
@@ -62,6 +71,11 @@ export function initPdfToImageTool({
 
   if (!overlay || !workspace || !pageStrip) return { dispose() {} };
 
+  // This feature is mounted lazily, after the application's initial icon scan.
+  // Refresh immediately so static chrome and the page-workspace close control
+  // never depend on another tool having rendered icons first.
+  refreshIcons();
+
   const lifecycle = createLifecycleScope();
   const listen = (target, type, handler, options) => target
     ? lifecycle.event(target, type, handler, options)
@@ -75,6 +89,8 @@ export function initPdfToImageTool({
   let disposed = false;
   let overlayReturnFocus = null;
   let unsubscribeLangChange = () => {};
+  let temporaryPreviewCleanup = null;
+  let previewReleaseChain = Promise.resolve();
   const isDemo = import.meta.env.DEV
     && new URLSearchParams(window.location.search).get('pdf-to-image-demo') === '1';
 
@@ -126,13 +142,25 @@ export function initPdfToImageTool({
     trapFocus
   } = view;
 
-  const preview = createPdfToImagePreview({
+  // The shared workbench synchronizes selection state during construction.
+  // Keep the reference nullable until construction has completed so that its
+  // first callback cannot access a still-initializing lexical binding.
+  let preview = null;
+  preview = createPdfToImagePreview({
     pageStage,
     pageStrip,
     workspace,
     isLocked: () => Boolean(activeOperation),
-    onSelectionChange: () => updateControls()
+    onSelectionChange: () => {
+      if (preview) updateControls();
+    },
+    refreshIcons
   });
+  // The shared workbench rebuilds the shell and moves the existing action nodes.
+  // Refresh references to the generated header fields after that mount.
+  workspaceStatus = workspace.querySelector('#pdfToImageWorkbenchStatus');
+  workspaceHint = workspace.querySelector('#pdfToImageWorkbenchHint');
+  updateControls();
   const exporter = createPdfToImageExporter({
     isTauri,
     getDocument: preview.getDocument,
@@ -143,6 +171,26 @@ export function initPdfToImageTool({
     isOperationCurrent: operation => activeOperation === operation,
     setLocalizedProgress
   });
+
+  function setTemporaryPreviewCleanup(cleanup) {
+    temporaryPreviewCleanup = typeof cleanup === 'function' ? cleanup : null;
+  }
+
+  function releasePreviewResources() {
+    const cleanup = temporaryPreviewCleanup;
+    temporaryPreviewCleanup = null;
+    const release = async () => {
+      await preview.releaseDocument();
+      if (!cleanup) return;
+      try {
+        await cleanup();
+      } catch (_) {
+        console.error('[PDF To Image] temporary preview cleanup failed');
+      }
+    };
+    previewReleaseChain = previewReleaseChain.then(release, release);
+    return previewReleaseChain;
+  }
 
   function activeFocusRoots() {
     if (successOverlay?.classList.contains('visible')) return [successOverlay];
@@ -168,9 +216,9 @@ export function initPdfToImageTool({
     } else if (processMask?.classList.contains('visible')) {
       if (!processCancel?.disabled) void cancelActiveOperation();
     } else if (workspace.classList.contains('visible')) {
-      closeWorkspace();
+      void closeWorkspace();
     } else {
-      closeOverlay();
+      void closeOverlay();
     }
   }
 
@@ -310,7 +358,7 @@ export function initPdfToImageTool({
     }
   }
 
-  function closeWorkspace() {
+  async function closeWorkspace() {
     if (activeOperation) {
       showToast(t('home.pdfToImageTool.busy'));
       return;
@@ -319,13 +367,13 @@ export function initPdfToImageTool({
     overlay.classList.remove('is-selection-flow');
     setLongExportAllowed(true);
     currentFile = null;
-    void preview.releaseDocument();
+    await releasePreviewResources();
     updateControls();
     syncInteractiveLayers();
     restoreFocus(cta || back);
   }
 
-  function closeOverlay() {
+  async function closeOverlay() {
     if (activeOperation) {
       showToast(t('home.pdfToImageTool.busy'));
       return;
@@ -340,7 +388,7 @@ export function initPdfToImageTool({
     plasmaInstance = disposeStandardToolPlasma(plasmaInstance);
     if (fileInput) fileInput.value = '';
     currentFile = null;
-    void preview.releaseDocument();
+    await releasePreviewResources();
     syncInteractiveLayers();
     const returnFocus = overlayReturnFocus;
     overlayReturnFocus = null;
@@ -374,10 +422,12 @@ export function initPdfToImageTool({
     const total = pageStates.length;
     const selected = pageStates.filter(pageState => pageState.selected).length;
     const allSelected = total > 0 && selected === total;
-    const longImages = longExportAllowed && selected > 0
+    const longImages = longExportAllowed && selected >= PDF_TO_IMAGE_WORKSPACE_LIMITS.minLongPages
       ? Math.ceil(selected / PDF_TO_IMAGE_LIMITS.maxPagesPerLongImage)
       : 0;
-    const exceedsLongLimit = longExportAllowed && selected > PDF_TO_IMAGE_LIMITS.maxLongPages;
+    const belowLongMinimum = longExportAllowed && selected > 0
+      && selected < PDF_TO_IMAGE_WORKSPACE_LIMITS.minLongPages;
+    const exceedsLongLimit = longExportAllowed && selected > PDF_TO_IMAGE_WORKSPACE_LIMITS.maxLongPages;
     const busy = Boolean(activeOperation);
 
     if (workspaceStatus) workspaceStatus.textContent = t('home.pdfToImageTool.readyStatus');
@@ -392,33 +442,60 @@ export function initPdfToImageTool({
     if (selectionMeta) {
       const statusKey = !longExportAllowed
         ? 'home.pdfToImageTool.selectionStatusIndividual'
-        : exceedsLongLimit
-          ? 'home.pdfToImageTool.selectionStatusLongLimit'
-          : 'home.pdfToImageTool.selectionStatus';
+        : belowLongMinimum
+          ? 'home.pdfToImageTool.selectionStatusLongMinimum'
+          : exceedsLongLimit
+            ? 'home.pdfToImageTool.selectionStatusLongLimit'
+            : 'home.pdfToImageTool.selectionStatus';
       selectionMeta.textContent = t(statusKey, {
         selected,
         total,
         longImages,
-        limit: PDF_TO_IMAGE_LIMITS.maxLongPages
+        limit: PDF_TO_IMAGE_WORKSPACE_LIMITS.maxLongPages,
+        minimum: PDF_TO_IMAGE_WORKSPACE_LIMITS.minLongPages
       });
     }
     if (selectAllBtn) {
-      selectAllBtn.textContent = t(
-        allSelected ? 'home.pdfToImageTool.clearSelection' : 'home.pdfToImageTool.selectAll'
-      );
+      const label = selectAllBtn.querySelector('span') || selectAllBtn;
+      label.textContent = t(allSelected ? 'home.pdfToImageTool.clearSelection' : 'home.pdfToImageTool.selectAll');
       selectAllBtn.disabled = busy || total === 0;
     }
     if (exportImagesBtn) exportImagesBtn.disabled = busy || selected === 0;
-    if (exportLongBtn) {
-      exportLongBtn.disabled = !longExportAllowed || busy || selected === 0 || exceedsLongLimit;
-      exportLongBtn.title = exceedsLongLimit
+    const longExportTitle = belowLongMinimum
+      ? t('home.pdfToImageTool.longImageMinimumSelection')
+      : exceedsLongLimit
         ? t('home.pdfToImageTool.longImageSelectionLimit')
         : '';
+    if (exportLongBtn) exportLongBtn.title = longExportTitle;
+    if (exportHorizontalBtn) exportHorizontalBtn.title = longExportTitle;
+    if (exportGridBtn) {
+      const gridLabel = exportGridBtn.querySelector('span');
+      if (gridLabel) {
+        gridLabel.textContent = t(
+          selected === 4
+            ? 'home.pdfToImageTool.exportGridImage4'
+            : selected === 9
+              ? 'home.pdfToImageTool.exportGridImage9'
+              : 'home.pdfToImageTool.exportGridImage'
+        );
+      }
+      exportGridBtn.title = isPdfToImageGridCount(selected)
+        ? ''
+        : t('home.pdfToImageTool.gridSelectionLimit');
     }
+    syncPdfToImageExportModes({
+      longButton: exportLongBtn,
+      horizontalButton: exportHorizontalBtn,
+      gridButton: exportGridBtn,
+      longExportAllowed,
+      selectedCount: selected,
+      busy
+    });
     formatOptions?.querySelectorAll('button').forEach(button => { button.disabled = busy; });
     clarityOptions?.querySelectorAll('button').forEach(button => { button.disabled = busy; });
-    pageStates.forEach(pageState => { pageState.selectButton.disabled = busy; });
-    preview.refreshTranslations();
+    pageStrip?.querySelectorAll('.pdf-editor-tile-select').forEach(button => {
+      button.disabled = busy;
+    });
     applyClarityHints();
   }
 
@@ -437,6 +514,7 @@ export function initPdfToImageTool({
       empty_pdf: 'emptyPdf',
       invalid_selection: 'noSelection',
       too_many_long_pages: 'longImageSelectionLimit',
+      invalid_grid_count: 'gridSelectionLimit',
       page_too_large: 'pageTooLarge',
       output_too_large: 'pageTooLarge',
       output_too_large_for_memory: 'pageTooLarge',
@@ -505,22 +583,22 @@ export function initPdfToImageTool({
     });
   }
 
-  async function acceptFile(file) {
+  async function acceptFile(file, { releaseExisting = true } = {}) {
     if (disposed || !file || activeOperation) {
       if (activeOperation) showToast(t('home.pdfToImageTool.busy'));
-      return;
+      return false;
     }
     const name = String(file.name || '');
     if (!/\.pdf$/i.test(name)) {
       showToast(t('home.pdfToImageTool.pdfOnly'));
-      return;
+      return false;
     }
 
     const operation = beginOperation('load');
     showProcess('loadingDocument', 2);
     try {
       currentFile = null;
-      await preview.releaseDocument();
+      if (releaseExisting) await releasePreviewResources();
       assertOperation(operation);
       const size = await fileSizeFor(file);
       assertOperation(operation);
@@ -542,11 +620,12 @@ export function initPdfToImageTool({
       syncInteractiveLayers();
       setLocalizedProgress(100, 'loadingPages', { count: loadedDocument.numPages });
       preview.start();
+      return true;
     } catch (error) {
       const cancelled = operation.cancelled || error instanceof PdfToImageCancelledError;
       if (activeOperation === operation) {
         currentFile = null;
-        await preview.releaseDocument();
+        await releasePreviewResources();
       }
       if (!disposed && !operation.silent && overlay.classList.contains('visible')) {
         showToast(
@@ -570,12 +649,21 @@ export function initPdfToImageTool({
       showToast(t('home.pdfToImageTool.noSelection'));
       return;
     }
-    if (mode === 'long' && !longExportAllowed) {
+    const modeError = validatePdfToImageExportMode(mode, selectedPages.length, longExportAllowed);
+    if (modeError === 'unavailable') {
       showToast(t('home.pdfToImageTool.longImageNotAvailable'));
       return;
     }
-    if (mode === 'long' && selectedPages.length > PDF_TO_IMAGE_LIMITS.maxLongPages) {
+    if (modeError === 'too-many-long-pages') {
       showToast(t('home.pdfToImageTool.longImageSelectionLimit'), 8500);
+      return;
+    }
+    if (modeError === 'too-few-long-pages') {
+      showToast(t('home.pdfToImageTool.longImageMinimumSelection'), 8500);
+      return;
+    }
+    if (modeError === 'invalid-grid-count') {
+      showToast(t('home.pdfToImageTool.gridSelectionLimit'), 8500);
       return;
     }
 
@@ -597,7 +685,7 @@ export function initPdfToImageTool({
       });
       setLocalizedProgress(
         10,
-        mode === 'long'
+        ['long', 'long-horizontal', 'grid'].includes(mode)
           ? 'exportingLongImages'
           : 'exportingImages'
       );
@@ -621,6 +709,7 @@ export function initPdfToImageTool({
           cancelled ? 4500 : 9000
         );
       }
+      return false;
     } finally {
       const wasCurrent = activeOperation === operation;
       endOperation(operation);
@@ -630,8 +719,8 @@ export function initPdfToImageTool({
     }
   }
 
-  listen(back, 'click', closeOverlay);
-  listen(workspaceClose, 'click', closeWorkspace);
+  listen(back, 'click', () => { void closeOverlay(); });
+  listen(workspaceClose, 'click', () => { void closeWorkspace(); });
   listen(processCancel, 'click', () => { void cancelActiveOperation(); });
   listen(successOk, 'click', () => closeSuccess());
   listen(successOpenFolder, 'click', async () => {
@@ -724,6 +813,8 @@ export function initPdfToImageTool({
   });
   listen(exportImagesBtn, 'click', () => { void exportSelection('images'); });
   listen(exportLongBtn, 'click', () => { void exportSelection('long'); });
+  listen(exportHorizontalBtn, 'click', () => { void exportSelection('long-horizontal'); });
+  listen(exportGridBtn, 'click', () => { void exportSelection('grid'); });
   listen(document, 'keydown', handleDocumentKeydown);
 
   unsubscribeLangChange = onLangChange(() => {
@@ -738,10 +829,12 @@ export function initPdfToImageTool({
   syncProgressLabel();
   syncInteractiveLayers();
 
-  function closeTool() {
+  async function closeTool() {
     const operation = activeOperation;
     if (operation) operation.silent = true;
-    if (operation && !operation.cancelled) void cancelActiveOperation();
+    const cancellation = operation && !operation.cancelled
+      ? cancelActiveOperation()
+      : Promise.resolve();
     activeOperation = null;
     openSession?.dispose();
     openSession = null;
@@ -755,26 +848,38 @@ export function initPdfToImageTool({
     plasmaInstance = disposeStandardToolPlasma(plasmaInstance);
     syncInteractiveLayers();
     currentFile = null;
-    void preview.releaseDocument();
+    await cancellation;
+    await releasePreviewResources();
   }
 
   return {
     open() {
       if (disposed) return;
+      refreshIcons();
       setLongExportAllowed(true);
       openOverlay();
       if (isDemo) void loadDemoFile(openSession);
     },
     close: closeTool,
-    async openWithFile(file, { allowLongExport = true } = {}) {
-      if (disposed) return;
+    async openWithFile(file, {
+      allowLongExport = true,
+      cleanupTemporaryPreview = null
+    } = {}) {
+      if (disposed) {
+        try { await cleanupTemporaryPreview?.(); } catch (_) {}
+        return false;
+      }
+      await releasePreviewResources();
+      setTemporaryPreviewCleanup(cleanupTemporaryPreview);
       setLongExportAllowed(allowLongExport);
       openOverlay();
-      await acceptFile(file);
+      const accepted = await acceptFile(file, { releaseExisting: false });
+      if (!accepted) await releasePreviewResources();
+      return accepted;
     },
-    dispose() {
+    async dispose() {
       if (disposed) return;
-      closeTool();
+      await closeTool();
       disposed = true;
       try { unsubscribeLangChange(); } catch (_) {}
       unsubscribeLangChange = () => {};

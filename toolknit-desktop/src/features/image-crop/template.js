@@ -32,9 +32,13 @@ export function imageCropTemplate() {
           </div>
           <button class="image-crop-secondary-button" id="imageCropPick" type="button"><i data-lucide="image-plus"></i><span id="imageCropPickLabel">选择图片</span></button>
         </div>
-        <section class="image-crop-stage-shell" id="imageCropStageShell" aria-label="图像裁剪画布">
-          <button class="image-crop-empty" id="imageCropEmpty" type="button">
-            <i data-lucide="crop"></i><strong>载入一张图片开始裁剪</strong><span>支持 JPG、PNG、WebP、BMP 和静态 GIF</span>
+        <section class="image-crop-stage-shell tk-vertical-stripe-surface" id="imageCropStageShell" aria-label="图像裁剪画布">
+          <button class="image-crop-empty tk-empty-hero" id="imageCropEmpty" type="button">
+            <span class="tk-empty-hero-icon"><i data-lucide="crop"></i></span>
+            <span class="tk-empty-hero-kicker">LOCAL IMAGE WORKSPACE</span>
+            <strong>载入一张图片开始裁剪</strong>
+            <span class="tk-empty-hero-description">支持 JPG、PNG、WebP、BMP 和静态 GIF</span>
+            <em><i data-lucide="upload"></i><span>选择图片</span></em>
           </button>
           <canvas class="image-crop-canvas" id="imageCropCanvas" tabindex="0" aria-label="裁剪区域，可拖动或使用方向键微调"></canvas>
           <div class="image-crop-snap-indicator" id="imageCropSnapIndicator" aria-hidden="true"><i data-lucide="magnet"></i><span>中心已吸附</span></div>

@@ -14,7 +14,7 @@ import {
   planPptTextExport,
   sanitizePptTextBaseName
 } from '../../ppt-text-extract-core.js';
-import { createOperationGuard, bindPptChrome, choosePptxFile, dragHasExternalFiles, isPptxFile, joinPath, readPptxFile, registerNativePptxDrop, setInteractiveLayer, uniqueOutputDirectory, waitForScope, writeUniqueFile } from './shared.js';
+import { createOperationGuard, bindPptChrome, choosePptxFile, dragHasExternalFiles, isPptxFile, joinPath, readPptxFile, registerNativePptxDrop, retainBrowserObjectUrl, setInteractiveLayer, uniqueOutputDirectory, waitForScope, writeUniqueFile } from './shared.js';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
@@ -91,6 +91,9 @@ export function createPptTextController({
     if (progressFill) progressFill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
     if (processText) processText.textContent = message || text('processing');
     setInteractiveLayer(processMask, visible);
+  };
+  const hideProgressSoon = owner => {
+    if (isOpen(owner) && !busy) setProgress(0, text('processing'), false);
   };
   const setCtaLabel = key => { const label = cta?.querySelector('span'); if (label) label.textContent = text(key); };
   const summaryText = () => manifest ? text('summary', { slides: manifest.slide_count, chars: manifest.text_characters, notes: manifest.notes_slide_count, empty: manifest.empty_slide_count }) : '';
@@ -214,6 +217,7 @@ export function createPptTextController({
     if (exportButton) { exportButton.disabled = true; exportButton.hidden = true; }
     scrollTop?.classList.remove('visible');
     if (workspace) workspace.scrollTop = 0;
+    setInteractiveLayer(successOverlay, false);
     setProgress(0, text('processing'), false);
   }
 
@@ -279,12 +283,13 @@ export function createPptTextController({
       console.error('[PPT Text] scan failed:', error);
       setProgress(0, text('processing'), false);
       const message = String(error?.userMessage || error?.message || error);
-      notify(message.includes('invalid_extension') ? text('unsupportedFormat') : message);
+      notify(message.includes('invalid_extension') ? text('unsupportedFormat') : message, { kind: 'error' });
     } finally {
       if (!guard.isCurrent(operation)) return;
       busy = false;
       guard.finish(operation);
       updateControls();
+      hideProgressSoon(owner);
     }
   }
 
@@ -358,7 +363,7 @@ export function createPptTextController({
         guard.assertCurrent(operation);
         const url = URL.createObjectURL(blob);
         const anchor = createElement(documentRef, 'a'); anchor.href = url; anchor.download = `${baseName}_ppt_text.zip`; anchor.hidden = true; documentRef.body.append(anchor); anchor.click(); anchor.remove();
-        session.timeout(() => URL.revokeObjectURL(url), 1000);
+        retainBrowserObjectUrl(owner, url);
       }
       guard.assertCurrent(operation);
       result.output_dir = outputDir;
@@ -372,7 +377,7 @@ export function createPptTextController({
     } catch (error) {
       if (!guard.isCurrent(operation)) return;
       console.error('[PPT Text] export failed:', error);
-      notify(String(error?.userMessage || error?.message || error));
+      notify(String(error?.userMessage || error?.message || error), { kind: 'error' });
     } finally {
       if (!guard.isCurrent(operation)) return;
       busy = false;

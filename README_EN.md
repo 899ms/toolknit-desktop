@@ -2,7 +2,9 @@
 
 <img src="assets/readme/hero-v2.webp" alt="ToolKnit Desktop — ToolKnit spider web hero" width="100%" />
 
-<h1>ToolKnit Desktop 2.3</h1>
+<h1>ToolKnit Desktop 3.0</h1>
+
+<p><strong>V3.0 release preparation</strong> · This branch contains the complete 3.0 source. The production installer will follow code-signing integration and verification; published downloads still refer to V2.3.1.</p>
 
 <p><strong>Local file workbench · Desktop, web, and AI Agent workflows</strong></p>
 
@@ -18,7 +20,7 @@
 
 <p>
   <a href="README.md"><img src="https://img.shields.io/badge/Language-Simplified%20Chinese-475569?style=for-the-badge&labelColor=334155" alt="Simplified Chinese README" /></a>
-  <img src="https://img.shields.io/badge/2.3.1-Current%20release-16a34a?style=for-the-badge&labelColor=166534" alt="ToolKnit 2.3.1 current release" />
+  <img src="https://img.shields.io/badge/V3.0-Release%20preparation-f59e0b?style=for-the-badge&labelColor=b45309" alt="ToolKnit 3.0 release preparation" />
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10/11" />
   <img src="https://img.shields.io/badge/Local--first-Files%20stay%20local-0f766e?style=for-the-badge" alt="Local-first" />
   <img src="https://img.shields.io/badge/Tauri-2.x-475569?style=for-the-badge" alt="Tauri 2.x" />
@@ -51,15 +53,15 @@
   </tr>
 </table>
 
-## ToolKnit 2.3
+## ToolKnit 3.0
 
-ToolKnit Desktop 2.3 is a local file workbench for Windows. It brings everyday file processing, image and Markdown creation, developer tools, AI content production, professional document workflows, and IDE Agent automation into one product system.
+ToolKnit Desktop 3.0 is a local file workbench for Windows. It brings everyday file processing, image and Markdown creation, developer tools, AI content production, professional document workflows, and IDE Agent automation into one product system.
 
 The same local file can be previewed in the desktop app, batch-processed by the CLI, or called by an MCP Agent, with explicit input, output, progress, error, and safety boundaries.
 
 <table width="100%" cellpadding="14" cellspacing="0">
   <tr>
-    <td align="center"><h3>65</h3><strong>Desktop tools</strong></td>
+    <td align="center"><h3>68</h3><strong>Desktop tools</strong></td>
     <td align="center"><h3>12</h3><strong>Categories</strong></td>
     <td align="center"><h3>46</h3><strong>MCP capabilities</strong></td>
     <td align="center"><h3>3</h3><strong>Ways to work</strong></td>
@@ -68,19 +70,26 @@ The same local file can be previewed in the desktop app, batch-processed by the 
   </tr>
 </table>
 
-## What's new in 2.3
+## What's new in 3.0
 
-V2.3 adds five desktop tools and strengthens update handling, dependency downloads, administrator relaunch, rounded-corner rendering, and tool-page interactions:
+V3.0 expands the desktop catalog from 65 to 68 tools and brings existing tools into modules that load on demand, with shared navigation, progress, output, error handling, and resource cleanup.
 
-- `Teleprompter`: smooth scrolling, mirroring, focus mode, and sentence-level voice following driven by Windows speech recognition or ToolKnit offline recognition.
-- `Add PDF Page Numbers`: page ranges, numbering styles, starting values, text templates, position and appearance previews, with page numbers written as vector instructions.
-- `Crop PDF`: visual selection, precise margins, shared or per-page adjustments, and lossless cropping by changing PDF page boundaries.
-- `Background Removal`: transparent-background generation with an on-demand local model, edge refinement, background preview, and source-resolution export.
-- `Excel to PDF`: batch XLSX, XLS, and ODS conversion through a ToolKnit-managed local LibreOffice runtime, including WPS workbook compatibility.
+### New tools
 
-The release also hardens real-world Windows behavior: idle-time GitHub Release checks can be deferred without uploading usage data; the installer carries the WebView2 bootstrapper; dependency downloads, installation-stage messaging, and administrator relaunch are more reliable; tool navigation, export dialogs, and rounded-corner rendering are consistent; and a compatible PDF.js build fixes PDF loading on older WebView2 runtimes.
+- `PDF Text to Markdown`: locally extract selectable PDF text, reconstruct reading order and basic structure, and continue editing in the existing Markdown editor.
+- `AI PDF to Markdown`: analyze pages with a vision model, assemble structured Markdown, and retain source-page references, a document summary, retry, and cancellation.
+- `Windows Clipboard History`: explicitly enable monitoring to record subsequent text, PNG images, and file paths in a timeline with search, filters, favorites, image previews, and local encryption.
 
-The desktop app, Tauri bundle, Rust crate, and `@toolknit/cli` share version `2.3.1`. Release checks cover the 65-tool desktop help map, 46 MCP capabilities, frontend regressions, Rust tests, and release security checks.
+### Improvements across the app
+
+- `Light and dark themes`: consistent empty, upload, processing, result, error, focus, and disabled states across tools, settings, and help. Startup and theme transitions reduce visible font and layout changes.
+- `PDF and PPT workbenches`: shared previews, page selection, export controls, and result dialogs; PDF page editing and undo/redo; richer PPT outlines, editable drafts, and local image assets.
+- `AI workflows`: shared key validation, request cancellation, retries, recovery, and output validation for writing, translation, documents, tables, outlines, and PPTX drafts.
+- `Media and offline tools`: on-demand FFmpeg, LibreOffice, Whisper, and local vision runtimes, with clearer dependency errors and improved video preview playback.
+- `Cleanup safety`: AI large-file cleanup supports C-drive scanning with protected-directory exclusions, native path and file checks, and explicit user review before cleanup.
+- `Application stability`: closing or switching tools releases workers, canvases, listeners, tasks, and temporary resources; stale asynchronous results cannot update a new session.
+
+The desktop app, Tauri bundle, Rust crate, and `@toolknit/cli` source share version `3.0.0`. Release checks cover 68 desktop tools and 46 CLI/MCP capabilities. SignPath integration and signing verification are pending; updating source does not publish an installer or npm package.
 
 ### Foundation from the 2.1 series
 
@@ -166,15 +175,17 @@ The 2.1 series adds 11 desktop tools and delivers a broader upgrade across custo
 
 ## Complete tool catalog
 
-The 12 desktop categories below contain all 65 tools. Names correspond to in-app entries; CLI and MCP capabilities use the same input/output contracts as each tool becomes ready.
+The 12 desktop categories below contain all 68 tools. Names correspond to in-app entries; CLI and MCP capabilities use the same input/output contracts as each tool becomes ready.
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/PDF-Document%20Studio-ed1c24?style=for-the-badge&logo=adobeacrobatreader&logoColor=white" alt="PDF Document Studio" /></td><td align="right" style="border:0;"><h3 align="right">PDF tools · 12</h3></td></tr>
+  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/PDF-Document%20Studio-ed1c24?style=for-the-badge&logo=adobeacrobatreader&logoColor=white" alt="PDF Document Studio" /></td><td align="right" style="border:0;"><h3 align="right">PDF tools · 14</h3></td></tr>
 </table>
 
-`PDF Merge` · `PDF Split` · `Add PDF Page Numbers` · `Crop PDF` · `PDF to Image` · `PDF Editor` · `PDF Page Rotate` · `PDF Encrypt` · `PDF Decrypt` · `PDF Compress` · `PDF Enhance` · `Excel to PDF`
+`PDF Merge` · `PDF Split` · `Add PDF Page Numbers` · `Crop PDF` · `PDF to Image` · `PDF Text to Markdown` · `AI PDF to Markdown` · `PDF Editor` · `PDF Page Rotate` · `PDF Encrypt` · `PDF Decrypt` · `PDF Compress` · `PDF Enhance` · `Excel to PDF`
 
 Supports drag sorting, page-by-page preview, selected-page export, page numbering, lossless cropping, rotation, text replacement, text and image insertion, append merge, password protection, scanned-document enhancement, multiple compression levels, and local workbook rendering. PDFs, workbooks, passwords, and exported results are processed locally by default.
+
+PDF Text to Markdown extracts an existing text layer locally without an API key. AI PDF to Markdown sends selected page images to your configured vision model when you start conversion. Both workflows import results into the shared Markdown editor for preview, editing and export.
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/PPT-Presentation%20Studio-d24726?style=for-the-badge&logo=microsoftpowerpoint&logoColor=white" alt="PPT Presentation Studio" /></td><td align="right" style="border:0;"><h3 align="right">PPT tools · 7</h3></td></tr>
@@ -249,12 +260,14 @@ Large File Cleanup scans locally, then lets local rules and optional AI analyze 
 AI Documents support multi-page PDFs, editable project files, numbered maps, preview, inspection, editing, undo, and re-rendering. AI Tables support CSV, XLSX, PDF, PNG, editable projects, numbered rows/columns/charts, formula edits, and re-rendering. Text is sent to your configured model service only when you explicitly invoke AI.
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/HARDWARE-System%20Inspector-0078d4?style=for-the-badge&logo=windows11&logoColor=white" alt="System Inspector" /></td><td align="right" style="border:0;"><h3 align="right">Hardware tools · 7</h3></td></tr>
+  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/HARDWARE-System%20Inspector-0078d4?style=for-the-badge&logo=windows11&logoColor=white" alt="System Inspector" /></td><td align="right" style="border:0;"><h3 align="right">Hardware and system tools · 8</h3></td></tr>
 </table>
 
-`System Overview` · `CPU and Memory` · `GPU and Displays` · `Mainboard and Firmware` · `Storage Health` · `Network Devices` · `Power Sensors`
+`System Overview` · `CPU and Memory` · `GPU and Displays` · `Mainboard and Firmware` · `Storage Health` · `Network Devices` · `Power Sensors` · `Windows Clipboard History`
 
 Read-only views cover Windows, device model, CPU, memory, graphics, displays, mainboard, BIOS, Secure Boot, TPM, virtualization, disks, network, and power sensors. The CPU and Memory page also provides live status refresh.
+
+Clipboard History records subsequent copies of text, images and file paths after you enable monitoring. It provides a searchable timeline, filters, favorites and local encryption; existing Win+V history is not imported and monitoring stops when the app exits.
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/DEVELOPER-Local%20Toolbox-475569?style=for-the-badge&logo=visualstudiocode&logoColor=white" alt="Local Developer Toolbox" /></td><td align="right" style="border:0;"><h3 align="right">Developer tools · 6</h3></td></tr>
@@ -276,7 +289,7 @@ CLI and MCP require explicit input and output paths by default and do not overwr
 
 ## Technology stack
 
-ToolKnit 2.3 combines a lightweight desktop container with local file engines. The web app, desktop app, CLI, and MCP share clear input/output boundaries.
+ToolKnit 3.0 combines a lightweight desktop container with local file engines. The web app, desktop app, CLI, and MCP share clear input/output boundaries.
 
 <table cellpadding="10" cellspacing="0">
   <tr>
@@ -510,5 +523,5 @@ ToolKnit Desktop and the CLI/MCP source code are released under the [Apache Lice
 The license does not grant rights to the ToolKnit name, logos, visual identity, domains, official website, hosted web services, service accounts, or other independently operated products. See [NOTICE](NOTICE).
 
 <p align="center">
-  <sub>ToolKnit Desktop 2.3 · Local-first tools for real work</sub>
+  <sub>ToolKnit Desktop 3.0 · Local-first tools for real work</sub>
 </p>

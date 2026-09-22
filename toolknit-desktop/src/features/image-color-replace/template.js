@@ -2,7 +2,7 @@ import { toolTopbarMarkup } from '../../shared/tool-page-shell.js';
 
 export function imageColorReplaceTemplate() {
   return `<div class="tool-page-v2-shell color-replace-shell">
-    ${toolTopbarMarkup({ tag: 'IMAGE TOOLS · TOOL PAGE 2.3', title: '智能颜色替换', closeAttr: 'data-cr-close' })}
+    ${toolTopbarMarkup({ tag: 'IMAGE TOOLS · TOOL PAGE 3.0', title: '智能颜色替换', closeAttr: 'data-cr-close' })}
     <main class="tool-page-v2-body color-replace-main">
       <aside class="tool-page-v2-rail color-replace-rail">
         <div class="tool-page-v2-rail-kicker">IMAGE COLOR REPLACER</div><h1>智能颜色<br>替换</h1><p>用感知色差和连通区域精准替换图像颜色，保留边缘与明暗层次。</p>
@@ -10,7 +10,7 @@ export function imageColorReplaceTemplate() {
         <div class="tool-page-v2-steps"><div class="is-active"><b>01</b><span><strong>导入图片</strong><small>选择 PNG、JPG、WebP 或 BMP。</small></span></div><div><b>02</b><span><strong>取样颜色</strong><small>在画布中点击需要替换的像素。</small></span></div><div><b>03</b><span><strong>调整保护</strong><small>控制阈值、柔化和主体保护。</small></span></div><div><b>04</b><span><strong>导出结果</strong><small>由原图生成高质量输出文件。</small></span></div></div>
       </aside>
       <section class="color-replace-stage-section"><div class="color-replace-stage-head"><div><span>LIVE CANVAS</span><strong data-cr-file>等待载入图片</strong></div><div class="color-replace-stage-actions"><button type="button" data-cr-compare disabled><i data-lucide="scan-eye"></i><span>按住查看原图</span></button><button type="button" data-cr-pick><i data-lucide="image-plus"></i><span>选择图片</span></button><button class="color-replace-export" type="button" data-cr-export disabled><i data-lucide="download"></i><span>导出原图</span></button></div></div>
-        <div class="color-replace-stage" data-cr-stage><button class="color-replace-empty" type="button" data-cr-pick><i data-lucide="pipette"></i><strong>从一个像素开始</strong><span>选择图片，再用吸管点击需要替换的颜色</span></button><canvas data-cr-canvas></canvas><div class="color-replace-busy" data-cr-busy hidden><span></span><strong>正在分析像素...</strong></div></div>
+        <div class="color-replace-stage tk-vertical-stripe-surface" data-cr-stage><button class="color-replace-empty tk-empty-hero" type="button" data-cr-pick><span class="tk-empty-hero-icon"><i data-lucide="pipette"></i></span><span class="tk-empty-hero-kicker">LOCAL COLOR WORKSPACE</span><strong>从一个像素开始</strong><span class="tk-empty-hero-description">选择图片，再用吸管点击需要替换的颜色</span><em><i data-lucide="upload"></i><span>选择图片</span></em></button><canvas data-cr-canvas></canvas><div class="color-replace-busy" data-cr-busy hidden><span></span><strong>正在分析像素...</strong></div></div>
         <div class="color-replace-stage-footer"><span data-cr-meta>PNG / JPG / WebP / BMP</span><label><i data-lucide="zoom-in"></i><input type="range" min="50" max="300" value="100" data-cr-zoom><output data-cr-zoom-value>100%</output></label></div>
       </section>
       <aside class="color-replace-controls">

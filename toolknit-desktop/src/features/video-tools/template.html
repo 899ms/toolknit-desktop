@@ -7,7 +7,7 @@
             <i data-lucide="arrow-left"></i>
             <span data-i18n="settings.back">返回首页</span>
           </button>
-          <span class="pdf-merge-v2-top-tag">VIDEO CONVERTER · TOOL PAGE 2.3</span>
+          <span class="pdf-merge-v2-top-tag">VIDEO CONVERTER · TOOL PAGE 3.0</span>
         </div>
         <div class="home-v2-top-actions pdf-merge-v2-top-actions">
           <button class="home-v2-nav-link" type="button" data-home-link="website">
@@ -73,16 +73,16 @@
           <section class="pdf-merge-v2-options video-convert-v2-options" aria-label="转换参数">
             <div class="audio-convert-format-selector">
               <span class="audio-convert-format-label" data-i18n="home.videoConvert.targetFormat">目标格式</span>
-              <div class="audio-convert-format-options" id="videoConvertFormatOptions">
-                <button class="audio-convert-format-option active" data-format="MP4">MP4</button>
-                <button class="audio-convert-format-option" data-format="MKV">MKV</button>
-                <button class="audio-convert-format-option" data-format="MOV">MOV</button>
-                <button class="audio-convert-format-option" data-format="WEBM">WebM</button>
-                <button class="audio-convert-format-option" data-format="AVI">AVI</button>
-                <button class="audio-convert-format-option" data-format="FLV">FLV</button>
-                <button class="audio-convert-format-option" data-format="WMV">WMV</button>
-                <button class="audio-convert-format-option" data-format="TS">TS</button>
-              </div>
+              <select class="video-convert-format-select" id="videoConvertFormatOptions" aria-label="目标格式">
+                <option value="MP4">MP4</option>
+                <option value="MKV">MKV</option>
+                <option value="MOV">MOV</option>
+                <option value="WEBM">WebM</option>
+                <option value="AVI">AVI</option>
+                <option value="FLV">FLV</option>
+                <option value="WMV">WMV</option>
+                <option value="TS">TS</option>
+              </select>
             </div>
             <div class="pdf-merge-v2-options-hint">MP4 兼容性最好；WebM 适合网页；MKV 适合多轨素材归档。</div>
           </section>
@@ -159,7 +159,7 @@
             <i data-lucide="arrow-left"></i>
             <span data-i18n="settings.back">返回</span>
           </button>
-          <span class="pdf-merge-v2-top-tag">FRAME CAPTURE · TOOL PAGE 2.3</span>
+          <span class="pdf-merge-v2-top-tag">FRAME CAPTURE · TOOL PAGE 3.0</span>
         </div>
         <div class="home-v2-top-actions pdf-merge-v2-top-actions">
           <button class="home-v2-nav-link" type="button" data-home-link="website">
@@ -191,10 +191,6 @@
             <span>LOCAL ONLY</span>
             <strong>视频只在本机解码取帧，适合封面、教程截图、素材抽帧和高质量预览图。</strong>
           </div>
-          <button class="audio-convert-cta pdf-merge-v2-cta video-media-v2-upload-btn" id="videoFramePick" type="button">
-            <i data-lucide="upload"></i>
-            <span>上传视频文件</span>
-          </button>
           <div class="pdf-merge-v2-steps" aria-label="单帧导出流程">
             <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong>上传视频</strong><p>支持 MP4 / MOV / MKV / WebM / AVI 等常见格式。</p></div></div>
             <div class="pdf-merge-v2-step"><span>02</span><div><strong>定位时间</strong><p>拖动时间轴或用上一帧/下一帧微调。</p></div></div>
@@ -204,10 +200,12 @@
         </aside>
 
         <section class="pdf-merge-v2-workspace video-media-v2-workspace" aria-label="视频单帧工作台">
-          <div class="video-frame-empty video-media-v2-empty" id="videoFrameEmpty">
-            <i data-lucide="scan-line"></i>
-            <h2>等待选择视频文件</h2>
-            <p>上传后会在这里显示预览帧、时间轴和导出参数。</p>
+          <div class="video-frame-empty video-media-v2-empty tk-empty-hero" id="videoFrameEmpty">
+            <span class="tk-empty-hero-icon"><i data-lucide="scan-line"></i></span>
+            <span class="tk-empty-hero-kicker">LOCAL VIDEO WORKSPACE</span>
+            <strong>选择视频开始</strong>
+            <p class="tk-empty-hero-description">支持 MP4、MOV、MKV、WebM、AVI，可逐帧定位并导出高清图片。</p>
+            <button class="tk-empty-hero-action" data-video-pick="frame" type="button"><i data-lucide="upload"></i><span>选择视频</span></button>
           </div>
           <div class="video-frame-editor video-media-v2-editor" id="videoFrameEditor" hidden>
             <section class="video-media-v2-preview-card">
@@ -218,27 +216,44 @@
                   <svg class="video-gif-preview-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
                   <svg class="video-gif-preview-pause-icon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M7 5h4v14H7zM13 5h4v14h-4z"></path></svg>
                 </button>
+                <button class="video-frame-expand-toggle" id="videoFrameExpandToggle" type="button" aria-label="展开视频预览" aria-pressed="false" title="展开视频预览">
+                  <i data-lucide="maximize-2" data-expand-icon="expand"></i>
+                  <i data-lucide="minimize-2" data-expand-icon="collapse" hidden></i>
+                </button>
                 <div class="video-frame-time" id="videoFrameTime">00:00.000</div>
               </div>
               <div class="video-frame-file video-media-v2-file"><span id="videoFrameName"></span><button id="videoFrameChange" type="button">更换文件</button></div>
             </section>
-            <section class="video-media-v2-control-card">
+            <section class="video-media-v2-control-card video-frame-control-card">
               <div class="video-media-v2-control-head">
                 <span class="pdf-merge-v2-section-kicker">CAPTURE CONTROLS</span>
                 <h2>取帧控制</h2>
               </div>
-              <input id="videoFrameTimeline" class="video-frame-timeline" type="range" min="0" max="0" step="1" value="0">
-              <div class="video-frame-controls video-media-v2-controls">
-                <button id="videoFramePrev" type="button" title="上一帧"><i data-lucide="chevron-left"></i></button>
-                <input id="videoFrameTimestamp" type="number" min="0" step="1">
-                <span>毫秒</span>
-                <button id="videoFrameNext" type="button" title="下一帧"><i data-lucide="chevron-right"></i></button>
-                <div class="audio-convert-format-options" id="videoFrameFormat">
+              <div class="video-frame-source-stats">
+                <div><span>画面规格</span><strong id="videoFrameResolution">--</strong></div>
+                <div><span>帧率</span><strong id="videoFrameRate">--</strong></div>
+                <div><span>文件大小</span><strong id="videoFrameFileSize">--</strong></div>
+              </div>
+              <div class="video-frame-timeline-block">
+                <div class="video-frame-timeline-meta"><span>当前时间</span><output id="videoFrameCurrentTime">00:00.000</output><span class="video-frame-duration-separator">/</span><output id="videoFrameDuration">00:00.000</output></div>
+                <input id="videoFrameTimeline" class="video-frame-timeline" type="range" min="0" max="0" step="1" value="0" aria-label="视频时间轴">
+              </div>
+              <div class="video-frame-quick-seek" aria-label="快速定位">
+                <button id="videoFrameStart" type="button" title="跳到开头"><i data-lucide="skip-back"></i><span>开头</span></button>
+                <button id="videoFrameBackFive" type="button" title="后退 5 秒"><i data-lucide="rewind"></i><span>-5 秒</span></button>
+                <button id="videoFrameForwardFive" type="button" title="前进 5 秒"><span>+5 秒</span><i data-lucide="fast-forward"></i></button>
+                <button id="videoFrameEnd" type="button" title="跳到结尾"><span>结尾</span><i data-lucide="skip-forward"></i></button>
+              </div>
+              <div class="video-frame-nudge-row">
+                <button id="videoFramePrev" type="button" title="上一帧"><i data-lucide="chevron-left"></i><span>上一帧</span></button>
+                <label class="video-frame-timestamp-field"><span>时间点</span><input id="videoFrameTimestamp" type="number" min="0" step="1"><em>毫秒</em></label>
+                <button id="videoFrameNext" type="button" title="下一帧"><span>下一帧</span><i data-lucide="chevron-right"></i></button>
+              </div>
+              <div class="video-frame-format-block"><span>输出格式</span><div class="audio-convert-format-options" id="videoFrameFormat">
                   <button class="audio-convert-format-option active" data-format="png">PNG 无损</button>
                   <button class="audio-convert-format-option" data-format="jpg">JPG 高清</button>
-                </div>
-              </div>
-              <button class="audio-convert-process-btn pdf-merge-v2-process visible" id="videoFrameExport" type="button">导出当前帧</button>
+                </div></div>
+              <button class="audio-convert-process-btn pdf-merge-v2-process visible" id="videoFrameExport" type="button"><i data-lucide="download"></i><span>导出当前帧</span></button>
             </section>
           </div>
         </section>
@@ -275,7 +290,7 @@
             <i data-lucide="arrow-left"></i>
             <span data-i18n="settings.back">返回</span>
           </button>
-          <span class="pdf-merge-v2-top-tag">GIF STUDIO · TOOL PAGE 2.3</span>
+          <span class="pdf-merge-v2-top-tag">GIF STUDIO · TOOL PAGE 3.0</span>
         </div>
         <div class="home-v2-top-actions pdf-merge-v2-top-actions">
           <button class="home-v2-nav-link" type="button" data-home-link="website">
@@ -307,10 +322,6 @@
             <span>LOCAL ONLY</span>
             <strong>本地生成调色板与 GIF，适合表情包、教程动图、产品演示和短片段传播。</strong>
           </div>
-          <button class="audio-convert-cta pdf-merge-v2-cta video-media-v2-upload-btn" id="videoGifPick" type="button">
-            <i data-lucide="upload"></i>
-            <span>上传视频文件</span>
-          </button>
           <div class="pdf-merge-v2-steps" aria-label="GIF 导出流程">
             <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong>上传视频</strong><p>支持 MP4 / MOV / MKV / WebM / AVI 等常见格式。</p></div></div>
             <div class="pdf-merge-v2-step"><span>02</span><div><strong>选择片段</strong><p>设置起始帧和结束帧，最长 30 秒。</p></div></div>
@@ -320,20 +331,26 @@
         </aside>
 
         <section class="pdf-merge-v2-workspace video-media-v2-workspace" aria-label="GIF 截取工作台">
-          <div class="video-frame-empty video-media-v2-empty" id="videoGifEmpty">
-            <i data-lucide="clapperboard"></i>
-            <h2>等待选择视频文件</h2>
-            <p>上传后会在这里显示预览、片段时间轴和导出参数。</p>
+          <div class="video-frame-empty video-media-v2-empty tk-empty-hero" id="videoGifEmpty">
+            <span class="tk-empty-hero-icon"><i data-lucide="clapperboard"></i></span>
+            <span class="tk-empty-hero-kicker">LOCAL VIDEO WORKSPACE</span>
+            <strong>选择视频开始</strong>
+            <p class="tk-empty-hero-description">支持 MP4、MOV、MKV、WebM、AVI，可截取片段并生成 GIF。</p>
+            <button class="tk-empty-hero-action" data-video-pick="gif" type="button"><i data-lucide="upload"></i><span>选择视频</span></button>
           </div>
           <div class="video-frame-editor video-media-v2-editor video-gif-v2-editor" id="videoGifEditor" hidden>
             <section class="video-media-v2-preview-card">
               <div class="video-frame-preview video-gif-preview video-media-v2-preview">
                 <img id="videoGifPreviewImage" alt="GIF 选帧预览">
                 <video id="videoGifRangePreview" class="video-gif-range-preview" muted playsinline preload="metadata" hidden></video>
-                <button class="video-gif-preview-toggle" id="videoGifPreviewToggle" type="button" disabled aria-label="播放所选片段" aria-pressed="false" title="播放所选片段">
-                  <svg class="video-gif-preview-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
-                  <svg class="video-gif-preview-pause-icon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M7 5h4v14H7zM13 5h4v14h-4z"></path></svg>
-                </button>
+                 <button class="video-gif-preview-toggle" id="videoGifPreviewToggle" type="button" disabled aria-label="播放所选片段" aria-pressed="false" title="播放所选片段">
+                   <svg class="video-gif-preview-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
+                   <svg class="video-gif-preview-pause-icon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M7 5h4v14H7zM13 5h4v14h-4z"></path></svg>
+                 </button>
+                 <button class="video-frame-expand-toggle" id="videoGifExpandToggle" type="button" aria-label="展开视频预览" aria-pressed="false" title="展开视频预览">
+                   <i data-lucide="maximize-2" data-expand-icon="expand"></i>
+                   <i data-lucide="minimize-2" data-expand-icon="collapse" hidden></i>
+                 </button>
                 <div class="video-frame-time" id="videoGifPreviewTime">00:00.000</div>
               </div>
               <div class="video-frame-file video-media-v2-file"><span id="videoGifName"></span><button id="videoGifChange" type="button">更换文件</button></div>
@@ -343,19 +360,15 @@
                 <span class="pdf-merge-v2-section-kicker">GIF CONTROLS</span>
                 <h2>片段与规格</h2>
               </div>
-              <div class="video-gif-timeline-wrap" id="videoGifTimelineWrap" style="--gif-start:0%;--gif-end:0%;--gif-cursor:0%;">
+              <div class="video-gif-timeline-wrap" id="videoGifTimelineWrap" style="--gif-start:0%;--gif-end:0%;">
                 <div class="video-gif-timeline-visual" aria-hidden="true">
                   <span class="video-gif-timeline-track"></span>
                   <span class="video-gif-timeline-selected"></span>
-                  <span class="video-gif-range-marker video-gif-range-marker-start"></span>
-                  <span class="video-gif-range-marker video-gif-range-marker-end"></span>
-                  <span class="video-gif-playhead"></span>
                 </div>
-                <input id="videoGifTimeline" class="video-frame-timeline video-gif-timeline-input" type="range" min="0" max="0" step="1" value="0">
+                <input id="videoGifTimeline" class="video-frame-timeline video-gif-timeline-input" type="range" min="0" max="0" step="1" value="0" aria-label="调整当前片段端点">
               </div>
               <div class="video-gif-selection">
                 <button class="video-gif-point active" id="videoGifSelectStart" type="button"><span>起始帧</span><strong id="videoGifStartLabel">00:00.000</strong></button>
-                <span class="video-gif-connector" aria-hidden="true"></span>
                 <button class="video-gif-point" id="videoGifSelectEnd" type="button"><span>结束帧</span><strong id="videoGifEndLabel">00:30.000</strong></button>
                 <span class="video-gif-duration" id="videoGifDurationLabel">30.000 秒 / 最多 30 秒</span>
               </div>

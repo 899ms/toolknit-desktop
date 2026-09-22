@@ -25,6 +25,14 @@ execFileSync(process.execPath, [path.join(projectRoot, 'scripts', 'stage-cli-res
   stdio: 'pipe'
 });
 
+const { parseRefinement } = await import('../cli/lib/transcription-runtime.mjs');
+assert.equal(parseRefinement('{"segments":[{"id":7,"text":"總有細碎的溫暖 English"}]}', new Set([7])).get(7), '总有细碎的温暖 English');
+assert.throws(() => parseRefinement('{"segments":[]}', new Set([7])), /segment count/);
+assert.throws(() => parseRefinement('{"segments":[{"id":7,"text":"A"},{"id":7,"text":"B"}]}', new Set([7, 8])), /subtitle IDs/);
+const stagedChinese = await import('../cli/lib/core/core/chinese-text.js');
+assert.equal(stagedChinese.simplifyChineseText('視頻終於開始 English'), '视频终于开始 English');
+assert.equal(stagedChinese.simplifyTranscriptionJson({ file: '聲音.wav', text: '視頻' }).file, '聲音.wav');
+
 assert.equal(cliPackage.version, desktopPackage.version, 'desktop and CLI release versions must match');
 assert.equal(cliLock.version, cliPackage.version, 'CLI shrinkwrap version must match package.json');
 assert.equal(cliPackage.repository?.directory, 'toolknit-desktop/cli', 'npm repository directory must resolve from the repository root');
@@ -51,10 +59,16 @@ const packedFiles = new Set(pack.files.map(file => file.path));
 for (const required of ['README.md', 'LICENSE', 'package.json', 'npm-shrinkwrap.json', 'toolknit.mjs']) {
   assert.equal(packedFiles.has(required), true, `published CLI package must include ${required}`);
 }
+for (const required of ['lib/core/core/chinese-text.js', 'lib/core/core/opencc/t2s.json', 'lib/core/core/opencc/LICENSE.txt', 'lib/core/core/opencc/NOTICE.txt']) {
+  assert.ok(packedFiles.has(required), `Chinese normalization and its license must ship together: ${required}`);
+}
 for (const required of ['lib/core/pdf-document-structure.js', 'lib/ppt-image-extract-runtime.mjs', 'lib/core/ppt-image-extract-core.js', 'lib/ppt-text-extract-runtime.mjs', 'lib/core/ppt-text-extract-core.js', 'lib/ppt-compress-runtime.mjs', 'lib/core/ppt-compress-core.js', 'lib/ppt-render-runtime.mjs', 'lib/core/ppt-render-core.js', 'lib/ppt-to-pdf-runtime.mjs', 'lib/ppt-to-image-runtime.mjs', 'lib/ppt-outline-runtime.mjs', 'lib/core/ppt-outline-core.js', 'lib/ppt-draft-runtime.mjs', 'lib/core/ppt-draft-core.js']) {
   assert.equal(packedFiles.has(required), true, `published CLI package must include ${required}`);
 }
 assert.equal(pack.version, cliPackage.version);
+for (const required of ['lib/core/core/pdf-compression.js', 'lib/core/core/pdf-raster-candidate.js', 'lib/pdf-compress-worker.mjs', 'lib/pdf-compress-raster-runtime.mjs']) {
+  assert.ok(packedFiles.has(required), `shared PDF compression runtime must be packaged: ${required}`);
+}
 assert.ok(pack.size < 30 * 1024 * 1024, `packed CLI must remain below 30 MiB, got ${pack.size}`);
 
 console.log(`CLI package contract passed: ${pack.files.length} files, ${pack.size} packed bytes.`);

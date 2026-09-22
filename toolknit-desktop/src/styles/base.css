@@ -15,8 +15,8 @@ body { background: transparent; font-family: var(--tk-font-ui); font-synthesis: 
 @font-face { font-family: 'ToolKnitNotoSansSC'; font-style: normal; font-weight: 600; font-display: swap; src: url('/assets/fonts/NotoSansSC-Semibold.ttf') format('truetype'); }
 @font-face { font-family: 'ToolKnitBuiltinCn'; font-style: normal; font-weight: 100 500; font-display: swap; src: url('/assets/fonts/Alibaba-PuHuiTi-Medium.ttf') format('truetype'); }
 @font-face { font-family: 'ToolKnitBuiltinCn'; font-style: normal; font-weight: 600 900; font-display: swap; src: url('/assets/fonts/Alibaba-PuHuiTi-Bold.ttf') format('truetype'); }
-@font-face { font-family: 'ToolKnitBuiltinEn'; font-style: normal; font-weight: 100 500; font-display: swap; src: url('/assets/fonts/Fonarto-Regular.otf') format('opentype'); }
-@font-face { font-family: 'ToolKnitBuiltinEn'; font-style: normal; font-weight: 600 900; font-display: swap; src: url('/assets/fonts/Fonarto-Bold.otf') format('opentype'); }
+@font-face { font-family: 'ToolKnitBuiltinEn'; font-style: normal; font-weight: 100 500; font-display: swap; src: url('/assets/fonts/Montserrat-Regular.otf') format('opentype'); }
+@font-face { font-family: 'ToolKnitBuiltinEn'; font-style: normal; font-weight: 600 900; font-display: swap; src: url('/assets/fonts/Montserrat-Bold.otf') format('opentype'); }
 @font-face { font-family: 'ToolKnitBuiltinCnHeading'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('/assets/fonts/Alibaba-PuHuiTi-Bold.ttf') format('truetype'); }
-@font-face { font-family: 'ToolKnitBuiltinEnHeading'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('/assets/fonts/Fonarto-Bold.otf') format('opentype'); }
+@font-face { font-family: 'ToolKnitBuiltinEnHeading'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('/assets/fonts/Montserrat-Bold.otf') format('opentype'); }
 body.lang-zh { font-family: var(--tk-font-ui); }

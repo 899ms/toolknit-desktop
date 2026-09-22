@@ -27,8 +27,14 @@ export function createPptDraftPreview({
     slideList: pptDraftSlideList
   } = elements || {};
 
-function pptDraftThemeLabel() {
-  return text('themeMono');
+function pptDraftThemeLabel(theme = 'minimal-mono') {
+  const labels = {
+    'minimal-mono': 'themeMono',
+    'minimal-dark': 'themeDark',
+    'minimal-light': 'themeLight',
+    'tech-blue': 'themeBlue'
+  };
+  return text(labels[String(theme || 'minimal-mono')] || 'themeMono');
 }
 
 function pptDraftRoleLabel(role) {
@@ -77,6 +83,10 @@ function pptDraftPreviewLabel(key) {
     visual: { zh: '视觉建议', en: 'Visual idea' },
     replaceImage: { zh: '替换为你的图片 / 截图', en: 'Replace with your image' },
     imageSlot: { zh: '图像占位', en: 'Image slot' },
+    embeddedAsset: { zh: '已嵌入素材', en: 'Embedded asset' },
+    assetEmbedded: { zh: '已嵌入素材', en: 'Asset embedded' },
+    assetPending: { zh: '待补素材', en: 'Asset pending' },
+    assets: { zh: '素材', en: 'Assets' },
     before: { zh: '现状 / 问题', en: 'Before' },
     after: { zh: '方案 / 结果', en: 'After' },
     draftNote: { zh: '预览为草稿版式示意，导出的 PPTX 可继续编辑。', en: 'Preview shows the draft layout; exported PPTX remains editable.' },
@@ -225,7 +235,7 @@ function pptDraftPreviewTopline(slide, index, total, outline) {
   `;
 }
 
-function pptDraftPreviewVisualSlot(slide, variant = 'standard', outline = null, theme = null) {
+function pptDraftPreviewVisualSlot(slide, variant = 'standard', outline = null, theme = null, assetContext = {}) {
   const copy = pptDraftPreviewCopy(outline);
   const layout = slide?.layout_intent && typeof slide.layout_intent === 'object' ? slide.layout_intent : {};
   const fallback = variant === 'cover' ? copy.coverImageLabel : pptDraftPreviewLabel('replaceImage');
@@ -233,6 +243,20 @@ function pptDraftPreviewVisualSlot(slide, variant = 'standard', outline = null, 
   const isPortrait = /portrait|9:16|竖屏|手机|短视频|mobile/i.test(`${layout.media_format || ''} ${visual} ${variant}`);
   const format = isPortrait || variant === 'cover' ? 'portrait' : 'landscape';
   const themeTokens = resolvePptDraftThemeTokens(theme || outline?.request?.theme || outline?.draft_request?.theme || 'minimal-mono', outline || {});
+  const slideNumber = Number(assetContext.slideIndex || slide?.page || 1);
+  const manifest = Array.isArray(assetContext.assetManifest) ? assetContext.assetManifest : [];
+  const preferredSlot = Array.isArray(slide?.asset_slots) ? slide.asset_slots.find(item => Number(item?.slot) === 1) : null;
+  const embedded = manifest.find(item => Number(item?.slide) === slideNumber && Number(item?.placeholder_index) === 1 && item.status === 'embedded');
+  const assetId = preferredSlot?.asset_id || embedded?.asset_id || '';
+  const asset = Array.isArray(assetContext.assets) ? assetContext.assets.find(item => item.id === assetId) : null;
+  if (asset?.preview_url) {
+    return `
+      <div class="ppt-draft-visual-slot is-image${isPortrait || variant === 'cover' ? ' is-portrait' : ''}" title="${escapeAttr(asset.name || visual)}">
+        <img class="ppt-draft-visual-slot-image" src="${escapeAttr(asset.preview_url)}" alt="${escapeAttr(asset.name || visual)}" draggable="false">
+        <span class="ppt-draft-visual-slot-badge">${escapeHtml(asset.name || pptDraftPreviewLabel('embeddedAsset'))}</span>
+      </div>
+    `;
+  }
   const svg = placeholderSvg(themeTokens, visual, format);
   return `
     <div class="ppt-draft-visual-slot is-svg${isPortrait || variant === 'cover' ? ' is-portrait' : ''}" title="${escapeAttr(visual)}">
@@ -241,7 +265,7 @@ function pptDraftPreviewVisualSlot(slide, variant = 'standard', outline = null, 
   `;
 }
 
-function pptDraftPreviewCanvas(slide, index, total, outline, theme) {
+function pptDraftPreviewCanvas(slide, index, total, outline, theme, assetContext = {}) {
   const variant = pptDraftPreviewVariant(slide, index, total);
   const title = pptDraftInline(slide?.title, `Slide ${index + 1}`, 120);
   const claim = pptDraftInline(slide?.claim, '', 150);
@@ -270,7 +294,7 @@ function pptDraftPreviewCanvas(slide, index, total, outline, theme) {
           </div>
           ${outline?.audience ? `<small class="ppt-draft-cover-audience">${escapeHtml(pptDraftInline(outline.audience, '', 80))}</small>` : ''}
         </div>
-        ${pptDraftPreviewVisualSlot(slide, variant, outline, theme)}
+        ${pptDraftPreviewVisualSlot(slide, variant, outline, theme, { ...assetContext, slideIndex: index + 1 })}
       </div>
     `;
   } else if (variant === 'closing') {
@@ -283,7 +307,7 @@ function pptDraftPreviewCanvas(slide, index, total, outline, theme) {
             ${pptDraftPreviewBulletList(bullets)}
           </div>
         </div>
-        ${pptDraftPreviewVisualSlot(slide, variant, outline, theme)}
+        ${pptDraftPreviewVisualSlot(slide, variant, outline, theme, { ...assetContext, slideIndex: index + 1 })}
       </div>
     `;
   } else if (variant === 'comparison') {
@@ -346,7 +370,7 @@ function pptDraftPreviewCanvas(slide, index, total, outline, theme) {
   } else if (variant === 'visual') {
     body = `
       <div class="ppt-draft-canvas-layout">
-        ${pptDraftPreviewVisualSlot(slide, variant, outline, theme)}
+        ${pptDraftPreviewVisualSlot(slide, variant, outline, theme, { ...assetContext, slideIndex: index + 1 })}
         <div class="ppt-draft-standard-copy">
           <h3 class="ppt-draft-canvas-title">${escapeHtml(title)}</h3>
           ${claim ? `<p class="ppt-draft-canvas-claim">${escapeHtml(claim)}</p>` : ''}
@@ -362,7 +386,7 @@ function pptDraftPreviewCanvas(slide, index, total, outline, theme) {
           ${claim ? `<p class="ppt-draft-canvas-claim">${escapeHtml(claim)}</p>` : ''}
           <div class="ppt-draft-canvas-panel">${pptDraftPreviewBulletList(bullets)}</div>
         </div>
-        ${pptDraftPreviewVisualSlot(slide, variant, outline, theme)}
+        ${pptDraftPreviewVisualSlot(slide, variant, outline, theme, { ...assetContext, slideIndex: index + 1 })}
       </div>
     `;
   }
@@ -375,13 +399,20 @@ function pptDraftPreviewCanvas(slide, index, total, outline, theme) {
   `;
 }
 
-function pptDraftSlidePreviewHtml(slide, index, total, outline, theme) {
+function pptDraftSlidePreviewHtml(slide, index, total, outline, theme, assetContext = {}) {
   const title = pptDraftInline(slide?.title, `Slide ${index + 1}`, 120);
   const role = pptDraftRoleLabel(slide?.role || slide?.type || 'content');
   const kind = pptDraftLayoutKindLabel(slide?.layout_intent?.kind || slide?.layout_intent?.layout || slide?.type || '');
   const density = pptDraftInline(slide?.layout_intent?.density, '', 18);
   const focus = pptDraftInline(slide?.layout_intent?.visual_focus || slide?.layout_intent?.visualFocus || slide?.visual_suggestion, pptDraftPreviewLabel('replaceImage'), 180);
   const tags = [role, kind, density].filter(Boolean);
+  const slideMedia = (Array.isArray(assetContext.assetManifest) ? assetContext.assetManifest : [])
+    .filter(item => Number(item?.slide) === index + 1);
+  const embeddedCount = slideMedia.filter(item => item.status === 'embedded').length;
+  const hasPendingMedia = slideMedia.some(item => item.status !== 'embedded');
+  const assetStatus = slideMedia.length
+    ? (embeddedCount && !hasPendingMedia ? pptDraftPreviewLabel('assetEmbedded') : pptDraftPreviewLabel('assetPending'))
+    : '';
   return `
     <article class="ppt-draft-slide-card" role="button" tabindex="0" data-ppt-draft-slide-index="${escapeAttr(String(index))}" title="${escapeAttr(text('editorOpenHint'))}">
       <div class="ppt-draft-slide-head">
@@ -391,7 +422,7 @@ function pptDraftSlidePreviewHtml(slide, index, total, outline, theme) {
           <span>${escapeHtml(tags.join(' · '))}</span>
         </div>
       </div>
-      ${pptDraftPreviewCanvas(slide, index, total, outline, theme)}
+      ${pptDraftPreviewCanvas(slide, index, total, outline, theme, assetContext)}
       <div class="ppt-draft-slide-foot">
         <div class="ppt-draft-visual-note">
           <strong>${escapeHtml(pptDraftPreviewLabel('visual'))}</strong>
@@ -400,6 +431,7 @@ function pptDraftSlidePreviewHtml(slide, index, total, outline, theme) {
         <div class="ppt-draft-slide-tags">
           ${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}
         </div>
+        ${assetStatus ? `<span class="ppt-draft-slide-asset-status${embeddedCount && !hasPendingMedia ? ' is-ready' : ''}">${escapeHtml(assetStatus)}</span>` : ''}
       </div>
     </article>
   `;
@@ -411,6 +443,7 @@ function renderPptDraftResult(result) {
   const outline = result.outline;
   const slides = Array.isArray(outline.slides) ? outline.slides : [];
   const theme = result.theme || outline.request?.theme || 'minimal-mono';
+  const assetContext = { assets: result.assets || [], assetManifest: result.asset_manifest || outline.asset_manifest || [] };
   if (pptDraftEmpty) pptDraftEmpty.hidden = true;
   if (pptDraftResult) pptDraftResult.hidden = false;
   if (pptDraftSummary) {
@@ -427,12 +460,13 @@ function renderPptDraftResult(result) {
         <span class="ppt-outline-pill">${escapeHtml(pptDraftPreviewLabel('slides'))}：${escapeHtml(String(slides.length))}</span>
         <span class="ppt-outline-pill">${escapeHtml(pptDraftPreviewLabel('theme'))}：${escapeHtml(pptDraftThemeLabel(theme))}</span>
         <span class="ppt-outline-pill">${escapeHtml(pptDraftPreviewLabel('deckType'))}：${escapeHtml(deckTypeLabel)}</span>
+        ${Array.isArray(result.assets) && result.assets.length ? `<span class="ppt-outline-pill">${escapeHtml(pptDraftPreviewLabel('assets'))}：${escapeHtml(String(result.assets.length))}</span>` : ''}
       </div>
     `;
   }
   if (pptDraftSlideList) {
     pptDraftSlideList.innerHTML = slides
-      .map((slide, index) => pptDraftSlidePreviewHtml(slide, index, slides.length, outline, theme))
+      .map((slide, index) => pptDraftSlidePreviewHtml(slide, index, slides.length, outline, theme, assetContext))
       .join('');
   }
 }

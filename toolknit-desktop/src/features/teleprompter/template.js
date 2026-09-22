@@ -7,7 +7,7 @@ export function teleprompterTemplate() {
           <i data-lucide="arrow-left"></i>
           <span data-tele-text="backTitle">返回</span>
         </button>
-        <span class="pdf-merge-v2-top-tag">TELEPROMPTER · TOOL PAGE 2.3</span>
+        <span class="pdf-merge-v2-top-tag">TELEPROMPTER · TOOL PAGE 3.0</span>
       </div>
       <div class="home-v2-top-actions pdf-merge-v2-top-actions teleprompter-top-actions">
         <button class="home-v2-nav-link" type="button" data-tele-action="website" data-tele-title="website">
@@ -81,7 +81,7 @@ export function teleprompterTemplate() {
             <div><span class="teleprompter-drop-label">DROP OR SELECT</span><p data-tele-text="dropHint">把文稿拖进来，或直接在下方输入。文件内容只在本机读取。</p></div>
             <span class="teleprompter-small-button" aria-hidden="true"><i data-lucide="text-cursor-input"></i><span data-tele-file-name data-tele-text="manualInput">手动输入</span></span>
           </div>
-          <textarea class="teleprompter-input" data-tele-input data-tele-placeholder="placeholder" spellcheck="true"></textarea>
+          <textarea class="teleprompter-input tk-vertical-stripe-surface" data-tele-input data-tele-placeholder="placeholder" spellcheck="true"></textarea>
           <div class="teleprompter-editor-footer">
             <div class="teleprompter-script-meta"><strong data-tele-count>0</strong><span data-tele-text="characters">字符</span><span>·</span><strong data-tele-duration>00:00</strong></div>
             <span class="teleprompter-current-copy" data-tele-current-copy data-tele-text="notStarted">尚未开始</span>

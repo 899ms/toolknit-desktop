@@ -1,5 +1,6 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
 import { onLangChange, t } from '../../i18n.js';
+import { moveFocusOutOfHiddenRegion } from '../../shared/tool-page-shell.js';
 import {
   loadTauriDialog,
   loadTauriWebview,
@@ -64,6 +65,7 @@ export function createExcelToPdfController({
   let lastOutputDir = '';
   let disposed = false;
   let operationSequence = 0;
+  let nativeStarted = false;
 
   const invoke = async (command, args) => {
     const api = await tauriCorePromise;
@@ -205,6 +207,13 @@ export function createExcelToPdfController({
     processMask.classList.toggle('visible', Boolean(visible));
   }
 
+  function hideSuccess({ restoreFocus = false } = {}) {
+    moveFocusOutOfHiddenRegion(successOverlay, restoreFocus ? processButton : null);
+    successOverlay.inert = true;
+    successOverlay.classList.remove('visible');
+    successOverlay.setAttribute('aria-hidden', 'true');
+  }
+
   function conversionErrorMessage(error) {
     const message = String(error?.message || error || '');
     const key = getExcelToPdfErrorKey(error);
@@ -228,6 +237,7 @@ export function createExcelToPdfController({
       : copy('pageCountUnavailable');
     successPath.textContent = lastOutputDir;
     successOverlay.classList.add('visible');
+    successOverlay.inert = false;
     successOverlay.setAttribute('aria-hidden', 'false');
   }
 
@@ -243,18 +253,9 @@ export function createExcelToPdfController({
       notify(copy('reselectDesktopFiles'));
       return;
     }
-    try {
-      if (ensureLibreOfficeAvailable && !await ensureLibreOfficeAvailable()) return;
-    } catch (error) {
-      if (isOpenSession(owner) && !/runtime-missing/i.test(String(error?.message || error))) {
-        notify(conversionErrorMessage(error));
-      }
-      return;
-    }
-    if (!isOpenSession(owner)) return;
-
     processing = true;
     cancelling = false;
+    nativeStarted = false;
     const operation = ++operationSequence;
     renderFiles();
     overlay.querySelectorAll('[data-setting-value], [data-excel-action="upload"], [data-excel-action="clear"], [data-remove-file]')
@@ -263,12 +264,16 @@ export function createExcelToPdfController({
     let releaseProgress = () => {};
 
     try {
+      if (ensureLibreOfficeAvailable && !await ensureLibreOfficeAvailable()) return;
+      if (!isOpenSession(owner) || cancelling || operation !== operationSequence) return;
       const { listen } = await tauriEventPromise;
       const unlisten = await listen('excel-to-pdf-progress', event => {
         if (!isOpenSession(owner) || operation !== operationSequence) return;
         const payload = event.payload || {};
         const phase = String(payload.phase || 'converting');
-        const key = phase === 'publishing'
+        const key = phase === 'preparing'
+          ? 'preparing'
+          : phase === 'publishing'
           ? 'publishing'
           : (phase === 'complete' ? 'complete' : 'converting');
         const message = phase === 'complete'
@@ -280,13 +285,14 @@ export function createExcelToPdfController({
             });
         setProgress(payload.percent, message);
       });
-      if (!isOpenSession(owner) || operation !== operationSequence) {
+      if (!isOpenSession(owner) || cancelling || operation !== operationSequence) {
         unlisten();
         return;
       }
       releaseProgress = owner.use(unlisten);
       const outputDir = await getOutputDir?.('Excel_To_PDF');
-      if (!isOpenSession(owner) || operation !== operationSequence) return;
+      if (!isOpenSession(owner) || cancelling || operation !== operationSequence) return;
+      nativeStarted = true;
       const result = await invoke('convert_excel_to_pdf', {
         inputPaths,
         outputDir,
@@ -301,7 +307,8 @@ export function createExcelToPdfController({
       setProgress(100, copy('complete'));
       showSuccess(result);
     } catch (error) {
-      if (isOpenSession(owner) && operation === operationSequence) {
+      if (isOpenSession(owner) && !cancelling && operation === operationSequence
+          && !/runtime-missing/i.test(String(error?.message || error))) {
         notify(conversionErrorMessage(error));
       }
     } finally {
@@ -309,9 +316,10 @@ export function createExcelToPdfController({
       if (operation === operationSequence) {
         processing = false;
         cancelling = false;
+        nativeStarted = false;
       }
       if (isOpenSession(owner) && operation === operationSequence) {
-        owner.timeout(() => setProgress(0, copy('processing'), false), 220);
+        setProgress(0, copy('processing'), false);
         overlay.querySelectorAll('[data-setting-value], [data-excel-action="upload"], [data-excel-action="clear"], [data-remove-file]')
           .forEach(node => { node.disabled = false; });
         renderFiles();
@@ -353,6 +361,7 @@ export function createExcelToPdfController({
     const owner = createLifecycleScope();
     session = owner;
     overlay.classList.add('visible');
+    overlay.inert = false;
     overlay.setAttribute('aria-hidden', 'false');
     plasmaInstance = initStandardToolPlasma?.(background) || plasmaInstance;
     renderLocale();
@@ -369,19 +378,20 @@ export function createExcelToPdfController({
     session = null;
     operationSequence += 1;
     owner.dispose();
+    moveFocusOutOfHiddenRegion(overlay);
+    overlay.inert = true;
     overlay.classList.remove('visible', 'drag-over');
     overlay.setAttribute('aria-hidden', 'true');
     dropZone.classList.remove('visible');
     processMask.classList.remove('visible');
-    successOverlay.classList.remove('visible');
-    successOverlay.setAttribute('aria-hidden', 'true');
+    hideSuccess();
     plasmaInstance = disposeStandardToolPlasma?.(plasmaInstance) || null;
     return true;
   }
 
   function dispose() {
     if (disposed) return;
-    if (processing && !cancelling) {
+    if (nativeStarted && !cancelling) {
       cancelling = true;
       void invoke('cancel_convert').catch(() => {});
     }
@@ -394,12 +404,14 @@ export function createExcelToPdfController({
   function handleClick(event) {
     const remove = event.target.closest('[data-remove-file]');
     if (remove) {
+      if (processing) return;
       files = files.filter(file => file.id !== Number(remove.dataset.removeFile));
       renderFiles();
       return;
     }
     const settingButton = event.target.closest('[data-setting-value]');
     if (settingButton) {
+      if (processing) return;
       const group = settingButton.closest('[data-setting-group]');
       if (!group) return;
       settings[group.dataset.settingGroup] = settingButton.dataset.settingValue;
@@ -414,16 +426,16 @@ export function createExcelToPdfController({
     if (action === 'back') close();
     else if (action === 'upload') void chooseFiles();
     else if (action === 'clear') {
+      if (processing) return;
       files = [];
       renderFiles();
     } else if (action === 'convert') void startConversion();
     else if (action === 'cancel' && processing && !cancelling) {
       cancelling = true;
       setProgress(Number.parseFloat(progressBar.style.width) || 0, copy('cancelling'));
-      void invoke('cancel_convert').catch(() => {});
+      if (nativeStarted) void invoke('cancel_convert').catch(() => {});
     } else if (action === 'success-ok') {
-      successOverlay.classList.remove('visible');
-      successOverlay.setAttribute('aria-hidden', 'true');
+      hideSuccess({ restoreFocus: true });
     } else if (action === 'open-output' && lastOutputDir) {
       void invoke('open_path', { path: lastOutputDir })
         .catch(() => notify(copy('openFolderFailed')));
@@ -436,6 +448,14 @@ export function createExcelToPdfController({
   }
 
   lifecycle.event(overlay, 'click', handleClick);
+  lifecycle.event(overlay, 'keydown', event => {
+    if (event.key !== 'Escape') return;
+    if (successOverlay.classList.contains('visible')) {
+      event.preventDefault();
+      event.stopPropagation();
+      hideSuccess({ restoreFocus: true });
+    }
+  });
   lifecycle.event(fileInput, 'change', () => addBrowserFiles(fileInput.files));
   lifecycle.event(overlay, 'dragover', event => {
     if (!event.dataTransfer?.types?.includes('Files') || processing || !session) return;
@@ -458,6 +478,7 @@ export function createExcelToPdfController({
 
   const unsubscribeLanguage = onLangChange(renderLocale) || (() => {});
   lifecycle.use(unsubscribeLanguage);
+  hideSuccess();
   renderLocale();
   return { open, close, dispose };
 }

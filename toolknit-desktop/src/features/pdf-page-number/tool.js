@@ -1,4 +1,5 @@
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.mjs?url';
+import { pdfjsDocumentOptions, destroyPdfDocument } from '../../shared/pdfjs-options.js';
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
 import { onLangChange, t } from '../../i18n.js';
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
@@ -46,7 +47,7 @@ function isCancellation(error) {
 async function destroyStagedSources(sources) {
   for (const source of sources) {
     try {
-      if (source.pdfDoc) await source.pdfDoc.destroy();
+      if (source.pdfDoc) await destroyPdfDocument(source.pdfDoc);
       else await source.loadingTask?.destroy?.();
     } catch (_) {}
     source.pdfDoc = null;
@@ -362,7 +363,6 @@ export function initPdfPageNumberTool({
       const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
       assertOperation(operation);
       pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-      const wasmUrl = new URL('assets/', document.baseURI).href;
       let stagedPages = 0;
       for (let index = 0; index < files.length; index += 1) {
         assertOperation(operation);
@@ -373,7 +373,7 @@ export function initPdfPageNumberTool({
         const bytes = await readFileBytes(files[index]);
         assertOperation(operation);
         if (!bytes.length) throw new Error('Invalid PDF input size');
-        const loadingTask = pdfjs.getDocument({ data: bytes.slice(), wasmUrl, useWasm: true });
+        const loadingTask = pdfjs.getDocument(pdfjsDocumentOptions({ data: bytes.slice() }));
         operation.loadingTasks.add(loadingTask);
         let pdfDoc;
         try {
@@ -621,9 +621,14 @@ export function initPdfPageNumberTool({
   }
 
   function handleKeydown(event) {
+    if (event.defaultPrevented) return;
     if (!overlay.classList.contains('visible')) return;
     if (event.key === 'Escape') {
       event.preventDefault();
+      if (overlay.querySelector('.tool-custom-select.is-open')) {
+        customSelectControls.forEach(control => control.close({ restoreFocus: true }));
+        return;
+      }
       if (successOverlay?.classList.contains('visible')) {
         view.closeSuccess();
         view.focus(exportButton);

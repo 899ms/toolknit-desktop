@@ -57,6 +57,7 @@ export function createAudioExtractController({
   refreshIcons = () => {},
   documentRef = globalThis.document,
   tauriCore = tauriCorePromise,
+  loadDialog = loadTauriDialog,
   tauriEvents = tauriEventPromise
 } = {}) {
   if (!overlay) throw new Error('audio-extract:missing-overlay');
@@ -142,6 +143,7 @@ export function createAudioExtractController({
 
   function renderTracks(tracks) {
     if (!trackSelect || !trackWrap) return;
+    const selectedTrack = state.trackIndex;
     trackSelect.replaceChildren();
     const list = Array.isArray(tracks) ? tracks : [];
     list.forEach((track, position) => {
@@ -151,6 +153,9 @@ export function createAudioExtractController({
       option.textContent = `${copy('trackLabel', { index: position + 1 })} · ${track?.codec || 'Unknown'} · ${track?.language || 'default'} · ${track?.channels || 'unknown'}`;
       trackSelect.append(option);
     });
+    if (selectedTrack !== null && Array.from(trackSelect.options).some(option => option.value === String(selectedTrack))) {
+      trackSelect.value = String(selectedTrack);
+    }
     state.trackIndex = list.length ? normalizeAudioTrackIndex(trackSelect.value) : null;
     trackWrap.hidden = list.length < 2;
   }
@@ -188,11 +193,12 @@ export function createAudioExtractController({
 
   async function chooseFile() {
     if (!session || state.processing) return;
+    const owner = session;
     if (isTauri) {
       try {
-        const { open } = await loadTauriDialog();
+        const { open } = await loadDialog();
         const selected = await open({ multiple: false, filters: [{ name: 'Video Files', extensions: VIDEO_EXTENSIONS }] });
-        if (typeof selected === 'string') await loadVideoFile({ path: selected, name: fileNameFromPath(selected) });
+        if (isCurrent(owner) && typeof selected === 'string') await loadVideoFile({ path: selected, name: fileNameFromPath(selected) });
       } catch (error) {
         notify(errorMessage(error));
       }
@@ -215,7 +221,9 @@ export function createAudioExtractController({
       let invoke = null;
       if (isTauri && state.inputPath) {
         ({ invoke } = await tauriCore);
-        state.fileSize = Number(await invoke('get_file_size', { path: state.inputPath }));
+        const size = Number(await invoke('get_file_size', { path: state.inputPath }));
+        if (!isCurrent(owner) || runId !== operationSequence) return;
+        state.fileSize = size;
       }
       assertAudioExtractInput({ name: state.fileName, size: state.fileSize });
       if (!isCurrent(owner, null) || runId !== operationSequence) return;

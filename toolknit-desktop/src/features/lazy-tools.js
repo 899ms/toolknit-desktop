@@ -1,4 +1,10 @@
 export const LAZY_TOOL_SPECS = Object.freeze({
+  'clipboard-history': Object.freeze({
+    overlayId: 'clipboardHistoryOverlay',
+    markup: () => import('./clipboard-history/template.js'),
+    load: () => import('./clipboard-history/tool.js'),
+    init: 'initClipboardHistoryTool'
+  }),
   'excel-to-pdf': Object.freeze({
     overlayId: 'excelToPdfOverlay',
     load: () => import('./excel-to-pdf/tool.js'),
@@ -27,6 +33,18 @@ export const LAZY_TOOL_SPECS = Object.freeze({
     markup: () => import('./pdf-to-image/template.html?raw'),
     load: () => import('./pdf-to-image/tool.js'),
     init: 'initPdfToImageTool'
+  }),
+  'pdf-text-markdown': Object.freeze({
+    overlayId: 'pdfTextExtractOverlay',
+    markup: () => import('./pdf-text-extract/template.html?raw'),
+    load: () => import('./pdf-text-extract/tool.js'),
+    init: 'initPdfTextMarkdownTool'
+  }),
+  'pdf-ai-markdown': Object.freeze({
+    overlayId: 'pdfAiMarkdownOverlay',
+    markup: () => import('./pdf-ai-markdown/template.html?raw'),
+    load: () => import('./pdf-ai-markdown/tool.js'),
+    init: 'initPdfAiMarkdownTool'
   }),
   'pdf-page-number': Object.freeze({
     overlayId: 'pdfPageNumberOverlay',

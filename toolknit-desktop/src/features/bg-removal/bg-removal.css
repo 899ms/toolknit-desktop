@@ -332,6 +332,8 @@
   height: 13px;
 }
 
+.bg-removal-overlay .tool-custom-select-trigger { color: #000; }
+
 .bg-removal-select {
   width: 100%;
   min-height: 40px;
@@ -540,65 +542,12 @@
   position: absolute;
   inset: 0;
   z-index: 4;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   width: 100%;
-  padding: 24px;
   border: 0;
   background: rgba(8, 9, 10, .28);
-  color: rgba(255, 255, 255, .64);
   font: inherit;
   text-align: center;
   cursor: pointer;
-}
-
-.bg-removal-empty-icon {
-  display: grid;
-  place-items: center;
-  width: 54px;
-  height: 54px;
-  margin-bottom: 14px;
-  border: 1px solid rgba(255, 255, 255, .22);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, .055);
-  color: rgba(255, 255, 255, .86);
-}
-
-.bg-removal-empty-icon svg {
-  width: 24px;
-  height: 24px;
-}
-
-.bg-removal-empty strong {
-  color: #fff;
-  font-size: 17px;
-}
-
-.bg-removal-empty > span:not(.bg-removal-empty-icon) {
-  max-width: 400px;
-  margin-top: 7px;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.bg-removal-empty em {
-  min-width: 112px;
-  margin-top: 18px;
-  padding: 10px 17px;
-  border: 1px solid rgba(255, 255, 255, .72);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, .1);
-  color: #fff;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 800;
-}
-
-.bg-removal-empty:hover em {
-  border-color: #fff;
-  background: rgba(255, 255, 255, .18);
 }
 
 .bg-removal-progress {
@@ -754,11 +703,22 @@
 
 .bg-removal-brush-cursor {
   position: absolute;
+  top: 0;
+  left: 0;
   z-index: 20;
   border: 1.5px solid rgba(255, 255, 255, .9);
   border-radius: 50%;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(0, 0, 0, .25);
+  visibility: hidden;
+  opacity: 0;
+  contain: layout paint style;
   pointer-events: none;
+  will-change: transform, width, height;
+}
+
+.bg-removal-brush-cursor.is-visible {
+  visibility: visible;
+  opacity: 1;
 }
 
 .bg-removal-footer {

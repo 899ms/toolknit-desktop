@@ -36,6 +36,9 @@ assert.match(controller, /audio-extract-progress/);
 assert.match(controller, /outputParent\(state\.outputPath\)/);
 assert.doesNotMatch(controller, /copy\(\{\s*probe:/);
 assert.match(template, /data-audio-extract-action="back"/);
+assert.match(template, /audio-extract-feature tool-page-v2-shell/);
+assert.match(template, /audio-extract-v2-topbar tool-page-v2-topbar/);
+assert.match(featureStyles, /\.audio-extract-start\s*\{[^}]*opacity:\s*1;[^}]*transform:\s*none;/);
 assert.match(template, /data-audio-extract-action="success-ok"/);
 assert.match(featureStyles, /\.audio-extract-feature/);
 assert.doesNotMatch(appStyles, /\.audio-extract-v2\s+\.audio-extract-body/);
@@ -45,5 +48,23 @@ const ids = [...audioExtractTemplate().matchAll(/\sid="([^\"]+)"/g)].map(match =
 assert.equal(ids.length, 0, 'audio extract template must use scoped data hooks instead of global IDs');
 assert.match(audioExtractTemplate(), /data-audio-extract-action="choose"/);
 assert.match(audioExtractTemplate(), /data-audio-extract-success-path/);
+
+const [themeIndex, sharedTheme, theme] = await Promise.all([
+  read('src/styles/themes/index.css'),
+  read('src/styles/themes/pdf-tools-light.css'),
+  read('src/styles/themes/audio-extract-light.css')
+]);
+assert.match(template, /tool-page-v2-shell tool-page-v2-light/);
+assert.match(sharedTheme, /:is\(\.pdf-merge-v2, \.excel-to-pdf-overlay, \.tool-page-v2-light\)/);
+assert.match(themeIndex, /@import url\('\.\/audio-extract-light\.css'\)/);
+assert.doesNotMatch(theme, /\.pdf-merge-v2-back|\.pdf-merge-v2-topbar/, 'navigation stays in the shared theme');
+for (const selector of ['.audio-extract-info-main', '.audio-extract-info-meta', '.audio-clip-file-remove',
+  '.audio-convert-format-option:not(.active)', '.audio-extract-track-select option',
+  '[data-audio-extract-process]', '[data-audio-extract-success]']) {
+  assert.ok(theme.includes(selector), `daytime theme covers ${selector}`);
+}
+assert.match(theme, /\.audio-extract-info-main\s*\{\s*min-width: 0/);
+assert.match(theme, /max-height: calc\(100dvh - 40px\)/);
+assert.match(template, /data-audio-extract-action="open-folder"/);
 
 console.log('Audio extraction lazy tool, template and lifecycle contract checks passed');

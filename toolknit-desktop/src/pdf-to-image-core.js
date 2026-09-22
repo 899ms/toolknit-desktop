@@ -7,6 +7,9 @@ export const PDF_TO_IMAGE_LIMITS = Object.freeze({
   maxPages: 200,
   maxLongPages: 20,
   maxPagesPerLongImage: 5,
+  minGridPages: 4,
+  maxGridPages: 9,
+  gridGap: 24,
   maxRenderSide: 16_384,
   maxRenderPixels: 40_000_000,
   maxLongImageSide: 32_767,
@@ -118,12 +121,15 @@ export function normalizePdfToImagePageSelection(
 ) {
   const safeLimits = resolvedLimits(limits);
   assertPdfToImagePageCount(pageCount, safeLimits);
-  if (!['images', 'long'].includes(mode)) fail('invalid_mode', 'Export mode must be images or long.');
+  if (!['images', 'long', 'long-horizontal', 'grid'].includes(mode)) fail('invalid_mode', 'Export mode is invalid.');
   if (!Array.isArray(values) || values.length < 1) {
     fail('invalid_selection', 'Select at least one PDF page.');
   }
-  if (mode === 'long' && values.length > safeLimits.maxLongPages) {
+  if (['long', 'long-horizontal'].includes(mode) && values.length > safeLimits.maxLongPages) {
     fail('too_many_long_pages', `Long-image export accepts at most ${safeLimits.maxLongPages} pages.`);
+  }
+  if (mode === 'grid' && values.length !== safeLimits.minGridPages && values.length !== safeLimits.maxGridPages) {
+    fail('invalid_grid_count', `Grid export accepts ${safeLimits.minGridPages}-${safeLimits.maxGridPages} pages.`);
   }
 
   const seen = new Set();
@@ -213,9 +219,13 @@ function assertPlannedPage(value, limits) {
   return { ...value, pageNumber: page.pageNumber, width, height, pixels };
 }
 
-function describeLongGroup(items, limits) {
-  const width = Math.max(...items.map(item => item.width));
-  const height = items.reduce((sum, item) => sum + item.height, 0);
+function describeLongGroup(items, limits, orientation = 'vertical') {
+  const width = orientation === 'horizontal'
+    ? items.reduce((sum, item) => sum + item.width, 0)
+    : Math.max(...items.map(item => item.width));
+  const height = orientation === 'horizontal'
+    ? Math.max(...items.map(item => item.height))
+    : items.reduce((sum, item) => sum + item.height, 0);
   const pixels = width * height;
   const maxPagePixels = Math.max(...items.map(item => item.pixels));
   const estimatedWorkingBytes = pixels * 6 + maxPagePixels * 4;
@@ -225,14 +235,14 @@ function describeLongGroup(items, limits) {
     && height <= limits.maxLongImageSide
     && pixels <= limits.maxLongImagePixels
     && estimatedWorkingBytes <= limits.maxEstimatedWorkingBytes;
-  let cursorY = 0;
+  let cursor = 0;
   const positionedItems = items.map(item => {
     const positioned = {
       ...item,
-      x: Math.floor((width - item.width) / 2),
-      y: cursorY
+      x: orientation === 'horizontal' ? cursor : Math.floor((width - item.width) / 2),
+      y: orientation === 'horizontal' ? Math.floor((height - item.height) / 2) : cursor
     };
-    cursorY += item.height;
+    cursor += orientation === 'horizontal' ? item.width : item.height;
     return positioned;
   });
   return {
@@ -246,7 +256,7 @@ function describeLongGroup(items, limits) {
   };
 }
 
-export function planPdfToImageLongGroups(pagePlans, limits = PDF_TO_IMAGE_LIMITS) {
+export function planPdfToImageLongGroups(pagePlans, limits = PDF_TO_IMAGE_LIMITS, orientation = 'vertical') {
   const safeLimits = resolvedLimits(limits);
   if (!Array.isArray(pagePlans) || pagePlans.length < 1) {
     fail('invalid_selection', 'Select at least one PDF page.');
@@ -259,7 +269,7 @@ export function planPdfToImageLongGroups(pagePlans, limits = PDF_TO_IMAGE_LIMITS
   let pending = [];
 
   const publishPending = () => {
-    const group = describeLongGroup(pending, safeLimits);
+    const group = describeLongGroup(pending, safeLimits, orientation);
     if (!group.safe) fail('output_too_large', 'A PDF page cannot fit in a safe long-image output.');
     groups.push({ ...group, groupIndex: groups.length + 1 });
     pending = [];
@@ -267,19 +277,44 @@ export function planPdfToImageLongGroups(pagePlans, limits = PDF_TO_IMAGE_LIMITS
 
   for (const page of normalized) {
     const candidate = [...pending, page];
-    const candidateGroup = describeLongGroup(candidate, safeLimits);
+    const candidateGroup = describeLongGroup(candidate, safeLimits, orientation);
     if (candidate.length <= safeLimits.maxPagesPerLongImage && candidateGroup.safe) {
       pending = candidate;
       continue;
     }
     if (pending.length) publishPending();
     pending = [page];
-    if (!describeLongGroup(pending, safeLimits).safe) {
+    if (!describeLongGroup(pending, safeLimits, orientation).safe) {
       fail('output_too_large', `PDF page ${page.pageNumber} cannot fit in a safe long-image output.`);
     }
   }
   if (pending.length) publishPending();
   return groups;
+}
+
+/** Plans a single bounded grid without resizing page content. */
+export function planPdfToImageGrid(pagePlans, limits = PDF_TO_IMAGE_LIMITS) {
+  const safeLimits = resolvedLimits(limits);
+  if (!Array.isArray(pagePlans) || (pagePlans.length !== safeLimits.minGridPages && pagePlans.length !== safeLimits.maxGridPages)) {
+    fail('invalid_grid_count', `Grid export accepts ${safeLimits.minGridPages}-${safeLimits.maxGridPages} pages.`);
+  }
+  const normalized = pagePlans.map(page => assertPlannedPage(page, safeLimits));
+  const columns = normalized.length === 4 ? 2 : 3;
+  const rows = Math.ceil(normalized.length / columns);
+  const columnWidths = Array.from({ length: columns }, (_, column) => Math.max(...normalized.filter((_, index) => index % columns === column).map(page => page.width)));
+  const rowHeights = Array.from({ length: rows }, (_, row) => Math.max(...normalized.slice(row * columns, (row + 1) * columns).map(page => page.height)));
+  const gap = safeLimits.gridGap;
+  const width = columnWidths.reduce((sum, value) => sum + value, 0) + gap * (columns - 1);
+  const height = rowHeights.reduce((sum, value) => sum + value, 0) + gap * (rows - 1);
+  const pixels = width * height;
+  if (!Number.isSafeInteger(pixels) || width > safeLimits.maxLongImageSide || height > safeLimits.maxLongImageSide || pixels > safeLimits.maxLongImagePixels) fail('output_too_large', 'Grid image exceeds the safe output limit.');
+  const offset = (values, index) => values.slice(0, index).reduce((sum, value) => sum + value, 0) + gap * index;
+  const items = normalized.map((page, index) => {
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    return { ...page, x: offset(columnWidths, column) + Math.floor((columnWidths[column] - page.width) / 2), y: offset(rowHeights, row) + Math.floor((rowHeights[row] - page.height) / 2) };
+  });
+  return { safe: true, width, height, pixels, estimatedWorkingBytes: pixels * 6, pageNumbers: normalized.map(page => page.pageNumber), items, columns, rows };
 }
 
 export function sanitizePdfToImageBaseName(sourceName) {
@@ -324,12 +359,25 @@ export function createPdfToImageLongFileName(sourceName, groupIndex, pageNumbers
   return `${sanitizePdfToImageBaseName(sourceName)}_long_${String(groupIndex).padStart(2, '0')}_pages_${pages}.${format}`;
 }
 
+export function createPdfToImageHorizontalFileName(sourceName, groupIndex, pageNumbers, pageCount, formatValue) {
+  positiveSafeInteger(groupIndex, 'invalid_request', 'Long-image group index is invalid.');
+  const format = normalizePdfToImageFormat(formatValue);
+  const pages = pageNumbers.map(pageNumber => pageNumberLabel(pageNumber, pageCount)).join('_');
+  return `${sanitizePdfToImageBaseName(sourceName)}_horizontal_${String(groupIndex).padStart(2, '0')}_pages_${pages}.${format}`;
+}
+
+export function createPdfToImageGridFileName(sourceName, pageNumbers, pageCount, formatValue) {
+  const format = normalizePdfToImageFormat(formatValue);
+  const pages = pageNumbers.map(pageNumber => pageNumberLabel(pageNumber, pageCount)).join('_');
+  return `${sanitizePdfToImageBaseName(sourceName)}_grid_pages_${pages}.${format}`;
+}
+
 export function normalizePdfToImageRequest(value, limits = PDF_TO_IMAGE_LIMITS) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     fail('invalid_request', 'PDF-to-image settings are required.');
   }
   const mode = String(value.mode ?? 'images').trim().toLowerCase();
-  if (!['images', 'long'].includes(mode)) fail('invalid_mode', 'Export mode must be images or long.');
+  if (!['images', 'long', 'long-horizontal', 'grid'].includes(mode)) fail('invalid_mode', 'Export mode is invalid.');
   const pageCount = assertPdfToImagePageCount(Number(value.pageCount ?? value.page_count), limits);
   const format = normalizePdfToImageFormat(value.format);
   const { clarity } = getPdfToImageClarityPreset(value.clarity);
@@ -366,18 +414,18 @@ export function planPdfToImageExport(value, limits = PDF_TO_IMAGE_LIMITS) {
       items: [{ ...page, x: 0, y: 0 }],
       fileName: createPdfToImagePageFileName(value.sourceName, page.pageNumber, request.pageCount, request.format)
     }));
+  } else if (request.mode === 'grid') {
+    const group = planPdfToImageGrid(pagePlans, safeLimits);
+    outputs = [{ ...group, kind: 'grid', outputIndex: 1, fileName: createPdfToImageGridFileName(value.sourceName, group.pageNumbers, request.pageCount, request.format) }];
   } else {
-    outputs = planPdfToImageLongGroups(pagePlans, safeLimits).map(group => ({
+    const horizontal = request.mode === 'long-horizontal';
+    outputs = planPdfToImageLongGroups(pagePlans, safeLimits, horizontal ? 'horizontal' : 'vertical').map(group => ({
       ...group,
       kind: 'long',
       outputIndex: group.groupIndex,
-      fileName: createPdfToImageLongFileName(
-        value.sourceName,
-        group.groupIndex,
-        group.pageNumbers,
-        request.pageCount,
-        request.format
-      )
+      fileName: horizontal
+        ? createPdfToImageHorizontalFileName(value.sourceName, group.groupIndex, group.pageNumbers, request.pageCount, request.format)
+        : createPdfToImageLongFileName(value.sourceName, group.groupIndex, group.pageNumbers, request.pageCount, request.format)
     }));
   }
 

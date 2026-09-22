@@ -3,17 +3,20 @@ import { createLifecycleScope } from '../../app/tool-lifecycle.js';
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 import {
   buildPptDraftPptx,
+  PPT_DRAFT_ASSET_LIMITS,
   createPptDraftManifest,
   createPptDraftMarkdown,
   inferPptDraftTheme,
   normalizePptDraftRequest,
+  normalizePptDraftAssets,
   normalizePptDraftOutline,
   resolvePptDraftThemeTokens,
   sanitizePptDraftBaseName
 } from '../../ppt-draft-core.js';
 import {
   buildPptOutlineMessages,
-  extractPptOutlineJson
+  extractPptOutlineJson,
+  normalizePptOutlineResult
 } from '../../ppt-outline-core.js';
 import {
   getPptAiPreset,
@@ -24,6 +27,8 @@ import {
 import {
   joinPath,
   normalizeDesktopBytes,
+  retainBrowserObjectUrl,
+  setInteractiveLayer,
   uniqueOutputDirectory,
   writeUniqueFile
 } from '../ppt-workflows/shared.js';
@@ -43,6 +48,7 @@ export function createPptDraftController(context = {}) {
   const isTauri = Boolean(context.isTauri);
   const showToast = context.notify || (() => {});
   const getOutputDir = context.getOutputDir || (async () => '');
+  const displayFilesystemPath = context.displayFilesystemPath || (value => String(value || ''));
   const getAiApiKey = context.getAiApiKey || (async () => '');
   const callDeepSeek = context.requestAi || (async () => {
     throw new Error(t('common.errorOccurred', { error: 'AI request unavailable' }));
@@ -57,8 +63,9 @@ export function createPptDraftController(context = {}) {
   };
   const escapeAttr = value => escapeHtml(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   const subscribeLang = context.onLangChange || onLangChange;
-  let disposed = false;
-  let sessionRevision = 0;
+let disposed = false;
+let sessionRevision = 0;
+let sessionScope = null;
   const isCurrentOperation = (revision, controller = null) => Boolean(
     !disposed
     && revision === sessionRevision
@@ -86,6 +93,10 @@ const pptDraftOutlineImportBtn = document.getElementById('pptDraftOutlineImportB
 const pptDraftOutlineClearBtn = document.getElementById('pptDraftOutlineClearBtn');
 const pptDraftOutlineFile = document.getElementById('pptDraftOutlineFile');
 const pptDraftOutlineStatus = document.getElementById('pptDraftOutlineStatus');
+const pptDraftAssetPickBtn = document.getElementById('pptDraftAssetPickBtn');
+const pptDraftAssetFile = document.getElementById('pptDraftAssetFile');
+const pptDraftAssetList = document.getElementById('pptDraftAssetList');
+const pptDraftAssetStatus = document.getElementById('pptDraftAssetStatus');
 const pptDraftGenerateBtn = document.getElementById('pptDraftGenerateBtn');
 const pptDraftPresetButtons = Array.from(document.querySelectorAll('[data-ppt-draft-preset]'));
 const pptDraftEmpty = document.getElementById('pptDraftEmpty');
@@ -127,9 +138,11 @@ let pptDraftLastResult = null;
 let pptDraftLastOutputPath = '';
 let pptDraftImportedOutline = null;
 let pptDraftImportedOutlineSource = '';
+let pptDraftAssets = [];
 let pptDraftLastPresetPrompt = '';
 let pptDraftEditorOutline = null;
 let pptDraftEditorOriginalOutline = null;
+let pptDraftEditorOriginalSnapshot = '';
 let pptDraftEditorOriginalTheme = 'minimal-mono';
 let pptDraftEditorSourceSignature = '';
 let pptDraftEditorTheme = 'minimal-mono';
@@ -170,7 +183,7 @@ function updatePptDraftOutlineStatus(message, isReady = false) {
 function setPptDraftProgress(percent, message, visible = true) {
   if (pptDraftProcessBarFill) pptDraftProcessBarFill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
   if (pptDraftProcessText) pptDraftProcessText.textContent = message || pptDraftText('processing');
-  if (pptDraftProcessMask) pptDraftProcessMask.classList.toggle('visible', Boolean(visible));
+  setInteractiveLayer(pptDraftProcessMask, visible);
 }
 
 function updatePptDraftScrollTop() {
@@ -210,6 +223,7 @@ function resetPptDraftState({ clearPrompt = false } = {}) {
   pptDraftController = null;
   pptDraftLastResult = null;
   pptDraftLastOutputPath = '';
+  clearPptDraftAssets();
   if (clearPrompt && pptDraftPrompt) {
     pptDraftPrompt.value = '';
     pptDraftLastPresetPrompt = '';
@@ -234,7 +248,152 @@ function resetPptDraftState({ clearPrompt = false } = {}) {
   if (pptDraftOutlineClearBtn) pptDraftOutlineClearBtn.disabled = !pptDraftImportedOutline;
   setPptAiPresetDisabled(pptDraftPresetButtons, false);
   pptDraftScrollTop?.classList.remove('visible');
+  setInteractiveLayer(pptDraftSuccessOverlay, false);
   setPptDraftProgress(0, pptDraftText('processing'), false);
+}
+
+function retainPptDraftPreviewUrl(url) {
+  if (!url || !sessionScope || typeof globalThis.URL?.revokeObjectURL !== 'function') return;
+  sessionScope.use(() => globalThis.URL.revokeObjectURL(url));
+}
+
+function pptDraftAssetMime(name, value = '') {
+  const explicit = String(value || '').toLowerCase().split(';')[0].trim();
+  if (PPT_DRAFT_ASSET_LIMITS.supportedMimeTypes.includes(explicit)) return explicit;
+  const extension = String(name || '').toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] || '';
+  return extension === 'png' ? 'image/png' : extension === 'gif' ? 'image/gif' : extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg' : '';
+}
+
+async function readPptDraftAssetDimensions(previewUrl) {
+  if (!previewUrl || !window?.Image) return { width: 0, height: 0 };
+  return new Promise(resolve => {
+    const image = new window.Image();
+    let settled = false;
+    const finish = (width = 0, height = 0) => {
+      if (settled) return;
+      settled = true;
+      resolve({ width: Number(width) || 0, height: Number(height) || 0 });
+    };
+    image.onload = () => finish(image.naturalWidth, image.naturalHeight);
+    image.onerror = () => finish();
+    image.src = previewUrl;
+    featureScope.timeout(() => finish(), 2500);
+  });
+}
+
+async function readPptDraftAssetFile(file) {
+  const name = String(file?.name || file?.path || '').split(/[\\/]/).pop() || 'image';
+  const mime = pptDraftAssetMime(name, file?.type);
+  if (!mime) throw new Error(pptDraftText('assetUnsupported'));
+  let bytes;
+  if (isTauri && file?.path) {
+    const { invoke } = await tauriCorePromise;
+    bytes = normalizeDesktopBytes(await invoke('read_file_bytes_limited', {
+      path: file.path,
+      maxBytes: PPT_DRAFT_ASSET_LIMITS.maxBytesPerAsset
+    }));
+  } else if (typeof file?.arrayBuffer === 'function') {
+    bytes = new Uint8Array(await file.arrayBuffer());
+  } else {
+    throw new Error(pptDraftText('assetReadFailed'));
+  }
+  if (!bytes.byteLength) throw new Error(pptDraftText('assetReadFailed'));
+  if (bytes.byteLength > PPT_DRAFT_ASSET_LIMITS.maxBytesPerAsset) throw new Error(pptDraftText('assetTooLarge'));
+  const previewUrl = typeof globalThis.URL?.createObjectURL === 'function'
+    ? globalThis.URL.createObjectURL(new Blob([bytes], { type: mime }))
+    : '';
+  retainPptDraftPreviewUrl(previewUrl);
+  const dimensions = await readPptDraftAssetDimensions(previewUrl);
+  return {
+    id: name.replace(/\.[^.]+$/, ''),
+    name,
+    mime,
+    bytes,
+    width: dimensions.width,
+    height: dimensions.height,
+    preview_url: previewUrl
+  };
+}
+
+function renderPptDraftAssets() {
+  if (pptDraftAssetStatus) {
+    pptDraftAssetStatus.textContent = pptDraftAssets.length
+      ? pptDraftText('assetStatus', { count: pptDraftAssets.length, max: PPT_DRAFT_ASSET_LIMITS.maxAssets })
+      : pptDraftText('assetEmpty');
+  }
+  if (!pptDraftAssetList) return;
+  pptDraftAssetList.innerHTML = pptDraftAssets.map(asset => `
+    <div class="ppt-draft-asset-item">
+      <div class="ppt-draft-asset-thumb${asset.preview_url ? '' : ' is-empty'}">
+        ${asset.preview_url ? `<img src="${escapeAttr(asset.preview_url)}" alt="${escapeAttr(asset.name)}" draggable="false">` : '<i data-lucide="image-off" aria-hidden="true"></i>'}
+      </div>
+      <div class="ppt-draft-asset-copy">
+        <strong title="${escapeAttr(asset.name)}">${escapeHtml(asset.name)}</strong>
+        <span>${asset.width && asset.height ? `${asset.width} × ${asset.height}` : pptDraftText('assetDimensionsUnknown')} · ${Math.max(1, Math.round(asset.size / 1024))} KB</span>
+      </div>
+      <button class="ppt-draft-asset-remove" type="button" data-ppt-draft-asset-remove="${escapeAttr(asset.id)}" aria-label="${escapeAttr(pptDraftText('assetRemove'))}" title="${escapeAttr(pptDraftText('assetRemove'))}"><i data-lucide="x"></i></button>
+    </div>
+  `).join('');
+  window.lucide?.createIcons?.({ attrs: { 'stroke-width': 1.8 } });
+}
+
+function clearPptDraftAssets() {
+  pptDraftAssets.forEach(asset => {
+    if (asset.preview_url && typeof globalThis.URL?.revokeObjectURL === 'function') globalThis.URL.revokeObjectURL(asset.preview_url);
+  });
+  pptDraftAssets = [];
+  renderPptDraftAssets();
+  if (pptDraftAssetFile) pptDraftAssetFile.value = '';
+}
+
+function removePptDraftAsset(id) {
+  const target = pptDraftAssets.find(asset => asset.id === id);
+  if (target?.preview_url && typeof globalThis.URL?.revokeObjectURL === 'function') globalThis.URL.revokeObjectURL(target.preview_url);
+  pptDraftAssets = pptDraftAssets.filter(asset => asset.id !== id);
+  renderPptDraftAssets();
+}
+
+async function addPptDraftAssetFiles(files) {
+  if (pptDraftBusy) return;
+  const incoming = Array.from(files || []).slice(0, PPT_DRAFT_ASSET_LIMITS.maxAssets - pptDraftAssets.length);
+  if (!incoming.length) {
+    showToast(pptDraftText('assetLimit', { max: PPT_DRAFT_ASSET_LIMITS.maxAssets }));
+    return;
+  }
+  const loaded = [];
+  try {
+    for (const file of incoming) loaded.push(await readPptDraftAssetFile(file));
+    const normalized = normalizePptDraftAssets([...pptDraftAssets, ...loaded]);
+    if (normalized.length < pptDraftAssets.length + loaded.length) showToast(pptDraftText('assetLimit', { max: PPT_DRAFT_ASSET_LIMITS.maxAssets }));
+    pptDraftAssets = normalized;
+    renderPptDraftAssets();
+  } catch (error) {
+    loaded.forEach(asset => {
+      if (asset.preview_url && typeof globalThis.URL?.revokeObjectURL === 'function') globalThis.URL.revokeObjectURL(asset.preview_url);
+    });
+    showToast(String(error?.userMessage || error?.message || error));
+  }
+}
+
+async function choosePptDraftAssetFiles() {
+  if (pptDraftBusy) return;
+  try {
+    if (isTauri) {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        multiple: true,
+        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif'] }],
+        title: getLang() === 'en' ? 'Add PPT image assets' : '添加 PPT 图片素材'
+      });
+      const paths = Array.isArray(selected) ? selected : (typeof selected === 'string' ? [selected] : []);
+      await addPptDraftAssetFiles(paths.map(path => ({ path, name: String(path).split(/[\\/]/).pop() || path })));
+      return;
+    }
+    pptDraftAssetFile?.click();
+  } catch (error) {
+    console.error('Choose PPT draft assets failed:', error);
+    showToast(String(error?.userMessage || error?.message || error));
+  }
 }
 
 function clearPptDraftImportedOutline() {
@@ -255,8 +414,11 @@ function pptDraftFirstValue(...values) {
   return '';
 }
 
-function pptDraftKnownTheme() {
-  return 'minimal-mono';
+function pptDraftKnownTheme(value = 'minimal-mono') {
+  const candidate = String(value || '').trim();
+  return ['minimal-mono', 'minimal-dark', 'minimal-light', 'tech-blue'].includes(candidate)
+    ? candidate
+    : 'minimal-mono';
 }
 
 function pptDraftSelectHasValue(select, value) {
@@ -433,7 +595,13 @@ async function handlePptDraftOutlineFileInput(event) {
 
 function openPptDraftOverlay() {
   if (disposed || !pptDraftOverlay) return;
-  if (!pptDraftOverlay.classList.contains('visible')) sessionRevision += 1;
+  if (!pptDraftOverlay.classList.contains('visible')) {
+    sessionRevision += 1;
+    sessionScope?.dispose();
+    sessionScope = createLifecycleScope({
+      onError: error => console.error('[PptDraft] session disposal failed:', error)
+    });
+  }
   pptDraftOverlay.classList.add('visible');
   pptDraftOverlay.setAttribute('aria-hidden', 'false');
   pptDraftGenerateBtn?.classList.add('visible');
@@ -460,6 +628,9 @@ function openPptDraftOverlay() {
 function closePptDraftOverlay() {
   if (!pptDraftOverlay) return;
   sessionRevision += 1;
+  const owner = sessionScope;
+  sessionScope = null;
+  owner?.dispose();
   pptDraftController?.abort();
   pptDraftController = null;
   pptDraftBusy = false;
@@ -487,7 +658,7 @@ function collectPptDraftRequest() {
     pptDraftSlideCount?.focus();
     return null;
   }
-  const theme = 'minimal-mono';
+  const theme = pptDraftTheme?.value || 'minimal-mono';
   try {
     return normalizePptDraftRequest({
       prompt,
@@ -675,7 +846,18 @@ function renderPptDraftEditorPreview() {
     });
   }
   if (pptDraftEditorCanvas) {
-    pptDraftEditorCanvas.innerHTML = pptDraftPreviewCanvas(slide, pptDraftEditorSelectedIndex, slides.length, pptDraftEditorOutline, pptDraftEditorTheme);
+    pptDraftEditorCanvas.innerHTML = pptDraftPreviewCanvas(
+      slide,
+      pptDraftEditorSelectedIndex,
+      slides.length,
+      pptDraftEditorOutline,
+      pptDraftEditorTheme,
+      {
+        slideIndex: pptDraftEditorSelectedIndex + 1,
+        assets: pptDraftLastResult?.assets || [],
+        assetManifest: pptDraftLastResult?.asset_manifest || pptDraftEditorOutline.asset_manifest || []
+      }
+    );
   }
 }
 
@@ -717,13 +899,21 @@ function movePptDraftEditorSlide(direction) {
 }
 
 function restorePptDraftEditorOriginal() {
-  if (!pptDraftEditorOriginalOutline) {
+  if (!pptDraftEditorOriginalOutline && !pptDraftEditorOriginalSnapshot) {
     showToast(pptDraftText('editorNeedDraft'));
     return;
   }
-  const restored = clonePptDraftOutline(pptDraftEditorOriginalOutline);
+  let restored = null;
+  try {
+    restored = pptDraftEditorOriginalSnapshot
+      ? JSON.parse(pptDraftEditorOriginalSnapshot)
+      : clonePptDraftOutline(pptDraftEditorOriginalOutline)
+        || (pptDraftLastResult?.outline ? clonePptDraftOutline(pptDraftLastResult.outline) : null);
+  } catch {
+    restored = clonePptDraftOutline(pptDraftEditorOriginalOutline);
+  }
   if (!restored) return;
-  syncPptDraftEditorFormToSlide();
+  clearPptDraftEditorState();
   pptDraftEditorOutline = restored;
   pptDraftEditorTheme = pptDraftEditorOriginalTheme || pptDraftEditorTheme;
   pptDraftEditorSelectedIndex = clampPptDraftEditorIndex(pptDraftEditorSelectedIndex);
@@ -742,6 +932,7 @@ function openPptDraftEditor(index = 0) {
     showToast(pptDraftText('invalidAiResponse'));
     return;
   }
+  pptDraftEditorOriginalSnapshot = JSON.stringify(pptDraftEditorOriginalOutline);
   pptDraftEditorOriginalTheme = pptDraftLastResult.theme || pptDraftEditorOriginalOutline.request?.theme || 'minimal-mono';
   pptDraftEditorSourceSignature = pptDraftEditorSignature(pptDraftEditorOriginalOutline, pptDraftEditorOriginalTheme);
   pptDraftEditorOutline = clonePptDraftOutline(pptDraftEditorOriginalOutline);
@@ -807,7 +998,8 @@ async function exportPptDraftEditorResult() {
       request: {
         ...(pptDraftEditorOutline.request || {}),
         theme: pptDraftEditorTheme
-      }
+      },
+      assets: pptDraftAssets
     });
     renderPptDraftResult(draft);
     const exported = await exportPptDraftResult(draft);
@@ -865,7 +1057,9 @@ async function exportPptDraftResult(draft) {
         theme: draft.theme,
         outputFile: pptxFile,
         outputBytes: draft.bytes.byteLength,
-        outputs: publicResult.outputs
+        outputs: publicResult.outputs,
+        assets: draft.assets,
+        assetManifest: draft.asset_manifest
       }),
       tool: publicResult.tool,
       dry_run: false,
@@ -879,6 +1073,8 @@ async function exportPptDraftResult(draft) {
     pptDraftLastOutputPath = outputDir;
     return publicResult;
   }
+  const JSZipModule = await import('jszip');
+  const JSZip = JSZipModule.default || JSZipModule;
   const zip = new JSZip();
   zip.file(pptxFile, draft.bytes);
   zip.file('outline.json', outlineJson);
@@ -894,7 +1090,9 @@ async function exportPptDraftResult(draft) {
       theme: draft.theme,
       outputFile: pptxFile,
       outputBytes: draft.bytes.byteLength,
-      outputs: publicResult.outputs
+      outputs: publicResult.outputs,
+      assets: draft.assets,
+      assetManifest: draft.asset_manifest
     }),
     tool: publicResult.tool,
     dry_run: false,
@@ -908,7 +1106,7 @@ async function exportPptDraftResult(draft) {
   anchor.href = url;
   anchor.download = `${baseName}_ppt_draft.zip`;
   anchor.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  retainBrowserObjectUrl(sessionScope, url);
   pptDraftLastOutputPath = outputDir;
   return publicResult;
 }
@@ -918,7 +1116,7 @@ function showPptDraftSuccess(outputPath, result) {
   if (pptDraftSuccessSlides) pptDraftSuccessSlides.textContent = `${result?.outline?.slides?.length || 0}`;
   if (pptDraftSuccessFile) pptDraftSuccessFile.textContent = result?.output_file || '';
   if (pptDraftSuccessPath) pptDraftSuccessPath.textContent = displayFilesystemPath(outputPath);
-  pptDraftSuccessOverlay?.classList.add('visible');
+  setInteractiveLayer(pptDraftSuccessOverlay, true);
 }
 
 function importOutlineIntoPptDraft(outline, sourceLabel = '') {
@@ -986,7 +1184,7 @@ async function generatePptDraftFromUi() {
     }
     const effectiveTheme = outline.request?.theme || request.theme;
     const draftRequest = { ...request, theme: effectiveTheme };
-    const draft = await buildPptDraftPptx(outline, { theme: effectiveTheme, request: draftRequest });
+    const draft = await buildPptDraftPptx(outline, { theme: effectiveTheme, request: draftRequest, assets: pptDraftAssets });
     if (!isCurrentOperation(operationRevision, operationController)) return;
     renderPptDraftResult(draft);
     setPptDraftProgress(82, pptDraftText('writing'));
@@ -1005,9 +1203,7 @@ async function generatePptDraftFromUi() {
       pptDraftBusy = false;
       pptDraftController = null;
       if (!disposed && operationRevision === sessionRevision) {
-        featureScope.timeout(() => {
-          if (isCurrentOperation(operationRevision)) setPptDraftProgress(0, pptDraftText('processing'), false);
-        }, 260);
+        setPptDraftProgress(0, pptDraftText('processing'), false);
         if (pptDraftGenerateBtn) pptDraftGenerateBtn.disabled = false;
         if (pptDraftOutlineImportBtn) pptDraftOutlineImportBtn.disabled = false;
         if (pptDraftOutlineClearBtn) pptDraftOutlineClearBtn.disabled = !pptDraftImportedOutline;
@@ -1029,6 +1225,16 @@ bind(pptDraftGenerateBtn, 'click', () => { void generatePptDraftFromUi(); });
 bind(pptDraftOutlineImportBtn, 'click', () => { void choosePptDraftOutlineFile(); });
 bind(pptDraftOutlineClearBtn, 'click', () => clearPptDraftImportedOutline());
 bind(pptDraftOutlineFile, 'change', (event) => { void handlePptDraftOutlineFileInput(event); });
+bind(pptDraftAssetPickBtn, 'click', () => { void choosePptDraftAssetFiles(); });
+bind(pptDraftAssetFile, 'change', event => {
+  void addPptDraftAssetFiles(event?.target?.files);
+  if (pptDraftAssetFile) pptDraftAssetFile.value = '';
+});
+bind(pptDraftAssetList, 'click', event => {
+  const button = event.target?.closest?.('[data-ppt-draft-asset-remove]');
+  if (!button || !pptDraftAssetList.contains(button)) return;
+  removePptDraftAsset(button.dataset.pptDraftAssetRemove || '');
+});
 bind(pptDraftSlideList, 'click', (event) => {
   const card = event.target?.closest?.('.ppt-draft-slide-card');
   if (!card || !pptDraftSlideList.contains(card)) return;
@@ -1129,7 +1335,7 @@ bind(document, 'keydown', (event) => {
   }
 });
 bind(pptDraftSuccessOk, 'click', () => {
-  pptDraftSuccessOverlay?.classList.remove('visible');
+  setInteractiveLayer(pptDraftSuccessOverlay, false);
 });
 bind(pptDraftSuccessOpenFolder, 'click', async () => {
   if (!isTauri || !pptDraftLastOutputPath) return;
@@ -1156,10 +1362,13 @@ bind(pptDraftSuccessOpenFolder, 'click', async () => {
   return {
     open: openPptDraftOverlay,
     close: closePptDraftOverlay,
+    importOutline: importOutlineIntoPptDraft,
     dispose() {
       if (disposed) return;
       disposed = true;
       sessionRevision += 1;
+      sessionScope?.dispose();
+      sessionScope = null;
       pptDraftController?.abort();
       pptDraftController = null;
       pptDraftBusy = false;

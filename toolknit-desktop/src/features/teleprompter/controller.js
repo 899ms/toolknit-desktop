@@ -3,14 +3,14 @@ import { getLang, onLangChange, t } from '../../i18n.js';
 import { enhanceToolSelects } from '../../tool-custom-select.js';
 import { createWaveformSlider } from '../../tool-waveform-slider.js';
 import { createTeleprompterRecognitionController } from './recognition.js';
+import { createTeleprompterDiagnostics } from './diagnostics.js';
 import { teleprompterTemplate } from './template.js';
 import {
   TELEPROMPTER_LIMITS,
   createSpeechFollower,
   estimateTeleprompterDuration,
   formatTeleprompterTime,
-  segmentTeleprompterScript,
-  speechReadingProgress
+  segmentTeleprompterScript
 } from '../../teleprompter-core.js';
 
 const PREF_KEY = 'toolknit.teleprompter.preferences.v2';
@@ -80,6 +80,7 @@ export function initTeleprompterTool({
   handleWindowAction
 } = {}) {
   if (!overlay) return { open() {}, close() {}, dispose() {} };
+  const diagnostics = createTeleprompterDiagnostics();
   overlay.innerHTML = teleprompterTemplate();
   overlay.classList.add('teleprompter-overlay');
 
@@ -391,7 +392,7 @@ export function initTeleprompterTool({
     const max = Math.max(0, script.sentences.length - 1);
     const previousIndex = currentIndex;
     currentIndex = clamp(Math.trunc(Number(index) || 0), 0, max);
-    follower.reset(currentIndex);
+    if (source !== 'speech') follower.reset(currentIndex);
     applySentenceState(currentIndex, sentenceStateInitialized ? previousIndex : null);
     if (previousIndex !== currentIndex) readingProgress = 0;
     updateReadingLine();
@@ -528,18 +529,30 @@ export function initTeleprompterTool({
   }
 
   function nearbyPrompt() {
-    return script.sentences.slice(currentIndex, currentIndex + 5).map(sentence => sentence.text).join(' ').slice(0, 520);
+    // Only past context: future sentences can be decoded as unspoken text.
+    return script.sentences.slice(Math.max(0, currentIndex - 2), currentIndex).map(sentence => sentence.text).join(' ').slice(-120);
   }
 
-  function applyRecognitionText(transcript, final = false, { context = transcript, cumulative = false } = {}) {
-    const result = follower.push(transcript, { final, context, cumulative });
+  function applyRecognitionText(transcript, final = false, options = {}) {
+    const previousIndex = currentIndex;
+    const result = follower.push(transcript, { ...options, final });
     if (result?.moved) setCurrentIndex(result.index, { scroll: true, source: 'speech' });
     else if (result && !result.pending) setEngineStatus('listening', 'engineListening');
-    updateReadingProgress(transcript);
+    if (result && !result.pending) updateReadingProgress(result.progress);
+    diagnostics.event('follow', () => ({
+      session: options.recognitionSession ?? null, requestId: options.requestId ?? null,
+      text: String(transcript || '').slice(0, 2000),
+      decision: !result ? 'no-match-or-duplicate' : result.pending ? 'pending' : result.moved ? 'moved' : 'matched',
+      fromSentence: previousIndex + 1, currentSentence: currentIndex + 1,
+      targetText: script.sentences[currentIndex]?.text.slice(0, 180) || '',
+      score: result?.score ?? null, progress: readingProgress,
+      cursorVisible: content.querySelector('.teleprompter-reading-line')?.hidden === false
+    }));
   }
 
   recognitionController = createTeleprompterRecognitionController({
     isTauri,
+    diagnostics,
     getLanguage: getLang,
     getEngine: () => preferences.engine,
     getVoiceFollow: () => preferences.voiceFollow,
@@ -556,11 +569,11 @@ export function initTeleprompterTool({
 
   // While following, a small white cursor bar sits under the exact character
   // the reader is on, so it is obvious where the tracking believes they are.
-  function updateReadingProgress(transcript) {
+  function updateReadingProgress(progress) {
     if (!preferences.voiceFollow || !script.sentences.length) return;
     const sentence = script.sentences[currentIndex];
     if (!sentence) return;
-    const computed = speechReadingProgress(transcript, sentence.text);
+    const computed = clamp(Number(progress) || 0, 0, 1);
     if (computed >= readingProgress) readingProgress = computed;
     updateReadingLine();
   }
@@ -596,6 +609,10 @@ export function initTeleprompterTool({
   }
 
   function startPlayback() {
+    diagnostics.event('playback', {
+      engine: preferences.engine, voiceFollow: preferences.voiceFollow,
+      alreadyPlaying: playing, sentences: script.sentences.length, currentSentence: currentIndex + 1
+    });
     if (playing || !script.sentences.length) return;
     playing = true;
     renderPlaybackState();
@@ -810,6 +827,7 @@ export function initTeleprompterTool({
 
   function open() {
     if (disposed) return;
+    diagnostics.event('ready', { engine: preferences.engine, voiceFollow: preferences.voiceFollow, consoleOnly: true });
     suppressScrollSync = false;
     window.clearTimeout(scrollSyncTimer);
     scrollSyncTimer = 0;

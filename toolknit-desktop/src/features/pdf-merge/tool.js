@@ -1,4 +1,5 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
+import { createModalSession, setModalInteractivity } from '../../app/modal-runtime.js';
 import { PDF_MERGE_LIMITS, assertPdfMergeSelection } from '../../pdf-merge-core.js';
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 import { bindPointerSortableFileList } from '../../shared/sortable-file-list.js';
@@ -45,6 +46,7 @@ export function initPdfMergeTool({
   const processMask = byId('pdfMergeProcessMask');
   const progressFill = byId('pdfMergeProcessBarFill');
   const progressText = byId('pdfMergeProcessText');
+  const processCancel = byId('pdfMergeProcessCancel');
   let session = null;
   let fileScope = null;
   let pickerScope = null;
@@ -56,6 +58,13 @@ export function initPdfMergeTool({
   let activeRunId = 0;
   let nativeDropGuardUntil = 0;
   let exporter = null;
+  let cancelProcessing = () => {};
+  const processModal = createModalSession({
+    root: processMask,
+    background: overlay,
+    initialFocus: processCancel,
+    onClose: () => cancelProcessing()
+  });
   const isDemo = import.meta.env.DEV
     && new URLSearchParams(window.location.search).get('pdf-merge-demo') === '1';
 
@@ -70,29 +79,32 @@ export function initPdfMergeTool({
 
   const preview = createPdfMergePreview({
     overlay,
-    selection: byId('pdfMergeSelection'),
-    selectionEyebrow: byId('pdfMergeSelectionEyebrow'),
-    choosePagesButton: byId('pdfMergeChoosePagesBtn'),
-    useAllPagesButton: byId('pdfMergeUseAllPagesBtn'),
-    pickerProgress: byId('pdfMergePickerProgress'),
-    pickerFileName: byId('pdfMergePickerFileName'),
-    pickerSelectedCount: byId('pdfMergePickerSelectedCount'),
-    pickerInputStatus: byId('pdfMergePickerInputStatus'),
-    pageStrip: byId('pdfMergePageStrip'),
-    selectAllPagesButton: byId('pdfMergeSelectAllPagesBtn'),
-    selectionNextButton: byId('pdfMergeSelectionNextBtn'),
-    getFileName: index => files[index]?.name || '',
+    workspace: byId('pdfMergeWorkspace'),
+    workspaceClose: byId('pdfMergeWorkspaceClose'),
+    workspaceStatus: byId('pdfMergeWorkspaceStatus'),
+    workspaceHint: byId('pdfMergeWorkspaceHint'),
+    inputCount: byId('pdfMergeInputCount'),
+    totalCount: byId('pdfMergeTotalCount'),
+    outputCount: byId('pdfMergeOutputCount'),
+    selectedCount: byId('pdfMergeSelectedCount'),
+    selectionMeta: byId('pdfMergeSelectionMeta'),
+    selectAllButton: byId('pdfMergeSelectAllBtn'),
+    moveUpButton: byId('pdfMergeMoveUpBtn'),
+    moveDownButton: byId('pdfMergeMoveDownBtn'),
+    deleteButton: byId('pdfMergeDeleteBtn'),
+    commitButton: byId('pdfMergeCommitBtn'),
+    isSaving: () => Boolean(exporter?.busy),
     onCommit: () => exporter?.commit(),
-    notify,
     refreshIcons
   });
 
   exporter = createPdfMergeExporter({
     isTauri,
     preview,
+    workspace: byId('pdfMergeWorkspace'),
     processMask,
+    setProgress,
     progressFill,
-    processText: progressText,
     successOverlay: byId('pdfMergeSuccessOverlay'),
     successPath: byId('pdfMergeSuccessPath'),
     successMeta: byId('pdfMergeSuccessMeta'),
@@ -335,7 +347,7 @@ export function initPdfMergeTool({
     const runId = ++runRevision;
     activeRunId = runId;
     processing = true;
-    processMask?.classList.add('visible');
+    processModal.open();
     setProgress(30, t('home.pdfMerge.loadingPreview'));
     const snapshot = [...files];
 
@@ -349,17 +361,21 @@ export function initPdfMergeTool({
       });
       assertCurrent(owner, runId);
       if (multiPageFiles.length) {
-        processMask?.classList.remove('visible');
+        processModal.close();
         setProgress(0);
-        preview.openNotice(multiPageFiles);
+        processing = false;
+        preview.openWorkspace();
       } else {
+        processModal.close();
+        processing = false;
+        setProgress(0);
         await exporter.commit();
       }
     } catch (error) {
       if (isCurrentRun(owner, runId)) {
         preview.close();
         processing = false;
-        processMask?.classList.remove('visible');
+        processModal.close();
         setProgress(0);
         if (!/cancelled/i.test(String(error?.message || error))) {
           console.error('[PDF Merge] source load error:', error);
@@ -375,8 +391,8 @@ export function initPdfMergeTool({
     if (exporter.busy) return;
     runRevision += 1;
     processing = false;
-    preview.returnToEditor();
-    processMask?.classList.remove('visible');
+    preview.closeWorkspace();
+    processModal.close();
     setProgress(0);
     renderFiles();
   }
@@ -385,6 +401,7 @@ export function initPdfMergeTool({
     runRevision += 1;
     activeRunId = 0;
     processing = false;
+    processModal.close({ restore: false });
     session?.dispose();
     session = null;
     pickerOwnerRelease?.();
@@ -400,10 +417,9 @@ export function initPdfMergeTool({
     fileList?.classList.remove('has-files', 'is-reordering');
     toggleProcessButton();
     hideDropZone();
-    processMask?.classList.remove('visible');
     setProgress(0);
+    setModalInteractivity(overlay, false);
     overlay.classList.remove('visible', 'is-selection-flow');
-    overlay.setAttribute('aria-hidden', 'true');
     plasma = disposeStandardToolPlasma(plasma);
   }
 
@@ -413,7 +429,7 @@ export function initPdfMergeTool({
       session = createLifecycleScope();
       exporter.open();
       overlay.classList.add('visible');
-      overlay.setAttribute('aria-hidden', 'false');
+      setModalInteractivity(overlay, true);
       plasma = initStandardToolPlasma(background);
       void registerNativeDrop(session);
       if (isDemo) void loadDemoFiles(session);
@@ -438,6 +454,20 @@ export function initPdfMergeTool({
     }
     api.close();
   });
+  cancelProcessing = () => {
+    if (exporter.busy) {
+      exporter.cancel();
+      return;
+    }
+    runRevision += 1;
+    activeRunId = 0;
+    processing = false;
+    preview.releaseResources();
+    processModal.close();
+    setProgress(0);
+    processButton?.focus({ preventScroll: true });
+  };
+  lifecycle.event(processCancel, 'click', () => cancelProcessing());
   lifecycle.event(cta, 'click', () => { void chooseFiles(); });
   lifecycle.event(processButton, 'click', () => { void processSelection(); });
   lifecycle.event(processButton, 'transitionend', event => {

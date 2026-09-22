@@ -7,8 +7,8 @@ import { calculateImageStitchLayout } from './core/image-stitch-core.js';
 import { ToolKnitError } from './errors.mjs';
 
 const SUPPORTED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif']);
-const MAX_INPUT_BYTES = 20 * 1024 * 1024;
-const MAX_INPUT_PIXELS = 40_000_000;
+const MAX_INPUT_BYTES = 100 * 1024 * 1024;
+const MAX_INPUT_PIXELS = 160_000_000;
 const MAX_FILES = 100;
 
 function assertObject(value) {
@@ -87,7 +87,7 @@ async function inspectInputs(values, options) {
     let metadata;
     try { metadata = await lstat(requested); } catch { throw new ToolKnitError('INPUT_NOT_FOUND', `Image input does not exist: ${requested}`); }
     if (metadata.isSymbolicLink() || !metadata.isFile() || metadata.size < 1 || metadata.size > MAX_INPUT_BYTES) {
-      throw new ToolKnitError('INPUT_INVALID', `Image input must be a non-empty regular file no larger than 20 MB: ${requested}`);
+      throw new ToolKnitError('INPUT_INVALID', `Image input must be a non-empty regular file no larger than 100 MB: ${requested}`);
     }
     const canonical = await realpath(requested);
     const duplicateKey = process.platform === 'win32' ? canonical.toLowerCase() : canonical;
@@ -101,7 +101,7 @@ async function inspectInputs(values, options) {
     const width = Number(image.width);
     const height = Number(image.height);
     if (!Number.isSafeInteger(width) || !Number.isSafeInteger(height) || width < 1 || height < 1 || width * height > MAX_INPUT_PIXELS) {
-      throw new ToolKnitError('INPUT_INVALID', `Image dimensions exceed the 40 megapixel input limit: ${canonical}`);
+      throw new ToolKnitError('INPUT_INVALID', `Image dimensions exceed the ${MAX_INPUT_PIXELS / 1_000_000} megapixel input limit: ${canonical}`);
     }
     inputs.push({ path: canonical, name: path.basename(canonical), width, height });
     report(options, 5 + ((index + 1) / values.length) * 15, `Inspected image ${index + 1}/${values.length}: ${path.basename(canonical)}`);

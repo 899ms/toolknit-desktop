@@ -287,11 +287,9 @@ export function createVideoConvertController({
     overlay.querySelectorAll('[data-home-link="website"]').forEach(node => lifecycle.event(node, 'click', () => openExternalUrl('https://toolknit.com')));
     overlay.querySelectorAll('[data-open-support]').forEach(node => lifecycle.event(node, 'click', openSupport));
     overlay.querySelectorAll('[data-action]').forEach(node => lifecycle.event(node, 'click', () => handleWindowAction(node.dataset.action)));
-    lifecycle.event(formatOptions, 'click', event => {
-      const button = event.target?.closest?.('[data-format]');
-      if (!button || processing) return;
-      formatOptions.querySelectorAll('[data-format]').forEach(item => item.classList.toggle('active', item === button));
-      targetFormat = normalizeVideoTargetFormat(button.dataset.format);
+    lifecycle.event(formatOptions, 'change', () => {
+      if (processing) return;
+      targetFormat = normalizeVideoTargetFormat(formatOptions.value);
     });
     lifecycle.event(filesNode, 'click', event => {
       const button = event.target?.closest?.('.audio-convert-file-remove');

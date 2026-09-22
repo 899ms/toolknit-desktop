@@ -1,0 +1,97 @@
+<div class="pdf-merge-overlay pdf-merge-v2 pdf-text-extract-v2" id="pdfTextExtractOverlay" role="dialog" aria-modal="true" aria-labelledby="pdfTextExtractTitle" aria-hidden="true" inert>
+  <div class="plasma-bg pdf-merge-v2-bg" aria-hidden="true"></div>
+  <input id="pdfTextExtractFileInput" type="file" accept="application/pdf,.pdf" hidden>
+  <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="pdfTextExtractDropZone">
+    <span class="drop-hint" data-i18n="home.pdfTextMarkdown.dropHint">松手即可上传 PDF</span>
+  </div>
+  <header class="tool-page-v2-topbar pdf-merge-v2-topbar" data-tauri-drag-region>
+    <div class="tool-page-v2-topbar-left pdf-merge-v2-topbar-left">
+      <button class="tool-page-v2-back settings-v2-back settings-back pdf-merge-v2-back" id="pdfTextExtractBack" type="button" data-tool-close data-i18n-title="settings.back" title="返回首页">
+        <i data-lucide="arrow-left"></i><span data-i18n="settings.back">返回首页</span>
+      </button>
+      <span class="tool-page-v2-tag pdf-merge-v2-top-tag">PDF TEXT · TOOL PAGE 3.0</span>
+    </div>
+    <div class="tool-page-v2-top-actions home-v2-top-actions pdf-merge-v2-top-actions">
+      <button class="tool-page-v2-nav-link home-v2-nav-link" type="button" data-tool-website><i data-lucide="globe-2"></i><span>网页版本</span></button>
+      <button class="tool-page-v2-support home-v2-support-top" type="button" data-tool-support><i data-lucide="heart"></i><span>支持作者</span></button>
+      <div class="home-v2-window-cluster" aria-label="窗口与设置">
+        <button class="tool-page-v2-icon home-v2-icon-button" type="button" data-tool-settings title="设置" aria-label="设置"><i data-lucide="settings"></i></button>
+        <div class="tool-page-v2-window-controls home-v2-window-controls" aria-label="窗口控制">
+          <button class="tool-page-v2-icon home-v2-window-button" type="button" data-tool-window="minimize" title="最小化" aria-label="最小化"><i data-lucide="minus"></i></button>
+          <button class="tool-page-v2-icon home-v2-window-button" type="button" data-tool-window="maximize" title="最大化" aria-label="最大化"><i data-lucide="square"></i></button>
+          <button class="tool-page-v2-icon home-v2-window-button" type="button" data-tool-window="close" title="关闭" aria-label="关闭"><i data-lucide="x"></i></button>
+        </div>
+      </div>
+    </div>
+    <span class="tool-page-v2-title" aria-hidden="true">PDF 文本提取与 Markdown</span>
+  </header>
+
+  <div class="pdf-merge-v2-body pdf-text-extract-v2-body" id="pdfTextExtractBody">
+    <aside class="pdf-merge-v2-poster pdf-text-extract-v2-poster" aria-label="PDF 文本提取说明">
+      <div class="pdf-merge-v2-poster-kicker" data-i18n="home.pdfTextMarkdown.heroLabel">PDF TEXT EXTRACTOR</div>
+      <h1 class="pdf-merge-v2-title" id="pdfTextExtractTitle" data-i18n="home.pdfTextMarkdown.title">PDF 文本提取</h1>
+      <p class="pdf-merge-v2-subtitle" data-i18n="home.pdfTextMarkdown.subtitle">读取有文本层的电子 PDF，按页面重建阅读顺序并生成可继续编辑的 Markdown。</p>
+      <div class="pdf-merge-v2-poster-note">
+        <span>LOCAL ONLY</span>
+        <strong data-i18n="home.pdfTextMarkdown.localNote">文件只在本机解析，不上传服务器。扫描型 PDF 请使用 AI 视觉版。</strong>
+      </div>
+      <div class="pdf-merge-v2-steps" aria-label="处理流程">
+        <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong data-i18n="home.pdfTextMarkdown.step1Title">选择 PDF</strong><p data-i18n="home.pdfTextMarkdown.step1Desc">读取文件大小、页数和密码状态。</p></div></div>
+        <div class="pdf-merge-v2-step"><span>02</span><div><strong data-i18n="home.pdfTextMarkdown.step2Title">逐页解析</strong><p data-i18n="home.pdfTextMarkdown.step2Desc">重排文字、标题、列表和基础表格。</p></div></div>
+        <div class="pdf-merge-v2-step"><span>03</span><div><strong data-i18n="home.pdfTextMarkdown.step3Title">生成 Markdown</strong><p data-i18n="home.pdfTextMarkdown.step3Desc">保留来源页码，显示提取进度和字符数。</p></div></div>
+        <div class="pdf-merge-v2-step"><span>04</span><div><strong data-i18n="home.pdfTextMarkdown.step4Title">继续编辑</strong><p data-i18n="home.pdfTextMarkdown.step4Desc">一键进入现有 Markdown 编辑器。</p></div></div>
+      </div>
+    </aside>
+
+    <main class="pdf-merge-v2-workspace pdf-text-extract-v2-workspace">
+      <section class="pdf-text-extract-upload" aria-label="上传 PDF 文件">
+        <div class="pdf-text-extract-document-mark" aria-hidden="true"><i data-lucide="file-text"></i><span><i data-lucide="arrow-right"></i><i data-lucide="file-code-2"></i></span></div>
+        <div class="pdf-text-extract-upload-copy">
+          <span class="pdf-text-extract-section-kicker">PDF <span aria-hidden="true">/</span> MARKDOWN</span>
+          <h2 data-i18n="home.pdfTextMarkdown.uploadTitle">把要转换的 PDF 放到这里</h2>
+          <p data-i18n="home.pdfTextMarkdown.uploadDesc">仅适合包含可选择文字的电子 PDF，扫描件不会被误生成空白 Markdown。</p>
+        </div>
+        <button class="audio-convert-cta pdf-merge-v2-cta" id="pdfTextExtractCta" type="button">
+          <i data-lucide="upload"></i><span data-i18n="home.pdfTextMarkdown.cta">选择 PDF 文件</span>
+        </button>
+        <p class="pdf-text-extract-upload-limit" data-i18n="home.pdfTextMarkdown.uploadLimit">支持拖入 · 单个 PDF · 最大 150 MB / 300 页</p>
+        <div class="pdf-text-extract-capabilities">
+          <div><i data-lucide="text-select"></i><strong data-i18n="home.pdfTextMarkdown.capText">可选择的文字</strong><span data-i18n="home.pdfTextMarkdown.capTextDesc">电子 PDF 文本层</span></div>
+          <div><i data-lucide="list-tree"></i><strong data-i18n="home.pdfTextMarkdown.capStructure">基础文档结构</strong><span data-i18n="home.pdfTextMarkdown.capStructureDesc">标题、列表与基础表格</span></div>
+          <div><i data-lucide="shield-check"></i><strong data-i18n="home.pdfTextMarkdown.capLocal">全程本地处理</strong><span data-i18n="home.pdfTextMarkdown.capLocalDesc">无需联网或 API Key</span></div>
+        </div>
+      </section>
+
+      <section class="pdf-text-extract-filecard" id="pdfTextExtractFileCard" aria-label="PDF 文件信息" hidden>
+        <div class="pdf-text-extract-file-icon"><i data-lucide="file-text"></i></div>
+        <div class="pdf-text-extract-file-main"><strong id="pdfTextExtractFileName"></strong><span id="pdfTextExtractFileSize"></span></div>
+        <div class="pdf-text-extract-file-metrics"><span><b data-i18n="home.pdfTextMarkdown.pagesLabel">页数</b><strong id="pdfTextExtractPageCount">-</strong></span><span><b data-i18n="home.pdfTextMarkdown.textLayerLabel">文本层</b><strong id="pdfTextExtractTextLayer">待检测</strong></span></div>
+        <button class="pdf-text-extract-icon-button" id="pdfTextExtractRemove" type="button" data-i18n-title="home.pdfTextMarkdown.removeFile" title="移除文件" aria-label="移除文件"><i data-lucide="x"></i></button>
+      </section>
+
+      <section class="pdf-text-extract-status" id="pdfTextExtractStatusPanel" aria-live="polite">
+        <div class="pdf-text-extract-status-head"><div class="pdf-text-extract-status-heading"><span class="pdf-text-extract-state-icon" aria-hidden="true"><i data-lucide="scan-text" class="pdf-text-extract-scan-icon"></i><i data-lucide="check" class="pdf-text-extract-done-icon"></i></span><div><span class="pdf-text-extract-section-kicker" data-i18n="home.pdfTextMarkdown.statusLabel">解析状态</span><h2 id="pdfTextExtractStatusTitle" data-i18n="home.pdfTextMarkdown.emptyTitle">等待选择 PDF</h2></div></div><span class="pdf-text-extract-status-badge" id="pdfTextExtractStatusBadge" data-state="empty" data-i18n="home.pdfTextMarkdown.emptyBadge">未开始</span></div>
+        <p class="pdf-text-extract-status-message" id="pdfTextExtractStatusMessage" data-i18n="home.pdfTextMarkdown.emptyDesc">选择一个本地 PDF，工具会先检查文件，再按页提取文字。</p>
+        <div class="pdf-text-extract-progress" id="pdfTextExtractProgressWrap" hidden><div class="pdf-text-extract-progress-track"><span id="pdfTextExtractProgressFill"></span></div><div class="pdf-text-extract-progress-meta"><span id="pdfTextExtractProgressText"></span><strong id="pdfTextExtractProgressChars">0 字符</strong></div></div>
+        <div class="pdf-text-extract-stats" id="pdfTextExtractStats"><div><span data-i18n="home.pdfTextMarkdown.processedPages">已处理页数</span><strong id="pdfTextExtractProcessedPages">0 / 0</strong></div><div><span data-i18n="home.pdfTextMarkdown.extractedChars">已提取字符</span><strong id="pdfTextExtractCharCount">0</strong></div><div><span data-i18n="home.pdfTextMarkdown.sourceType">来源类型</span><strong id="pdfTextExtractSourceType" data-i18n="home.pdfTextMarkdown.sourcePending">待检测</strong></div></div>
+        <div class="pdf-text-extract-plan">
+          <div><i data-lucide="layers-2"></i><div><strong data-i18n="home.pdfTextMarkdown.planRead">逐页读取文字</strong><p data-i18n="home.pdfTextMarkdown.planReadDesc">处理全部页面，保留可提取的原文内容。</p></div><span>01</span></div>
+          <div><i data-lucide="list-tree"></i><div><strong data-i18n="home.pdfTextMarkdown.planStructure">重建阅读结构</strong><p data-i18n="home.pdfTextMarkdown.planStructureDesc">按位置与字号整理段落、标题和列表。</p></div><span>02</span></div>
+          <div><i data-lucide="file-code-2"></i><div><strong data-i18n="home.pdfTextMarkdown.planOutput">生成可编辑文档</strong><p data-i18n="home.pdfTextMarkdown.planOutputDesc">输出 Markdown，附带原 PDF 页码标记。</p></div><span>03</span></div>
+        </div>
+        <div class="pdf-text-extract-warning" id="pdfTextExtractWarning" hidden><i data-lucide="triangle-alert"></i><span id="pdfTextExtractWarningText"></span></div>
+      </section>
+
+      <section class="pdf-text-extract-result" id="pdfTextExtractResult" hidden>
+        <div class="pdf-text-extract-result-head"><div><i data-lucide="file-code-2"></i><strong data-i18n="home.pdfTextMarkdown.previewTitle">提取内容预览</strong></div><span class="pdf-text-extract-section-kicker">.MD</span></div>
+        <p id="pdfTextExtractResultSummary"></p>
+        <div class="pdf-text-extract-page-tabs" role="group" data-i18n-aria-label="home.pdfTextMarkdown.pageNavigation" aria-label="来源页面"></div>
+        <pre class="pdf-text-extract-preview" tabindex="0" data-i18n-aria-label="home.pdfTextMarkdown.previewTitle" aria-label="提取内容预览"></pre>
+        <p class="pdf-text-extract-preview-note" data-i18n="home.pdfTextMarkdown.previewNote">每页预览前 2,000 字符；完整内容保留在 Markdown 编辑器中。</p>
+        <div class="pdf-text-extract-result-actions"><button class="pdf-text-extract-secondary" id="pdfTextExtractReset" type="button"><i data-lucide="rotate-ccw"></i><span data-i18n="home.pdfTextMarkdown.reset">重新选择</span></button><button class="pdf-text-extract-primary" id="pdfTextExtractImport" type="button"><i data-lucide="square-pen"></i><span data-i18n="home.pdfTextMarkdown.import">导入 Markdown 编辑器</span></button></div>
+      </section>
+
+      <footer class="pdf-merge-v2-actions pdf-text-extract-actions"><button class="audio-convert-process-btn pdf-merge-v2-process visible" id="pdfTextExtractProcess" type="button" disabled><i data-lucide="scan-text" id="pdfTextExtractProcessIcon"></i><i data-lucide="square" id="pdfTextExtractCancelIcon" hidden></i><span id="pdfTextExtractProcessLabel" data-i18n="home.pdfTextMarkdown.process">开始提取 Markdown</span></button></footer>
+    </main>
+  </div>
+</div>

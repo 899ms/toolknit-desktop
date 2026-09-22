@@ -45,7 +45,7 @@ assert.match(processor, /pdfjs\.getDocument/);
 assert.match(processor, /destroyLoadingTask\(operation\.loadingTask\)/);
 assert.match(processor, /pending\?\.catch/);
 assert.match(processor, /operation\.renderTask\?\.cancel\(\)/);
-assert.match(processor, /documentHandle\.destroy\(\)/);
+assert.match(processor, /destroyPdfDocument\(documentHandle\)/);
 assert.match(processor, /releaseCanvas\(canvas\)/);
 assert.match(processor, /enhanceRgbaImage\(/);
 assert.match(processor, /begin_pdf_enhance_write/);

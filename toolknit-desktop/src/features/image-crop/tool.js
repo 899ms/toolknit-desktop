@@ -1,5 +1,6 @@
 import { createIcons, icons } from 'lucide';
 import { t } from '../../i18n.js';
+import { enhanceToolSelects } from '../../tool-custom-select.js';
 import { createImageCropController } from './controller.js';
 import { imageCropSuccessTemplate, imageCropTemplate } from './template.js';
 import './image-crop.css';
@@ -20,6 +21,9 @@ export function initImageCropTool(context = {}) {
   if (!overlay) return { open() {}, close() {}, dispose() {} };
 
   overlay.innerHTML = imageCropTemplate();
+  const customSelectControls = enhanceToolSelects([
+    overlay.querySelector('#imageCropGuide')
+  ]);
   const success = createSuccessOverlay(overlay);
   overlay.querySelectorAll('[data-i18n]').forEach(element => {
     element.textContent = t(element.dataset.i18n);
@@ -34,9 +38,14 @@ export function initImageCropTool(context = {}) {
 
   return {
     open: (...args) => controller.open(...args),
-    close: (...args) => controller.close(...args),
+    close: (...args) => {
+      customSelectControls.forEach(control => control.close());
+      return controller.close(...args);
+    },
     dispose() {
+      customSelectControls.forEach(control => control.close());
       controller.dispose();
+      customSelectControls.forEach(control => control.dispose());
       if (success.created) success.element.remove();
       overlay.replaceChildren();
     }

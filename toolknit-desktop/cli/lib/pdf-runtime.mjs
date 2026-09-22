@@ -53,7 +53,8 @@ const { PDF_SPLIT_LIMITS, assertPdfSplitPageCount, assertPdfSplitSelection, spli
 const { PDF_ROTATE_LIMITS, assertPdfRotateSelection, rotatePdfPages } = rotateCore;
 const { PDF_ENCRYPT_LIMITS, assertPdfEncryptLegacyPassword, assertPdfEncryptSelection, encryptPdf } = encryptCore;
 const { PDF_DECRYPT_LIMITS, assertPdfDecryptPassword, assertPdfDecryptSelection } = decryptCore;
-const { PDF_COMPRESS_LIMITS, assertPdfCompressLevel, assertPdfCompressSelection } = compressCore;
+const { PDF_COMPRESS_LIMITS, assertPdfCompressLevel, assertPdfCompressSelection,
+  normalizePdfCompressionOptions, structureCompressionArguments, pdfCompressionStatus } = compressCore;
 const {
   PDF_ENHANCE_LIMITS,
   assertPdfEnhancePagePlan,
@@ -569,14 +570,16 @@ export async function decryptPdfFile(args, options = {}) {
 export async function compressPdfFile(args, options = {}) {
   throwIfAborted(options.signal);
   assertObject(args, 'arguments');
-  assertOnlyKeys(args, new Set(['input_path', 'output_path', 'level', 'overwrite']));
+  assertOnlyKeys(args, new Set(['input_path', 'output_path', 'level', 'overwrite', 'mode', 'clarity', 'target_bytes']));
   const input = await inspectPdfInput(assertString(args.input_path, 'input_path'), {
     maxBytes: PDF_COMPRESS_LIMITS.maxInputBytes
   });
   const level = args.level === undefined ? 'medium' : assertString(args.level, 'level');
+  let compressionOptions;
   try {
     assertPdfCompressSelection([input]);
     assertPdfCompressLevel(level);
+    compressionOptions = normalizePdfCompressionOptions({ mode: args.mode, level, clarity: args.clarity, targetBytes: args.target_bytes ?? null });
   } catch (error) {
     throw new ToolKnitError('INPUT_INVALID', String(error.message || error));
   }
@@ -586,17 +589,47 @@ export async function compressPdfFile(args, options = {}) {
     overwrite: assertBoolean(args.overwrite, 'overwrite')
   });
   const qpdf = await resolveQpdf();
+  const warnings = {
+    'already-within-target': 'The original PDF already satisfies the size cap. It was not re-encoded and no output was created.',
+    'no-reduction': 'The optimized PDF was not smaller, so no output file was created.',
+    'target-not-reached': 'The size cap was not reached. No oversized output was published.'
+  };
+  const outcome = (compression, outputs = []) => ({ tool: 'pdf.compress',
+    inputs: [{ path: input.path, bytes: input.size }], outputs,
+    status: compression.status, compression: { mode: compressionOptions.mode, ...compression },
+    warnings: warnings[compression.status] ? [warnings[compression.status]]
+      : compressionOptions.mode === 'raster' ? ['Image-only PDF: searchable text, links, forms, bookmarks and accessibility tags are not preserved.'] : [] });
   try {
+    if (compressionOptions.mode === 'raster') {
+      const { runRasterPdfCompression } = await import('./pdf-compress-raster-runtime.mjs');
+      const result = await runRasterPdfCompression({ input, options: compressionOptions, temporaryPath: prepared.temporaryPath, signal: options.signal });
+      throwIfAborted(options.signal);
+      if (result.status !== 'compressed') return outcome(result);
+      const bytes = await fileSize(prepared.temporaryPath);
+      if (bytes !== result.compressedSize || bytes >= input.size
+        || (compressionOptions.targetBytes != null && bytes > compressionOptions.targetBytes)) {
+        throw new ToolKnitError('PROCESSING_FAILED', 'PDF compression output failed its final byte limit check.');
+      }
+      const check = await runProcess(qpdf, ['--warning-exit-0', '--check', prepared.temporaryPath], undefined, { signal: options.signal });
+      const pages = await runProcess(qpdf, ['--show-npages', '--', prepared.temporaryPath], undefined, { signal: options.signal });
+      if (check.code !== 0 || pages.code !== 0 || Number(pages.stdout.toString('utf8').trim()) !== result.pages) {
+        throw new ToolKnitError('PROCESSING_FAILED', 'PDF compression output failed validation.');
+      }
+      throwIfAborted(options.signal);
+      const outputPath = await publishTemporaryOutput(prepared);
+      return outcome(result, [{ path: outputPath, pages: result.pages, bytes: await fileSize(outputPath) }]);
+    }
     const pages = await runProcess(qpdf, ['--show-npages', '--', input.path], undefined, { signal: options.signal });
     const pageCount = Number.parseInt(pages.stdout.toString('utf8').trim(), 10);
     if (pages.code !== 0) throw qpdfError(pages, 'PDF inspection');
     if (!Number.isSafeInteger(pageCount) || pageCount < 1 || pageCount > PDF_COMPRESS_LIMITS.maxPages) {
       throw new ToolKnitError('INPUT_INVALID', 'PDF page count exceeds the compression limit.');
     }
-    const qpdfArgs = ['--warning-exit-0', '--object-streams=generate', '--compress-streams=y'];
-    if (level !== 'low') {
-      qpdfArgs.push('--recompress-flate', level === 'high' ? '--compression-level=9' : '--compression-level=6');
+    if (compressionOptions.targetBytes != null && input.size <= compressionOptions.targetBytes) {
+      return outcome({ status: 'already-within-target', originalSize: input.size, compressedSize: input.size,
+        pages: pageCount, targetBytes: compressionOptions.targetBytes, attempts: [] });
     }
+    const qpdfArgs = structureCompressionArguments(level);
     qpdfArgs.push('--', input.path, prepared.temporaryPath);
     const output = await runProcess(qpdf, qpdfArgs, undefined, { signal: options.signal });
     if (output.code !== 0) {
@@ -608,18 +641,21 @@ export async function compressPdfFile(args, options = {}) {
       await discardTemporaryOutput(prepared.temporaryPath);
       throw new ToolKnitError('PROCESSING_FAILED', 'PDF compression produced an invalid output.');
     }
-    const compressedBytes = await fileSize(prepared.temporaryPath);
-    if (compressedBytes >= input.size) {
-      await discardTemporaryOutput(prepared.temporaryPath);
-      return {
-        tool: 'pdf.compress',
-        inputs: [{ path: input.path, bytes: input.size }],
-        outputs: [],
-        warnings: ['The optimized PDF was not smaller, so no output file was created.']
-      };
+    const outputPages = await runProcess(qpdf, ['--show-npages', '--', prepared.temporaryPath], undefined, { signal: options.signal });
+    if (outputPages.code !== 0 || Number(outputPages.stdout.toString('utf8').trim()) !== pageCount) {
+      throw new ToolKnitError('PROCESSING_FAILED', 'PDF compression changed its page count.');
     }
+    const compressedBytes = await fileSize(prepared.temporaryPath);
+    const compression = { status: pdfCompressionStatus({ originalSize: input.size, compressedSize: compressedBytes, targetBytes: compressionOptions.targetBytes }),
+      originalSize: input.size, compressedSize: Math.min(input.size, compressedBytes), pages: pageCount,
+      targetBytes: compressionOptions.targetBytes, attempts: [{ attempt: 1, bytes: compressedBytes, flateLevel: compressionOptions.flateLevel }] };
+    if (compression.status !== 'compressed') {
+      await discardTemporaryOutput(prepared.temporaryPath);
+      return outcome(compression);
+    }
+    throwIfAborted(options.signal);
     const outputPath = await publishTemporaryOutput(prepared);
-    return { tool: 'pdf.compress', inputs: [{ path: input.path, bytes: input.size }], outputs: [{ path: outputPath, pages: pageCount, bytes: compressedBytes }] };
+    return outcome(compression, [{ path: outputPath, pages: pageCount, bytes: compressedBytes }]);
   } catch (error) {
     await discardTemporaryOutput(prepared.temporaryPath);
     throw error;

@@ -502,7 +502,7 @@ pub(super) async fn download_transcription_model(
 
     let partial = target.with_extension("bin.part");
     let client = reqwest::Client::builder()
-        .user_agent("ToolKnit/2.3.1 offline-model-manager")
+        .user_agent("ToolKnit/3.0.0 offline-model-manager")
         .build()
         .map_err(|error| format!("Cannot initialize model download: {}", error))?;
     let requested_source = source
@@ -780,6 +780,121 @@ pub(super) fn create_transcription_temp_dir(
     Err("transcription:invalid-output".to_string())
 }
 
+pub(super) struct TranscriptionTempDir {
+    path: std::path::PathBuf,
+}
+
+impl TranscriptionTempDir {
+    pub(super) fn create(output_dir: &std::path::Path) -> Result<Self, String> {
+        Ok(Self {
+            path: create_transcription_temp_dir(output_dir)?,
+        })
+    }
+
+    pub(super) fn path(&self) -> &std::path::Path {
+        &self.path
+    }
+}
+
+impl Drop for TranscriptionTempDir {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.path);
+    }
+}
+
+pub(super) fn is_ascii_path(path: &std::path::Path) -> bool {
+    path.to_string_lossy().bytes().all(|byte| byte < 0x80)
+}
+
+fn transcription_whisper_workspace_root() -> Result<std::path::PathBuf, String> {
+    let mut candidates = Vec::new();
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(program_data) = std::env::var("ProgramData") {
+            candidates.push(std::path::PathBuf::from(program_data));
+        }
+        candidates.push(std::path::PathBuf::from(r"C:\Windows\Temp"));
+        candidates.push(std::path::PathBuf::from(r"C:\ToolKnitTemp"));
+    }
+    #[cfg(not(target_os = "windows"))]
+    candidates.push(std::env::temp_dir());
+
+    for candidate in candidates {
+        let root = candidate.join("ToolKnit").join("transcription-work");
+        if !is_ascii_path(&root) {
+            continue;
+        }
+        if std::fs::create_dir_all(&root).is_ok() {
+            return Ok(root);
+        }
+    }
+    Err("transcription:workspace-unavailable".to_string())
+}
+
+fn create_whisper_workspace() -> Result<TranscriptionTempDir, String> {
+    let root = transcription_whisper_workspace_root()?;
+    TranscriptionTempDir::create(&root)
+        .map_err(|_| "transcription:workspace-unavailable".to_string())
+}
+
+fn stage_whisper_model(
+    model: &std::path::Path,
+    workspace: &std::path::Path,
+) -> Result<std::path::PathBuf, String> {
+    let staged = workspace.join("model.bin");
+    if std::fs::hard_link(model, &staged).is_err() {
+        std::fs::copy(model, &staged)
+            .map_err(|_| "transcription:model-stage-failed".to_string())?;
+    }
+    Ok(staged)
+}
+
+pub(super) fn transcription_prepare_error(
+    command_succeeded: bool,
+    wav_exists: bool,
+    stderr: &str,
+) -> Option<&'static str> {
+    if command_succeeded && wav_exists {
+        return None;
+    }
+    let diagnostic = stderr.to_ascii_lowercase();
+    if diagnostic.contains("does not contain any stream")
+        || diagnostic.contains("matches no streams")
+        || diagnostic.contains("no audio stream")
+        || diagnostic.contains("output file does not contain any stream")
+    {
+        return Some("transcription:no-audio-stream");
+    }
+    Some("transcription:prepare-failed")
+}
+
+pub(super) fn transcription_engine_error(
+    command_succeeded: bool,
+    output_files_exist: bool,
+    stderr: &str,
+) -> Option<&'static str> {
+    if command_succeeded && output_files_exist {
+        return None;
+    }
+    let diagnostic = stderr.to_ascii_lowercase();
+    if diagnostic.contains("failed to load model")
+        || diagnostic.contains("cannot load model")
+        || diagnostic.contains("model file")
+    {
+        return Some("transcription:model-load-failed");
+    }
+    if diagnostic.contains("failed to read audio")
+        || diagnostic.contains("cannot open audio")
+        || diagnostic.contains("audio file")
+    {
+        return Some("transcription:audio-read-failed");
+    }
+    if command_succeeded && !output_files_exist {
+        return Some("transcription:output-failed");
+    }
+    Some("transcription:engine-failed")
+}
+
 pub(super) async fn run_transcription_command(
     command: &std::path::Path,
     arguments: &[std::ffi::OsString],
@@ -798,11 +913,9 @@ pub(super) async fn run_transcription_command(
         .spawn()
         .map_err(|_| "transcription:engine-failed".to_string())?;
     CURRENT_CHILD_ID.store(child.id().unwrap_or(0), Ordering::SeqCst);
-    let output = child
-        .wait_with_output()
-        .await
-        .map_err(|_| "transcription:engine-failed".to_string())?;
+    let output = child.wait_with_output().await;
     CURRENT_CHILD_ID.store(0, Ordering::SeqCst);
+    let output = output.map_err(|_| "transcription:engine-failed".to_string())?;
     if CANCEL_FLAG.load(Ordering::SeqCst) {
         return Err("transcription:cancelled".to_string());
     }
@@ -812,110 +925,8 @@ pub(super) async fn run_transcription_command(
 // Whisper models occasionally answer spoken Mandarin in traditional
 // characters. Transcription outputs are rewritten to simplified so the
 // published files match what Chinese users expect to edit and share.
-pub(super) fn simplify_char(character: char) -> char {
-    match character {
-        '艦' => '舰',
-        '彙' | '匯' => '汇',
-        '級' => '级',
-        '創' => '创',
-        '業' => '业',
-        '實' => '实',
-        '現' => '现',
-        '點' => '点',
-        '間' => '间',
-        '時' => '时',
-        '為' => '为',
-        '會' => '会',
-        '後' => '后',
-        '裡' => '里',
-        '這' => '这',
-        '說' => '说',
-        '對' => '对',
-        '開' => '开',
-        '關' => '关',
-        '們' => '们',
-        '從' => '从',
-        '見' => '见',
-        '車' => '车',
-        '電' => '电',
-        '動' => '动',
-        '應' => '应',
-        '話' => '话',
-        '語' => '语',
-        '讓' => '让',
-        '體' => '体',
-        '學' => '学',
-        '將' => '将',
-        '與' => '与',
-        '於' => '于',
-        '來' => '来',
-        '內' => '内',
-        '無' => '无',
-        '節' => '节',
-        '專' => '专',
-        '號' => '号',
-        '當' => '当',
-        '處' => '处',
-        '屬' => '属',
-        '據' => '据',
-        '備' => '备',
-        '質' => '质',
-        '資' => '资',
-        '費' => '费',
-        '環' => '环',
-        '聲' => '声',
-        '響' => '响',
-        '顯' => '显',
-        '飛' => '飞',
-        '機' => '机',
-        '構' => '构',
-        '標' => '标',
-        '統' => '统',
-        '斷' => '断',
-        '邊' => '边',
-        '變' => '变',
-        '輸' => '输',
-        '轉' => '转',
-        '連' => '连',
-        '運' => '运',
-        '進' => '进',
-        '遠' => '远',
-        '適' => '适',
-        '選' => '选',
-        '錄' => '录',
-        '鍵' => '键',
-        '盤' => '盘',
-        '壓' => '压',
-        '縮' => '缩',
-        '織' => '织',
-        '經' => '经',
-        '濟' => '济',
-        '廣' => '广',
-        '滅' => '灭',
-        '營' => '营',
-        '藝' => '艺',
-        '觀' => '观',
-        '釋' => '释',
-        '鏡' => '镜',
-        '錯' => '错',
-        '長' => '长',
-        '門' => '门',
-        '問' => '问',
-        '單' => '单',
-        '嚴' => '严',
-        '優' => '优',
-        '強' => '强',
-        '獲' => '获',
-        '證' => '证',
-        '護' => '护',
-        '觸' => '触',
-        '覺' => '觉',
-        other => other,
-    }
-}
-
 pub(super) fn simplify_chinese_text(input: &str) -> String {
-    input.chars().map(simplify_char).collect()
+    crate::chinese_text::simplify(input)
 }
 
 pub(super) fn simplify_transcription_outputs(temp_dir: &std::path::Path) -> Result<(), String> {
@@ -923,13 +934,91 @@ pub(super) fn simplify_transcription_outputs(temp_dir: &std::path::Path) -> Resu
         let path = temp_dir.join(name);
         let content = std::fs::read_to_string(&path)
             .map_err(|error| format!("Cannot read transcription output: {error}"))?;
-        let simplified = simplify_chinese_text(&content);
+        let simplified = if name.ends_with(".json") {
+            let mut value: serde_json::Value = serde_json::from_str(&content)
+                .map_err(|_| "Invalid transcription JSON output".to_string())?;
+            crate::chinese_text::simplify_transcription_json(&mut value);
+            serde_json::to_string(&value)
+                .map_err(|_| "Cannot serialize transcription JSON output".to_string())?
+        } else {
+            simplify_chinese_text(&content)
+        };
         if simplified != content {
             std::fs::write(&path, simplified)
                 .map_err(|error| format!("Cannot update transcription output: {error}"))?;
         }
     }
     Ok(())
+}
+
+pub(super) fn copy_transcription_output(
+    source: &std::path::Path,
+    destination: &std::path::Path,
+) -> std::io::Result<()> {
+    let parent = destination.parent().ok_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "missing output directory")
+    })?;
+    let mut staging = None;
+    for _ in 0..10_000 {
+        let id = TRANSCRIPTION_TEMP_ID.fetch_add(1, Ordering::SeqCst);
+        let candidate = parent.join(format!(
+            ".toolknit-transcription-publish-{}-{}.tmp",
+            std::process::id(),
+            id
+        ));
+        match std::fs::OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(&candidate)
+        {
+            Ok(file) => {
+                staging = Some((candidate, file));
+                break;
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error),
+        }
+    }
+    let (staging_path, mut staging_file) = staging.ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::AlreadyExists,
+            "could not reserve a temporary output file",
+        )
+    })?;
+    let result = (|| {
+        let mut source_file = std::fs::File::open(source)?;
+        std::io::copy(&mut source_file, &mut staging_file)?;
+        staging_file.sync_all()?;
+        drop(staging_file);
+        if std::fs::hard_link(&staging_path, destination).is_ok() {
+            return Ok(());
+        }
+        let mut staged_source = std::fs::File::open(&staging_path)?;
+        let mut destination_file = std::fs::OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(destination)?;
+        if let Err(error) = std::io::copy(&mut staged_source, &mut destination_file)
+            .and_then(|_| destination_file.sync_all())
+        {
+            drop(destination_file);
+            let _ = std::fs::remove_file(destination);
+            return Err(error);
+        }
+        Ok(())
+    })();
+    let _ = std::fs::remove_file(&staging_path);
+    result
+}
+
+fn publish_transcription_file(
+    source: &std::path::Path,
+    destination: &std::path::Path,
+) -> std::io::Result<()> {
+    match std::fs::hard_link(source, destination) {
+        Ok(()) => Ok(()),
+        Err(_) => copy_transcription_output(source, destination),
+    }
 }
 
 pub(super) fn publish_transcription_outputs(
@@ -955,14 +1044,14 @@ pub(super) fn publish_transcription_outputs(
         if json.exists() || srt.exists() || txt.exists() {
             continue;
         }
-        if std::fs::hard_link(&source_json, &json).is_err() {
+        if publish_transcription_file(&source_json, &json).is_err() {
             continue;
         }
-        if std::fs::hard_link(&source_srt, &srt).is_err() {
+        if publish_transcription_file(&source_srt, &srt).is_err() {
             let _ = std::fs::remove_file(&json);
             continue;
         }
-        if std::fs::hard_link(&source_txt, &txt).is_err() {
+        if publish_transcription_file(&source_txt, &txt).is_err() {
             let _ = std::fs::remove_file(&json);
             let _ = std::fs::remove_file(&srt);
             continue;
@@ -993,8 +1082,13 @@ pub(super) async fn transcribe_media(
     let ffmpeg = get_ffmpeg_path().map_err(|_| "transcription:ffmpeg-unavailable".to_string())?;
     let whisper =
         get_whisper_cli_path().map_err(|_| "transcription:engine-unavailable".to_string())?;
-    let temp_dir = create_transcription_temp_dir(&output_dir)?;
-    let wav = temp_dir.join("input.wav");
+    // whisper.cpp 1.9.1 converts command-line paths as UTF-8 on Windows. Keep
+    // every path passed to that CLI ASCII-only; the user's real paths remain
+    // unchanged and are still used by FFmpeg and the final publisher.
+    let temp_dir = create_whisper_workspace()?;
+    let temp_path = temp_dir.path();
+    let whisper_model = stage_whisper_model(&model_path, temp_path)?;
+    let wav = temp_path.join("input.wav");
     let _ = app_handle.emit(
         "transcription-progress",
         TranscriptionProgress {
@@ -1009,6 +1103,8 @@ pub(super) async fn transcribe_media(
         std::ffi::OsString::from("-y"),
         std::ffi::OsString::from("-i"),
         input.as_os_str().to_os_string(),
+        std::ffi::OsString::from("-map"),
+        std::ffi::OsString::from("0:a:0"),
         std::ffi::OsString::from("-vn"),
         std::ffi::OsString::from("-ac"),
         std::ffi::OsString::from("1"),
@@ -1016,12 +1112,25 @@ pub(super) async fn transcribe_media(
         std::ffi::OsString::from("16000"),
         std::ffi::OsString::from("-c:a"),
         std::ffi::OsString::from("pcm_s16le"),
+        std::ffi::OsString::from("-f"),
+        std::ffi::OsString::from("wav"),
         wav.as_os_str().to_os_string(),
     ];
-    let prepared = run_transcription_command(&ffmpeg, &ffmpeg_args).await?;
-    if !prepared.status.success() || !wav.is_file() {
-        let _ = std::fs::remove_dir_all(&temp_dir);
-        return Err("transcription:prepare-failed".to_string());
+    let prepared = run_transcription_command(&ffmpeg, &ffmpeg_args)
+        .await
+        .map_err(|error| {
+            if error == "transcription:engine-failed" {
+                "transcription:prepare-failed".to_string()
+            } else {
+                error
+            }
+        })?;
+    if let Some(error) = transcription_prepare_error(
+        prepared.status.success(),
+        wav.is_file(),
+        &String::from_utf8_lossy(&prepared.stderr),
+    ) {
+        return Err(error.to_string());
     }
     let _ = app_handle.emit(
         "transcription-progress",
@@ -1032,7 +1141,7 @@ pub(super) async fn transcribe_media(
     );
     let whisper_args = vec![
         std::ffi::OsString::from("-m"),
-        model_path.as_os_str().to_os_string(),
+        whisper_model.as_os_str().to_os_string(),
         std::ffi::OsString::from("-f"),
         wav.as_os_str().to_os_string(),
         std::ffi::OsString::from("-l"),
@@ -1043,12 +1152,17 @@ pub(super) async fn transcribe_media(
         std::ffi::OsString::from("-ojf"),
         std::ffi::OsString::from("-np"),
         std::ffi::OsString::from("-of"),
-        temp_dir.join("transcript").as_os_str().to_os_string(),
+        temp_path.join("transcript").as_os_str().to_os_string(),
     ];
     let transcribed = run_transcription_command(&whisper, &whisper_args).await?;
-    if !transcribed.status.success() {
-        let _ = std::fs::remove_dir_all(&temp_dir);
-        return Err("transcription:engine-failed".to_string());
+    if let Some(error) = transcription_engine_error(
+        transcribed.status.success(),
+        temp_path.join("transcript.json").is_file()
+            && temp_path.join("transcript.srt").is_file()
+            && temp_path.join("transcript.txt").is_file(),
+        &String::from_utf8_lossy(&transcribed.stderr),
+    ) {
+        return Err(error.to_string());
     }
     let _ = app_handle.emit(
         "transcription-progress",
@@ -1057,10 +1171,9 @@ pub(super) async fn transcribe_media(
             progress: 95,
         },
     );
-    simplify_transcription_outputs(&temp_dir)?;
+    simplify_transcription_outputs(temp_path)?;
     let stem = transcription_output_stem(&input);
-    let published = publish_transcription_outputs(&temp_dir, &output_dir, &stem);
-    let _ = std::fs::remove_dir_all(&temp_dir);
+    let published = publish_transcription_outputs(temp_path, &output_dir, &stem);
     let (raw_json_path, raw_srt_path, raw_txt_path) = published?;
     let _ = app_handle.emit(
         "transcription-progress",

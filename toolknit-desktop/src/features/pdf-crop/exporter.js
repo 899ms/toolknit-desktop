@@ -2,7 +2,9 @@ import JSZip from 'jszip';
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
 import {
   createPdfCropFileName,
+  createPdfCropPageFileName,
   exportCroppedPdf,
+  exportCroppedPdfPage,
   sanitizePdfCropBaseName,
   splitCroppedPdfPages
 } from './core.js';
@@ -41,9 +43,11 @@ export function createPdfCropExporter({ isTauri, getOutputDir, getInvoke }) {
     active,
     bytes,
     crops,
+    currentIndex,
     pageCount,
     outputName,
     mode,
+    target = 'all',
     assertOperation,
     setProgress,
     text
@@ -55,8 +59,27 @@ export function createPdfCropExporter({ isTauri, getOutputDir, getInvoke }) {
     let outputFileName;
     let mimeType;
     let outputCount;
+    let resultMode = mode;
+    let exportedPageNumber = null;
 
-    if (mode === 'zip') {
+    if (target === 'current') {
+      const pageIndex = Number(currentIndex);
+      outputBytes = await exportCroppedPdfPage({
+        bytes,
+        crop: crops?.[pageIndex],
+        pageIndex,
+        shouldCancel: () => active.cancelled || !active.isCurrent(),
+        onProgress(update) {
+          assertOperation(active);
+          setProgress(8 + Math.round((update.completed / update.total) * 78), text('home.pdfCrop.croppingPage', update));
+        }
+      });
+      outputFileName = createPdfCropPageFileName(baseName, pageIndex + 1, pageCount);
+      mimeType = 'application/pdf';
+      outputCount = 1;
+      resultMode = 'current';
+      exportedPageNumber = pageIndex + 1;
+    } else if (mode === 'zip') {
       const split = await splitCroppedPdfPages({
         bytes,
         crops,
@@ -101,7 +124,16 @@ export function createPdfCropExporter({ isTauri, getOutputDir, getInvoke }) {
     const outputPath = await writeOutput(outputBytes, outputDir, outputFileName, mimeType);
     assertOperation(active);
     outputBytes = null;
-    return { mode, outputCount, outputDir, outputFileName, outputPath, pageCount };
+    return {
+      target,
+      mode: resultMode,
+      outputCount,
+      outputDir,
+      outputFileName,
+      outputPath,
+      pageCount,
+      exportedPageNumber
+    };
   }
 
   function dispose() {

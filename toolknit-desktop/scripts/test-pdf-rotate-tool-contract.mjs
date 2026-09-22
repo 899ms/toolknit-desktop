@@ -38,10 +38,19 @@ assert.doesNotMatch(tool, /\.innerHTML\s*=|\.addEventListener\(/);
 
 assert.match(preview, /import\('pdfjs-dist\/legacy\/build\/pdf\.mjs'\)/);
 assert.match(preview, /pdf\.worker\.mjs\?url/);
-assert.match(preview, /renderTask\.cancel\(\)/);
-assert.match(preview, /loadingTask\.destroy\(\)/);
-assert.match(preview, /loadedDocument\.doc\.destroy\(\)/);
-assert.match(preview, /renderScope\.event\(rotateButton/);
+assert.match(preview, /createPdfWorkbench/);
+assert.match(preview, /view\.clear\(\)/);
+assert.match(preview, /loadingTask\?\.destroy\(\)/);
+assert.match(preview, /destroyPdfDocument\(loadedDocument\.doc\)/);
+assert.match(preview, /getRotation: page => page.rotation/);
+assert.match(preview, /view\.refreshPages/);
+assert.match(preview, /selectedOnly/);
+assert.match(exporter, /createPdfRotateExportJob/);
+assert.match(exporter, /activeJob\?\.cancel/);
+assert.match(exporter, /createModalSession/);
+for (const attribute of ['data-rotate-actions', 'data-rotate-scope', 'data-rotate-turn', 'data-rotate-export', 'data-rotate-cancel']) {
+  assert.ok(html.includes(attribute), 'missing rotation workbench contract: ' + attribute);
+}
 assert.doesNotMatch(preview, /\.innerHTML\s*=|\.addEventListener\(/);
 
 assert.match(exporter, /write_unique_file_bytes/);

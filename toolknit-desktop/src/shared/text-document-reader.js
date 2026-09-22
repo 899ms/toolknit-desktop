@@ -1,4 +1,5 @@
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.mjs?url';
+import { pdfjsDocumentOptions } from './pdfjs-options.js';
 import JSZip from 'jszip';
 import { TEXT_STATS_LIMITS } from '../text-stats-core.js';
 import { tauriCorePromise } from '../platform/tauri-runtime.js';
@@ -92,8 +93,7 @@ async function readDocx(bytes) {
 async function readPdf(bytes) {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
   pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-  const wasmUrl = new URL('assets/', document.baseURI).href;
-  const loadingTask = pdfjs.getDocument({ data: normalizeBytes(bytes).slice(), wasmUrl, useWasm: true });
+  const loadingTask = pdfjs.getDocument(pdfjsDocumentOptions({ data: normalizeBytes(bytes).slice() }));
   try {
     const pdf = await loadingTask.promise;
     if (pdf.numPages > TEXT_STATS_LIMITS.maxPdfPages) {

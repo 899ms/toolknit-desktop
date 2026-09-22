@@ -6,6 +6,7 @@ import {
   oklabInDisplayP3,
   oklabInRec2020,
   oklabInSrgbGamut,
+  parseHexColor,
   rgbToHex,
   spaceToDisplayRgb,
   spaceToXyz,
@@ -19,6 +20,8 @@ import {
   replaceColorSpaceChannel,
   stepColorValue,
 } from './controls.js';
+import { createColorWheels } from './wheel.js';
+import { createLifecycleScope } from '../../app/tool-lifecycle.js';
 import { onLangChange, t } from '../../i18n.js';
 import { createIcons, icons } from 'lucide';
 
@@ -27,8 +30,8 @@ const INITIAL_RGB = Object.freeze({ r: 128, g: 128, b: 128 });
 const SPACE_META = Object.freeze([
   { id: 'oklch', label: 'OKLCH', icon: 'sparkles' },
   { id: 'oklab', label: 'OKLab', icon: 'orbit' },
-  { id: 'lab', label: 'CIELAB', icon: 'triangle' },
   { id: 'lch', label: 'CIELCH', icon: 'circle-dashed' },
+  { id: 'lab', label: 'CIELAB', icon: 'triangle' },
   { id: 'rgb', label: 'RGB', icon: 'panel-top' },
   { id: 'hsl', label: 'HSL', icon: 'diamond' },
   { id: 'hsv', label: 'HSV', icon: 'scan' },
@@ -38,8 +41,8 @@ const SPACE_META = Object.freeze([
 const CODE_FORMATS = Object.freeze([
   { id: 'oklch', label: 'OKLCH' },
   { id: 'oklab', label: 'OKLab' },
-  { id: 'lab', label: 'Lab D65' },
   { id: 'lch', label: 'LCh D65' },
+  { id: 'lab', label: 'Lab D65' },
   { id: 'cmyk', label: 'CMYK ≈' },
   { id: 'rgb', label: 'RGB' },
   { id: 'hsl', label: 'HSL' },
@@ -122,6 +125,9 @@ export function createColorSpaceCompareController(root, notify) {
 
   const preview = root.querySelector('[data-role="preview"]');
   const hexValue = root.querySelector('[data-role="hex"]');
+  const hexInput = root.querySelector('[data-role="hex-input"]');
+  const hexRow = root.querySelector('[data-role="hex-row"]');
+  const wheelsRoot = root.querySelector('[data-role="wheels"]');
   const gamutBadge = root.querySelector('[data-role="gamut-badge"]');
   const gamutList = root.querySelector('[data-role="gamut-list"]');
   const previewStatus = root.querySelector('[data-role="preview-status"]');
@@ -129,11 +135,12 @@ export function createColorSpaceCompareController(root, notify) {
   const slidersRoot = root.querySelector('[data-role="sliders"]');
   const controlsRoot = root.querySelector('.color-space-compare-controls');
 
-  if (!preview || !hexValue || !gamutBadge || !gamutList || !previewStatus || !codeList || !slidersRoot) {
+  if (!preview || !hexValue || !hexInput || !hexRow || !wheelsRoot || !gamutBadge || !gamutList || !previewStatus || !codeList || !slidersRoot) {
     throw new Error('Color space compare markup is incomplete.');
   }
 
   const codeElements = new Map();
+  const lifecycle = createLifecycleScope();
   const sliderElements = {};
   let displayRgb = { ...INITIAL_RGB };
   let canonicalState = { space: 'rgb', values: { ...INITIAL_RGB } };
@@ -145,6 +152,63 @@ export function createColorSpaceCompareController(root, notify) {
   let openDrawFrame = null;
   let unsubscribeLanguage = null;
   let copyGeneration = 0;
+  let hexEditing = false;
+  let hexSnapshot = null;
+  let lastHue = 0;
+  const wheels = createColorWheels(wheelsRoot, {
+    getValues: getEditableSpaceValues,
+    applyValues: updateAll,
+    getDisplayRgb: () => displayRgb,
+    beforeInteraction: finishEditing,
+  });
+
+  function setHexInvalid(invalid) {
+    hexRow.classList.toggle('is-invalid', invalid);
+    hexInput.setAttribute('aria-invalid', String(invalid));
+    hexInput.title = t(invalid ? 'home.colorSpaceCompare.hexInvalid' : 'home.colorSpaceCompare.hexLabel');
+  }
+
+  function finishHexEditing() {
+    hexEditing = false;
+    // The shared Escape handler blurs before the input receives keydown.
+    // Keep its snapshot until that keydown or the next explicit takeover.
+    hexInput.value = rgbToHex(displayRgb.r, displayRgb.g, displayRgb.b).slice(1);
+    setHexInvalid(false);
+  }
+
+  function finishEditing() {
+    for (const channels of Object.values(sliderElements)) {
+      for (const slider of Object.values(channels)) slider.inputController?.finishEditing();
+    }
+    finishHexEditing();
+    hexSnapshot = null;
+  }
+
+  function wireHexInput() {
+    lifecycle.event(hexInput, 'focus', () => {
+      finishEditing();
+      hexEditing = true;
+      hexSnapshot = { space: canonicalState.space, values: { ...canonicalState.values }, hue: lastHue };
+    });
+    lifecycle.event(hexInput, 'input', () => {
+      const rgb = parseHexColor(hexInput.value);
+      setHexInvalid(!rgb);
+      if (rgb) updateAll('rgb', rgb);
+    });
+    lifecycle.event(hexInput, 'blur', finishHexEditing);
+    lifecycle.event(hexInput, 'keydown', event => {
+      if (event.key !== 'Enter' && event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.key === 'Escape' && hexSnapshot) {
+        lastHue = hexSnapshot.hue;
+        updateAll(hexSnapshot.space, hexSnapshot.values);
+      }
+      finishHexEditing();
+      hexSnapshot = null;
+      hexInput.blur();
+    });
+  }
 
   function buildCodeCards() {
     const fragment = document.createDocumentFragment();
@@ -335,11 +399,8 @@ export function createColorSpaceCompareController(root, notify) {
       // pointerdown is prevented so the active input does not naturally blur.
       // Finish every active draft before snapshotting the model for this drag;
       // otherwise a later blur could replay stale text over the slider result.
-      for (const channels of Object.values(sliderElements)) {
-        for (const slider of Object.values(channels)) {
-          slider.inputController?.finishEditing();
-        }
-      }
+      finishEditing();
+      hit.focus({ preventScroll: true });
       dragging = true;
       pointerId = event.pointerId;
       dragValues = getEditableSpaceValues(meta.id);
@@ -412,11 +473,19 @@ export function createColorSpaceCompareController(root, notify) {
       displayRgb = xyzToDisplayRgb(xyz.x, xyz.y, xyz.z);
       const all = xyzToAllSpaces(xyz, displayRgb);
       if (sourceSpace !== 'rgb') all[sourceSpace] = { ...presentedSource };
+      if (sourceSpace === 'hsv' || sourceSpace === 'hsl') lastHue = presentedSource.h;
+      else if (all.hsv.s > 1e-7 && all.hsv.v > 1e-7) lastHue = all.hsv.h;
+      // An achromatic color has no unique hue; retain the user's chosen hue.
+      if (all.hsv.s <= 1e-7 || all.hsv.v <= 1e-7) {
+        all.hsv.h = lastHue;
+        all.hsl.h = lastHue;
+      }
       lastPresentedAll = all;
 
       const hex = rgbToHex(displayRgb.r, displayRgb.g, displayRgb.b);
       preview.style.backgroundColor = hex;
       hexValue.textContent = hex;
+      if (!hexEditing) hexInput.value = hex.slice(1);
 
       const codeValues = formatCodeValues(all, displayRgb);
       for (const [id, entry] of codeElements) entry.value.textContent = codeValues[id];
@@ -483,7 +552,10 @@ export function createColorSpaceCompareController(root, notify) {
       const latest = pendingTrackAll;
       pendingTrackAll = null;
       trackDrawFrame = null;
-      if (isOpen && latest) drawAllCanvasTracks(latest);
+      if (isOpen && latest) {
+        wheels.sync();
+        drawAllCanvasTracks(latest);
+      }
     });
   }
 
@@ -528,6 +600,9 @@ export function createColorSpaceCompareController(root, notify) {
   }
 
   function refreshLanguage() {
+    hexInput.setAttribute('aria-label', t('home.colorSpaceCompare.hexLabel'));
+    setHexInvalid(hexRow.classList.contains('is-invalid'));
+    wheels.refreshLabels((key, values) => t(`home.colorSpaceCompare.wheels.${key}`, values));
     root.querySelectorAll('[data-csc-i18n]').forEach(element => {
       element.textContent = t(element.dataset.cscI18n);
     });
@@ -567,6 +642,10 @@ export function createColorSpaceCompareController(root, notify) {
   }
 
   function reset() {
+    lastHue = 0;
+    hexEditing = false;
+    hexSnapshot = null;
+    setHexInvalid(false);
     displayRgb = { ...INITIAL_RGB };
     canonicalState = { space: 'rgb', values: { ...INITIAL_RGB } };
     updateAll('rgb', INITIAL_RGB);
@@ -576,7 +655,9 @@ export function createColorSpaceCompareController(root, notify) {
   }
 
   function open() {
+    if (isOpen) return;
     isOpen = true;
+    wheels.open();
     copyGeneration += 1;
     unsubscribeLanguage?.();
     unsubscribeLanguage = onLangChange(refreshLanguage);
@@ -595,7 +676,9 @@ export function createColorSpaceCompareController(root, notify) {
   }
 
   function close() {
+    finishEditing();
     isOpen = false;
+    wheels.close();
     copyGeneration += 1;
     pendingTrackAll = null;
     if (trackDrawFrame !== null) cancelAnimationFrame(trackDrawFrame);
@@ -622,6 +705,7 @@ export function createColorSpaceCompareController(root, notify) {
 
   buildCodeCards();
   buildSliders();
+  wireHexInput();
   createIcons({ icons, attrs: { 'stroke-width': 1.8 } });
   refreshLanguage();
   updateAll('rgb', INITIAL_RGB);
@@ -635,6 +719,8 @@ export function createColorSpaceCompareController(root, notify) {
     close,
     destroy() {
       close();
+      wheels.destroy();
+      lifecycle.dispose();
     },
   };
 }

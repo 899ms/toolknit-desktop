@@ -35,6 +35,21 @@ assert.match(controller, /convert_audio_batch/);
 assert.match(controller, /cancel_convert/);
 assert.match(controller, /convert-progress/);
 assert.match(controller, /tauriEvents/);
+assert.match(controller, /readNativeAudioFiles/);
+assert.doesNotMatch(controller, /size:\s*0\s*\}/, 'native selections must read their actual file sizes');
+const { readNativeAudioFiles } = await import('../src/features/audio-convert/selection.js');
+const { validateAudioBatchSelection } = await import('../src/audio-convert-core.js');
+const calls = [];
+const nativeFiles = await readNativeAudioFiles(['C:/qa/one.wav', 'C:/qa/two.mp3'], async (command, args) => {
+  calls.push([command, args.path]); return 4096;
+});
+assert.equal(validateAudioBatchSelection(nativeFiles).length, 2);
+assert.deepEqual(calls, [['get_file_size', 'C:/qa/one.wav'], ['get_file_size', 'C:/qa/two.mp3']]);
+let current = true;
+assert.equal(await readNativeAudioFiles('C:/qa/old.wav', async () => { current = false; return 4096; }, () => current), null,
+  'late metadata cannot enter a closed/reopened tool');
+const emptyFiles = await readNativeAudioFiles('C:/qa/empty.wav', async () => 0);
+assert.throws(() => validateAudioBatchSelection(emptyFiles), /invalid size/, 'real empty files remain rejected');
 assert.match(controller, /data-audio-convert-files/);
 assert.match(controller, /querySelectorAll\('\[data-audio-convert-action\]'\)/);
 assert.match(controller, /website:.*openExternalUrl/s);
@@ -45,6 +60,9 @@ assert.match(template, /data-audio-convert-action="start"/);
 assert.match(template, /data-audio-convert-success-path/);
 assert.match(featureStyles, /\.audio-convert-feature\.audio-convert-v2/);
 assert.doesNotMatch(appStyles, /\.audio-convert-v2 \.pdf-merge-v2-poster::after/);
+const lightStyles = await read('src/styles/themes/pdf-tools-light.css');
+assert.match(lightStyles, /html\[data-theme="light"\] \.pdf-merge-v2 :is\(\[data-audio-convert-files\], #videoConvertFiles\) \.audio-convert-file-item:has\(> \.audio-convert-file-size\)\s*\{\s*grid-template-columns: 28px minmax\(0, 1fr\) max-content 30px;/);
+assert.match(lightStyles, /:is\(\[data-audio-convert-files\], #videoConvertFiles\) \.audio-convert-file-size\s*\{\s*color: #65686f;/);
 
 const ids = [...audioConvertTemplate().matchAll(/\sid="([^"]+)"/g)].map(match => match[1]);
 assert.equal(ids.length, 0, 'audio convert template must use scoped data hooks instead of global IDs');

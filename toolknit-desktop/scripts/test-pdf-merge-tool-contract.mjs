@@ -20,6 +20,7 @@ for (const id of [
   'pdfMergeCta', 'pdfMergeProcessBtn', 'pdfMergeProcessMask',
   'pdfMergeSelection', 'pdfMergeChoosePagesBtn', 'pdfMergeUseAllPagesBtn',
   'pdfMergePageStrip', 'pdfMergeSelectAllPagesBtn', 'pdfMergeSelectionNextBtn',
+  'pdfMergeMoveUpBtn', 'pdfMergeMoveDownBtn', 'pdfMergeDeleteBtn', 'pdfMergeOutputCount',
   'pdfMergeSuccessOverlay', 'pdfMergeSuccessOpenFolder', 'pdfMergeSuccessOk'
 ]) {
   assert.match(html, new RegExp(`id=["']${id}["']`), `missing PDF Merge DOM contract: ${id}`);
@@ -31,6 +32,10 @@ assert.doesNotMatch(main, /PDF Merger|pdfMergeOverlay|selectedPdfMergeFiles|pdfM
 assert.match(tool, /createLifecycleScope/);
 assert.match(tool, /createPdfMergePreview/);
 assert.match(tool, /createPdfMergeExporter/);
+assert.match(tool, /workspace: byId\('pdfMergeWorkspace'\)/);
+assert.match(tool, /setProgress,/);
+assert.match(tool, /moveUpButton: byId\('pdfMergeMoveUpBtn'\)/);
+assert.match(tool, /deleteButton: byId\('pdfMergeDeleteBtn'\)/);
 assert.match(tool, /bindPointerSortableFileList/);
 assert.match(tool, /owner\.use\(unlisten\)/);
 assert.match(tool, /isCurrentRun\(owner, runId\)/);
@@ -41,15 +46,22 @@ assert.match(preview, /import\('pdfjs-dist\/legacy\/build\/pdf\.mjs'\)/);
 assert.match(preview, /pdf\.worker\.mjs\?url/);
 assert.match(preview, /task\.cancel\(\)/);
 assert.match(preview, /loadingTask\.destroy\(\)/);
-assert.match(preview, /doc\.destroy\(\)/);
-assert.match(preview, /renderScope\.event\(tile/);
+assert.match(preview, /destroyPdfDocument\(doc\)/);
+assert.match(preview, /createPdfWorkbench/);
+assert.match(preview, /view\.setPages/);
+assert.match(preview, /sortable: true/);
+assert.match(preview, /function deleteSelected/);
+assert.match(preview, /pages\.length - chosen < 2/);
 assert.doesNotMatch(preview, /\.innerHTML\s*=|\.addEventListener\(/);
 
 assert.match(exporter, /write_unique_file_bytes/);
 assert.match(exporter, /URL\.revokeObjectURL/);
 assert.match(exporter, /assertCurrent\(owner, id\)/);
 assert.match(exporter, /outputParent\(lastOutputPath\)/);
-assert.match(exporter, /waitForOwner/);
+assert.match(exporter, /createModalSession/);
+assert.match(exporter, /processModal/);
+assert.match(exporter, /setProgress\?\./);
+assert.match(exporter, /cancel\(\)/);
 assert.match(sortable, /bindPointerSortableFileList/);
 assert.match(sortable, /scope\.event\(row, 'pointerdown'/);
 assert.match(featureCss, /pdf-merge-v2/);

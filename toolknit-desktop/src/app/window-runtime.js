@@ -1,4 +1,6 @@
-const WINDOW_RADIUS_KEY = 'toolknit.window-radius.v1';
+import { createLifecycleScope } from './tool-lifecycle.js';
+
+const WINDOW_RADIUS_KEY = 'toolknit.window-radius.v3';
 const WINDOW_RADIUS_PRESETS = Object.freeze({ none: 0, small: 10, large: 18 });
 const WINDOW_RADIUS_CUSTOM_DEFAULT = 10;
 const WINDOW_RADIUS_MAX = 32;
@@ -21,15 +23,22 @@ export function createWindowRuntime({
   documentRef = globalThis.document,
   windowRef = globalThis.window,
   storage = globalThis.localStorage,
+  getTheme = () => 'dark',
+  onThemeChange = () => () => {},
   translate = key => key,
   refreshIcons = () => {}
 } = {}) {
-  let radiusQueue = Promise.resolve();
+  const scope = createLifecycleScope();
   let chromeQueue = Promise.resolve();
   let chromeTimer = 0;
   let radiusTimer = null;
   let frameTimer = 0;
   let maximizeQueue = Promise.resolve();
+  let appliedShadow = null;
+  let appliedSurface = null;
+  let requestedRadius = null;
+  let frameMaximized = false;
+  let observingFrame = false;
 
   const clearLegacyRadiusStyles = () => {
     documentRef?.querySelectorAll?.('html, body, .app, .settings-overlay, .global-window-controls, .transition-mask')
@@ -44,10 +53,10 @@ export function createWindowRuntime({
   const read = () => {
     try {
       const parsed = JSON.parse(storage?.getItem(WINDOW_RADIUS_KEY) || 'null');
-      const mode = ['none', 'small', 'large', 'custom'].includes(parsed?.mode) ? parsed.mode : 'none';
+      const mode = ['none', 'small', 'large', 'custom'].includes(parsed?.mode) ? parsed.mode : 'large';
       return { mode, custom: clampRadius(parsed?.custom ?? WINDOW_RADIUS_CUSTOM_DEFAULT) };
     } catch {
-      return { mode: 'none', custom: WINDOW_RADIUS_CUSTOM_DEFAULT };
+      return { mode: 'large', custom: WINDOW_RADIUS_CUSTOM_DEFAULT };
     }
   };
 
@@ -55,27 +64,37 @@ export function createWindowRuntime({
     ? clampRadius(setting.custom)
     : WINDOW_RADIUS_PRESETS[setting.mode] ?? 0;
 
-  const applyNativeRadius = radius => {
-    if (!isTauri) return;
-    radiusQueue = radiusQueue
-      .catch(() => undefined)
-      .then(async () => {
-        const { invoke } = await tauriCorePromise;
-        await invoke('set_window_corner_radius', { radius });
-      })
-      .catch(error => console.warn('Native window corner radius is unavailable:', error));
-  };
-
   const repairChrome = () => {
-    if (!isTauri || !appWindow || isScreenPickerWindow) return Promise.resolve();
+    if (scope.disposed || !isTauri || !appWindow || isScreenPickerWindow) return Promise.resolve();
     chromeQueue = chromeQueue
       .catch(() => undefined)
       .then(async () => {
+        if (scope.disposed) return;
         const decorated = typeof appWindow.isDecorated === 'function'
           ? await appWindow.isDecorated()
           : true;
+        if (scope.disposed) return;
         if (decorated && typeof appWindow.setDecorations === 'function') {
           await appWindow.setDecorations(false);
+          appliedShadow = null;
+          appliedSurface = null;
+        }
+        if (scope.disposed) return;
+        // DWM shadows use the rectangular host, not our CSS alpha contour.
+        // The native companion shares the actual radius without changing layout.
+        if (typeof appWindow.setShadow === 'function' && appliedShadow !== false) {
+          await appWindow.setShadow(false);
+          appliedShadow = false;
+        }
+        const { invoke } = await tauriCorePromise;
+        if (scope.disposed) return;
+        // Read the latest theme/radius after pending native calls.
+        const radius = requestedRadius ?? pixels(read());
+        const shadow = getTheme() === 'light' && !frameMaximized;
+        const surface = `${radius}:${shadow}`;
+        if (surface !== appliedSurface) {
+          await invoke('set_window_corner_radius', { radius, shadow });
+          appliedSurface = surface;
         }
       })
       .catch(error => console.warn('Native frameless chrome repair failed:', error));
@@ -83,7 +102,7 @@ export function createWindowRuntime({
   };
 
   const apply = (setting = read()) => {
-    if (isScreenPickerWindow) return 0;
+    if (scope.disposed || isScreenPickerWindow) return 0;
     const radius = pixels(setting);
     const value = `${radius}px`;
     const root = documentRef?.documentElement;
@@ -98,7 +117,8 @@ export function createWindowRuntime({
       .forEach(layer => layer.style.setProperty('--toolknit-window-radius', value));
     clearLegacyRadiusStyles();
     if (isTauri) {
-      applyNativeRadius(radius);
+      requestedRadius = radius;
+      void repairChrome();
     } else if (body) {
       root?.style.setProperty('border-radius', value, 'important');
       root?.style.setProperty('overflow', 'hidden', 'important');
@@ -109,7 +129,12 @@ export function createWindowRuntime({
   };
 
   const setMaximizedState = enabled => {
+    if (scope.disposed) return;
     const maximized = Boolean(enabled);
+    if (frameMaximized !== maximized) {
+      frameMaximized = maximized;
+      void repairChrome();
+    }
     documentRef?.documentElement?.classList.toggle('window-is-maximized', maximized);
     documentRef?.body?.classList.toggle('window-is-maximized', maximized);
     const iconName = maximized ? 'copy' : 'square';
@@ -145,20 +170,20 @@ export function createWindowRuntime({
   };
 
   const syncFrame = async () => {
-    if (!isTauri || !appWindow || isScreenPickerWindow || !documentRef?.body) return;
+    if (scope.disposed || !isTauri || !appWindow || isScreenPickerWindow || !documentRef?.body) return;
     setMaximizedState(await readMaximized());
   };
 
   const syncAfterLayout = () => {
-    if (!isTauri || !appWindow || isScreenPickerWindow) return;
-    [0, 180].forEach(delay => windowRef?.setTimeout?.(async () => {
+    if (scope.disposed || !isTauri || !appWindow || isScreenPickerWindow) return;
+    [0, 180].forEach(delay => scope.timeout(async () => {
       await syncFrame();
       apply(read());
     }, delay));
   };
 
   const scheduleChromeRepair = ({ reapplyRadius = true } = {}) => {
-    if (!isTauri || !appWindow || isScreenPickerWindow) return;
+    if (scope.disposed || !isTauri || !appWindow || isScreenPickerWindow) return;
     windowRef?.clearTimeout?.(chromeTimer);
     chromeTimer = windowRef?.setTimeout?.(() => {
       chromeTimer = 0;
@@ -167,7 +192,7 @@ export function createWindowRuntime({
   };
 
   const scheduleFrameSync = () => {
-    if (!isTauri || !appWindow || isScreenPickerWindow) return;
+    if (scope.disposed || !isTauri || !appWindow || isScreenPickerWindow) return;
     windowRef?.clearTimeout?.(frameTimer);
     frameTimer = windowRef?.setTimeout?.(async () => {
       frameTimer = 0;
@@ -177,24 +202,28 @@ export function createWindowRuntime({
   };
 
   const observeFrame = () => {
-    if (!isTauri || !appWindow || isScreenPickerWindow) return;
+    if (scope.disposed || observingFrame || !isTauri || !appWindow || isScreenPickerWindow) return;
+    observingFrame = true;
     ['onResized', 'onScaleChanged'].forEach(method => {
       if (typeof appWindow[method] !== 'function') return;
-      appWindow[method](scheduleFrameSync).catch(error => console.warn(`Native window ${method} listener failed:`, error));
+      appWindow[method](scheduleFrameSync)
+        .then(unlisten => scope.use(unlisten))
+        .catch(error => console.warn(`Native window ${method} listener failed:`, error));
     });
   };
 
   const syncRadiusAfterLayout = () => {
-    if (!isTauri || !appWindow || isScreenPickerWindow) return;
+    if (scope.disposed || !isTauri || !appWindow || isScreenPickerWindow) return;
     windowRef?.clearTimeout?.(radiusTimer);
     radiusTimer = windowRef?.setTimeout?.(() => apply(read()), 80) || null;
   };
 
   const toggleMaximize = () => {
-    if (!isTauri || !appWindow || isScreenPickerWindow) return Promise.resolve();
+    if (scope.disposed || !isTauri || !appWindow || isScreenPickerWindow) return Promise.resolve();
     maximizeQueue = maximizeQueue
       .catch(() => undefined)
       .then(async () => {
+        if (scope.disposed) return;
         await appWindow.toggleMaximize();
         await syncFrame();
         scheduleChromeRepair();
@@ -204,7 +233,7 @@ export function createWindowRuntime({
   };
 
   const handleControl = async action => {
-    if (!isTauri || !appWindow || isScreenPickerWindow || !action) return;
+    if (scope.disposed || !isTauri || !appWindow || isScreenPickerWindow || !action) return;
     try {
       if (action === 'minimize') await appWindow.minimize();
       else if (action === 'maximize') await toggleMaximize();
@@ -214,7 +243,7 @@ export function createWindowRuntime({
 
   const save = setting => {
     const normalized = {
-      mode: ['none', 'small', 'large', 'custom'].includes(setting?.mode) ? setting.mode : 'none',
+      mode: ['none', 'small', 'large', 'custom'].includes(setting?.mode) ? setting.mode : 'large',
       custom: clampRadius(setting?.custom ?? WINDOW_RADIUS_CUSTOM_DEFAULT)
     };
     try { storage?.setItem(WINDOW_RADIUS_KEY, JSON.stringify(normalized)); } catch {}
@@ -223,6 +252,8 @@ export function createWindowRuntime({
   };
 
   const dispose = () => {
+    if (scope.disposed) return;
+    scope.dispose();
     windowRef?.clearTimeout?.(chromeTimer);
     windowRef?.clearTimeout?.(frameTimer);
     windowRef?.clearTimeout?.(radiusTimer);
@@ -230,6 +261,12 @@ export function createWindowRuntime({
     frameTimer = 0;
     radiusTimer = null;
   };
+
+  if (isTauri && appWindow && !isScreenPickerWindow) {
+    scope.use(onThemeChange(() => { void repairChrome(); }));
+    if (windowRef?.addEventListener) scope.event(windowRef, 'pagehide', event => { if (!event.persisted) dispose(); });
+    void syncFrame().then(repairChrome);
+  }
 
   return Object.freeze({
     apply,

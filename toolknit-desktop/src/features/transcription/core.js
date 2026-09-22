@@ -1,3 +1,5 @@
+import { simplifyChineseText } from '../../core/chinese-text.js';
+
 export function extractBalancedJson(value, start = 0) {
   const source = String(value || '');
   let depth = 0;
@@ -32,7 +34,7 @@ export function parseTranscriptionSrt(value) {
     const match = /^(.+?)\s+-->\s+(.+?)(?:\s+.*)?$/.exec(timing.trim());
     const textLines = lines.slice(timingIndex + 1);
     if (!match || textLines.length === 0) return null;
-    return { id, start: match[1], end: match[2], text: textLines.join('\n').trim() };
+    return { id, start: match[1], end: match[2], text: simplifyChineseText(textLines.join('\n').trim()) };
   }).filter(Boolean);
 }
 
@@ -52,7 +54,7 @@ export function parseRefinedTranscriptionResponse(value, expectedIds) {
     if (!ids.has(id) || updated.has(id) || !text || text.length > 1200) {
       throw new Error('Invalid refinement response');
     }
-    updated.set(id, text);
+    updated.set(id, simplifyChineseText(text));
   }
   if (updated.size !== ids.size) throw new Error('Invalid refinement response');
   return updated;

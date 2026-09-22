@@ -395,10 +395,11 @@
   position: relative;
   min-width: 0;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(380px, 1fr) minmax(340px, 1fr);
   gap: 14px;
   padding: 18px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: rgba(9, 9, 10, 0.72);
 }
 
@@ -422,6 +423,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 14px;
+  flex-wrap: wrap;
 }
 
 .color-extractor-v2-panel-head h2 {
@@ -431,16 +433,17 @@
   font-size: 23px;
   font-weight: 900;
   line-height: 1.05;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 .color-extractor-v2-status,
 .color-extractor-v2-result-caption {
-  flex: 0 0 auto;
+  min-width: 0;
+  flex: 0 1 auto;
   color: rgba(255, 255, 255, 0.42);
   font-size: 11px;
   line-height: 1.4;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .color-extractor-v2-mode-switch {
@@ -516,6 +519,10 @@
 .color-extractor-v2-image-mode[hidden],
 .color-extractor-v2-screen-mode[hidden] {
   display: none;
+}
+
+.color-extractor-v2-screen-mode {
+  gap: 10px;
 }
 
 .color-extractor-upload {
@@ -616,7 +623,7 @@
   grid-template-columns: 38px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 0;
   padding: 9px 10px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 13px;
@@ -961,7 +968,6 @@
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.04);
-  transition: background 160ms ease;
 }
 
 .color-extractor-v2-detail-codes {
@@ -999,12 +1005,11 @@
 
 .color-extractor-v2-detail-code strong {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
   color: rgba(255, 255, 255, 0.9);
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .color-extractor-v2-detail-hint {
@@ -1065,6 +1070,70 @@
   .color-extractor-v2-palette-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .color-extractor-v2-detail {
+    flex-wrap: wrap;
+  }
+
+  .color-extractor-v2-detail-hint {
+    flex-basis: 100%;
+    max-width: none;
+    text-align: left;
+  }
+}
+
+/* Compact instances retain the shared empty-state palette and icon geometry. */
+.color-extractor-v2 .tk-empty-hero {
+  gap: 8px;
+  padding: 16px;
+}
+
+.color-extractor-v2 .tk-empty-hero-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  color: var(--tk-empty-hero-icon-ink);
+}
+
+.color-extractor-v2 .tk-empty-hero-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.color-extractor-v2 .tk-empty-hero strong,
+.color-extractor-v2 .color-extractor-upload-text {
+  margin: 0;
+  color: var(--tk-empty-hero-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.color-extractor-v2 .tk-empty-hero-description {
+  margin: 0;
+  color: var(--tk-empty-hero-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.color-extractor-v2 :is(.color-extractor-v2-workspace, .color-extractor-v2-palette-grid) {
+  scrollbar-width: thin;
+}
+
+.color-extractor-v2 :is(button, [role="button"]):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.color-extractor-v2 :is(.color-extractor-upload, .color-extractor-palette-card):focus-visible {
+  outline-offset: -3px;
+}
+
+.color-extractor-screen-start:disabled {
+  opacity: 0.55;
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
 }
 
 /* ===== Desktop-wide screen picker window ===== */
@@ -1267,5 +1336,3 @@ html[data-screen-picker] body > *:not(#screenPickerOverlay) {
     transition: none;
   }
 }
-
-

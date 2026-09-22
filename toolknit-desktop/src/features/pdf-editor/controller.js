@@ -532,12 +532,20 @@ export function initPdfEditorTool({
   }
 
   function effectivePageRotation(model) {
-    if (!model || !Number.isFinite(Number(model.sourceRotation))) return null;
-    return resolvePdfPageRotation(model.sourceRotation, model.rotation);
+    if (!model) return null;
+    // A freshly committed page has not been inspected by PDF.js yet. Treat
+    // that short window as an unrotated page so editing controls do not stay
+    // disabled while the first preview is painting; the cached source rotation
+    // still takes precedence as soon as it is known.
+    return resolvePdfPageRotation(model.sourceRotation ?? 0, model.rotation);
   }
 
   function pageSupportsContentEditing(model) {
     return effectivePageRotation(model) === 0;
+  }
+
+  function pageSupportsInsertion(model) {
+    return model && Number.isFinite(effectivePageRotation(model));
   }
 
   function pageStateFor(id) {
@@ -828,6 +836,7 @@ export function initPdfEditorTool({
     getSelectedIds: () => selectedIds,
     getCurrentPage: currentPage,
     pageSupportsContentEditing,
+    pageSupportsInsertion,
     getSelectedComponent: () => selectedComponent,
     getComponentMode: () => componentMode,
     getEditMode: () => editMode,
@@ -1267,6 +1276,7 @@ export function initPdfEditorTool({
     cacheSourceRotation,
     effectivePageRotation,
     pageSupportsContentEditing,
+    pageSupportsInsertion,
     getTextLinesCache: () => textLinesCache,
     setTextLinesCache: value => { textLinesCache = value; },
     getEditMode: () => editMode,
@@ -1410,6 +1420,7 @@ export function initPdfEditorTool({
     getCurrentPage: currentPage,
     getCurrentTextLayerCache: currentTextLayerCache,
     pageSupportsContentEditing,
+    pageSupportsInsertion,
     getActiveOperation: currentOperation,
     nextId: type => `${type}-${++idCounter}`,
     storeInsertedImage: (id, value) => { insertedImageStore.set(id, value); },
@@ -1777,6 +1788,13 @@ export function initPdfEditorTool({
   syncStageVisibility();
 
   return {
+    open() {
+      if (disposed) return;
+      openOverlay();
+    },
+    close() {
+      return closeOverlay();
+    },
     async openWithFile(file) {
       if (disposed) return;
       openOverlay();

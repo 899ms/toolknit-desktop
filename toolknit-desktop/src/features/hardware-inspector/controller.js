@@ -58,7 +58,15 @@ export function createHardwareSnapshotController({
   }
 
   function renderData() {
+    // Live metrics and language changes replace table nodes while users read them.
+    const tableSelector = '.hardware-device-table-wrap, .cpu-memory-module-table-wrap';
+    const scrollTop = content.scrollTop;
+    const tableOffsets = Array.from(content.querySelectorAll(tableSelector), table => table.scrollLeft);
     definition.render(content, data);
+    content.scrollTop = scrollTop;
+    content.querySelectorAll(tableSelector).forEach((table, index) => {
+      table.scrollLeft = tableOffsets[index] ?? 0;
+    });
     if (scannedAt) updatedAt.textContent = definition.updatedAt(scannedAt);
   }
 

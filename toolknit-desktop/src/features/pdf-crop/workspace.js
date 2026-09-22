@@ -4,10 +4,22 @@ import {
   PDF_CROP_LIMITS,
   normalizePdfCropRect,
   pdfCropMarginsToRect,
-  pdfCropRectToMargins,
-  pdfCropRectsEqual
+  pdfCropRectToMargins
 } from './core.js';
 import { releasePdfCropSource, stagePdfCropDocument } from './document.js';
+import {
+  calculatePdfCropInteractionRect,
+  createLatestFrameScheduler,
+  normalizePdfCropPointer
+} from './interaction.js';
+import { createPausableRenderQueue } from './thumbnail-queue.js';
+import {
+  formatPdfCropBytes, formatPdfCropDimensions, formatPdfCropUnitValue,
+  pdfCropSnapshotsEqual,
+  pdfCropUnitFactor,
+  releasePdfCropCanvas,
+  snapshotPdfCropPages
+} from './utils.js';
 
 const THUMB_WIDTH = 96;
 const THUMB_HEIGHT = 68;
@@ -15,30 +27,6 @@ const THUMB_CONCURRENCY = 2;
 const PREVIEW_MIN_ZOOM = 0.45;
 const PREVIEW_MAX_ZOOM = 3.2;
 const HISTORY_LIMIT = 60;
-const POINTS_PER_MM = 72 / 25.4;
-
-function releaseCanvas(canvas) {
-  if (!canvas) return;
-  canvas.width = 0;
-  canvas.height = 0;
-}
-
-function formatBytes(bytes) {
-  const value = Number(bytes) || 0;
-  if (value >= 1024 * 1024) return `${(value / 1024 / 1024).toFixed(value >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
-  if (value >= 1024) return `${Math.round(value / 1024)} KB`;
-  return `${value} B`;
-}
-
-function snapshotPages(pages) {
-  return pages.map(page => ({ rect: { ...page.rect }, explicit: Boolean(page.explicit) }));
-}
-
-function snapshotsEqual(left, right) {
-  return Array.isArray(left) && Array.isArray(right) && left.length === right.length
-    && left.every((entry, index) => Boolean(entry.explicit) === Boolean(right[index]?.explicit)
-      && pdfCropRectsEqual(entry.rect, right[index]?.rect));
-}
 
 export function createPdfCropWorkspace({
   overlay,
@@ -100,6 +88,11 @@ export function createPdfCropWorkspace({
   let previewScale = 1;
   let thumbBatch = null;
 
+  const pointerFrame = createLatestFrameScheduler(renderTransientCropRect, {
+    requestFrame: handler => window.requestAnimationFrame(handler),
+    cancelFrame: frame => window.cancelAnimationFrame(frame)
+  });
+
   const currentPage = () => pages[currentIndex] || null;
   const hasDocument = () => Boolean(source && pages.length);
   const emitChange = () => onStateChange?.();
@@ -111,7 +104,7 @@ export function createPdfCropWorkspace({
     previewRequest += 1;
     try { previewTask?.cancel(); } catch (_) {}
     previewTask = null;
-    releaseCanvas(previewCanvas);
+    releasePdfCropCanvas(previewCanvas);
     if (canvasWrap) canvasWrap.hidden = true;
     if (interactionLayer) interactionLayer.hidden = true;
   }
@@ -119,8 +112,9 @@ export function createPdfCropWorkspace({
   function releaseThumbs() {
     const batch = thumbBatch;
     thumbBatch = null;
+    batch?.queue.dispose();
     batch?.owner.dispose();
-    filmstrip.querySelectorAll('canvas').forEach(releaseCanvas);
+    filmstrip.querySelectorAll('canvas').forEach(releasePdfCropCanvas);
   }
 
   function createPageThumb(page, owner) {
@@ -181,6 +175,10 @@ export function createPdfCropWorkspace({
     try {
       proxy = await documentHandle.getPage(pageIndex + 1);
       if (batch !== thumbBatch || source?.pdfDoc !== documentHandle || batch.owner.disposed) return;
+      if (batch.queue.paused) {
+        batch.queue.requeue(pageIndex);
+        return;
+      }
       const base = proxy.getViewport({ scale: 1 });
       const scale = Math.min(THUMB_WIDTH / base.width, THUMB_HEIGHT / base.height);
       const viewport = proxy.getViewport({ scale });
@@ -194,28 +192,27 @@ export function createPdfCropWorkspace({
         viewport,
         transform: dpr === 1 ? null : [dpr, 0, 0, dpr, 0, 0]
       });
+      const releaseTrackedTask = batch.queue.track(pageIndex, renderTask);
       releaseTask = batch.owner.use(() => { try { renderTask.cancel(); } catch (_) {} });
-      await renderTask.promise;
+      try {
+        await renderTask.promise;
+      } finally {
+        releaseTrackedTask();
+      }
       if (batch !== thumbBatch || source?.pdfDoc !== documentHandle || batch.owner.disposed) return;
+      if (batch.queue.paused) return batch.queue.requeue(pageIndex);
       item.dataset.thumbState = 'ready';
       updateThumbState(pages[pageIndex]);
     } catch (error) {
-      if (batch === thumbBatch && error?.name !== 'RenderingCancelledException') item.dataset.thumbState = 'error';
+      if (batch === thumbBatch && !batch.owner.disposed
+        && (batch.queue.paused || error?.name === 'RenderingCancelledException')) {
+        batch.queue.requeue(pageIndex);
+      } else if (batch === thumbBatch) {
+        item.dataset.thumbState = 'error';
+      }
     } finally {
       releaseTask();
       proxy?.cleanup?.();
-    }
-  }
-
-  function pumpThumbnails(batch) {
-    if (batch !== thumbBatch || batch.owner.disposed) return;
-    while (batch.active < THUMB_CONCURRENCY && batch.queue.length) {
-      const pageIndex = batch.queue.shift();
-      batch.active += 1;
-      void renderThumbnail(batch, pageIndex).finally(() => {
-        batch.active -= 1;
-        pumpThumbnails(batch);
-      });
     }
   }
 
@@ -223,8 +220,7 @@ export function createPdfCropWorkspace({
     const item = filmstrip.querySelector(`[data-page-index="${pageIndex}"]`);
     if (batch !== thumbBatch || !item || item.dataset.thumbState) return;
     item.dataset.thumbState = 'queued';
-    batch.queue.push(pageIndex);
-    pumpThumbnails(batch);
+    batch.queue.enqueue(pageIndex);
   }
 
   function renderFilmstrip() {
@@ -237,7 +233,11 @@ export function createPdfCropWorkspace({
       return;
     }
     const owner = createLifecycleScope();
-    const batch = { owner, queue: [], active: 0 };
+    const batch = { owner, queue: null };
+    batch.queue = createPausableRenderQueue({
+      concurrency: THUMB_CONCURRENCY,
+      run: pageIndex => renderThumbnail(batch, pageIndex)
+    });
     thumbBatch = batch;
     pages.forEach(page => fragment.appendChild(createPageThumb(page, owner)));
     filmstrip.replaceChildren(fragment);
@@ -257,6 +257,11 @@ export function createPdfCropWorkspace({
       pages.forEach(page => enqueueThumbnail(batch, page.index));
     }
     refreshIcons();
+  }
+
+  function setThumbnailsPaused(paused) {
+    if (!thumbBatch) return;
+    paused ? thumbBatch.queue.pause() : thumbBatch.queue.resume();
   }
 
   function isPreviewCurrent(request, documentHandle) {
@@ -313,6 +318,7 @@ export function createPdfCropWorkspace({
 
   function replaceDocument(staged) {
     const previous = source;
+    cancelPointer({ render: false });
     cancelPreview();
     releaseThumbs();
     source = staged.source;
@@ -331,7 +337,7 @@ export function createPdfCropWorkspace({
   }
 
   async function resetDocument() {
-    cancelPointer();
+    cancelPointer({ render: false });
     marginEditBefore = null;
     cancelPreview();
     releaseThumbs();
@@ -352,15 +358,6 @@ export function createPdfCropWorkspace({
     await releaseSource(previous);
   }
 
-  function unitFactor() {
-    return unitSelect?.value === 'pt' ? 1 : POINTS_PER_MM;
-  }
-
-  function formatUnitValue(points) {
-    const converted = points / unitFactor();
-    return Math.abs(converted) >= 100 ? converted.toFixed(0) : converted.toFixed(1).replace(/\.0$/, '');
-  }
-
   function updateMarginFields() {
     const page = currentPage();
     if (!page) {
@@ -370,21 +367,30 @@ export function createPdfCropWorkspace({
     const margins = pdfCropRectToMargins(page.rect, { width: page.displayWidth, height: page.displayHeight });
     marginInputs.forEach(input => {
       if (document.activeElement === input && marginEditBefore) return;
-      input.value = formatUnitValue(margins[input.dataset.marginSide]);
+      input.value = formatPdfCropUnitValue(margins[input.dataset.marginSide], unitSelect?.value);
     });
   }
 
   function updateDimension() {
     const page = currentPage();
-    if (!page || !dimension) {
-      if (dimension) dimension.textContent = '-';
-      return;
-    }
-    const width = page.rect.width * page.displayWidth;
-    const height = page.rect.height * page.displayHeight;
-    dimension.textContent = unitSelect?.value === 'pt'
-      ? `${width.toFixed(1)} × ${height.toFixed(1)} pt`
-      : `${(width / POINTS_PER_MM).toFixed(1)} × ${(height / POINTS_PER_MM).toFixed(1)} mm`;
+    if (!dimension) return;
+    dimension.textContent = page ? formatPdfCropDimensions(page.rect, page, unitSelect?.value) : '-';
+  }
+
+  function renderSelectionGeometry(rect, page) {
+    selection.style.left = `${rect.x * 100}%`;
+    selection.style.top = `${rect.y * 100}%`;
+    selection.style.width = `${rect.width * 100}%`;
+    selection.style.height = `${rect.height * 100}%`;
+    if (sizeBadge) sizeBadge.textContent = formatPdfCropDimensions(rect, page, unitSelect?.value, true);
+  }
+
+  function renderTransientCropRect(value) {
+    const page = currentPage();
+    if (!page || canvasWrap.hidden) return;
+    interactionLayer.hidden = false;
+    interactionLayer.classList.remove('is-unset');
+    renderSelectionGeometry(normalizePdfCropRect(value), page);
   }
 
   function renderCropOverlay() {
@@ -394,20 +400,9 @@ export function createPdfCropWorkspace({
       return;
     }
     interactionLayer.hidden = false;
-    const rect = normalizePdfCropRect(page.rect);
-    selection.style.left = `${rect.x * 100}%`;
-    selection.style.top = `${rect.y * 100}%`;
-    selection.style.width = `${rect.width * 100}%`;
-    selection.style.height = `${rect.height * 100}%`;
+    renderSelectionGeometry(normalizePdfCropRect(page.rect), page);
     interactionLayer.classList.toggle('is-unset', !page.explicit);
     interactionLayer.classList.toggle('is-reframing', reframeMode);
-    if (sizeBadge) {
-      const width = rect.width * page.displayWidth;
-      const height = rect.height * page.displayHeight;
-      sizeBadge.textContent = unitSelect?.value === 'pt'
-        ? `${Math.round(width)} × ${Math.round(height)} pt`
-        : `${(width / POINTS_PER_MM).toFixed(1)} × ${(height / POINTS_PER_MM).toFixed(1)} mm`;
-    }
     updateMarginFields();
     updateDimension();
   }
@@ -423,7 +418,7 @@ export function createPdfCropWorkspace({
     if (pageCount) pageCount.textContent = text('home.pdfCrop.totalPages', { count: pages.length });
     if (fileName) fileName.textContent = source?.name || text('home.pdfCrop.noFile');
     if (fileMeta) fileMeta.textContent = source
-      ? text('home.pdfCrop.fileMeta', { pages: pages.length, size: formatBytes(source.size) })
+      ? text('home.pdfCrop.fileMeta', { pages: pages.length, size: formatPdfCropBytes(source.size) })
       : text('home.pdfCrop.localOnly');
     if (scopeNote) scopeNote.textContent = hasDocument()
       ? text(scope === 'all' ? 'home.pdfCrop.scopeAllStatus' : 'home.pdfCrop.scopeCurrentStatus', { count: scopedCount, page: currentIndex + 1 })
@@ -474,8 +469,8 @@ export function createPdfCropWorkspace({
   }
 
   function commitHistory(before) {
-    const after = snapshotPages(pages);
-    if (!before || snapshotsEqual(before, after)) return false;
+    const after = snapshotPdfCropPages(pages);
+    if (!before || pdfCropSnapshotsEqual(before, after)) return false;
     history.push(before);
     if (history.length > HISTORY_LIMIT) history.shift();
     future = [];
@@ -485,13 +480,13 @@ export function createPdfCropWorkspace({
 
   function undo() {
     if (!history.length || isBusy()) return;
-    future.push(snapshotPages(pages));
+    future.push(snapshotPdfCropPages(pages));
     applySnapshot(history.pop());
   }
 
   function redo() {
     if (!future.length || isBusy()) return;
-    history.push(snapshotPages(pages));
+    history.push(snapshotPdfCropPages(pages));
     applySnapshot(future.pop());
   }
 
@@ -507,7 +502,7 @@ export function createPdfCropWorkspace({
   }
 
   function applyMarginsToScope() {
-    const factor = unitFactor();
+    const factor = pdfCropUnitFactor(unitSelect?.value);
     const margins = Object.fromEntries(marginInputs.map(input => [
       input.dataset.marginSide,
       Math.max(0, Number(input.value) || 0) * factor
@@ -539,7 +534,7 @@ export function createPdfCropWorkspace({
   function resetCurrentPage() {
     const page = currentPage();
     if (!page?.explicit) return;
-    const before = snapshotPages(pages);
+    const before = snapshotPdfCropPages(pages);
     page.rect = { ...PDF_CROP_FULL_RECT };
     page.explicit = false;
     commitHistory(before);
@@ -548,19 +543,11 @@ export function createPdfCropWorkspace({
 
   function resetAllPages() {
     if (!pages.some(page => page.explicit)) return;
-    const before = snapshotPages(pages);
+    const before = snapshotPdfCropPages(pages);
     pages.forEach(page => { page.rect = { ...PDF_CROP_FULL_RECT }; page.explicit = false; });
     commitHistory(before);
     reframeMode = false;
     refreshCropState();
-  }
-
-  function normalizedPointer(event) {
-    const rect = interactionLayer.getBoundingClientRect();
-    return {
-      x: Math.max(0, Math.min(1, (event.clientX - rect.left) / Math.max(1, rect.width))),
-      y: Math.max(0, Math.min(1, (event.clientY - rect.top) / Math.max(1, rect.height)))
-    };
   }
 
   function beginCropPointer(event) {
@@ -574,7 +561,19 @@ export function createPdfCropWorkspace({
     else if (!page.explicit || reframeMode) mode = 'draw';
     if (!mode) return;
     event.preventDefault();
-    const point = normalizedPointer(event);
+    const rawBounds = interactionLayer.getBoundingClientRect();
+    const bounds = {
+      left: rawBounds.left,
+      top: rawBounds.top,
+      width: rawBounds.width,
+      height: rawBounds.height
+    };
+    const point = normalizePdfCropPointer(event, bounds);
+    const minWidth = Math.min(0.5, PDF_CROP_LIMITS.minCropPoints / Math.max(1, page.displayWidth || 1));
+    const minHeight = Math.min(0.5, PDF_CROP_LIMITS.minCropPoints / Math.max(1, page.displayHeight || 1));
+    const initialRect = mode === 'draw'
+      ? calculatePdfCropInteractionRect({ mode, start: point, point, rect: page.rect, minWidth, minHeight })
+      : { ...page.rect };
     pointerState = {
       pointerId: event.pointerId,
       mode,
@@ -583,67 +582,68 @@ export function createPdfCropWorkspace({
       startClientX: event.clientX,
       startClientY: event.clientY,
       rect: { ...page.rect },
-      before: snapshotPages(pages),
+      latestRect: initialRect,
+      bounds,
+      minWidth,
+      minHeight,
+      scope,
+      before: snapshotPdfCropPages(pages),
       moved: false
     };
-    interactionLayer.classList.add('is-drawing');
+    interactionLayer.classList.add('is-drawing', 'is-interacting');
+    setThumbnailsPaused(true);
     try { interactionLayer.setPointerCapture(event.pointerId); } catch (_) {}
-    if (mode === 'draw') applyRectToScope({ x: point.x, y: point.y, width: 0.002, height: 0.002 }, true);
+    if (mode === 'draw') renderTransientCropRect(initialRect);
   }
 
   function handleCropPointerMove(event) {
     const state = pointerState;
     if (!state || state.pointerId !== event.pointerId) return;
     event.preventDefault();
-    const point = normalizedPointer(event);
-    const dx = point.x - state.start.x;
-    const dy = point.y - state.start.y;
+    const point = normalizePdfCropPointer(event, state.bounds);
     state.moved ||= Math.hypot(event.clientX - state.startClientX, event.clientY - state.startClientY) >= 4;
-    let rect = { ...state.rect };
-    const minWidth = Math.min(0.5, PDF_CROP_LIMITS.minCropPoints / Math.max(1, currentPage()?.displayWidth || 1));
-    const minHeight = Math.min(0.5, PDF_CROP_LIMITS.minCropPoints / Math.max(1, currentPage()?.displayHeight || 1));
-    if (state.mode === 'draw') {
-      rect = {
-        x: Math.min(state.start.x, point.x),
-        y: Math.min(state.start.y, point.y),
-        width: Math.max(minWidth, Math.abs(point.x - state.start.x)),
-        height: Math.max(minHeight, Math.abs(point.y - state.start.y))
-      };
-    } else if (state.mode === 'move') {
-      rect.x = Math.max(0, Math.min(1 - rect.width, rect.x + dx));
-      rect.y = Math.max(0, Math.min(1 - rect.height, rect.y + dy));
-    } else {
-      let left = rect.x;
-      let right = rect.x + rect.width;
-      let top = rect.y;
-      let bottom = rect.y + rect.height;
-      if (state.handle.includes('w')) left = Math.max(0, Math.min(right - minWidth, state.start.x + dx));
-      if (state.handle.includes('e')) right = Math.min(1, Math.max(left + minWidth, state.start.x + dx));
-      if (state.handle.includes('n')) top = Math.max(0, Math.min(bottom - minHeight, state.start.y + dy));
-      if (state.handle.includes('s')) bottom = Math.min(1, Math.max(top + minHeight, state.start.y + dy));
-      rect = { x: left, y: top, width: right - left, height: bottom - top };
-    }
-    applyRectToScope(rect, true);
+    state.latestRect = calculatePdfCropInteractionRect({
+      mode: state.mode,
+      handle: state.handle,
+      start: state.start,
+      point,
+      rect: state.rect,
+      minWidth: state.minWidth,
+      minHeight: state.minHeight
+    });
+    pointerFrame.schedule(state.latestRect);
   }
 
-  function cancelPointer() {
+  function cancelPointer({ render = true } = {}) {
     const state = pointerState;
     pointerState = null;
-    interactionLayer.classList.remove('is-drawing');
+    pointerFrame.cancel();
+    interactionLayer.classList.remove('is-drawing', 'is-interacting');
+    setThumbnailsPaused(false);
     if (state) {
       try { interactionLayer.releasePointerCapture(state.pointerId); } catch (_) {}
     }
+    if (render) renderCropOverlay();
+    return state;
   }
 
   function endCropPointer(event) {
     const state = pointerState;
     if (!state || state.pointerId !== event.pointerId) return;
-    cancelPointer();
-    if (state.mode === 'draw' && !state.moved) applySnapshot(state.before);
-    else commitHistory(state.before);
+    pointerFrame.flush();
+    cancelPointer({ render: false });
     reframeMode = false;
-    emitChange();
-    renderCropOverlay();
+    if (state.mode === 'draw' && !state.moved) {
+      emitChange();
+      return;
+    }
+    applyRectToScope(state.latestRect, true, state.scope);
+    commitHistory(state.before);
+  }
+
+  function abortCropPointer(event) {
+    if (!pointerState || pointerState.pointerId !== event.pointerId) return;
+    cancelPointer();
   }
 
   function renderLinkButton() {
@@ -715,7 +715,7 @@ export function createPdfCropWorkspace({
   listen(interactionLayer, 'pointerdown', beginCropPointer);
   listen(document, 'pointermove', handleCropPointerMove, { passive: false });
   listen(document, 'pointerup', endCropPointer);
-  listen(document, 'pointercancel', endCropPointer);
+  listen(document, 'pointercancel', abortCropPointer);
   overlay.querySelectorAll('[data-crop-scope]').forEach(button => {
     listen(button, 'click', () => {
       scope = button.dataset.cropScope === 'current' ? 'current' : 'all';
@@ -733,7 +733,7 @@ export function createPdfCropWorkspace({
     renderCropOverlay();
   });
   marginInputs.forEach(input => {
-    listen(input, 'focus', () => { marginEditBefore ||= snapshotPages(pages); });
+    listen(input, 'focus', () => { marginEditBefore ||= snapshotPdfCropPages(pages); });
     listen(input, 'input', () => {
       if (marginsLinked) marginInputs.forEach(candidate => { if (candidate !== input) candidate.value = input.value; });
       applyMarginsToScope();
@@ -766,10 +766,12 @@ export function createPdfCropWorkspace({
     getExportState: () => ({
       bytes: source?.bytes,
       crops: pages.map(page => ({ rect: { ...page.rect }, explicit: page.explicit, rotation: page.rotation })),
+      currentIndex,
       pageCount: pages.length,
       sourceName: source?.name || 'document.pdf'
     }),
     hasCrop: () => pages.some(page => page.explicit),
+    hasCurrentCrop: () => Boolean(currentPage()?.explicit),
     hasDocument,
     handleShortcut,
     refresh,

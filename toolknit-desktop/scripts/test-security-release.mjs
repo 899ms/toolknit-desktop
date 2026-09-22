@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { startMcpServer } from '../cli/lib/mcp-server.mjs';
 import { readResponseTextLimited, ResponseSizeLimitError } from '../src/core/bounded-response.js';
+import { listSourceFiles } from './lib/source-inventory.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const repositoryRoot = resolve(root, '..');
@@ -82,8 +83,10 @@ const trackedFiles = execFileSync('git', ['ls-files', '-z'], { cwd: repositoryRo
   .split('\0')
   .filter(Boolean);
 const trackedFileSet = new Set(trackedFiles);
+const sourceFiles = listSourceFiles(repositoryRoot);
 const sensitiveFilePattern = /(?:^|\/)(?:\.env(?:\..+)?|\.npmrc|[^/]+\.(?:pem|pfx|p12|key))$/i;
 check(!trackedFiles.some(file => sensitiveFilePattern.test(file)), 'Sensitive configuration or key material must not be tracked');
+check(!sourceFiles.some(file => sensitiveFilePattern.test(file)), 'Sensitive configuration or key material must not enter the source inventory');
 
 const desktopPackage = JSON.parse(read('toolknit-desktop/package.json'));
 check(
@@ -102,7 +105,7 @@ for (const fileName of stagedCoreFiles) {
   );
 }
 const referencedCoreFiles = new Set();
-for (const cliFile of trackedFiles.filter(file => /^toolknit-desktop\/cli\/.*\.(?:mjs|js)$/i.test(file))) {
+for (const cliFile of sourceFiles.filter(file => /^toolknit-desktop\/cli\/.*\.(?:mjs|js)$/i.test(file))) {
   const contents = readFileSync(resolve(repositoryRoot, cliFile), 'utf8');
   for (const match of contents.matchAll(/(?:from\s+|import\s*\()\s*['"]\.\/core\/([^'"]+\.js)['"]/g)) {
     referencedCoreFiles.add(match[1]);
@@ -123,16 +126,18 @@ const secretPatterns = [
 ];
 const textExtensions = new Set(['', '.cjs', '.css', '.html', '.js', '.json', '.md', '.mjs', '.nsi', '.nsh', '.rs', '.toml', '.txt', '.yaml', '.yml']);
 const extensionOf = file => file.includes('.') ? file.slice(file.lastIndexOf('.')).toLowerCase() : '';
-for (const file of trackedFiles.filter(file => textExtensions.has(extensionOf(file)))) {
+for (const file of sourceFiles.filter(file => textExtensions.has(extensionOf(file)))) {
   const contents = readFileSync(resolve(repositoryRoot, file), 'utf8');
-  check(!secretPatterns.some(pattern => pattern.test(contents)), `Possible credential material found in tracked file: ${file}`);
+  check(!secretPatterns.some(pattern => pattern.test(contents)), `Possible credential material found in source file: ${file}`);
 }
 
-const nativeSource = read('toolknit-desktop/src-tauri/src/lib.rs');
+const nativeSource = sourceFiles
+  .filter(file => /^toolknit-desktop\/src-tauri\/src\/(?:native_runtime|platform)\/.*\.rs$/.test(file))
+  .map(read).join('\n');
 for (const required of [
   'fn validate_external_url',
-  'url.len() > 2_048',
-  'url.chars().any(char::is_control)',
+  'value.len() > 2_048',
+  'value.chars().any(char::is_control)',
   'parsed.username().is_empty()',
   'parsed.password().is_some()',
   'fn allow_webview_navigation',
@@ -156,12 +161,14 @@ check(cleanupSource.includes('fn normalize_system_drive'), 'SystemDrive must pas
 check(cleanupSource.includes('bytes.len() == 2'), 'SystemDrive must only accept a drive letter and colon');
 
 const mainSource = `${read('toolknit-desktop/src/main.js')}\n${read('toolknit-desktop/src/application-runtime.js')}`;
+const externalLinksSource = read('toolknit-desktop/src/app/external-links-runtime.js');
+const keyStoreSource = read('toolknit-desktop/src/app/ai-key-store.js');
 const i18nSource = read('toolknit-desktop/src/i18n.js');
-check(mainSource.includes("window.open(parsedUrl.href, '_blank', 'noopener,noreferrer')"), 'Browser external links must isolate the opener');
-check(!mainSource.includes("window.open(url, '_blank')"), 'Tauri external-link failures must not bypass native validation');
+check(externalLinksSource.includes("windowRef?.open?.(parsedUrl.href, '_blank', 'noopener,noreferrer')"), 'Browser external links must isolate the opener');
+check(!externalLinksSource.includes("window.open(url, '_blank')"), 'Tauri external-link failures must not bypass native validation');
 check(nativeSource.includes('.devtools(false)'), 'Dynamically created WebViews must explicitly disable DevTools');
 check(nativeSource.includes('not(debug_assertions)') && nativeSource.includes('fn append_picker_debug(_line: &str) {}'), 'Release builds must disable the screen-picker debug file');
-check(/#\[cfg\(all\(target_os = "windows", debug_assertions\)\)\]\s*fn append_hardware_debug/.test(nativeSource), 'Hardware debug logging must be debug-only');
+check(/#\[cfg\(all\(target_os = "windows", debug_assertions\)\)\]\s*pub\(super\) fn append_hardware_debug/.test(nativeSource), 'Hardware debug logging must be debug-only');
 check(nativeSource.includes('fn append_hardware_debug(_line: &str) {}'), 'Release builds must disable the hardware debug file');
 check(!nativeSource.includes('Custom background video converted: source='), 'Custom background logs must not include user paths');
 check(nativeSource.includes('CUSTOM_BACKGROUND_SERVER_TOKEN'), 'The local background media server must use a per-process access token');
@@ -169,8 +176,8 @@ check(nativeSource.includes('request_token != access_token'), 'The local backgro
 check(nativeSource.includes('/custom-background/{access_token}/{filename}'), 'Background media URLs must carry the local access token');
 check(!mainSource.includes("localStorage.setItem('ai_api_key'"), 'AI API keys must not be written to localStorage');
 check(!mainSource.includes("localStorage.setItem('deepseek_api_key'"), 'Legacy AI API keys must not be written to localStorage');
-check(mainSource.includes("invoke('store_ai_api_key'"), 'AI API keys must use native protected storage');
-check(mainSource.includes('clearLegacyAiApiKeys();'), 'Protected-key migration must remove legacy plaintext storage');
+check(keyStoreSource.includes("invoke('store_ai_api_key'"), 'AI API keys must use native protected storage');
+check(keyStoreSource.includes('clearLegacy();'), 'Protected-key migration must remove legacy plaintext storage');
 check(!i18nSource.includes("querySelectorAll('[data-i18n-html]')"), 'Translations must not expose a generic innerHTML injection path');
 const aiProviderSource = read('toolknit-desktop/src/ai-provider-core.js');
 check(aiProviderSource.includes('async function readResponseTextLimited'), 'AI HTTPS responses must be read through a streaming size limit');
@@ -180,7 +187,7 @@ check(aiProviderSource.includes('await reader.cancel()'), 'Oversized AI HTTPS st
 const updateServiceSource = read('toolknit-desktop/src/update-service.js');
 check(updateServiceSource.includes('readResponseTextLimited(response, MAX_UPDATE_API_BYTES)'), 'Update API responses must have a streaming size limit');
 check(updateServiceSource.includes('readResponseTextLimited(response, MAX_UPDATE_NOTES_BYTES)'), 'Update note responses must have a streaming size limit');
-check(mainSource.includes('readResponseTextLimited(response, GITHUB_RESPONSE_MAX_BYTES)'), 'Homepage GitHub responses must have a streaming size limit');
+check(externalLinksSource.includes('readResponseTextLimited(response, GITHUB_RESPONSE_MAX_BYTES)'), 'Homepage GitHub responses must have a streaming size limit');
 const boundedResponseSource = read('toolknit-desktop/src/core/bounded-response.js');
 check(boundedResponseSource.includes('await reader.cancel()'), 'Oversized remote JSON streams must be cancelled immediately');
 
@@ -210,7 +217,7 @@ for (const required of [
 check(markdownControllerSource.includes("from '../../platform/tauri-runtime.js'"), 'Markdown must use the centralized Tauri platform boundary');
 check(!markdownControllerSource.includes("from '@tauri-apps/"), 'Markdown must not import Tauri APIs directly');
 check(markdownControllerSource.includes('isOpenSession(owner)'), 'Markdown async work must verify its owning open session');
-check(markdownControllerSource.includes('return { open, close, dispose }'), 'Markdown must expose the complete tool lifecycle contract');
+check(markdownControllerSource.includes('return { open, close, dispose, importMarkdown }'), 'Markdown must expose the complete tool lifecycle and import contract');
 const markdownCoreSource = read('toolknit-desktop/src/features/markdown-editor/core.js');
 check(markdownCoreSource.includes("default-src 'none'"), 'Standalone Markdown exports must block network access by default');
 check(markdownCoreSource.includes('img-src data:'), 'Standalone Markdown exports must allow embedded images only');

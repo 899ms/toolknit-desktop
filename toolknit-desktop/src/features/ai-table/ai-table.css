@@ -65,7 +65,7 @@
   min-width: 0;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(360px, 0.82fr) minmax(520px, 1.18fr);
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
   grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
   gap: 16px;
@@ -105,6 +105,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .ai-table-v2-card-head h2 {
@@ -206,6 +207,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
   color: rgba(255, 255, 255, 0.38);
   font-size: 11px;
   line-height: 1.3;
@@ -389,7 +391,7 @@
 .ai-table-preview-scroll {
   min-width: 0;
   min-height: 0;
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 18px 4px 18px 0;
   scrollbar-width: thin;
@@ -407,6 +409,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  flex-wrap: wrap;
   margin-bottom: 16px;
   padding: 14px 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -437,7 +440,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .ai-table-preview-stats {
@@ -454,6 +458,7 @@
   text-align: left;
   cursor: pointer;
   outline: none;
+  overflow-wrap: anywhere;
   letter-spacing: -0.04em;
 }
 .ai-table-title[contenteditable="true"] {
@@ -463,9 +468,9 @@
 }
 
 .ai-table-wrap {
-  width: max-content;
-  min-width: 100%;
-  max-width: none;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   margin-bottom: 24px;
   overflow-x: auto;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -611,8 +616,8 @@
 }
 
 .ai-table-chart-wrap {
-  width: max-content;
-  min-width: 100%;
+  width: 100%;
+  min-width: 0;
   margin-bottom: 24px;
   background:
     radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.08), transparent 36%),
@@ -626,9 +631,11 @@
   font-weight: 900;
   color: rgba(255, 255, 255, 0.9);
   margin-bottom: 12px;
+  overflow-wrap: anywhere;
   letter-spacing: -0.02em;
 }
 .ai-table-chart-holder {
+  min-width: 0;
   background: #ffffff;
   border-radius: 14px;
   padding: 14px;
@@ -735,7 +742,7 @@
   }
 
   .ai-table-v2-workspace {
-    grid-template-columns: minmax(330px, 0.86fr) minmax(430px, 1.14fr);
+    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
     padding: 20px;
   }
 
@@ -751,7 +758,7 @@
   }
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1180px) {
   .ai-table-v2-workspace {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(410px, 0.92fr) minmax(430px, 1.08fr);
@@ -766,6 +773,16 @@
   .ai-table-v2-card-head p {
     max-width: none;
     text-align: left;
+  }
+}
+
+@media (max-width: 900px) {
+  .ai-table-v2 .ai-table-v2-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ai-table-v2 .ai-table-v2-poster {
+    display: none;
   }
 }
 

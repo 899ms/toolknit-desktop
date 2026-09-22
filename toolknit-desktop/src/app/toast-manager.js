@@ -1,11 +1,34 @@
 const MIN_DURATION = 5200;
 const LONG_DURATION = 7200;
 const MAX_VISIBLE = 3;
+const TOAST_KINDS = new Set(['info', 'success', 'warning', 'error']);
+
+function kindFor(message, requestedKind) {
+  const requested = String(requestedKind || '').trim().toLowerCase();
+  if (TOAST_KINDS.has(requested)) return requested;
+  const text = String(message || '');
+  if (/(失败|错误|无法|无效|不像|不支持|阻止|failed|invalid|not valid|not a valid|must be (?:a )?valid|could not|error|cannot|unable|blocked)/i.test(text)) return 'error';
+  if (/(警告|注意|风险|warning|caution|risk)/i.test(text)) return 'warning';
+  if (/(成功|完成|已保存|已复制|已更新|success|completed|saved|copied|updated)/i.test(text)) return 'success';
+  return 'info';
+}
+
+function appendIcon(parent, createIconElement, name, fallback = '') {
+  try {
+    const icon = createIconElement(name);
+    if (icon) {
+      parent.appendChild(icon);
+      return;
+    }
+  } catch (_) {}
+  if (fallback) parent.textContent = fallback;
+}
 
 /** Owns global transient feedback and its timers. */
 export function createToastManager({
   root = document,
   getLanguage = () => 'en',
+  createIconElement = () => null,
   setTimeoutFn = globalThis.setTimeout,
   clearTimeoutFn = globalThis.clearTimeout
 } = {}) {
@@ -60,11 +83,17 @@ export function createToastManager({
     }
     while (active.length >= MAX_VISIBLE) remove(active[0], true);
 
+    const kind = kindFor(text, options.kind);
     const toast = root.createElement('div');
     toast.className = 'app-toast';
+    toast.classList.add(`app-toast--${kind}`);
     if (options.className) toast.classList.add(...String(options.className).split(/\s+/).filter(Boolean));
-    toast.setAttribute('role', 'status');
-    toast.setAttribute('aria-live', 'polite');
+    toast.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+    toast.setAttribute('aria-live', kind === 'error' ? 'assertive' : 'polite');
+    const iconEl = root.createElement('span');
+    iconEl.className = 'app-toast-icon';
+    iconEl.setAttribute('aria-hidden', 'true');
+    appendIcon(iconEl, createIconElement, kind, kind === 'error' || kind === 'warning' ? '!' : 'i');
     const messageEl = root.createElement('div');
     messageEl.className = 'app-toast-message';
     messageEl.textContent = text;
@@ -72,9 +101,9 @@ export function createToastManager({
     closeBtn.className = 'app-toast-close';
     closeBtn.type = 'button';
     closeBtn.setAttribute('aria-label', getLanguage() === 'zh' ? '关闭提示' : 'Dismiss notification');
-    closeBtn.textContent = '×';
+    appendIcon(closeBtn, createIconElement, 'close', '×');
     if (options.dismissible === false) closeBtn.style.display = 'none';
-    toast.append(messageEl, closeBtn);
+    toast.append(iconEl, messageEl, closeBtn);
     container.appendChild(toast);
     const record = { el: toast, messageEl, message: text, timer: null, startedAt: Date.now(), remaining: durationFor(text, options.duration), removed: false };
     active.push(record);

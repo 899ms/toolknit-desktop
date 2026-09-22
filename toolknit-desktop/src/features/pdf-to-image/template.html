@@ -10,7 +10,7 @@
             <i data-lucide="arrow-left"></i>
             <span data-i18n="settings.back">返回首页</span>
           </button>
-          <span class="pdf-merge-v2-top-tag pdf-to-image-v2-top-tag">PDF TO IMAGE · TOOL PAGE 2.3</span>
+          <span class="pdf-merge-v2-top-tag pdf-to-image-v2-top-tag">PDF TO IMAGE · TOOL PAGE 3.0</span>
         </div>
         <div class="home-v2-top-actions pdf-merge-v2-top-actions">
           <button class="home-v2-nav-link" type="button" data-home-link="website">
@@ -123,7 +123,7 @@
       </div>
     </div>
 
-<section class="pdf-page-workspace pdf-to-image-workspace" id="pdfToImageWorkspace" role="dialog" aria-modal="true" aria-labelledby="pdfToImageWorkspaceTitle" aria-hidden="true" inert>
+<section class="pdf-workbench pdf-editor-v2 pdf-to-image-workspace" id="pdfToImageWorkspace" role="dialog" aria-modal="true" aria-labelledby="pdfToImageWorkspaceTitle" aria-hidden="true" inert>
       <header class="pdf-page-workspace-header">
         <div>
           <p class="pdf-merge-selection-eyebrow" id="pdfToImageWorkspaceStatus"></p>
@@ -140,7 +140,11 @@
       <div class="pdf-merge-page-stage" id="pdfToImagePageStage">
         <div class="pdf-merge-page-strip" id="pdfToImagePageStrip" aria-live="polite"></div>
       </div>
-      <footer class="pdf-page-workspace-footer pdf-to-image-workspace-footer">
+      <footer class="pdf-page-workspace-footer pdf-to-image-workspace-footer" data-to-image-actions>
+        <div class="pdf-to-image-section-heading">
+          <strong data-i18n="home.pdfToImageTool.exportSettings">导出设置</strong>
+          <span data-i18n="home.pdfToImageTool.exportSettingsHint">选择格式和清晰度后导出当前选中的页面</span>
+        </div>
         <div class="pdf-to-image-footer-options">
           <div class="pdf-to-image-option-group">
             <span class="pdf-to-image-option-label" data-i18n="home.pdfToImageTool.outputFormat">图像格式</span>
@@ -160,13 +164,26 @@
           </div>
           <div class="pdf-to-image-limit-note">
             <i data-lucide="layers-3" aria-hidden="true"></i>
-            <span data-i18n="home.pdfToImageTool.longImageLimit">长图最多选择 20 页，每 5 页自动生成一张</span>
+            <span data-i18n="home.pdfToImageTool.longImageLimit">长图和横向长图需选择 2～5 页；田型拼图仅支持 4 页或 9 页</span>
           </div>
         </div>
         <div class="pdf-to-image-footer-actions-row">
-          <div class="pdf-page-workspace-status" id="pdfToImageSelectionMeta"></div>
-          <div class="pdf-page-workspace-footer-actions">
-            <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary" id="pdfToImageSelectAllBtn" data-i18n="home.pdfToImageTool.clearSelection">取消全选</button>
+          <div class="pdf-to-image-selection-actions">
+            <div class="pdf-to-image-actions-heading">
+              <strong data-i18n="home.pdfToImageTool.selectionActions">选择操作</strong>
+              <span data-i18n="home.pdfToImageTool.selectionActionsHint">统一选择或取消选择页面</span>
+            </div>
+            <button class="pdf-merge-selection-btn pdf-to-image-selection-button" id="pdfToImageSelectAllBtn" type="button">
+              <i data-lucide="check-check" aria-hidden="true"></i>
+              <span data-i18n="home.pdfToImageTool.clearSelection">取消全选</span>
+            </button>
+          </div>
+          <div class="pdf-to-image-export-actions">
+            <div class="pdf-to-image-actions-heading">
+              <strong data-i18n="home.pdfToImageTool.exportActions">导出操作</strong>
+              <span class="pdf-page-workspace-status" id="pdfToImageSelectionMeta"></span>
+            </div>
+            <div class="pdf-page-workspace-footer-actions">
             <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary pdf-to-image-export-button" id="pdfToImageExportImagesBtn">
               <i data-lucide="images" aria-hidden="true"></i>
               <span data-i18n="home.pdfToImageTool.exportImages">导出图像</span>
@@ -175,6 +192,15 @@
               <i data-lucide="panels-top-left" aria-hidden="true"></i>
               <span data-i18n="home.pdfToImageTool.exportLongImage">导出长图</span>
             </button>
+            <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary pdf-to-image-export-button pdf-to-image-conditional-export" id="pdfToImageExportHorizontalBtn" aria-hidden="false" aria-disabled="true" disabled>
+              <i data-lucide="arrow-right-to-line" aria-hidden="true"></i>
+              <span data-i18n="home.pdfToImageTool.exportHorizontalImage">导出横向长图</span>
+            </button>
+            <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary pdf-to-image-export-button pdf-to-image-conditional-export" id="pdfToImageExportGridBtn" aria-hidden="false" aria-disabled="true" disabled>
+              <i data-lucide="grid-2x2" aria-hidden="true"></i>
+              <span data-i18n="home.pdfToImageTool.exportGridImage">导出田型拼图</span>
+            </button>
+            </div>
           </div>
         </div>
       </footer>

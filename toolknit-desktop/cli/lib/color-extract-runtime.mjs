@@ -20,7 +20,7 @@ export async function extractColorPalette(args, options = {}) {
   report(options, 0, 'Validating image input.');
   let meta; try { meta = await lstat(requested); } catch { throw new ToolKnitError('INPUT_NOT_FOUND', `Image input does not exist: ${requested}`); }
   if (meta.isSymbolicLink() || !meta.isFile() || meta.size < 1 || !EXTENSIONS.has(path.extname(requested).toLowerCase())) throw new ToolKnitError('INPUT_INVALID', `Image input must be a supported regular PNG, JPEG, or WebP file: ${requested}`);
-  if (meta.size > COLOR_EXTRACTOR_LIMITS.maxBytes) throw new ToolKnitError('INPUT_TOO_LARGE', 'Images for palette extraction must be 20MB or smaller.');
+  if (meta.size > COLOR_EXTRACTOR_LIMITS.maxBytes) throw new ToolKnitError('INPUT_TOO_LARGE', `Images for palette extraction must be ${Math.floor(COLOR_EXTRACTOR_LIMITS.maxBytes / 1024 / 1024)}MB or smaller.`);
   const count = args.count === undefined ? 5 : Number(args.count);
   if (!Number.isInteger(count) || count < 2 || count > 9) throw new ToolKnitError('INVALID_ARGUMENT', 'count must be an integer from 2 to 9.');
   const bytes = await readFile(requested); let dimensions;

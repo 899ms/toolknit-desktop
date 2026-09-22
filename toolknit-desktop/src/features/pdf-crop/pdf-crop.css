@@ -212,7 +212,7 @@
   transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
 }
 .pdf-crop-primary:hover:not(:disabled), .pdf-crop-export:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,255,255,.14); }
-.pdf-crop-primary:disabled, .pdf-crop-export:disabled { opacity: .35; cursor: not-allowed; }
+.pdf-crop-primary:disabled { opacity: .35; cursor: not-allowed; }
 .pdf-crop-primary svg, .pdf-crop-export svg { width: 16px; height: 16px; }
 
 .pdf-crop-canvas-wrap {
@@ -237,6 +237,9 @@
 .pdf-crop-interaction-layer.is-drawing,
 .pdf-crop-interaction-layer.is-reframing,
 .pdf-crop-interaction-layer.is-unset { cursor: crosshair; }
+.pdf-crop-interaction-layer.is-interacting .pdf-crop-selection {
+  will-change: left, top, width, height;
+}
 
 .pdf-crop-selection {
   position: absolute;
@@ -360,7 +363,9 @@
 
 .pdf-crop-page-thumb {
   position: relative;
-  min-width: 106px;
+  flex: 0 0 132px;
+  width: 132px;
+  min-width: 132px;
   height: 78px;
   display: grid;
   grid-template-columns: 54px minmax(0,1fr);
@@ -372,6 +377,8 @@
   color: var(--pc-muted);
   background: rgba(255,255,255,.025);
   cursor: pointer;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .pdf-crop-page-thumb:hover, .pdf-crop-page-thumb.is-current { border-color: rgba(255,255,255,.72); background: rgba(255,255,255,.08); }
 .pdf-crop-page-thumb.is-current { box-shadow: inset 3px 0 0 #ffffff; }
@@ -379,8 +386,10 @@
 .pdf-crop-page-thumb canvas { display: block; max-width: 52px; max-height: 62px; background: #ffffff; }
 .pdf-crop-page-thumb-box { position: absolute; border: 1px solid #ffffff; background: rgba(255,255,255,.08); box-shadow: 0 0 0 999px rgba(0,0,0,.42); pointer-events: none; }
 .pdf-crop-page-thumb:not(.has-crop) .pdf-crop-page-thumb-box { display: none; }
-.pdf-crop-page-thumb-copy { min-width: 44px; display: flex; flex-direction: column; gap: 5px; }
-.pdf-crop-page-thumb-copy b { color: #ffffff; font-size: 13px; white-space: nowrap; }
+.pdf-crop-page-thumb-copy { min-width: 0; display: flex; flex-direction: column; gap: 5px; overflow: hidden; }
+.pdf-crop-page-thumb-copy b,
+.pdf-crop-page-thumb-copy small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pdf-crop-page-thumb-copy b { color: #ffffff; font-size: 13px; }
 .pdf-crop-page-thumb-copy small { color: var(--pc-faint); font-size: 10px; line-height: 1.3; }
 .pdf-crop-page-thumb.has-crop .pdf-crop-page-thumb-copy small { color: rgba(255,255,255,.82); }
 
@@ -426,8 +435,8 @@
 .pdf-crop-scope svg, .pdf-crop-output-modes svg { width: 19px; height: 19px; }
 .pdf-crop-scope b, .pdf-crop-output-modes b { color: #fff; font-size: 12px; line-height: 1.35; }
 .pdf-crop-scope small, .pdf-crop-output-modes small { color: inherit; font-size: 10px; line-height: 1.4; }
-.pdf-crop-scope button:hover, .pdf-crop-scope button.is-active, .pdf-crop-output-modes input:checked + span { color: #111; border-color: #fff; background: #fff; }
-.pdf-crop-scope button:hover b, .pdf-crop-scope button.is-active b, .pdf-crop-output-modes input:checked + span b { color: #111; }
+.pdf-crop-scope button:hover:not(:disabled), .pdf-crop-scope button.is-active:not(:disabled), .pdf-crop-output-modes input:checked:not(:disabled) + span { color: #111; border-color: #fff; background: #fff; }
+.pdf-crop-scope button:hover:not(:disabled) b, .pdf-crop-scope button.is-active:not(:disabled) b, .pdf-crop-output-modes input:checked:not(:disabled) + span b { color: #111; }
 .pdf-crop-scope button:disabled { opacity: .35; cursor: not-allowed; }
 .pdf-crop-scope-note { margin: 12px 0 0; padding: 10px 11px; border-left: 2px solid rgba(255,255,255,.76); color: var(--pc-muted); background: rgba(255,255,255,.035); font-size: 11px; line-height: 1.5; }
 
@@ -470,7 +479,41 @@
 .pdf-crop-export-bar { padding: 12px 14px 14px; border-top: 1px solid var(--pc-line); background: var(--pc-panel-strong); }
 .pdf-crop-export-bar > span { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: var(--pc-faint); font-size: 10px; line-height: 1.4; }
 .pdf-crop-export-bar > span svg { width: 13px; height: 13px; }
-.pdf-crop-export { width: 100%; }
+.pdf-crop-export-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.pdf-crop-export {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding-inline: 10px;
+  line-height: 1.25;
+}
+.pdf-crop-export span { min-width: 0; text-align: center; }
+.pdf-crop-export-secondary {
+  border-color: rgba(255,255,255,.24);
+  color: rgba(255,255,255,.9);
+  background: rgba(255,255,255,.065);
+}
+.pdf-crop-export-secondary:hover:not(:disabled) {
+  border-color: rgba(255,255,255,.52);
+  color: #ffffff;
+  background: rgba(255,255,255,.12);
+  box-shadow: none;
+}
+.pdf-crop-v2 .pdf-crop-layout :is(button, input:not([type="radio"]), select):disabled,
+.pdf-crop-v2 .pdf-crop-output-modes input:disabled + span {
+  border-color: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.34);
+  background: rgba(255,255,255,.055);
+  box-shadow: none;
+  opacity: 1;
+  transform: none;
+  cursor: not-allowed;
+}
+
+.pdf-crop-v2 .pdf-crop-layout button:disabled :is(b, small, span, svg),
+.pdf-crop-v2 .pdf-crop-output-modes input:disabled + span :is(b, small, svg) {
+  color: inherit;
+}
 
 .pdf-crop-process-mask .pdf-crop-process-copy { width: min(430px,calc(100vw - 64px)); display: flex; align-items: center; justify-content: space-between; color: #fff; }
 .pdf-crop-process-copy span, .pdf-crop-process-copy strong { font-size: 13px; }
@@ -512,7 +555,9 @@
   .pdf-crop-filmstrip-head > span:last-child { display: none; }
   .pdf-crop-filmstrip { gap: 6px; padding: 0 8px 6px; }
   .pdf-crop-page-thumb {
-    min-width: 88px;
+    flex-basis: 110px;
+    width: 110px;
+    min-width: 110px;
     height: 58px;
     grid-template-columns: 40px minmax(0, 1fr);
     gap: 6px;
@@ -520,7 +565,7 @@
   }
   .pdf-crop-page-thumb-visual { width: 40px; height: 46px; }
   .pdf-crop-page-thumb canvas { max-width: 38px; max-height: 44px; }
-  .pdf-crop-page-thumb-copy { min-width: 36px; gap: 3px; }
+  .pdf-crop-page-thumb-copy { min-width: 0; gap: 3px; }
   .pdf-crop-page-thumb-copy b { font-size: 12px; }
   .pdf-crop-page-thumb-copy small { font-size: 9px; }
   .pdf-crop-canvas-stage { padding: 10px; }

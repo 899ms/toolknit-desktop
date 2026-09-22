@@ -58,6 +58,17 @@ export function createAiTableEditor({
 
   const isOpen = () => Boolean(session && !session.disposed);
 
+  // Finish editing before the document-level Escape guard blurs and rebuilds
+  // the cell, which would remove its own key listener mid-dispatch.
+  lifecycle.event(window, 'keydown', event => {
+    if (event.key !== 'Escape' || !isOpen()) return;
+    const cell = event.target?.closest?.('[contenteditable="true"]');
+    if (!cell || !scroll?.contains(cell)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    cell.blur();
+  }, true);
+
   function updateUndoButton() {
     if (!undoButton) return;
     const canUndo = undoStack.length > 0;
@@ -213,9 +224,6 @@ export function createAiTableEditor({
         selectEditableContents(cell);
       });
       renderScope.event(cell, 'blur', () => commitCell(cell, rowIndex, columnIndex, column));
-      renderScope.event(cell, 'keydown', event => {
-        if (event.key === 'Escape') cell.blur();
-      });
       tableRow.appendChild(cell);
     });
 

@@ -1,3 +1,12 @@
+pub(crate) fn image_stitch_grid_size(mode: &str) -> Option<usize> {
+    match mode {
+        "grid-2" => Some(2),
+        "grid-3" => Some(3),
+        "grid-4" => Some(4),
+        "grid-5" => Some(5),
+        _ => None,
+    }
+}
 
 pub(crate) fn calculate_image_stitch_layout(
     dimensions: &[(u32, u32)],
@@ -10,12 +19,18 @@ pub(crate) fn calculate_image_stitch_layout(
         || dimensions.len() > MAX_IMAGE_BATCH_FILES
         || spacing_px > 500
         || !(10..=100).contains(&scale_percent)
+        || dimensions.iter().any(|&(w, h)| w == 0 || h == 0)
     {
         return Err("image-stitch:invalid-settings".to_string());
+    }
+    let grid = image_stitch_grid_size(mode);
+    if grid.is_some_and(|size| dimensions.len() != size * size) {
+        return Err("image-stitch:invalid-grid-count".to_string());
     }
     let vertical = match mode {
         "vertical" => true,
         "horizontal" => false,
+        _ if grid.is_some() => true,
         _ => return Err("image-stitch:invalid-settings".to_string()),
     };
     let axis = |dimensions: &(u32, u32)| if vertical { dimensions.0 } else { dimensions.1 };
@@ -39,17 +54,25 @@ pub(crate) fn calculate_image_stitch_layout(
                 let target_height = ((u64::from(*height) * fixed + u64::from(*width) / 2)
                     / u64::from(*width))
                 .max(1);
-                (fixed as u32, target_height as u32)
+                if fixed > 65_535 || target_height > 65_535 {
+                    return Err("image-stitch:output-too-large".to_string());
+                }
+                Ok((fixed as u32, target_height as u32))
             } else {
                 let target_width = ((u64::from(*width) * fixed + u64::from(*height) / 2)
                     / u64::from(*height))
                 .max(1);
-                (target_width as u32, fixed as u32)
+                if fixed > 65_535 || target_width > 65_535 {
+                    return Err("image-stitch:output-too-large".to_string());
+                }
+                Ok((target_width as u32, fixed as u32))
             }
         })
-        .collect::<Vec<_>>();
+        .collect::<Result<Vec<_>, String>>()?;
     let gap = u64::from(spacing_px) * (sizes.len() as u64 - 1);
-    let width = if vertical {
+    let width = if let Some(side) = grid {
+        fixed * side as u64 + u64::from(spacing_px) * (side as u64 - 1)
+    } else if vertical {
         fixed
     } else {
         sizes
@@ -57,7 +80,10 @@ pub(crate) fn calculate_image_stitch_layout(
             .try_fold(gap, |sum, item| sum.checked_add(u64::from(item.0)))
             .ok_or_else(|| "image-stitch:output-too-large".to_string())?
     };
-    let height = if vertical {
+    let height = if let Some(side) = grid {
+        u64::from(sizes.iter().map(|size| size.1).max().unwrap()) * side as u64
+            + u64::from(spacing_px) * (side as u64 - 1)
+    } else if vertical {
         sizes
             .iter()
             .try_fold(gap, |sum, item| sum.checked_add(u64::from(item.1)))
@@ -519,6 +545,9 @@ where
 
     let mut canvas = image::RgbaImage::from_pixel(layout.width, layout.height, canvas_background);
     let vertical = options.mode == "vertical";
+    let grid = image_stitch_grid_size(&options.mode);
+    let cell_width = layout.sizes[0].0;
+    let cell_height = layout.sizes.iter().map(|size| size.1).max().unwrap();
     let mut cursor = 0u32;
     for (index, (input, (width, height))) in inputs.iter().zip(layout.sizes.iter()).enumerate() {
         if CANCEL_FLAG.load(Ordering::SeqCst) {
@@ -527,11 +556,15 @@ where
         let resized = read_oriented_image(input)?
             .resize_exact(*width, *height, image::imageops::FilterType::Lanczos3)
             .to_rgba8();
+        let (x, y) = if let Some(side) = grid {
+            ((index % side) as u32 * (cell_width + options.spacing_px),
+             (index / side) as u32 * (cell_height + options.spacing_px) + (cell_height - height) / 2)
+        } else if vertical { (0, cursor) } else { (cursor, 0) };
         image::imageops::overlay(
             &mut canvas,
             &resized,
-            if vertical { 0 } else { i64::from(cursor) },
-            if vertical { i64::from(cursor) } else { 0 },
+            i64::from(x),
+            i64::from(y),
         );
         cursor = cursor
             .saturating_add(if vertical { *height } else { *width })
@@ -746,6 +779,8 @@ pub(crate) struct PdfToImageExportResult {
 pub(crate) enum PdfToImageExportMode {
     Pages,
     Long,
+    Horizontal,
+    Grid,
 }
 
 #[derive(Clone, Debug)]

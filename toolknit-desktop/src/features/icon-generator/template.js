@@ -5,7 +5,7 @@ export function iconGeneratorPageTemplate() {
     <header class="pdf-merge-v2-topbar icon-gen-v2-topbar">
       <div class="pdf-merge-v2-topbar-left icon-gen-v2-topbar-left">
         <button class="settings-v2-back settings-back pdf-merge-v2-back" id="iconGenBack" type="button" data-i18n-title="settings.back" title="返回首页"><i data-lucide="arrow-left"></i><span data-i18n="settings.back">返回首页</span></button>
-        <span class="pdf-merge-v2-top-tag icon-gen-v2-top-tag">IMAGE TOOLS · TOOL PAGE 2.3</span>
+        <span class="pdf-merge-v2-top-tag icon-gen-v2-top-tag">IMAGE TOOLS · TOOL PAGE 3.0</span>
       </div>
       <div class="home-v2-top-actions pdf-merge-v2-top-actions">
         <button class="home-v2-nav-link" type="button" data-home-link="website"><i data-lucide="globe-2"></i><span>网页版本</span></button>
@@ -59,6 +59,20 @@ export function iconGeneratorPageTemplate() {
 export function iconGeneratorPortalTemplate() {
   return `<div data-icon-generator-portal>
     <div class="audio-convert-process-mask" id="iconGenProcessMask" aria-hidden="true"><div class="tk-mascot-lg" aria-hidden="true"></div><div class="audio-convert-process-bar"><div class="audio-convert-process-bar-fill" id="iconGenProcessBarFill"></div></div><div class="audio-convert-process-text" id="iconGenProcessText" data-i18n="home.iconGen.processing">正在生成...</div><button class="audio-convert-cancel-btn" id="iconGenCancelBtn" data-i18n="home.iconGen.cancel">取消</button></div>
-    <div class="audio-convert-success-overlay" id="iconGenSuccessOverlay" aria-hidden="true"><div class="audio-convert-success-dialog"><div class="audio-convert-success-icon"><i data-lucide="check"></i></div><h3 class="audio-convert-success-title" data-i18n="home.iconGen.successTitle">生成完成</h3><div class="audio-convert-success-meta" id="iconGenSuccessMeta"></div><div class="audio-convert-success-detail"><div class="audio-convert-success-row"><span class="audio-convert-success-key" data-i18n="home.iconGen.successCount">生成图标</span><span class="audio-convert-success-value" id="iconGenSuccessCount"></span></div></div><div class="audio-convert-success-actions"><button class="audio-convert-success-btn audio-convert-success-btn-secondary" id="iconGenOpenFolder" data-i18n="home.iconGen.openFolder">打开文件夹</button><button class="audio-convert-success-btn audio-convert-success-btn-primary" id="iconGenSuccessOk" data-i18n="home.iconGen.ok">确定</button></div></div></div>
+    <div class="audio-convert-success-overlay" id="iconGenSuccessOverlay" aria-hidden="true">
+      <div class="audio-convert-success-dialog">
+        <div class="audio-convert-success-icon"><i data-lucide="check"></i></div>
+        <h3 class="audio-convert-success-title" data-i18n="home.iconGen.successTitle">生成完成</h3>
+        <div class="audio-convert-success-meta" id="iconGenSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row"><span class="audio-convert-success-key" data-i18n="home.iconGen.successCount">生成图标</span><span class="audio-convert-success-value" id="iconGenSuccessCount"></span></div>
+          <div class="audio-convert-success-row"><span class="audio-convert-success-key" data-i18n="home.iconGen.successPath">保存路径</span><span class="audio-convert-success-value" id="iconGenSuccessPath"></span></div>
+        </div>
+        <div class="audio-convert-success-actions">
+          <button class="audio-convert-success-btn audio-convert-success-btn-secondary" id="iconGenOpenFolder" type="button" data-i18n="home.iconGen.openFolder">打开文件夹</button>
+          <button class="audio-convert-success-btn audio-convert-success-btn-primary" id="iconGenSuccessOk" type="button" data-i18n="home.iconGen.ok">确定</button>
+        </div>
+      </div>
+    </div>
   </div>`;
 }

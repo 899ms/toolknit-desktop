@@ -10,7 +10,7 @@
             <i data-lucide="arrow-left"></i>
             <span data-i18n="settings.back">返回首页</span>
           </button>
-          <span class="pdf-merge-v2-top-tag">PDF CROP · TOOL PAGE 2.3</span>
+          <span class="pdf-merge-v2-top-tag">PDF CROP · TOOL PAGE 3.0</span>
         </div>
         <div class="home-v2-top-actions pdf-merge-v2-top-actions">
           <button class="home-v2-nav-link" type="button" data-home-link="website"><i data-lucide="globe-2"></i><span>网页版本</span></button>
@@ -143,7 +143,10 @@
           </div>
           <div class="pdf-crop-export-bar">
             <span><i data-lucide="shield-check"></i><span data-i18n="home.pdfCrop.exportNote">矢量保留 · 本地导出 · 不修改源文件</span></span>
-            <button class="pdf-crop-export" id="pdfCropExport" type="button"><i data-lucide="download"></i><span data-i18n="home.pdfCrop.exportButton">导出裁剪后的 PDF</span></button>
+            <div class="pdf-crop-export-actions">
+              <button class="pdf-crop-export pdf-crop-export-secondary" id="pdfCropExportCurrent" type="button"><i data-lucide="file-down"></i><span data-i18n="home.pdfCrop.exportCurrentButton">导出当前预览页</span></button>
+              <button class="pdf-crop-export pdf-crop-export-primary" id="pdfCropExport" type="button"><i data-lucide="files"></i><span data-i18n="home.pdfCrop.exportAllButton">导出全部页</span></button>
+            </div>
           </div>
         </aside>
       </div>

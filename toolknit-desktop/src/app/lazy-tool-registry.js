@@ -1,5 +1,6 @@
 import { createLifecycleScope, normalizeToolInstance } from './tool-lifecycle.js';
 import { mountTrustedTemplate } from './trusted-template-runtime.js';
+import { moveFocusOutOfHiddenRegion } from '../shared/tool-page-shell.js';
 
 function validateSpec(toolId, spec) {
   if (!spec || typeof spec !== 'object') throw new TypeError(`Missing lazy tool spec for ${toolId}`);
@@ -31,11 +32,14 @@ export function createLazyToolRegistry({
   root = globalThis.document,
   view = root?.defaultView,
   createContext = () => ({}),
+  refreshIcons = null,
   beforeOpen = () => true,
-  onError = (error, toolId) => console.error(`Cannot open ${toolId}:`, error)
+  onError = (error, toolId) => console.error(`Cannot open ${toolId}:`, error),
+  pageTransition = null
 } = {}) {
   const specEntries = validateLazyToolSpecs(specs);
   const instances = new Map();
+  const instanceOverlays = new WeakMap();
   const pendingLoads = new Map();
   const bindings = createLifecycleScope({ onError: error => onError(error, 'lazy-tool-registry') });
   let activeInstance = null;
@@ -48,14 +52,44 @@ export function createLazyToolRegistry({
     try { onError(error, toolId); } catch { /* error reporting is best effort */ }
   }
 
-  async function closeActive({ invalidate = true } = {}) {
+  // Lucide scans the document at call time. Lazy templates are mounted after
+  // the application's initial scan, so keep the refresh at this shared
+  // boundary instead of requiring every feature initializer to remember it.
+  function refreshMountedIcons(context, toolId) {
+    const refresh = typeof context?.refreshIcons === 'function'
+      ? context.refreshIcons
+      : refreshIcons;
+    if (typeof refresh !== 'function') return;
+    try { refresh(); } catch (error) { report(error, toolId); }
+  }
+
+  async function closeActive({ invalidate = true, transition = true } = {}) {
+    if (transition && pageTransition?.run) {
+      return pageTransition.run(() => closeActive({ invalidate, transition: false }));
+    }
     if (invalidate) requestRevision += 1;
     const instance = activeInstance;
     const toolId = activeToolId;
-    activeInstance = null;
-    activeToolId = '';
     if (!instance) return;
-    try { await instance.close(); } catch (error) { report(error, toolId); }
+    // A tool may be closed by a navigation transition rather than its own
+    // back button. Clear any focused descendant before it changes
+    // aria-hidden/inert state so the transition remains accessibility-safe.
+    moveFocusOutOfHiddenRegion(instanceOverlays.get(instance));
+    try {
+      if (await instance.close() === false) return false;
+      if (activeInstance === instance) {
+        activeInstance = null;
+        activeToolId = '';
+      }
+    } catch (error) { report(error, toolId); }
+  }
+
+  function closeFromChrome(overlay) {
+    // Inner editors/dialogs keep their own Back action. Registered page roots
+    // close once, under the shared veil, preserving a feature's close veto.
+    if (!pageTransition?.run || !activeInstance || instanceOverlays.get(activeInstance) !== overlay) return false;
+    void closeActive().catch(error => report(error, activeToolId));
+    return true;
   }
 
   async function loadInstance(toolId, spec) {
@@ -67,14 +101,17 @@ export function createLazyToolRegistry({
     if (!pending) {
       pending = Promise.resolve().then(async () => {
         let overlay = root?.getElementById?.(spec.overlayId) || null;
+        let mountedTemplate = false;
         if (!overlay && spec.markup) {
           const templateModule = await spec.markup();
           if (disposed) return null;
           const markup = templateModule?.default ?? templateModule;
           mountTrustedTemplate(markup, { root, host: root?.body });
           overlay = root?.getElementById?.(spec.overlayId) || null;
+          mountedTemplate = true;
         }
         if (!overlay) throw new Error(`Missing overlay ${spec.overlayId}`);
+        if (mountedTemplate) refreshMountedIcons(null, toolId);
         const module = await spec.load();
         if (disposed) return null;
         const initializer = module?.[spec.init];
@@ -83,6 +120,11 @@ export function createLazyToolRegistry({
         if (disposed) return null;
         const created = normalizeToolInstance(initializer({ ...context, overlay }), toolId);
         instances.set(instanceKey, created);
+        instanceOverlays.set(created, overlay);
+        // Initializers may add or replace controls in the mounted overlay.
+        // Refresh once more after initialization so every lazy entry has the
+        // same icon guarantee, including tools without a feature-local call.
+        refreshMountedIcons(context, toolId);
         return created;
       }).finally(() => pendingLoads.delete(instanceKey));
       pendingLoads.set(instanceKey, pending);
@@ -100,11 +142,20 @@ export function createLazyToolRegistry({
       if (!ready || disposed || requestId !== requestRevision) return null;
       const instance = await loadInstance(toolId, spec);
       if (!instance || disposed || requestId !== requestRevision) return null;
-      if (activeInstance && activeInstance !== instance) await closeActive({ invalidate: false });
-      if (disposed || requestId !== requestRevision) return null;
-      activeInstance = instance;
-      activeToolId = toolId;
-      await instance.open(toolId);
+      const activate = async () => {
+        if (disposed || requestId !== requestRevision) return null;
+        if (activeInstance && activeInstance !== instance
+          && await closeActive({ invalidate: false, transition: false }) === false) return null;
+        if (disposed || requestId !== requestRevision) return null;
+        activeInstance = instance;
+        activeToolId = toolId;
+        await instance.open(toolId);
+        return instance;
+      };
+      const activated = pageTransition?.run
+        ? await pageTransition.run(activate)
+        : await activate();
+      if (activated !== instance) return null;
       if (disposed || requestId !== requestRevision) {
         if (activeInstance === instance) await closeActive();
         return null;
@@ -136,10 +187,12 @@ export function createLazyToolRegistry({
     bindings.event(root, 'keydown', event => {
       if (event.key !== 'Escape' || !activeInstance) return;
       const instance = activeInstance;
-      queueMicrotask(() => {
+      // Native event dispatch can flush microtasks between listeners. Defer
+      // fallback closing to the next task so feature-owned Escape runs first.
+      bindings.timeout(() => {
         if (event.defaultPrevented || disposed || activeInstance !== instance) return;
         void closeActive();
-      });
+      }, 0);
     });
     if (view?.addEventListener && view?.removeEventListener) {
       bindings.event(view, 'pagehide', () => { void dispose(); }, { once: true });
@@ -151,7 +204,7 @@ export function createLazyToolRegistry({
     if (disposed) return;
     disposed = true;
     requestRevision += 1;
-    await closeActive({ invalidate: false });
+    await closeActive({ invalidate: false, transition: false });
     bindings.dispose();
     const ownedInstances = [...instances.entries()];
     instances.clear();
@@ -164,6 +217,7 @@ export function createLazyToolRegistry({
   return {
     bind,
     closeActive,
+    closeFromChrome,
     dispose,
     open,
     get activeToolId() { return activeToolId; },

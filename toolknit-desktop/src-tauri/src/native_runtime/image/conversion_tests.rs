@@ -19,6 +19,185 @@ mod image_conversion_tests {
         directory
     }
 
+    #[test]
+    #[ignore = "Requires explicitly supplied local PNG samples; keeps outputs for inspection"]
+    fn image_compression_source_file_matrix() {
+        let _conversion_lock = test_conversion_lock();
+        CANCEL_FLAG.store(false, Ordering::SeqCst);
+        let paths: Vec<String> = serde_json::from_str(
+            &std::env::var("TOOLKNIT_IMAGE_COMPRESSION_INPUTS").expect("local input paths JSON"),
+        ).expect("valid local input paths JSON");
+        let directory = image_test_directory("compression-source-matrix");
+        for (index, path) in paths.iter().enumerate() {
+            let input = std::fs::read(path).unwrap();
+            let source = decode_oriented_image(std::path::Path::new(path)).unwrap();
+            for (quality, compression) in [
+                ("high", image::codecs::png::CompressionType::Fast),
+                ("medium", image::codecs::png::CompressionType::Default),
+                ("low", image::codecs::png::CompressionType::Best),
+            ] {
+                let mut legacy = Vec::new();
+                source.write_with_encoder(image::codecs::png::PngEncoder::new_with_quality(
+                    &mut legacy, compression, image::codecs::png::FilterType::Sub,
+                )).unwrap();
+                let start = std::time::Instant::now();
+                let outputs = directory.join(format!("sample-{}-{}", index + 1, quality));
+                let result = compress_image_batch_blocking_with_progress(
+                    vec![path.clone()], outputs.to_string_lossy().into_owned(), quality.into(), |_| {},
+                ).unwrap();
+                assert_eq!((result.success_count, result.fail_count), (1, 0));
+                assert!(result.errors.is_empty());
+                let output = outputs.join(std::path::Path::new(path).file_name().unwrap());
+                let optimized = std::fs::read(&output).unwrap();
+                let decoded = decode_oriented_image(&output).unwrap();
+                assert_eq!(decoded.dimensions(), source.dimensions());
+                assert_eq!(decoded.to_rgba8(), source.to_rgba8());
+                assert!(optimized.len() < input.len());
+                assert_eq!(png_preserved_chunks(&input), png_preserved_chunks(&optimized));
+                assert_eq!(result.original_size, Some(input.len() as u64));
+                assert_eq!(result.compressed_size, Some(optimized.len() as u64));
+                println!("sample={} quality={} source={} legacy={} optimized={} elapsed_ms={}",
+                    index + 1, quality, input.len(), legacy.len(), optimized.len(), start.elapsed().as_millis());
+            }
+            assert_eq!(std::fs::read(path).unwrap(), input, "source must remain untouched");
+        }
+        println!("Sample outputs: {}", directory.display());
+    }
+
+    fn png_preserved_chunks(bytes: &[u8]) -> Vec<([u8; 4], Vec<u8>)> {
+        let mut chunks = Vec::new();
+        let mut offset = 8;
+        while offset + 12 <= bytes.len() {
+            let size = u32::from_be_bytes(bytes[offset..offset + 4].try_into().unwrap()) as usize;
+            let kind: [u8; 4] = bytes[offset + 4..offset + 8].try_into().unwrap();
+            if matches!(&kind, b"eXIf" | b"pHYs" | b"iCCP" | b"sRGB" | b"gAMA") {
+                chunks.push((kind, bytes[offset + 8..offset + 8 + size].to_vec()));
+            }
+            offset += 12 + size;
+        }
+        chunks.sort_by_key(|chunk| chunk.0);
+        chunks
+    }
+
+    #[test]
+    fn png_compression_preserves_pixels_depth_transparency_and_orientation() {
+        let _conversion_lock = test_conversion_lock();
+        CANCEL_FLAG.store(false, Ordering::SeqCst);
+        let directory = image_test_directory("png-lossless");
+        let inputs = directory.join("inputs");
+        std::fs::create_dir_all(&inputs).unwrap();
+        let fixtures = [
+            image::DynamicImage::ImageRgb8(image::RgbImage::from_fn(192, 128, |x, y| {
+                let shade = ((x + y) % 256) as u8;
+                image::Rgb([shade; 3])
+            })),
+            image::DynamicImage::ImageRgba8(image::RgbaImage::from_fn(192, 128, |x, y| {
+                image::Rgba([x as u8, y as u8, 73, ((x + y) % 256) as u8])
+            })),
+            image::DynamicImage::ImageRgba16(image::ImageBuffer::from_fn(192, 128, |x, y| {
+                image::Rgba([x as u16 * 251, y as u16 * 509, 30001, (x + y) as u16 * 199])
+            })),
+            image::DynamicImage::ImageRgb8(image::RgbImage::from_fn(192, 128, |x, y| {
+                if (x / 16 + y / 16) % 2 == 0 { image::Rgb([255, 10, 0]) } else { image::Rgb([0, 190, 240]) }
+            })),
+        ];
+        for (index, source) in fixtures.iter().enumerate() {
+            let input = inputs.join(format!("source-{index}.png"));
+            let mut bytes = Vec::new();
+            let mut encoder = image::codecs::png::PngEncoder::new_with_quality(
+                &mut bytes, image::codecs::png::CompressionType::Fast, image::codecs::png::FilterType::Sub,
+            );
+            encoder.set_exif_metadata(exif_orientation_payload(6)).unwrap();
+            source.write_with_encoder(encoder).unwrap();
+            std::fs::write(&input, &bytes).unwrap();
+            let original_pixels = decode_oriented_image(&input).unwrap().to_rgba16();
+            let mut prior = None;
+            for quality in ["high", "medium", "low"] {
+                let outputs = directory.join(format!("{index}-{quality}"));
+                let result = compress_image_batch_blocking_with_progress(
+                    vec![input.to_string_lossy().into_owned()], outputs.to_string_lossy().into_owned(),
+                    quality.into(), |_| {},
+                ).unwrap();
+                assert_eq!((result.success_count, result.fail_count), (1, 0));
+                assert!(result.errors.is_empty());
+                let output = outputs.join(input.file_name().unwrap());
+                let optimized = std::fs::read(&output).unwrap();
+                assert!(optimized.len() < bytes.len());
+                assert_eq!(decode_oriented_image(&output).unwrap().to_rgba16(), original_pixels);
+                assert_eq!(png_preserved_chunks(&bytes), png_preserved_chunks(&optimized));
+                if index == 2 { assert_eq!(optimized[24], 16, "do not truncate 16-bit samples"); }
+                if index == 3 { assert_eq!(optimized[25], 3, "lossless palette reduction"); }
+                if let Some(previous) = prior { assert_eq!(optimized, previous, "PNG is lossless at every preset"); }
+                prior = Some(optimized);
+            }
+            assert_eq!(std::fs::read(&input).unwrap(), bytes);
+        }
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn image_compression_unchanged_is_not_failure_or_fake_output() {
+        let _conversion_lock = test_conversion_lock();
+        CANCEL_FLAG.store(false, Ordering::SeqCst);
+        let directory = image_test_directory("compression-unchanged");
+        let input = directory.join("already-optimized.png");
+        let mut bytes = Vec::new();
+        image::DynamicImage::ImageRgb8(image::RgbImage::from_pixel(256, 128, image::Rgb([60; 3])))
+            .write_with_encoder(image::codecs::png::PngEncoder::new(&mut bytes)).unwrap();
+        // Find a stable, already optimized input without embedding a third-party fixture.
+        loop {
+            let next = oxipng::optimize_from_memory(&bytes, &oxipng::Options::from_preset(2)).unwrap();
+            if next.len() >= bytes.len() { break; }
+            bytes = next;
+        }
+        std::fs::write(&input, &bytes).unwrap();
+        let broken = directory.join("damaged.png");
+        std::fs::write(&broken, b"not a PNG").unwrap();
+        let outputs = directory.join("outputs");
+        let mut events = Vec::new();
+        let result = compress_image_batch_blocking_with_progress(
+            vec![input.to_string_lossy().into_owned(), broken.to_string_lossy().into_owned()],
+            outputs.to_string_lossy().into_owned(), "low".into(), |event| events.push(event),
+        ).unwrap();
+        assert_eq!((result.success_count, result.fail_count), (0, 1));
+        assert_eq!(result.errors.len(), 1);
+        assert!(result.errors[0].contains("damaged.png"));
+        assert_eq!(result.original_size, Some(bytes.len() as u64));
+        assert_eq!(result.compressed_size, result.original_size);
+        assert_eq!(std::fs::read_dir(&outputs).unwrap().count(), 0);
+        assert!(events.iter().any(|event| event.file_name == "already-optimized.png" && event.status == "done"));
+        assert_eq!(std::fs::read(&input).unwrap(), bytes);
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn png_compression_cancellation_and_existing_output_are_safe() {
+        let _conversion_lock = test_conversion_lock();
+        CANCEL_FLAG.store(false, Ordering::SeqCst);
+        let directory = image_test_directory("png-cancel-publish");
+        let input = directory.join("source.png");
+        image::RgbImage::from_pixel(256, 256, image::Rgb([50; 3])).save(&input).unwrap();
+        let outputs = directory.join("outputs");
+        std::fs::create_dir_all(&outputs).unwrap();
+        let previous = outputs.join("source.png");
+        std::fs::write(&previous, b"existing output").unwrap();
+        let paths = vec![input.to_string_lossy().into_owned()];
+        let result = compress_image_batch_blocking_with_progress(
+            paths.clone(), outputs.to_string_lossy().into_owned(), "medium".into(), |_| {},
+        ).unwrap();
+        assert_eq!((result.success_count, result.fail_count), (1, 0));
+        assert_eq!(std::fs::read(previous).unwrap(), b"existing output");
+        let cancel_outputs = directory.join("cancelled");
+        let result = compress_image_batch_blocking_with_progress(
+            paths, cancel_outputs.to_string_lossy().into_owned(), "medium".into(),
+            |_| CANCEL_FLAG.store(true, Ordering::SeqCst),
+        ).unwrap();
+        CANCEL_FLAG.store(false, Ordering::SeqCst);
+        assert_eq!((result.success_count, result.fail_count), (0, 0));
+        assert_eq!(std::fs::read_dir(cancel_outputs).unwrap().count(), 0);
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+
     fn exif_orientation_payload(orientation: u16) -> Vec<u8> {
         let mut exif = vec![0_u8; 26];
         exif[0..2].copy_from_slice(b"II");
@@ -355,6 +534,59 @@ mod image_conversion_tests {
                 .to_string_lossy()
                 .starts_with(".toolknit-stitch-")));
         std::fs::remove_dir_all(&directory).expect("remove stitch test directory");
+    }
+
+    #[test]
+    fn image_stitch_grid_counts_dimensions_and_limits() {
+        for side in 2usize..=5 {
+            let mode = format!("grid-{side}");
+            let dimensions = (0..side * side).map(|i| (100, if i % 2 == 0 { 100 } else { 50 })).collect::<Vec<_>>();
+            let grid = calculate_image_stitch_layout(&dimensions, &mode, "first", 4, 50).unwrap();
+            let expected = side as u32 * 50 + (side as u32 - 1) * 4;
+            assert_eq!((grid.width, grid.height), (expected, expected));
+            assert_eq!(&grid.sizes[..2], &[(50, 50), (50, 25)]);
+            for count in [side * side - 1, side * side + 1] {
+                assert!(calculate_image_stitch_layout(&vec![(10, 10); count], &mode, "first", 0, 100).unwrap_err().contains("invalid-grid-count"));
+            }
+            assert!(calculate_image_stitch_layout(&vec![(65535, 65535); side * side], &mode, "first", 0, 100).is_err());
+        }
+        assert!(calculate_image_stitch_layout(&[(0, 10); 4], "grid-2", "first", 0, 100).is_err());
+        assert!(calculate_image_stitch_layout(&[(10, 10); 36], "grid-6", "first", 0, 100).is_err());
+    }
+
+    #[test]
+    fn image_stitch_grid_png_jpg_order_and_padding() {
+        let directory = std::env::temp_dir().join(format!("toolknit-stitch-grid-{}-{}", std::process::id(),
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let output = directory.join("out");
+        std::fs::create_dir_all(&output).unwrap();
+        let inputs = (0..25).map(|i| {
+            let file = directory.join(format!("image-{i}.png"));
+            let shade = (i * 8) as u8;
+            image::RgbaImage::from_pixel(40, if i % 2 == 0 { 40 } else { 20 }, image::Rgba([shade, shade, shade, 255])).save(&file).unwrap();
+            file
+        }).collect::<Vec<_>>();
+        CANCEL_FLAG.store(false, Ordering::SeqCst);
+        for side in 2usize..=5 {
+            for format in ["png", "jpg"] {
+                let mut options = stitch_test_options(&inputs[..side * side], &output, &format!("grid-{side}"), format, "#FFFFFFFF");
+                options.spacing_px = 4;
+                let result = stitch_images_blocking(options, |_, _, _, _| {}).unwrap();
+                let decoded = image::open(&result.output_path).unwrap().to_rgba8();
+                let expected = side as u32 * 40 + (side as u32 - 1) * 4;
+                assert_eq!(decoded.dimensions(), (expected, expected));
+                for i in 0..side * side {
+                    let x = (i % side) as u32 * 44 + 20;
+                    let y = (i / side) as u32 * 44 + 20;
+                    let pixel = decoded.get_pixel(x, y).0;
+                    let shade = (i * 8) as i16;
+                    for channel in &pixel[..3] { assert!((*channel as i16 - shade).abs() <= if format == "png" { 0 } else { 5 }); }
+                }
+                assert!(decoded.get_pixel(60, 2).0[0] > 245, "short images must be padded, not stretched");
+            }
+        }
+        assert_eq!(std::fs::read_dir(&output).unwrap().count(), 8, "unique outputs, no temporary files");
+        std::fs::remove_dir_all(directory).unwrap();
     }
 
     #[test]

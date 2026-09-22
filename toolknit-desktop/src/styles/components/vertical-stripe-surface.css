@@ -1,0 +1,13 @@
+:root {
+  --tk-vertical-stripe-surface-image: linear-gradient(90deg, rgba(255, 255, 255, .028) 1px, transparent 1px);
+  --tk-vertical-stripe-surface-size: 38px 100%;
+  --tk-vertical-stripe-surface-color: rgba(0, 0, 0, .24);
+}
+
+.tk-vertical-stripe-surface {
+  background-image: var(--tk-vertical-stripe-surface-image);
+  background-position: 0 0;
+  background-repeat: repeat;
+  background-size: var(--tk-vertical-stripe-surface-size);
+  background-color: var(--tk-vertical-stripe-surface-color);
+}

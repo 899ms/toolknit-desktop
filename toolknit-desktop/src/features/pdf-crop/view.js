@@ -52,10 +52,15 @@ export function createPdfCropView({
   function renderSuccess() {
     if (!lastResult) return;
     if (successMeta) {
-      successMeta.textContent = text(
-        lastResult.mode === 'zip' ? 'home.pdfCrop.successZip' : 'home.pdfCrop.successSingle',
-        { count: lastResult.pageCount }
-      );
+      const key = lastResult.mode === 'current'
+        ? 'home.pdfCrop.successCurrent'
+        : lastResult.mode === 'zip'
+          ? 'home.pdfCrop.successZip'
+          : 'home.pdfCrop.successSingle';
+      successMeta.textContent = text(key, {
+        count: lastResult.pageCount,
+        page: lastResult.exportedPageNumber
+      });
     }
     if (successCount) {
       successCount.textContent = text('home.pdfCrop.outputCountValue', { count: lastResult.outputCount });

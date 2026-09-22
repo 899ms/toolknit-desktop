@@ -8,7 +8,7 @@ const PAGE = String.raw`
       <i data-lucide="arrow-left"></i>
       <span data-i18n="settings.back">返回首页</span>
     </button>
-    <span class="pdf-merge-v2-top-tag">PPT ASSETS · TOOL PAGE 2.3</span>
+    <span class="pdf-merge-v2-top-tag">PPT ASSETS · TOOL PAGE 3.0</span>
   </div>
   <div class="home-v2-top-actions pdf-merge-v2-top-actions">
     <button class="home-v2-nav-link" type="button" data-home-link="website">
@@ -38,7 +38,7 @@ const PAGE = String.raw`
     <p class="pdf-merge-v2-subtitle" data-i18n="home.pptImagesPage.subtitle">提取 PPTX 内嵌图片、Logo、截图和背景素材，保留原始格式并生成导出清单。</p>
     <div class="pdf-merge-v2-poster-note">
       <span>LOCAL ONLY</span>
-      <strong>文件只在本机扫描，不会上传到服务器。</strong>
+      <strong data-i18n="home.pptImagesPage.localNote">文件只在本机扫描，不会上传到服务器，也不会修改原演示文稿。可查看每张素材的页码、格式、尺寸与大小，按页码筛选并跳过完全重复项。导出保留图片原始格式，附带素材清单，方便整理、查找与再次使用。</strong>
     </div>
     <div class="pdf-merge-v2-steps" aria-label="图片提取流程">
       <div class="pdf-merge-v2-step is-active">
@@ -64,20 +64,20 @@ const PAGE = String.raw`
       </div>
     </div>
   </aside>
-  <main class="pdf-merge-v2-workspace ppt-images-v2-workspace" id="pptImagesScrollArea">
-    <section class="ppt-images-v2-upload" aria-label="上传 PPTX 文件">
+  <main class="pdf-merge-v2-workspace ppt-images-v2-workspace ppt-file-workspace" id="pptImagesScrollArea">
+    <section class="ppt-images-v2-upload ppt-file-upload" aria-label="上传 PPTX 文件">
       <div class="pdf-merge-v2-upload-copy">
         <span class="pdf-merge-v2-upload-eyebrow">DROP OR SELECT</span>
         <h2>把 PPTX 放到这里提取图片</h2>
         <p>扫描内嵌图片、Logo、截图和背景素材，保留原始格式与尺寸。</p>
       </div>
-      <button class="audio-convert-cta ppt-images-v2-cta" id="pptImagesCta" type="button">
+      <button class="audio-convert-cta ppt-images-v2-cta ppt-file-cta" id="pptImagesCta" type="button">
         <i data-lucide="upload"></i>
         <span data-i18n="home.pptImagesPage.cta">上传 PPTX 文件</span>
       </button>
     </section>
     <p class="ppt-images-file ppt-images-v2-file" id="pptImagesFileName"></p>
-    <section class="ppt-images-panel" id="pptImagesPanel" aria-live="polite">
+    <section class="ppt-images-panel ppt-file-panel" id="pptImagesPanel" aria-live="polite">
       <div class="ppt-images-empty ppt-images-v2-empty" id="pptImagesEmpty">
         <i data-lucide="image-up" aria-hidden="true"></i>
         <strong data-i18n="home.pptImagesPage.emptyTitle">先上传一个 PPTX</strong>
@@ -115,6 +115,16 @@ const PAGE = String.raw`
 
 const PORTAL = String.raw`
 <div data-ppt-images-portal>
+  <div class="audio-clip-success-overlay ppt-images-preview" id="pptImagesPreviewOverlay" role="dialog" aria-modal="true" aria-labelledby="pptImagesPreviewTitle" aria-hidden="true" inert>
+    <div class="audio-clip-success-dialog ppt-images-preview-dialog">
+      <div class="ppt-images-preview-heading">
+        <h3 id="pptImagesPreviewTitle"></h3>
+        <p id="pptImagesPreviewMeta"></p>
+      </div>
+      <div class="ppt-images-preview-media"><img id="pptImagesPreviewImage" alt=""></div>
+      <button class="audio-clip-success-btn audio-clip-success-btn-primary ppt-images-preview-close" id="pptImagesPreviewClose" type="button"><i data-lucide="x" aria-hidden="true"></i><span data-i18n="home.pptImagesPage.closePreview">关闭预览</span></button>
+    </div>
+  </div>
   
   <div class="audio-convert-process-mask" id="pptImagesProcessMask">
     <div class="tk-mascot-lg" aria-hidden="true"></div>

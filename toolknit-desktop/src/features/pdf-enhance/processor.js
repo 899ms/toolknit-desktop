@@ -1,4 +1,5 @@
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.mjs?url';
+import { pdfjsDocumentOptions, destroyPdfDocument } from '../../shared/pdfjs-options.js';
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 import {
   PDF_ENHANCE_LIMITS,
@@ -150,8 +151,7 @@ export function createPdfEnhanceProcessor({
       const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
       assertOperation(operation);
       pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-      const wasmUrl = new URL('assets/', document.baseURI).href;
-      operation.loadingTask = pdfjs.getDocument({ data: bytes, wasmUrl, useWasm: true });
+      operation.loadingTask = pdfjs.getDocument(pdfjsDocumentOptions({ data: bytes }));
       documentHandle = await operation.loadingTask.promise;
       operation.loadingTask = null;
       assertOperation(operation);
@@ -249,7 +249,7 @@ export function createPdfEnhanceProcessor({
         operation.loadingTask = null;
       }
       if (documentHandle) {
-        try { await documentHandle.destroy(); } catch (_) {}
+        try { await destroyPdfDocument(documentHandle); } catch (_) {}
       }
       await discardWrite(operation);
     }

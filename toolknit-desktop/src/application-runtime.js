@@ -13,13 +13,17 @@
       import { createExternalLinksRuntime } from './app/external-links-runtime.js';
       import { createHomeExplorerRuntime } from './app/home-explorer-runtime.js';
       import { createFontSettingsRuntime } from './app/font-settings-runtime.js';
+      import { createStartupRuntime } from './app/startup-runtime.js';
       import { createWindowRuntime } from './app/window-runtime.js';
       import { createUpdateRuntime } from './app/update-runtime.js';
       import { createModalRuntime } from './app/modal-runtime.js';
+      import { createPageTransitionRuntime } from './app/page-transition-runtime.js';
+      import { createThemeRuntime } from './app/theme-runtime.js';
       import { createOutputRuntime, OUTPUT_ROOT_KEY, displayFilesystemPath } from './app/output-runtime.js';
       import {
         createDependencyHelpers,
-        dependencyProgressPercent,
+        overallDependencyProgress,
+        updateDependencyProgress,
         formatDependencyBytes,
         isManagedRuntime,
         normalizeLibreOfficeAvailability
@@ -43,6 +47,7 @@
       import { extractJson } from './app/json-extractor.js';
       import { createToastManager } from './app/toast-manager.js';
       import { createHelpCenterRuntime } from './app/help-center-runtime.js';
+      import { bindGlobalToolPageChrome, moveFocusOutOfHiddenRegion } from './shared/tool-page-shell.js';
       import { createHomeController } from './app/home-controller.js';
       import { createScreenPickerSettingsRuntime } from './app/screen-picker-settings-runtime.js';
       import { createCustomBackgroundSettingsRuntime } from './app/custom-background-settings-runtime.js';
@@ -68,6 +73,7 @@
       import { TaskRunner } from '../shared/task-runtime.mjs';
       // Keep custom tool menus, but preserve native editing menus in text fields.
       document.addEventListener('contextmenu', (e) => {
+        if (import.meta.env.DEV) return;
         if (e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
         if (e.target.closest('.audio-list-item')) return;
         if (e.target.closest('.cleanup-large-files-table tr[data-path], .cleanup-large-files-context-menu')) return;
@@ -102,6 +108,11 @@
       const isScreenPickerWindow = typeof window !== 'undefined'
         && new URLSearchParams(window.location.search).get('screen-picker') === '1';
       const appWindow = isTauri ? getCurrentWindow() : null;
+      const pageTransition = createPageTransitionRuntime();
+      const themeRuntime = createThemeRuntime({
+        enabled: !isScreenPickerWindow,
+        pageTransition
+      });
 
       const aiKeyStore = createAiKeyStore({ isTauri, tauriCorePromise });
       const aiApiKeyReady = aiKeyStore.ready;
@@ -126,6 +137,8 @@
         isTauri,
         tauriCorePromise,
         initPlasma,
+        allowCustomBackground: themeRuntime.allowsCustomBackground,
+        onThemeChange: themeRuntime.subscribe,
         onHomeBackgroundChanged: () => syncHomeV2Background(),
         onPreviewPlaybackSync: () => syncCustomBackgroundPreviewPlayback?.()
       });
@@ -158,6 +171,8 @@
         isTauri,
         isScreenPickerWindow,
         tauriCorePromise,
+        getTheme: themeRuntime.get,
+        onThemeChange: themeRuntime.subscribe,
         translate: t,
         refreshIcons: () => createIcons({ icons })
       });
@@ -316,6 +331,8 @@
 
         const headerSelector = '.settings-header, .settings-v2-topbar, .home-v2-topbar, .api-key-header, .feedback-header, .audio-convert-header, .audio-clip-header, .help-v2-topbar, .pdf-merge-v2-topbar, .help-sidebar-header, .help-content-header, .transcription-model-header, .pdf-merge-page-picker-header, .pdf-page-workspace-header, .pdf-preview-drawer-header, .update-preview-stage-topbar';
         document.querySelectorAll(headerSelector).forEach(header => {
+          if (header.dataset.tkWindowDragBound === '1') return;
+          header.dataset.tkWindowDragBound = '1';
           header.removeAttribute('data-tauri-drag-region');
           header.style.setProperty('-webkit-app-region', 'no-drag');
           header.addEventListener('pointerdown', event => {
@@ -350,6 +367,8 @@
       const {
         detectedRuntimeLabel,
         dependencyStatusText,
+        dependencyErrorMessage,
+        dependencyInstallingDetail,
         runtimeMetadata
       } = dependencyHelpers;
       const transitionMask = document.getElementById('transitionMask');
@@ -598,6 +617,36 @@
         void refreshStoragePath();
       });
 
+      // Toast is consumed by settings runtimes created below. Initialize it
+      // before wiring those runtimes so the startup path never touches a
+      // temporal-dead-zone binding and aborts the rest of application setup.
+      const toastIconNodes = Object.freeze({
+        info: icons.Info,
+        success: icons.CircleCheck,
+        warning: icons.TriangleAlert,
+        error: icons.CircleAlert,
+        close: icons.X
+      });
+      const toastManager = createToastManager({
+        root: document,
+        getLanguage: getLang,
+        createIconElement: name => {
+          const iconNode = toastIconNodes[name];
+          return iconNode
+            ? createLucideElement(iconNode, { 'aria-hidden': 'true', 'stroke-width': 2 })
+            : null;
+        }
+      });
+      const showToast = toastManager.show;
+      window.showToast = showToast;
+      window.alert = message => {
+        try {
+          showToast(message);
+        } catch (error) {
+          console.error('Toast fallback failed:', error);
+        }
+      };
+
       // Custom background settings own import, preview and media cleanup.
       customBackgroundSettingsRuntime = createCustomBackgroundSettingsRuntime({
         root: document,
@@ -608,6 +657,8 @@
         settingsOverlay,
         storageKey: CUSTOM_BACKGROUND_STORAGE_KEY,
         changeEvent: CUSTOM_BACKGROUND_CHANGE_EVENT,
+        allowCustomBackground: themeRuntime.allowsCustomBackground,
+        onThemeChange: themeRuntime.subscribe,
         translate: t,
         showToast,
         onLanguageChange: onLangChange
@@ -626,7 +677,7 @@
       const versionUpdateStatus = document.getElementById('versionUpdateStatus');
       const checkVersionUpdateBtn = document.getElementById('checkVersionUpdateBtn');
       const openReleasePageBtn = document.getElementById('openReleasePageBtn');
-      const APP_VERSION_FALLBACK = '2.3.1';
+      const APP_VERSION_FALLBACK = '3.0.0';
       let updatePreviewController = null;
       const updateRuntime = createUpdateRuntime({
         isTauri,
@@ -1004,14 +1055,14 @@
         meta.textContent = libreOfficeRuntimeStatus?.installed
           ? runtimeMetadata(libreOfficeRuntimeStatus)
           : (getLang() === 'en' ? 'Required for PPT to PDF and PPT to image' : 'PPT 转 PDF、PPT 转图像所需的本地运行时');
+        if (libreOfficeRuntimeProgress?.phase === 'installing') {
+          meta.textContent = dependencyInstallingDetail('LibreOffice', libreOfficeRuntimeProgress);
+        }
         info.append(name, meta);
         const actions = document.createElement('div'); actions.className = 'transcription-model-actions';
         if (libreOfficeRuntimeProgress && libreOfficeRuntimeProgress.phase !== 'complete') {
           const status = document.createElement('span'); status.className = 'transcription-model-current';
-          const total = Math.max(1, libreOfficeRuntimeProgress.total_bytes || 0);
-          status.textContent = libreOfficeRuntimeProgress.phase === 'installing'
-            ? (getLang() === 'en' ? 'Installing' : '正在安装')
-            : `${Math.min(100, Math.round((libreOfficeRuntimeProgress.downloaded_bytes || 0) / total * 100))}%`;
+          status.textContent = dependencyStatusText('libreoffice', libreOfficeRuntimeProgress, false);
           actions.append(status);
         } else if (libreOfficeRuntimeStatus?.installed && isManagedRuntime(libreOfficeRuntimeStatus)) {
           const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'settings-btn'; remove.textContent = getLang() === 'en' ? 'Delete' : '删除';
@@ -1048,7 +1099,7 @@
               }
               updateLibreOfficeRuntimeSummary();
               renderLibreOfficeRuntime();
-            } catch (error) { libreOfficeRuntimeProgress = null; renderLibreOfficeRuntime(); window.showToast?.(String(error?.message || error)); }
+            } catch (error) { libreOfficeRuntimeProgress = null; renderLibreOfficeRuntime(); window.showToast?.(dependencyErrorMessage(error)); }
           });
           actions.append(install);
         }
@@ -1126,8 +1177,7 @@
         return getLang() === 'en' ? 'official' : 'china';
       }
 
-      // dependencyProgressPercent and dependencyStatusText come from the shared
-      // dependency helper so every gate renders progress consistently.
+      // Shared dependency helpers own the field mapping and progress labels.
 
       function renderDependencyGate() {
         const state = dependencyGateState;
@@ -1146,7 +1196,7 @@
           const row = document.createElement('div');
           row.className = 'audio-convert-success-row dependency-gate-row';
           const key = document.createElement('span'); key.className = 'audio-convert-success-key'; key.textContent = `${label} · ${size}`;
-          const value = document.createElement('span'); value.className = 'audio-convert-success-value'; value.textContent = dependencyStatusText(type, progress, complete);
+          const value = document.createElement('span'); value.className = 'audio-convert-success-value'; value.textContent = dependencyStatusText(type, progress, complete, Boolean(state.error && state.current === type));
           value.dataset.state = complete || progress?.phase === 'complete' ? 'ready' : (progress ? 'active' : 'waiting');
           row.append(key, value); dependencyGateList.append(row);
         };
@@ -1154,10 +1204,7 @@
         if (state.needsModel) appendItem('model', state.modelLabel || 'Whisper Small', state.modelSizeText || '465 MB', state.modelProgress, state.modelComplete);
         if (state.needsLibreOffice) appendItem('libreoffice', 'LibreOffice', '356 MB', state.libreOfficeProgress, state.libreOfficeComplete);
 
-        const types = [state.needsFfmpeg && 'ffmpeg', state.needsModel && 'model', state.needsLibreOffice && 'libreoffice'].filter(Boolean);
-        const overall = types.length
-          ? Math.round(types.reduce((sum, type) => sum + (state[`${type}Complete`] ? 100 : dependencyProgressPercent(state[`${type}Progress`])), 0) / types.length)
-          : 100;
+        const overall = overallDependencyProgress(state);
         const currentProgress = state.current === 'model'
           ? state.modelProgress
           : (state.current === 'libreoffice' ? state.libreOfficeProgress : state.ffmpegProgress);
@@ -1171,7 +1218,7 @@
           dependencyGateProgressText.textContent = state.cancelling
             ? t('home.dependencies.cancelling')
             : (currentPhase === 'installing'
-              ? t('home.dependencies.installingDetail', { name: currentName })
+              ? dependencyInstallingDetail(currentName, currentProgress)
               : (currentPhase === 'verifying'
                 ? t('home.dependencies.verifyingDetail', { name: currentName })
                 : `${t('home.dependencies.current')}${currentName} · ${overall}%`));
@@ -1188,11 +1235,7 @@
       }
 
       function updateDependencyGateProgress(type, progress) {
-        const state = dependencyGateState;
-        if (!state || !state.downloading || !state[`needs${type === 'ffmpeg' ? 'Ffmpeg' : (type === 'model' ? 'Model' : 'LibreOffice')}`]) return;
-        state[`${type}Progress`] = progress || null;
-        if (progress?.phase === 'complete') state[`${type}Complete`] = true;
-        renderDependencyGate();
+        if (updateDependencyProgress(dependencyGateState, type, progress)) renderDependencyGate();
       }
 
       function showDependencyGate({ openFn, needsFfmpeg, needsModel, needsLibreOffice, modelKind, modelLabel, modelSizeText }) {
@@ -1344,7 +1387,8 @@
           }
           state.downloading = false;
           state.cancelling = false;
-          state.error = `${t('home.dependencies.failed')} ${message}`.trim();
+          libreOfficeRuntimeProgress = null;
+          state.error = `${t('home.dependencies.failed')} ${dependencyErrorMessage(error)}`.trim();
           renderFfmpegRuntime();
           renderTranscriptionModels();
           renderLibreOfficeRuntime();
@@ -1374,13 +1418,48 @@
         renderDependencyGate();
       });
 
-      function openSettingsOverlay() {
+      function resetSettingsChildOverlays() {
+        // Settings owns nested dependency dialogs; clear stale visibility before opening the parent.
+        settingsOverlay?.querySelectorAll?.('[id$="Overlay"]').forEach(region => {
+          if (!region.classList.contains('visible') && region.getAttribute('aria-hidden') !== 'false') return;
+          moveFocusOutOfHiddenRegion(region);
+          region.classList.remove('visible');
+          region.setAttribute('aria-hidden', 'true');
+          region.inert = true;
+          region.setAttribute('inert', '');
+        });
+      }
+
+      function showSettingsOverlay() {
         if (!settingsOverlay) return;
+        resetSettingsChildOverlays();
+        document.querySelectorAll('[id$="Overlay"].visible').forEach(region => {
+          if (region !== settingsOverlay) moveFocusOutOfHiddenRegion(region);
+        });
         document.getElementById('helpOverlay')?.classList.remove('visible');
         if (settingsContent) settingsContent.scrollTop = 0;
         settingsOverlay.style.zIndex = '50000';
         settingsOverlay.classList.add('visible');
+        settingsOverlay.removeAttribute('inert');
+        settingsOverlay.setAttribute('aria-hidden', 'false');
+        window.requestAnimationFrame(() => {
+          if (settingsOverlay.classList.contains('visible')) settingsBack?.focus?.({ preventScroll: true });
+        });
         syncCustomBackgroundPreviewPlayback?.();
+      }
+
+      function openSettingsOverlay() {
+        return pageTransition.run(showSettingsOverlay);
+      }
+
+      function closeSettingsOverlay() {
+        return pageTransition.run(() => {
+          resetSettingsChildOverlays();
+          moveFocusOutOfHiddenRegion(settingsOverlay);
+          settingsOverlay?.classList.remove('visible');
+          if (settingsOverlay) settingsOverlay.style.zIndex = '';
+          syncCustomBackgroundPreviewPlayback?.();
+        });
       }
 
       if (settingsBtns.length && settingsOverlay) {
@@ -1392,11 +1471,7 @@
       }
 
       if (settingsBack && settingsOverlay) {
-        settingsBack.addEventListener('click', () => {
-          settingsOverlay.classList.remove('visible');
-          settingsOverlay.style.zIndex = '';
-          syncCustomBackgroundPreviewPlayback?.();
-        });
+        settingsBack.addEventListener('click', () => { void closeSettingsOverlay(); });
       }
 
       const helpCenterRuntime = createHelpCenterRuntime({
@@ -1409,8 +1484,11 @@
         getLegalContent,
         escapeHtml,
         initLightRays,
+        getTheme: themeRuntime.get,
+        onThemeChange: themeRuntime.subscribe,
         settingsOverlay,
         settingsContent,
+        pageTransition,
         syncCustomBackgroundPreviewPlayback
       });
       const {
@@ -1437,17 +1515,6 @@
         showAiKeyRequiredOverlay
       } = aiSettingsRuntime;
 
-      const toastManager = createToastManager({ root: document, getLanguage: getLang });
-      const showToast = toastManager.show;
-      window.showToast = showToast;
-      window.alert = message => {
-        try {
-          showToast(message);
-        } catch (error) {
-          console.error('Toast fallback failed:', error);
-        }
-      };
-
       const externalLinksRuntime = createExternalLinksRuntime({
         root: document,
         storage: localStorage,
@@ -1460,6 +1527,17 @@
       });
       const openExternalUrl = externalLinksRuntime.openExternalUrl;
       const donationController = createDonationController({ openExternalUrl });
+      // Tool overlays are mounted lazily and still contain both current and
+      // legacy chrome attributes. Keep one capture-phase owner so every page
+      // has working top actions without duplicating feature listeners.
+      bindGlobalToolPageChrome({
+        root: document,
+        onWebsite: () => { void openExternalUrl('https://toolknit.com'); },
+        onSupport: () => { void donationController.open(); },
+        onSettings: () => openSettingsOverlay(),
+        onToolBack: ({ overlay }) => lazyFeatureRegistry?.closeFromChrome(overlay) ?? false,
+        onWindowAction: action => { void handleWindowControlAction(action); }
+      });
       void externalLinksRuntime.loadGithubActivity();
 
       // ===== PDF Tool Template Overlay Background =====
@@ -1488,7 +1566,8 @@
       const callDeepSeek = createAiRequestRuntime({
         getApiKey: getAiApiKey,
         getConfig: getAiPlatformConfig,
-        translate: t
+        translate: t,
+        isTauri
       });
 
 
@@ -1561,8 +1640,10 @@
         }
       }
 
-      function openMattingModelManager() {
-        openSettingsOverlay();
+      let mattingManagerOpenRequest = 0;
+
+      function showMattingModelManager(request) {
+        if (request !== mattingManagerOpenRequest || !settingsOverlay?.classList.contains('visible')) return;
         const overlayEl = document.getElementById('mattingModelOverlay');
         overlayEl?.classList.add('visible');
         overlayEl?.setAttribute('aria-hidden', 'false');
@@ -1570,7 +1651,19 @@
         if (window.lucide) window.lucide.createIcons();
       }
 
+      function openMattingModelManager() {
+        const request = ++mattingManagerOpenRequest;
+        // This control lives inside settings. Avoid routing a nested dialog
+        // through the page transition, which creates a close/reopen race.
+        if (settingsOverlay?.classList.contains('visible')) {
+          showMattingModelManager(request);
+          return;
+        }
+        void openSettingsOverlay().then(() => showMattingModelManager(request));
+      }
+
       function closeMattingModelManager() {
+        mattingManagerOpenRequest += 1;
         const overlayEl = document.getElementById('mattingModelOverlay');
         overlayEl?.classList.remove('visible');
         overlayEl?.setAttribute('aria-hidden', 'true');
@@ -1750,6 +1843,11 @@
       lazyFeatureRegistry = createLazyToolRegistry({
         specs: LAZY_TOOL_SPECS,
         root: document,
+        // Lazy templates are appended after the initial Lucide document scan.
+        // The registry uses this fallback immediately after mounting; feature
+        // contexts still receive the same callback for post-initialization UI.
+        refreshIcons: () => createIcons({ icons }),
+        pageTransition,
         beforeOpen: async (toolId, retryOpen) => {
           if (toolId === 'ai-polish' || toolId === 'ai-translate'
             || toolId === 'ai-doc' || toolId === 'ai-table') {
@@ -1810,7 +1908,12 @@
           }
           return true;
         },
-        createContext: () => ({
+        createContext: () => {
+          // Lazy templates are appended after the initial window chrome pass.
+          // Repair their drag region before the feature can receive input so
+          // native dragging never swallows topbar button clicks.
+          initNativeWindowDragRegions();
+          return {
           notify: (message, options) => window.showToast?.(message, options),
           isTauri,
           t,
@@ -1823,6 +1926,7 @@
            requestOfflineModel: requestTeleprompterOfflineModel,
            requestAi: callDeepSeek,
            getAiApiKey,
+           getAiPlatformConfig,
            requestAiKeyConfiguration: showAiKeyRequiredOverlay,
            extractJson,
            refreshTranscriptionModels,
@@ -1839,13 +1943,20 @@
           checkLibreOfficeAvailable: checkLibreOfficeRuntimeAvailable,
           requestLibreOfficeRuntime: openFn => showDependencyGate({ openFn, needsFfmpeg: false, needsModel: false, needsLibreOffice: true }),
           openLazyTool: toolId => lazyFeatureRegistry.open(toolId),
+          continueToDraft: async (outline, sourceLabel) => {
+            const instance = await lazyFeatureRegistry.open('ppt-draft');
+            const importOutline = instance?.raw?.importOutline || instance?.importOutline;
+            if (typeof importOutline !== 'function') return false;
+            return Boolean(importOutline(outline, sourceLabel));
+          },
           openSettings: openSettingsOverlay,
           openMattingModelManager,
           openSupport: donationController.open,
           openExternalUrl,
           syncWindowFrameAfterLayoutChange,
           handleWindowAction: handleWindowControlAction
-        }),
+          };
+        },
         onError: (error, toolId) => {
           console.error(`Cannot open ${toolId}:`, error);
           window.showToast?.(getLang() === 'zh' ? `工具加载失败：${String(error?.message || error)}` : `Failed to load tool: ${String(error?.message || error)}`);
@@ -1906,3 +2017,8 @@
       }
 
 scheduleAutomaticUpdateCheck();
+
+      createStartupRuntime({
+        fontsReady: fontSettingsRuntime.ready,
+        backgroundReady: isScreenPickerWindow ? Promise.resolve() : backgroundRuntime.whenHomeReady()
+      });

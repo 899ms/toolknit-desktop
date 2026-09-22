@@ -34,6 +34,13 @@ assert.doesNotMatch(main, /openPdfDecryptOverlay|selectedPdfDecryptFiles|handleD
 assert.doesNotMatch(styles, /\.pdf-encrypt-password-dialog|\.pdf-encrypt-v2|\.pdf-decrypt-v2/);
 
 assert.match(shell, /createLifecycleScope/);
+assert.match(shell, /createModalSession/);
+assert.match(shell, /passwordDialog\.prepend\(topbar\)/);
+assert.match(shell, /overlay\.insertBefore\(topbar, topbarNextSibling/);
+assert.match(shell, /passwordSession\.close\(\{ restore: focusProcess \}\)/);
+assert.match(shell, /if \(passwordDialog\.classList\.contains\('visible'\)\) hidePassword\(\{ focusProcess: true \}\)/);
+assert.match(shell, /event\.defaultPrevented \|\| overlay\.inert/);
+assert.doesNotMatch(shell, /cloneNode|toolTopbarMarkup|bindGlobalToolPageChrome/, 'password pages reuse the original bar and the existing global event owner');
 assert.match(shell, /owner\.use\(unlisten\)/);
 assert.match(shell, /if \(!isOpenSession\(owner\)\) \{\s*unlisten\(\)/);
 assert.match(shell, /filesElement\.replaceChildren\(\)/);
@@ -64,6 +71,16 @@ assert.doesNotMatch(decrypt, /\.addEventListener\(|\.innerHTML\s*=/);
 assert.match(featureCss, /\.pdf-encrypt-v2/);
 assert.match(featureCss, /\.pdf-decrypt-v2/);
 assert.match(featureCss, /\.pdf-encrypt-password-dialog/);
+assert.match(featureCss, /\.pdf-security-password-page\.pdf-merge-v2\s*\{[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\)/);
+assert.match(featureCss, /\.pdf-security-password-body \.pdf-encrypt-password-dialog\s*\{[^}]*max-height:\s*100%/);
+assert.match(featureCss, /\.pdf-decrypt-v2 > \.pdf-merge-v2-body\s*\{[^}]*grid-row:\s*2/, 'moving the toolbar must not shift the parent tool content into its row');
+for (const kind of ['Encrypt', 'Decrypt']) {
+  assert.match(html, new RegExp(`id="pdf${kind}PasswordDialog"[^>]*data-tool-page-chrome[^>]*role="dialog"[^>]*aria-modal="true"`));
+}
+for (const language of ['zh', 'en']) {
+  const locale = JSON.parse(await readFile(new URL(`../src/locales/${language}.json`, import.meta.url), 'utf8'));
+  assert.ok(locale.common.backToPrevious, 'subpage back label is translated');
+}
 
 for (const [name, source] of [
   ['shell', shell],

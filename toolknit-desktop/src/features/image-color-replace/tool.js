@@ -6,6 +6,7 @@ import './image-color-replace.css';
 
 export function initImageColorReplaceTool({
   overlay,
+  isTauri = false,
   notify = (message, options) => window.showToast?.(message, options)
 } = {}) {
   if (!overlay) throw new Error('color-replace:missing-overlay');
@@ -13,7 +14,7 @@ export function initImageColorReplaceTool({
   overlay.innerHTML = imageColorReplaceTemplate();
   createIcons({ icons });
   const shell = overlay.querySelector('.tool-page-v2-shell');
-  const controller = createImageColorReplaceController({ overlay, notify });
+  const controller = createImageColorReplaceController({ overlay, isTauri, notify });
   let backgroundDispose = null;
   let isOpen = false;
   let disposed = false;

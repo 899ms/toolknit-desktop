@@ -3,13 +3,15 @@ import { readGlobalStyles } from './lib/global-styles.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [html, main, lazyTools, tool, styles, featureStyles] = await Promise.all([
+const [html, main, lazyTools, tool, styles, featureStyles, themeIndex, calculatorLightStyles] = await Promise.all([
   readAppMarkup(import.meta.url),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/lazy-tools.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/features/timestamp-calculator/tool.js', import.meta.url), 'utf8'),
   readGlobalStyles(import.meta.url),
-  readFile(new URL('../src/features/timestamp-calculator/timestamp-calculator.css', import.meta.url), 'utf8')
+  readFile(new URL('../src/features/timestamp-calculator/timestamp-calculator.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/styles/themes/index.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/styles/themes/calculator-tools-light.css', import.meta.url), 'utf8')
 ]);
 
 for (const id of [
@@ -36,5 +38,8 @@ assert.doesNotMatch(tool, /localStorage|sessionStorage/);
 assert.doesNotMatch(styles, /\.ts-calc|\.timestamp-calc/);
 assert.match(featureStyles, /\.timestamp-calc-v2-workspace/);
 assert.match(featureStyles, /\.ts-calc-result-card/);
+assert.match(themeIndex, /@import url\('\.\/calculator-tools-light\.css'\);/);
+assert.match(calculatorLightStyles, /html\[data-theme="light"\][\s\S]*\.timestamp-calc-v2/);
+assert.match(calculatorLightStyles, /ts-calc-current-row/);
 
 console.log('Timestamp calculator feature contract passed');

@@ -1,4 +1,5 @@
 import { createLifecycleScope } from './tool-lifecycle.js';
+import { createHomeWeaving } from './home-weaving.js';
 
 /** Owns the home shell, category navigation and legacy category search. */
 export function createHomeController({
@@ -167,6 +168,7 @@ export function createHomeController({
   function bind() {
     if (bound || scope.disposed) return;
     bound = true;
+    scope.use(createHomeWeaving({ root }).dispose);
     installCardInteractions();
     installSearch();
     syncHomeShell(root.querySelector('.content-section.active')?.dataset.category || 'home');

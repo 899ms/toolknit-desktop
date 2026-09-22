@@ -1,4 +1,5 @@
 import { PdfEditorCancelledError } from './errors.js';
+import { pdfjsDocumentOptions, destroyPdfDocument } from '../../shared/pdfjs-options.js';
 
 export function createPdfEditorDocumentStore({ pdfWorkerUrl, getSources, isDisposed }) {
   const documents = new Map();
@@ -11,12 +12,7 @@ export function createPdfEditorDocumentStore({ pdfWorkerUrl, getSources, isDispo
     const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
     if (disposed) throw new PdfEditorCancelledError();
     pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-    const wasmUrl = new URL('assets/', document.baseURI).href;
-    const loadingTask = pdfjsLib.getDocument({
-      data: bytes.slice(),
-      wasmUrl,
-      useWasm: true
-    });
+    const loadingTask = pdfjsLib.getDocument(pdfjsDocumentOptions({ data: bytes.slice() }));
     loadingTasks.add(loadingTask);
     return loadingTask;
   }
@@ -28,7 +24,7 @@ export function createPdfEditorDocumentStore({ pdfWorkerUrl, getSources, isDispo
     try {
       const pdfDocument = await loadingTask.promise;
       if (disposed || requestGeneration !== generation || isDisposed?.()) {
-        try { await pdfDocument.destroy(); } catch (_) {}
+        try { await destroyPdfDocument(pdfDocument); } catch (_) {}
         throw new PdfEditorCancelledError();
       }
       return { document: pdfDocument, loadingTask };
@@ -46,7 +42,7 @@ export function createPdfEditorDocumentStore({ pdfWorkerUrl, getSources, isDispo
     const request = (async () => {
       const { document: pdfDocument } = await loadBytes(source.bytes);
       if (requestGeneration !== generation || disposed) {
-        try { await pdfDocument.destroy(); } catch (_) {}
+        try { await destroyPdfDocument(pdfDocument); } catch (_) {}
         throw new PdfEditorCancelledError();
       }
       documents.set(sourceId, pdfDocument);
@@ -75,7 +71,7 @@ export function createPdfEditorDocumentStore({ pdfWorkerUrl, getSources, isDispo
     const values = Array.from(documents.values());
     documents.clear();
     await Promise.allSettled(values.map(async pdfDocument => {
-      try { await pdfDocument.destroy(); } catch (_) {}
+      try { await destroyPdfDocument(pdfDocument); } catch (_) {}
     }));
   }
 

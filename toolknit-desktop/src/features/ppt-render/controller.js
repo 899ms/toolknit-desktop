@@ -70,6 +70,7 @@ export function createPptRenderController({
   const byId = suffix => documentRef.getElementById(`${prefix}${suffix}`);
   const background = byId('PlasmaBg');
   const body = byId('Body');
+  const workspace = overlay.querySelector('.ppt-render-v2-workspace');
   const dropZone = byId('DropZone');
   const input = byId('FileInput');
   const cta = byId('Cta');
@@ -180,6 +181,7 @@ export function createPptRenderController({
     }
     dropZone?.classList.remove('visible');
     if (body) body.scrollTop = 0;
+    if (workspace) workspace.scrollTop = 0;
     setInteractiveLayer(successOverlay, false);
     setProgress(0, text('processing'), false);
   }
@@ -236,9 +238,9 @@ export function createPptRenderController({
   }
 
   function hideProgressSoon(owner) {
-    owner?.timeout(() => {
-      if (isOpen(owner)) setProgress(0, text('processing'), false);
-    }, 260);
+    // Release the full-screen hit-test layer as soon as the operation settles;
+    // the shared CSS transition still provides the visual fade-out.
+    if (isOpen(owner) && !busy) setProgress(0, text('processing'), false);
   }
 
   async function handleFile(file) {
@@ -306,10 +308,36 @@ export function createPptRenderController({
     const result = await invoke('convert_ppt_to_pdf', {
       inputPath: selectedFile.path,
       outputDir,
-      outputName: baseName
+      outputName: baseName,
+      temporary: mode === 'image'
     });
-    guard.assertCurrent(operation);
+    try {
+      guard.assertCurrent(operation);
+    } catch (error) {
+      if (mode === 'image') await discardTemporaryPreview(result);
+      throw error;
+    }
     return result;
+  }
+
+  async function discardTemporaryPreview(result) {
+    if (mode !== 'image' || result?.temporary !== true) return;
+    const outputDir = result.outputDir || result.output_dir;
+    const outputPath = result.outputPath || result.output_path;
+    const manifestPath = result.manifestPath || result.manifest_path;
+    if (!outputDir || !outputPath || !manifestPath) return;
+    try {
+      const { invoke } = await tauriCorePromise;
+      await invoke('discard_ppt_to_image_preview', {
+        outputDir,
+        outputPath,
+        manifestPath
+      });
+    } catch (_) {
+      // Do not echo filesystem paths in a user-facing log. The native command
+      // refuses anything that is not a marked, exact preview artifact.
+      console.error('[PPT Render:image] temporary preview cleanup failed');
+    }
   }
 
   function showSuccess(result) {
@@ -363,10 +391,12 @@ export function createPptRenderController({
     updateControls();
     setProgress(16, text('converting'));
     let pdfFile = null;
+    let temporaryCleanup = null;
     try {
       const result = await convertToPdf('PPT_To_Image', operation);
       setProgress(92, text('openingWorkspace'));
       notify(text('workspaceReady', { pages: result.pageCount || manifest.slide_count }));
+      temporaryCleanup = () => discardTemporaryPreview(result);
       pdfFile = {
         name: result.outputFile || createPptToPdfFileName(manifest.base_name || manifest.source_name),
         path: result.outputPath,
@@ -391,8 +421,19 @@ export function createPptRenderController({
       return;
     }
     close();
-    const instance = await openLazyTool('pdf-to-image');
-    await instance?.raw?.openWithFile(pdfFile, { allowLongExport: false });
+    let transferred = false;
+    try {
+      const instance = await openLazyTool('pdf-to-image');
+      const opened = await instance?.raw?.openWithFile(pdfFile, {
+        cleanupTemporaryPreview: temporaryCleanup
+      });
+      transferred = opened === true;
+      if (!transferred) await temporaryCleanup?.();
+    } catch (error) {
+      if (!transferred) await temporaryCleanup?.();
+      console.error('[PPT Render:image] workspace open failed');
+      notify(errorMessage(error, text));
+    }
   }
 
   lifecycle.event(overlay, 'dragover', event => {
@@ -411,7 +452,7 @@ export function createPptRenderController({
     if (file) void handleFile(file);
     else notify(text('unsupportedFormat'));
   });
-  lifecycle.event(cta, 'click', () => {
+  function selectFile() {
     if (busy) return;
     void choosePptxFile({
       isTauri,
@@ -419,7 +460,8 @@ export function createPptRenderController({
       onSelected: handleFile,
       onError: error => notify(String(error?.message || error))
     });
-  });
+  }
+  lifecycle.event(cta, 'click', selectFile);
   lifecycle.event(input, 'change', event => {
     const file = event.target.files?.[0];
     if (file) void handleFile(file);

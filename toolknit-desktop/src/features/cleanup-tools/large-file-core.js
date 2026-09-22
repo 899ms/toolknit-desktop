@@ -12,7 +12,7 @@ export function formatCleanupDate(time, lang = 'zh') {
 }
 
 export function cleanupDriveLetter(path) {
-  const value = String(path || '').trim();
+  const value = String(path || '').trim().replace(/^\\\\\?\\/, '');
   const match = value.match(/^([a-zA-Z]):[\\/]*$/);
   return match ? match[1].toUpperCase() : '';
 }
@@ -71,6 +71,7 @@ export function classifyCleanupRecycleError(error) {
   const message = String(error || '').trim();
   const lower = message.toLowerCase();
   if (!message) return { key: 'recycleFailureUnknown' };
+  if (/protected|reparse|outside|changed|session|scope|not in this scan/.test(lower)) return { key: 'recycleFailureProtected' };
   if (lower.includes('access') || lower.includes('permission') || message.includes('拒绝访问') || message.includes('权限')) {
     return { key: 'recycleFailureAccessDenied' };
   }
@@ -84,4 +85,35 @@ export function classifyCleanupRecycleError(error) {
     return { key: 'recycleFailureRecycleUnavailable' };
   }
   return { message: message.length > 140 ? `${message.slice(0, 140)}...` : message };
+}
+
+export function applyCleanupAiBatch(candidates, payload, batchIds) {
+  const allowed = new Set(batchIds.map(String));
+  const entries = Array.isArray(payload?.items) ? payload.items : [];
+  const counts = new Map();
+  for (const entry of entries) counts.set(entry?.id, (counts.get(entry?.id) || 0) + 1);
+  const valid = new Map(entries.filter(entry => entry && typeof entry.id === 'string'
+    && allowed.has(entry.id) && counts.get(entry.id) === 1
+    && ['delete', 'keep', 'review'].includes(entry.decision)
+    && typeof entry.reason === 'string' && entry.reason.trim()
+    && typeof entry.identity === 'string').map(entry => [entry.id, entry]));
+  return candidates.map(candidate => {
+    const entry = valid.get(candidate.id);
+    if (!entry) return candidate;
+    const sensitive = candidate.risk === 'high' || candidate.protected || candidate.category === 'models'
+      || /(?:wechat|xwechat|wxid_|projects?|source|repos?|src)(?:[\\/]|$)/i.test(candidate.folder_hint || '');
+    return { ...candidate, ai_decision: sensitive && entry.decision === 'delete' ? 'review' : entry.decision,
+      ai_identity: entry.identity.trim().slice(0, 120), ai_reason: entry.reason.trim().slice(0, 500) };
+  });
+}
+
+export function filterCleanupCandidates(candidates, query = '', risk = 'all', category = 'all') {
+  const needle = query.trim().toLocaleLowerCase();
+  return candidates.filter(item => (risk === 'all' || item.risk === risk)
+    && (category === 'all' || item.category === category)
+    && (!needle || [item.name, item.path, item.folder_hint].some(value => String(value || '').toLocaleLowerCase().includes(needle))));
+}
+
+export function cleanupBatchSelection(candidates) {
+  return candidates.filter(item => item.risk !== 'high' && !item.protected).slice(0, 200).map(item => item.path);
 }

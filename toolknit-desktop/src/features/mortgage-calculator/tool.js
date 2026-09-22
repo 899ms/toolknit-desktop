@@ -24,6 +24,14 @@ export function initMortgageCalculatorTool({
 
   const input = id => q(`#${id}`);
 
+  function syncSelection() {
+    methodTabs?.querySelectorAll('.mortgage-calc-method-tab').forEach(tab => {
+      const selected = tab.dataset.method === method;
+      tab.classList.toggle('active', selected);
+      tab.setAttribute('aria-pressed', String(selected));
+    });
+  }
+
   function renderSchedule(schedule) {
     if (!scheduleBody) return;
     const fragment = document.createDocumentFragment();
@@ -89,7 +97,7 @@ export function initMortgageCalculatorTool({
     overlay.setAttribute('aria-hidden', 'false');
     if (background && !plasma) plasma = initStandardToolPlasma(background);
     method = 'equalPayment';
-    methodTabs?.querySelectorAll('.mortgage-calc-method-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.method === method));
+    syncSelection();
     const defaults = [['mortgageCalcAmount', '100'], ['mortgageCalcTerm', '30'], ['mortgageCalcRate', '4.2']];
     for (const [id, value] of defaults) {
       const element = input(id);
@@ -110,6 +118,7 @@ export function initMortgageCalculatorTool({
     const tab = event.target.closest('.mortgage-calc-method-tab');
     if (!tab || !methodTabs.contains(tab)) return;
     method = tab.dataset.method || 'equalPayment';
+    syncSelection();
   });
   lifecycle.event(calculateButton, 'click', calculate);
   for (const id of ['mortgageCalcAmount', 'mortgageCalcTerm', 'mortgageCalcRate']) {

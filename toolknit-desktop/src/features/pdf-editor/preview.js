@@ -193,7 +193,7 @@ export function createPdfEditorPreview({
           renderTextLayer([], cssViewport, scale, page.id);
         }
       } else {
-        textLinesCache.delete(page.id);
+        textLinesCache.set(page.id, { lines: [], scale, cssViewport, rotation: displayRotation, epoch });
         setTextLinesCache(textLinesCache);
         renderTextLayer([], cssViewport, scale, page.id);
         if (getEditMode()) setEditMode(false);
@@ -235,4 +235,3 @@ export function createPdfEditorPreview({
     render
   };
 }
-

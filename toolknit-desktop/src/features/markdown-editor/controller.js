@@ -354,6 +354,33 @@ export function createMarkdownEditorController({
     });
   }
 
+  function importMarkdown(markdownText, sourceName = '') {
+    if (disposed || !session || !editor) return false;
+    const text = String(markdownText ?? '');
+    // Keep the source argument part of the import contract for callers that
+    // need to retain provenance; the Markdown document already contains the
+    // PDF page markers, so no extra header is injected here.
+    void sourceName;
+    hydrateRevision += 1;
+    renderRevision += 1;
+    clearTimeout(renderTimer);
+    renderTimer = 0;
+    highlightTimers.forEach(timer => clearTimeout(timer));
+    highlightTimers.clear();
+    assets = [];
+    activeOutlineTargetId = '';
+    try {
+      localStorage.removeItem(MARKDOWN_ASSET_KEY);
+    } catch {
+      // The document can still be imported when persistent storage is unavailable.
+    }
+    replaceDocument(text);
+    saveDraft();
+    editor.focus();
+    void renderDocument(session);
+    return true;
+  }
+
   async function insertImage() {
     const owner = session;
     if (!isOpenSession(owner) || !editor) return;
@@ -664,5 +691,5 @@ export function createMarkdownEditorController({
     }
   });
 
-  return { open, close, dispose };
+  return { open, close, dispose, importMarkdown };
 }

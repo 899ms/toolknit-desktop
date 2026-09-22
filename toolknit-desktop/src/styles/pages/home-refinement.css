@@ -1,24 +1,4 @@
 /* ===== v2.1 homepage refinement ===== */
-.app.is-v2-home .weave-stage {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  overflow: visible;
-}
-
-.app.is-v2-home .web-preview-stage {
-  inset: 0;
-  border-radius: 22px;
-  background: transparent;
-  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.2);
-}
-
-.app.is-v2-home .web-preview-stage:hover,
-.app.is-v2-home .web-preview-stage:focus-visible {
-  box-shadow: 0 26px 64px rgba(0, 0, 0, 0.34), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
-}
 
 .app.is-v2-home .home-v2-brand img {
   filter: none;
@@ -213,8 +193,6 @@
   .app.is-v2-home .hero-desc,
   .app.is-v2-home .hero-support-note { max-width: 100%; }
 
-  .app.is-v2-home .weave-stage { height: auto; min-height: 0; aspect-ratio: 16 / 9; }
-  .app.is-v2-home .web-preview-stage { border-radius: 16px; }
   .app.is-v2-home .tool-result-card { min-height: 132px; padding: 18px; }
   .app.is-v2-home .tool-result-tag { font-size: 13px; }
   .app.is-v2-home .tool-load-more { align-items: stretch; flex-direction: column; }
@@ -471,10 +449,6 @@
 .app.is-v2-home .github-actions .github-repo,
 .app.is-v2-home .github-stat-note {
   color: rgba(255, 255, 255, 0.82);
-}
-
-.app.is-v2-home .hero-meta span::before {
-  border-color: rgba(255, 255, 255, 0.78);
 }
 
 .app.is-v2-home .github-section-index {

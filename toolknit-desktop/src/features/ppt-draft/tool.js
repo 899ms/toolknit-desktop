@@ -1,7 +1,10 @@
 import { applyTranslations } from '../../i18n.js';
+import '../../styles/components/ppt-workbench.css';
+import '../../styles/themes/ppt-tools-light.css';
 import { createPptDraftController } from './controller.js';
 import { pptDraftPageTemplate, pptDraftPortalTemplate } from './template.js';
 import './ppt-draft.css';
+import './ppt-draft-light.css';
 
 function mountPortal() {
   const portal = document.createElement('div');
@@ -22,6 +25,7 @@ export function initPptDraftTool(context = {}) {
   return {
     open: (...args) => controller.open(...args),
     close: (...args) => controller.close(...args),
+    importOutline: (...args) => controller.importOutline(...args),
     dispose() {
       controller.dispose();
       portal.remove();

@@ -155,7 +155,7 @@
 
       .text-stats-v2 .text-stats-v2-workspace {
         display: grid;
-        grid-template-columns: minmax(430px, 0.96fr) minmax(500px, 1.04fr);
+        grid-template-columns: minmax(360px, 0.96fr) minmax(0, 1.04fr);
         grid-template-rows: minmax(0, 1fr);
         align-items: stretch;
         gap: 16px;
@@ -513,7 +513,7 @@
 
       @media (max-width: 1260px) {
         .text-stats-v2 .text-stats-v2-workspace {
-          grid-template-columns: minmax(390px, 0.92fr) minmax(440px, 1.08fr);
+          grid-template-columns: minmax(360px, 0.92fr) minmax(0, 1.08fr);
           padding: 20px;
         }
 
@@ -552,7 +552,20 @@
         }
 
         .text-stats-v2 .text-stats-results {
-          grid-template-columns: repeat(3, minmax(118px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+        }
+
+        .text-stats-v2 .text-stats-v2-actions {
+          flex-wrap: wrap;
+        }
+
+        .text-stats-v2 .text-stats-v2-actions .text-stats-btn {
+          min-width: 0;
+          flex: 1 1 120px;
+        }
+
+        .text-stats-v2 .text-stats-v2-actions .text-stats-export-btn {
+          margin-left: 0;
         }
       }
 

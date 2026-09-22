@@ -7,6 +7,7 @@ import {
   inferPptDraftTheme,
   normalizePptDraftOutline,
   normalizePptDraftRequest,
+  normalizePptDraftAssets,
   resolvePptDraftSubjectCopy,
   resolvePptDraftSubjectProfile,
   sanitizePptDraftBaseName
@@ -64,16 +65,16 @@ function assertImagePlaceholderAspectRatios(placeholders, label) {
 }
 
 assert.equal(sanitizePptDraftBaseName('..\\demo:name.pptx'), 'demo_name');
-assert.equal(normalizePptDraftRequest({ prompt: '测试', slide_count: 4, theme: 'tech-blue', deck_type: 'product-launch' }).theme, 'minimal-mono');
+assert.equal(normalizePptDraftRequest({ prompt: '测试', slide_count: 4, theme: 'tech-blue', deck_type: 'product-launch' }).theme, 'tech-blue');
 assert.equal(normalizePptDraftRequest({ prompt: '测试', slide_count: 4, theme: 'tech-blue', deck_type: 'product-launch' }).deck_type, 'product-launch');
 assert.equal(inferPptDraftTheme({ style: '极简风 白色 留白 暖灰' }), 'minimal-mono');
 assert.equal(normalizePptDraftRequest({ prompt: '测试', slide_count: 4, style: '黑白极简' }).theme, 'minimal-mono');
-assert.equal(normalizePptDraftRequest({ prompt: '测试', slide_count: 4, style: '浅色白色空间留白' }).theme, 'minimal-mono');
+assert.equal(normalizePptDraftRequest({ prompt: '测试', slide_count: 4, style: '浅色白色空间留白' }).theme, 'minimal-light');
 assert.equal(normalizePptDraftRequest({ prompt: '测试', slide_count: 4, theme: 'purple' }).theme, 'minimal-mono');
 
 const outline = normalizePptDraftOutline(outlinePayload(5), { prompt: '测试', slide_count: 5, theme: 'minimal-dark', deck_type: 'product-launch' });
 assert.equal(outline.slides.length, 5);
-assert.equal(outline.request.theme, 'minimal-mono');
+assert.equal(outline.request.theme, 'minimal-dark');
 assert.equal(outline.request.deck_type, 'product-launch');
 
 const importedLightOutline = normalizePptDraftOutline({
@@ -87,9 +88,9 @@ const importedLightOutline = normalizePptDraftOutline({
   }
 }, { slide_count: 5 });
 assert.equal(importedLightOutline.request.prompt, '导入大纲主题继承测试');
-assert.equal(importedLightOutline.request.theme, 'minimal-mono');
+assert.equal(importedLightOutline.request.theme, 'minimal-light');
 const importedLightDraft = await buildPptDraftPptx(importedLightOutline);
-assert.equal(importedLightDraft.theme, 'minimal-mono');
+assert.equal(importedLightDraft.theme, 'minimal-light');
 
 const warmInteriorOutline = normalizePptDraftOutline({
   ...outlinePayload(5),
@@ -100,12 +101,12 @@ const warmInteriorOutline = normalizePptDraftOutline({
     color_hint: '奶油白、木色、暖灰'
   }
 }, { prompt: '装修案例', slide_count: 5 });
-assert.equal(warmInteriorOutline.request.theme, 'minimal-mono');
+assert.equal(warmInteriorOutline.request.theme, 'minimal-light');
 const warmInteriorDraft = await buildPptDraftPptx(warmInteriorOutline);
-assert.equal(warmInteriorDraft.theme, 'minimal-mono');
+assert.equal(warmInteriorDraft.theme, 'minimal-light');
 const warmInteriorZip = await JSZip.loadAsync(warmInteriorDraft.bytes);
 const warmInteriorThemeXml = await warmInteriorZip.file('ppt/theme/theme1.xml').async('string');
-assert.match(warmInteriorThemeXml, /Minimal Monochrome/);
+assert.match(warmInteriorThemeXml, /Minimal Light/);
 assert.doesNotMatch(warmInteriorThemeXml, /A9784B/, 'interior subject must not leak hue into the monochrome template');
 assert.equal(resolvePptDraftSubjectProfile(warmInteriorOutline), 'interior');
 assert.equal(resolvePptDraftSubjectCopy(warmInteriorOutline).matrixMetricValue, '全屋');
@@ -180,7 +181,7 @@ const partyZip = await JSZip.loadAsync(partyDraft.bytes);
 const partyThemeXml = await partyZip.file('ppt/theme/theme1.xml').async('string');
 const partyCoverXml = await partyZip.file('ppt/slides/slide1.xml').async('string');
 const partyMatrixXml = await partyZip.file('ppt/slides/slide3.xml').async('string');
-assert.match(partyThemeXml, /Minimal Monochrome/);
+assert.match(partyThemeXml, /Minimal Light/);
 assert.doesNotMatch(partyThemeXml, /B11F24/, 'party-government subject must not leak red into the monochrome template');
 assert.match(partyCoverXml, /专题会议/);
 assert.match(partyCoverXml, /PARTY MEETING/);
@@ -218,7 +219,7 @@ const literaryZip = await JSZip.loadAsync(literaryDraft.bytes);
 const literaryThemeXml = await literaryZip.file('ppt/theme/theme1.xml').async('string');
 const literaryCoverXml = await literaryZip.file('ppt/slides/slide1.xml').async('string');
 const literaryMatrixXml = await literaryZip.file('ppt/slides/slide3.xml').async('string');
-assert.match(literaryThemeXml, /Minimal Monochrome/);
+assert.match(literaryThemeXml, /Minimal Light/);
 assert.doesNotMatch(literaryThemeXml, /4F5B53/, 'literary subject must stay within the monochrome template');
 assert.match(literaryCoverXml, /人物介绍/);
 assert.match(literaryCoverXml, /LITERARY PORTRAIT/);
@@ -226,7 +227,7 @@ assert.match(literaryMatrixXml, /人物生平|代表作品|散文风格/);
 
 const draft = await buildPptDraftPptx(outline, { theme: 'tech-blue' });
 assert.equal(draft.slide_count, 5);
-assert.equal(draft.theme, 'minimal-mono');
+assert.equal(draft.theme, 'tech-blue');
 assert.ok(draft.bytes.byteLength > 8000);
 assertImagePlaceholderAspectRatios(draft.image_placeholders, 'default draft');
 const coverPlaceholder = draft.image_placeholders.find(item => item.slide === 1);
@@ -234,14 +235,42 @@ assert.ok(coverPlaceholder, 'default draft must expose a cover image placeholder
 assert.equal(coverPlaceholder.aspect_ratio, '9:16', 'cover image placeholder must use portrait 9:16');
 
 const lightDraft = await buildPptDraftPptx(outline, { theme: 'minimal-light' });
-assert.equal(lightDraft.theme, 'minimal-mono');
+assert.equal(lightDraft.theme, 'minimal-light');
 const lightZip = await JSZip.loadAsync(lightDraft.bytes);
 const lightThemeXml = await lightZip.file('ppt/theme/theme1.xml').async('string');
-assert.match(lightThemeXml, /Minimal Monochrome/);
+assert.match(lightThemeXml, /Minimal Light/);
 for (const slideName of Object.keys(lightZip.files).filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name))) {
   const xml = await lightZip.file(slideName).async('string');
   assert.doesNotMatch(xml, /NaN|undefined|null/, `${slideName} light theme must be valid XML`);
 }
+
+const samplePng = Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64'));
+const normalizedAssets = normalizePptDraftAssets([{
+  id: 'hero-image',
+  name: 'hero.png',
+  mime: 'image/png',
+  bytes: samplePng,
+  width: 1,
+  height: 1
+}]);
+assert.equal(normalizedAssets.length, 1);
+const assetOutline = normalizePptDraftOutline({
+  ...outlinePayload(5),
+  slides: outlinePayload(5).slides.map((slide, index) => index === 0
+    ? { ...slide, asset_slots: [{ role: 'cover', asset_id: 'hero-image', fit: 'cover' }] }
+    : slide)
+}, { prompt: '真实图片素材测试', slide_count: 5, theme: 'tech-blue' });
+const assetDraft = await buildPptDraftPptx(assetOutline, { theme: 'tech-blue', assets: normalizedAssets });
+assert.equal(assetDraft.asset_manifest.find(item => item.slide === 1)?.status, 'embedded');
+assert.equal(assetDraft.asset_manifest.find(item => item.slide === 1)?.asset_id, 'hero-image');
+const assetZip = await JSZip.loadAsync(assetDraft.bytes);
+const assetContentTypes = await assetZip.file('[Content_Types].xml').async('string');
+const assetRels = await assetZip.file('ppt/slides/_rels/slide1.xml.rels').async('string');
+const assetSlide = await assetZip.file('ppt/slides/slide1.xml').async('string');
+assert.match(assetContentTypes, /Extension="png" ContentType="image\/png"/);
+assert.ok(assetZip.file('ppt/media/asset-hero-image.png'));
+assert.match(assetRels, /\.png/);
+assert.match(assetSlide, /Embedded image asset/);
 
 const zip = await JSZip.loadAsync(draft.bytes);
 for (const required of [

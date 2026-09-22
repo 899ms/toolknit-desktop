@@ -1,4 +1,5 @@
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
+import { createModalSession, setModalInteractivity } from '../../app/modal-runtime.js';
 import { mergePdfPages } from '../../pdf-merge-core.js';
 import { tauriCorePromise } from '../../platform/tauri-runtime.js';
 import { t } from '../../i18n.js';
@@ -7,28 +8,12 @@ function outputParent(path) {
   return String(path || '').replace(/[/\\][^/\\]+$/, '').replace(/\//g, '\\');
 }
 
-function waitForOwner(owner, delay) {
-  return new Promise(resolve => {
-    let settled = false;
-    let release = () => {};
-    const finish = value => {
-      if (settled) return;
-      settled = true;
-      window.clearTimeout(timer);
-      release();
-      resolve(value);
-    };
-    const timer = window.setTimeout(() => finish(true), delay);
-    release = owner.use(() => finish(false));
-  });
-}
-
 export function createPdfMergeExporter({
   isTauri = false,
   preview,
+  workspace,
   processMask,
-  progressFill,
-  processText,
+  setProgress,
   successOverlay,
   successPath,
   successMeta,
@@ -51,6 +36,19 @@ export function createPdfMergeExporter({
   let committing = false;
   let lastOutputPath = '';
 
+  const successModal = createModalSession({
+    root: successOverlay,
+    background: workspace,
+    initialFocus: successOk,
+    onClose: () => successModal.close()
+  });
+  const processModal = createModalSession({
+    root: processMask,
+    background: workspace,
+    initialFocus: processMask?.querySelector('#pdfMergeProcessCancel'),
+    onClose: () => cancel()
+  });
+
   function revokeObjectUrl(url) {
     const timer = objectUrls.get(url);
     if (timer) window.clearTimeout(timer);
@@ -70,9 +68,13 @@ export function createPdfMergeExporter({
     if (!current(owner, id)) throw new Error('PDF merge export cancelled');
   }
 
-  function setProgress(percent, message) {
-    if (progressFill) progressFill.style.width = `${percent}%`;
-    if (message && processText) processText.textContent = message;
+  function setSaving(value, owner = session) {
+    committing = value;
+    if (owner === session && !owner?.disposed) preview.setSaving(value);
+  }
+
+  function setProgressSafe(percent, message) {
+    setProgress?.(percent, message);
   }
 
   async function saveBytes(bytes, owner, id) {
@@ -109,38 +111,37 @@ export function createPdfMergeExporter({
     const count = getInputCount();
     lastOutputPath = path;
     if (successMeta) successMeta.textContent = t('home.pdfMerge.successSummary', { count });
-    if (successCount) successCount.textContent = `${count} ${t('home.pdfMerge.successCountUnit')}`;
+    if (successCount) successCount.textContent = String(count) + ' ' + t('home.pdfMerge.successCountUnit');
     if (successPath) successPath.textContent = displayFilesystemPath(path);
-    successOverlay?.classList.add('visible');
+    successModal.open();
   }
 
   async function commit() {
     if (committing || !session || session.disposed) return;
     const state = preview.getExportState();
     if (!state.documents.length || !state.pages.length) return;
+
     const owner = session;
     const id = ++revision;
     activeId = id;
-    committing = true;
+    setSaving(true, owner);
     preview.hideForCommit();
-    processMask?.classList.add('visible');
-    setProgress(30, t('home.pdfMerge.processing'));
-    const startTime = Date.now();
+    processModal.open();
+    setProgressSafe(5, t('home.pdfMerge.processing'));
 
     try {
       const bytes = await mergePdfPages(state);
       assertCurrent(owner, id);
+      setProgressSafe(85, t('home.pdfMerge.processing'));
       const path = await saveBytes(bytes, owner, id);
-      setProgress(100, t('home.pdfMerge.processing'));
-      if (!await waitForOwner(owner, Math.max(0, 1500 - (Date.now() - startTime)))) return;
       assertCurrent(owner, id);
+      setProgressSafe(100, t('home.pdfMerge.processing'));
       preview.releaseResources();
+      processModal.close();
       onSuccess();
       showSuccess(path, owner, id);
     } catch (error) {
       if (!current(owner, id) || /cancelled/i.test(String(error?.message || error))) return;
-      if (!await waitForOwner(owner, Math.max(0, 1500 - (Date.now() - startTime)))) return;
-      if (!current(owner, id)) return;
       console.error('[PDF Merge] export error:', error);
       const restored = preview.restoreAfterError();
       onFailure({ restored });
@@ -152,14 +153,15 @@ export function createPdfMergeExporter({
         activeId = 0;
       }
       if (ownsUi) {
-        processMask?.classList.remove('visible');
-        setProgress(0);
+        processModal.close();
+        setProgressSafe(0);
+        preview.setSaving(false);
       }
     }
   }
 
   lifecycle.event(successOk, 'click', () => {
-    successOverlay?.classList.remove('visible');
+    successModal.close();
     onAcknowledge();
   });
   lifecycle.event(successOpenFolder, 'click', async () => {
@@ -172,17 +174,28 @@ export function createPdfMergeExporter({
     }
   });
 
-  function close() {
+  function cancel() {
     revision += 1;
+    activeId = 0;
+    committing = false;
+    preview.setSaving(false);
+    processModal.close();
+    setProgressSafe(0);
+  }
+
+  function close() {
+    cancel();
     session?.dispose();
     session = null;
-    successOverlay?.classList.remove('visible');
-    processMask?.classList.remove('visible');
-    setProgress(0);
+    successModal.close({ restore: false });
+    processModal.close({ restore: false });
+    setModalInteractivity(successOverlay, false);
+    for (const url of objectUrls.keys()) revokeObjectUrl(url);
     lastOutputPath = '';
   }
 
   return {
+    cancel,
     close,
     commit,
     dispose() {
@@ -192,8 +205,10 @@ export function createPdfMergeExporter({
     open() {
       session?.dispose();
       session = createLifecycleScope();
-      successOverlay?.classList.remove('visible');
+      successModal.close({ restore: false });
+      processModal.close({ restore: false });
       lastOutputPath = '';
+      if (!committing) preview.setSaving(false);
     },
     get busy() { return committing; }
   };

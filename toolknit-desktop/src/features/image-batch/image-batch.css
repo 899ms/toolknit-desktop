@@ -41,3 +41,8 @@
 #imageCompressSuccessOverlay .audio-convert-success-dialog {
   max-width: 460px;
 }
+#imageCompressSuccessOverlay .audio-convert-success-icon[data-result-state="info"] {
+  background: #eceef1;
+  color: #60636a;
+  box-shadow: none;
+}

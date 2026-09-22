@@ -1,7 +1,9 @@
 import { createIcons, icons } from 'lucide';
 import { bindToolPageChrome } from '../../shared/tool-page-shell.js';
 import { createColorExtractorController } from './controller.js';
+import '../../styles/components/tool-empty-hero.css';
 import './color-extractor.css';
+import './color-extractor-light.css';
 
 export function initColorExtractorTool(context = {}) {
   const { overlay } = context;

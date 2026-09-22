@@ -1,5 +1,8 @@
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.mjs?url';
+import { pdfjsDocumentOptions, destroyPdfDocument } from '../../shared/pdfjs-options.js';
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
+import { createModalSession } from '../../app/modal-runtime.js';
+import { createPdfWorkbench } from '../../shared/pdf-workbench.js';
 import { PDF_MERGE_LIMITS } from '../../pdf-merge-core.js';
 import { onLangChange, t } from '../../i18n.js';
 
@@ -7,83 +10,120 @@ function cancelledError() {
   return new Error('PDF merge operation cancelled');
 }
 
+/**
+ * Owns PDF.js documents and the merge-specific state around the shared PDF
+ * workbench. The workbench owns only the rendered canvases and page controls.
+ */
 export function createPdfMergePreview({
   overlay,
-  selection,
-  selectionEyebrow,
-  choosePagesButton,
-  useAllPagesButton,
-  pickerProgress,
-  pickerFileName,
-  pickerSelectedCount,
-  pickerInputStatus,
-  pageStrip,
-  selectAllPagesButton,
-  selectionNextButton,
-  getFileName = () => '',
+  workspace,
+  workspaceClose,
+  workspaceStatus,
+  workspaceHint,
+  inputCount,
+  totalCount,
+  outputCount,
+  selectedCount,
+  selectionMeta,
+  selectAllButton,
+  commitButton,
+  moveUpButton,
+  moveDownButton,
+  deleteButton,
+  isSaving = () => false,
   onCommit = () => {},
-  notify = () => {},
   refreshIcons = () => {}
 } = {}) {
   const lifecycle = createLifecycleScope();
-  let renderScope = null;
+  const actions = workspace.querySelector('#pdfMergeWorkbenchActions');
   let loadingTask = null;
-  const renderTasks = new Set();
-  const previewCanvases = new Set();
   let documents = [];
   let pages = [];
-  let selectionFiles = [];
-  let currentSelectionIndex = 0;
-  let renderRevision = 0;
+  let view = null;
+  let workspaceSession = false;
 
-  function releaseRenderedPreviews() {
-    renderRevision += 1;
-    renderScope?.dispose();
-    renderScope = null;
-    for (const task of renderTasks) {
-      try { task.cancel(); } catch {}
+  const modal = createModalSession({
+    root: workspace,
+    background: overlay,
+    initialFocus: workspaceClose,
+    onClose: () => closeWorkspace(),
+    canClose: () => !isSaving()
+  });
+
+  function updateControls() {
+    const chosen = pages.filter(page => page.selected).length;
+    const currentPageIndex = view?.currentIndex?.() ?? -1;
+    const canMoveUp = currentPageIndex > 0;
+    const canMoveDown = currentPageIndex >= 0 && currentPageIndex < pages.length - 1;
+    const canDelete = chosen > 0 && pages.length - chosen >= 2;
+    const allSelected = pages.length > 0 && chosen === pages.length;
+    workspace.setAttribute('aria-label', t('home.pdfMerge.workspaceTitle'));
+    if (workspaceStatus) {
+      workspaceStatus.textContent = t('home.pdfMerge.inputStatus', { count: documents.length });
     }
-    renderTasks.clear();
-    for (const canvas of previewCanvases) {
-      canvas.width = 0;
-      canvas.height = 0;
+    if (workspaceHint) workspaceHint.textContent = t('home.pdfMerge.workspaceHint');
+    if (inputCount) inputCount.textContent = String(documents.length);
+    if (totalCount) totalCount.textContent = String(documents.reduce((sum, { doc }) => sum + doc.numPages, 0));
+    if (outputCount) outputCount.textContent = String(pages.length);
+    if (selectedCount) {
+      selectedCount.textContent = t('home.pdfMerge.selectedCount', { count: chosen });
     }
-    previewCanvases.clear();
-    pageStrip?.replaceChildren();
+    if (selectionMeta) {
+      selectionMeta.textContent = t('home.pdfMerge.outputSummary', { count: pages.length });
+    }
+    if (selectAllButton) {
+      const label = selectAllButton.querySelector('span');
+      if (label) label.textContent = t(allSelected
+        ? 'home.pdfMerge.clearSelection'
+        : 'home.pdfMerge.selectAllPages');
+      selectAllButton.disabled = isSaving() || !pages.length;
+    }
+    if (commitButton) commitButton.disabled = isSaving() || pages.length < 2;
+    if (moveUpButton) moveUpButton.disabled = isSaving() || !canMoveUp;
+    if (moveDownButton) moveDownButton.disabled = isSaving() || !canMoveDown;
+    if (deleteButton) {
+      deleteButton.disabled = isSaving() || !canDelete;
+      deleteButton.title = canDelete ? '' : t('home.pdfMerge.minimumPages');
+    }
+    if (workspaceClose) workspaceClose.disabled = isSaving();
   }
 
+  view = createPdfWorkbench({
+    root: workspace,
+    pageStrip: workspace.querySelector('#pdfMergePageStrip'),
+    back: workspaceClose,
+    actions,
+    tag: 'PDF MERGER · TOOL PAGE 3.0',
+    labels: {
+      back: 'home.pdfMerge.backToHome',
+      sourcePage: 'home.pdfMerge.sourcePage',
+      selectedCount: 'home.pdfMerge.selectedCount'
+    },
+    stageId: 'pdfMergePageStage',
+    sortable: true,
+    onReorder: () => updateControls(),
+    onChange: updateControls,
+    refreshIcons
+  });
+
   function releaseResources() {
-    releaseRenderedPreviews();
-    if (loadingTask) {
-      try { loadingTask.destroy(); } catch {}
-      loadingTask = null;
+    view.clear();
+    const task = loadingTask;
+    if (task) {
+      try { task.cancel(); } catch {}
+      try { loadingTask.destroy()?.catch(() => {}); } catch {}
     }
+    loadingTask = null;
     for (const { doc } of documents) {
-      try { doc.destroy(); } catch {}
+      try { destroyPdfDocument(doc)?.catch(() => {}); } catch {}
     }
     documents = [];
     pages = [];
-  }
-
-  function hideFlow({ reset = false } = {}) {
-    releaseRenderedPreviews();
-    selection?.classList.remove('visible');
-    selection?.setAttribute('aria-hidden', 'true');
-    overlay?.classList.remove('is-selection-flow');
-    if (reset) {
-      selectionFiles = [];
-      currentSelectionIndex = 0;
-      if (selection) selection.dataset.phase = '';
-    }
-  }
-
-  function close() {
-    hideFlow({ reset: true });
-    releaseResources();
+    workspaceSession = false;
   }
 
   async function loadSources({ files, readFileData, preflight, isCurrent, onProgress }) {
-    close();
+    releaseResources();
     await preflight();
     if (!isCurrent()) throw cancelledError();
     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
@@ -97,8 +137,8 @@ export function createPdfMergePreview({
         const fileData = await readFileData(file);
         if (!fileData.length) throw new Error(`File ${file.name} is empty`);
         if (!isCurrent()) throw cancelledError();
-        const wasmUrl = new URL('assets/', document.baseURI).href;
-        const task = pdfjs.getDocument({ data: fileData.slice(), wasmUrl, useWasm: true });
+
+        const task = pdfjs.getDocument(pdfjsDocumentOptions({ data: fileData.slice() }));
         loadingTask = task;
         let documentHandle;
         try {
@@ -107,16 +147,23 @@ export function createPdfMergePreview({
           if (loadingTask === task) loadingTask = null;
         }
         if (!isCurrent()) {
-          try { documentHandle.destroy(); } catch {}
+          await destroyPdfDocument(documentHandle);
           throw cancelledError();
         }
         if (pages.length + documentHandle.numPages > PDF_MERGE_LIMITS.maxPreviewPages) {
-          try { documentHandle.destroy(); } catch {}
+          await destroyPdfDocument(documentHandle);
           throw new Error(`PDF inputs exceed the ${PDF_MERGE_LIMITS.maxPreviewPages}-page preview limit`);
         }
-        documents.push({ doc: documentHandle, fileData });
+
+        documents.push({ doc: documentHandle, fileData, fileName: file.name });
         for (let pageIndex = 1; pageIndex <= documentHandle.numPages; pageIndex += 1) {
-          pages.push({ fileIndex, pageIndex, rotation: 0, selected: true });
+          pages.push({
+            fileIndex,
+            pageIndex,
+            fileName: file.name,
+            rotation: 0,
+            selected: true
+          });
         }
       }
     } catch (error) {
@@ -129,263 +176,101 @@ export function createPdfMergePreview({
       .filter(({ pageCount }) => pageCount > 1);
   }
 
-  function pagesForFile(fileIndex) {
-    return pages.filter(page => page.fileIndex === fileIndex);
-  }
-
-  function selectedPages() {
-    return pages.filter(page => page.selected);
-  }
-
-  function updateControls() {
-    const currentFile = selectionFiles[currentSelectionIndex];
-    if (!currentFile) return;
-    const currentPages = pagesForFile(currentFile.fileIndex);
-    const selectedCount = currentPages.filter(page => page.selected).length;
-    const allSelected = currentPages.length > 0 && selectedCount === currentPages.length;
-    if (pickerProgress) {
-      pickerProgress.textContent = t('home.pdfMerge.pickerProgress', {
-        current: currentSelectionIndex + 1,
-        total: selectionFiles.length
-      });
-    }
-    if (pickerFileName) {
-      pickerFileName.textContent = t('home.pdfMerge.pickerFile', {
-        name: getFileName(currentFile.fileIndex)
-      });
-    }
-    if (pickerInputStatus) {
-      pickerInputStatus.textContent = t('home.pdfMerge.pickerInputStatus', {
-        count: documents.length
-      });
-    }
-    if (pickerSelectedCount) {
-      pickerSelectedCount.textContent = t('home.pdfMerge.pickerSelected', {
-        selected: selectedCount,
-        total: currentPages.length
-      });
-    }
-    if (selectAllPagesButton) {
-      selectAllPagesButton.textContent = t(allSelected
-        ? 'home.pdfMerge.deselectAllPages'
-        : 'home.pdfMerge.selectAllPages');
-    }
-    if (selectionNextButton) {
-      selectionNextButton.textContent = t(currentSelectionIndex === selectionFiles.length - 1
-        ? 'home.pdfMerge.selectionComplete'
-        : 'home.pdfMerge.nextFile');
-      selectionNextButton.disabled = selectedCount === 0;
-    }
-  }
-
-  function setTileSelected(tile, selected) {
-    tile.classList.toggle('is-selected', selected);
-    tile.setAttribute('aria-pressed', String(selected));
-  }
-
-  async function renderPagePreviews(fileIndex, entries, revision) {
-    const source = documents[fileIndex]?.doc;
-    if (!source) return;
-    let nextIndex = 0;
-
-    const renderOne = async () => {
-      while (nextIndex < entries.length) {
-        const entry = entries[nextIndex++];
-        let canvas = null;
-        try {
-          const page = await source.getPage(entry.page.pageIndex);
-          const baseViewport = page.getViewport({ scale: 1 });
-          const viewport = page.getViewport({ scale: 232 / baseViewport.width });
-          canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d', { alpha: false });
-          if (!context) throw new Error('Unable to create PDF preview canvas');
-          canvas.width = Math.ceil(viewport.width);
-          canvas.height = Math.ceil(viewport.height);
-          previewCanvases.add(canvas);
-          const task = page.render({ canvasContext: context, viewport });
-          renderTasks.add(task);
-          try {
-            await task.promise;
-          } finally {
-            renderTasks.delete(task);
-            try { page.cleanup(); } catch {}
-          }
-          if (revision !== renderRevision || !entry.frame.isConnected) {
-            previewCanvases.delete(canvas);
-            canvas.width = 0;
-            canvas.height = 0;
-            return;
-          }
-          entry.frame.replaceChildren(canvas);
-          entry.frame.classList.remove('is-loading');
-        } catch (error) {
-          if (canvas && revision !== renderRevision) {
-            previewCanvases.delete(canvas);
-            canvas.width = 0;
-            canvas.height = 0;
-          }
-          if (revision !== renderRevision || /cancel/i.test(String(error?.message || error))) return;
-          console.warn('Unable to render PDF page preview:', error);
-          if (entry.frame.isConnected) {
-            entry.frame.classList.remove('is-loading');
-            entry.frame.classList.add('has-error');
-          }
-        }
-      }
-    };
-
-    await Promise.all(Array.from({ length: Math.min(3, entries.length) }, renderOne));
-  }
-
-  function renderPicker() {
-    const currentFile = selectionFiles[currentSelectionIndex];
-    if (!currentFile || !pageStrip) return;
-    releaseRenderedPreviews();
-    renderScope = createLifecycleScope();
-    const entries = [];
-    const fragment = document.createDocumentFragment();
-
-    for (const page of pagesForFile(currentFile.fileIndex)) {
-      const tile = document.createElement('button');
-      tile.type = 'button';
-      tile.className = 'pdf-merge-page-tile';
-      tile.setAttribute('aria-label', `Page ${page.pageIndex}`);
-      setTileSelected(tile, page.selected);
-      const frame = document.createElement('span');
-      frame.className = 'pdf-merge-page-frame is-loading';
-      const loading = document.createElement('span');
-      loading.className = 'pdf-merge-page-loading';
-      frame.appendChild(loading);
-      const index = document.createElement('span');
-      index.className = 'pdf-merge-page-index';
-      index.textContent = String(page.pageIndex);
-      const check = document.createElement('span');
-      check.className = 'pdf-merge-page-check';
-      const icon = document.createElement('i');
-      icon.dataset.lucide = 'check';
-      check.appendChild(icon);
-      tile.append(frame, index, check);
-      renderScope.event(tile, 'click', () => {
-        page.selected = !page.selected;
-        setTileSelected(tile, page.selected);
-        updateControls();
-      });
-      fragment.appendChild(tile);
-      entries.push({ page, frame });
-    }
-
-    pageStrip.replaceChildren(fragment);
+  function openWorkspace() {
+    if (!pages.length) return;
+    workspaceSession = true;
+    modal.open();
+    view.setPages(pages, page => documents[page.fileIndex].doc.getPage(page.pageIndex));
     updateControls();
-    refreshIcons();
-    const revision = renderRevision;
-    void renderPagePreviews(currentFile.fileIndex, entries, revision);
   }
 
-  function openNotice(files) {
-    selectionFiles = files;
-    currentSelectionIndex = 0;
-    if (selectionEyebrow) {
-      selectionEyebrow.textContent = t('home.pdfMerge.multiPageDetected', { count: files.length });
-    }
-    if (selection) {
-      selection.dataset.phase = 'notice';
-      selection.classList.add('visible');
-      selection.setAttribute('aria-hidden', 'false');
-    }
-    overlay?.classList.add('is-selection-flow');
-  }
-
-  function showPicker() {
-    if (!selectionFiles.length) return;
-    if (selection) {
-      selection.dataset.phase = 'pages';
-      selection.classList.add('visible');
-      selection.setAttribute('aria-hidden', 'false');
-    }
-    overlay?.classList.add('is-selection-flow');
-    renderPicker();
-  }
-
-  function restoreAfterError() {
-    if (!selectionFiles.length) return false;
-    if (selection) {
-      selection.classList.add('visible');
-      selection.setAttribute('aria-hidden', 'false');
-    }
-    overlay?.classList.add('is-selection-flow');
-    if (selection?.dataset.phase === 'pages') renderPicker();
+  function closeWorkspace({ force = false } = {}) {
+    if (!force && isSaving()) return false;
+    modal.close({ restore: !force });
+    releaseResources();
     return true;
   }
 
-  lifecycle.event(choosePagesButton, 'click', showPicker);
-  lifecycle.event(useAllPagesButton, 'click', () => {
-    for (const page of pages) page.selected = true;
+  function hideForCommit() {
+    modal.close({ restore: false });
+  }
+
+  function restoreAfterError() {
+    if (!workspaceSession || !pages.length) return false;
+    modal.open();
+    updateControls();
+    return true;
+  }
+
+  function moveSelected(direction) {
+    if (isSaving()) return;
+    const from = view.currentIndex();
+    const to = direction === 'up' ? from - 1 : from + 1;
+    if (to < 0 || to >= pages.length) return;
+    [pages[from], pages[to]] = [pages[to], pages[from]];
+    view.setPages(pages, page => documents[page.fileIndex].doc.getPage(page.pageIndex));
+    view.select(to);
+    view.refresh();
+    updateControls();
+  }
+
+  function deleteSelected() {
+    if (isSaving()) return;
+    const chosen = pages.filter(page => page.selected).length;
+    if (!chosen || pages.length - chosen < 2) return;
+    const oldCurrent = view.currentIndex();
+    const removedBefore = pages.slice(0, oldCurrent).filter(page => page.selected).length;
+    pages = pages.filter(page => !page.selected);
+    const nextIndex = Math.min(Math.max(0, oldCurrent - removedBefore), pages.length - 1);
+    pages.forEach(page => { page.selected = false; });
+    if (pages[nextIndex]) pages[nextIndex].selected = true;
+    view.setPages(pages, page => documents[page.fileIndex].doc.getPage(page.pageIndex));
+    view.select(nextIndex);
+    updateControls();
+  }
+
+  lifecycle.event(workspaceClose, 'click', () => closeWorkspace());
+  lifecycle.event(selectAllButton, 'click', () => {
+    if (isSaving() || !pages.length) return;
+    const select = pages.some(page => !page.selected);
+    pages.forEach(page => { page.selected = select; });
+    view.refresh();
+  });
+  lifecycle.event(moveUpButton, 'click', () => moveSelected('up'));
+  lifecycle.event(moveDownButton, 'click', () => moveSelected('down'));
+  lifecycle.event(deleteButton, 'click', deleteSelected);
+  lifecycle.event(commitButton, 'click', () => {
+    if (isSaving() || !pages.some(page => page.selected)) return;
     void onCommit();
   });
-  lifecycle.event(selectAllPagesButton, 'click', () => {
-    const currentFile = selectionFiles[currentSelectionIndex];
-    if (!currentFile) return;
-    const currentPages = pagesForFile(currentFile.fileIndex);
-    const shouldSelect = currentPages.some(page => !page.selected);
-    for (const page of currentPages) page.selected = shouldSelect;
-    pageStrip?.querySelectorAll('.pdf-merge-page-tile').forEach(tile => {
-      setTileSelected(tile, shouldSelect);
-    });
-    updateControls();
-  });
-  lifecycle.event(selectionNextButton, 'click', () => {
-    const currentFile = selectionFiles[currentSelectionIndex];
-    if (!currentFile) return;
-    if (!pagesForFile(currentFile.fileIndex).some(page => page.selected)) {
-      notify(t('home.pdfMerge.selectAtLeastOne'));
-      return;
-    }
-    if (currentSelectionIndex < selectionFiles.length - 1) {
-      currentSelectionIndex += 1;
-      renderPicker();
-      return;
-    }
-    void onCommit();
-  });
-  lifecycle.use(onLangChange(() => {
-    if (!selection?.classList.contains('visible')) return;
-    if (selection.dataset.phase === 'notice') {
-      if (selectionEyebrow) {
-        selectionEyebrow.textContent = t('home.pdfMerge.multiPageDetected', {
-          count: selectionFiles.length
-        });
-      }
-      return;
-    }
-    updateControls();
-  }));
+  lifecycle.use(onLangChange(updateControls));
 
   return {
-    close,
+    loadSources,
+    openWorkspace,
+    hideForCommit,
+    restoreAfterError,
+    releaseResources,
+    close: () => closeWorkspace({ force: true }),
     dispose() {
-      close();
+      closeWorkspace({ force: true });
+      view.dispose();
       lifecycle.dispose();
+    },
+    setSaving(value) {
+      view.setLocked(value);
+      updateControls();
     },
     getExportState() {
       return {
-        documents: documents.map(({ fileData }) => ({ fileData })),
-        pages: selectedPages().map(({ fileIndex, pageIndex, rotation }) => ({
+        documents: documents.map(({ fileData, fileName }) => ({ fileData, fileName })),
+        pages: pages.map(({ fileIndex, pageIndex, rotation }) => ({
           fileIndex,
           pageIndex,
           rotation
         }))
       };
     },
-    hideForCommit: () => hideFlow(),
-    loadSources,
-    openNotice,
-    releaseResources,
-    restoreAfterError,
-    returnToEditor() {
-      hideFlow({ reset: true });
-      releaseResources();
-    },
-    get hasSelectionFlow() { return selectionFiles.length > 0; },
-    get visible() { return Boolean(selection?.classList.contains('visible')); }
+    get visible() { return Boolean(workspace.classList.contains('visible')); }
   };
 }

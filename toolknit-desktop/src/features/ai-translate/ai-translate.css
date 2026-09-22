@@ -18,6 +18,14 @@
         padding: 34px 30px 28px;
       }
 
+      .ai-translate-v2 .pdf-merge-v2-title {
+        font-size: 50px;
+        line-height: 1.08;
+        letter-spacing: 0;
+        overflow-wrap: normal;
+        word-break: keep-all;
+      }
+
       .ai-translate-v2 .ai-translate-v2-upload-btn {
         width: 100%;
         margin: 28px 0 0;
@@ -25,7 +33,7 @@
 
       .ai-translate-v2 .ai-translate-v2-workspace {
         display: grid;
-        grid-template-columns: minmax(420px, 0.98fr) minmax(460px, 1.02fr);
+        grid-template-columns: minmax(360px, 0.98fr) minmax(390px, 1.02fr);
         grid-template-rows: minmax(0, 1fr);
         align-items: stretch;
         gap: 16px;
@@ -433,10 +441,17 @@
         }
       }
 
-      @media (max-width: 1080px) {
+      @media (max-width: 1180px) {
         .ai-translate-v2 .ai-translate-v2-workspace {
           grid-template-columns: 1fr;
-          grid-template-rows: minmax(360px, 1fr) minmax(320px, 1fr);
+          grid-template-rows: minmax(520px, auto) minmax(360px, auto);
+          overflow-y: auto;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .ai-translate-v2 .ai-translate-v2-workspace {
+          grid-template-rows: minmax(640px, auto) minmax(380px, auto);
         }
 
         .ai-translate-v2-card-head,
@@ -449,6 +464,11 @@
           width: 100%;
           max-width: none;
         }
+
+        .ai-translate-v2-card-head p {
+          max-width: none;
+          text-align: left;
+        }
       }
 
       @media (max-height: 760px) {
@@ -457,7 +477,7 @@
         }
 
         .ai-translate-v2 .pdf-merge-v2-title {
-          font-size: clamp(36px, 4vw, 52px);
+          font-size: 46px;
         }
 
         .ai-translate-v2 .ai-translate-v2-workspace {

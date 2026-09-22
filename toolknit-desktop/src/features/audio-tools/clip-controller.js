@@ -92,6 +92,7 @@ export function createAudioClipController({
   let exportRevision = 0;
   let redrawFrame = 0;
   let dragScope = null;
+  let viewScope = null;
   const clipState = {
     audioBuffer: null,
     audioContext: null,
@@ -306,8 +307,9 @@ export function createAudioClipController({
     if (!context) return;
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.clearRect(0, 0, width, height);
-    context.fillStyle = 'rgba(255, 255, 255, 0.78)';
-    context.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+    const styles = window?.getComputedStyle?.(audioClipCanvas);
+    context.fillStyle = styles?.getPropertyValue('--clip-wave-ink').trim() || 'rgba(255, 255, 255, 0.78)';
+    context.strokeStyle = styles?.getPropertyValue('--clip-wave-axis').trim() || 'rgba(255, 255, 255, 0.18)';
     context.lineWidth = 1;
     const midY = height / 2;
     context.beginPath(); context.moveTo(0, midY); context.lineTo(width, midY); context.stroke();
@@ -562,10 +564,23 @@ export function createAudioClipController({
   function open() {
     if (disposed || visible()) return;
     overlay.classList.add('visible'); overlay.setAttribute('aria-hidden', 'false');
+    viewScope = createLifecycleScope();
+    // Canvas pixels do not follow CSS theme or layout changes automatically.
+    if (window?.MutationObserver && document.documentElement) {
+      const observer = new window.MutationObserver(scheduleRedraw);
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+      viewScope.use(() => observer.disconnect());
+    }
+    if (window?.ResizeObserver && audioClipCanvas) {
+      const observer = new window.ResizeObserver(scheduleRedraw);
+      observer.observe(audioClipCanvas);
+      viewScope.use(() => observer.disconnect());
+    }
     if (!plasma && audioClipPlasmaBg) plasma = initStandardToolPlasma(audioClipPlasmaBg);
   }
 
   function close() {
+    viewScope?.dispose(); viewScope = null;
     loadRevision += 1; invalidateExport(); dragScope?.dispose(); dragScope = null; document.body?.classList.remove('audio-clip-pointer-dragging');
     stopPlayback(); closeAudioContext(); resetState();
     overlay.classList.remove('visible'); overlay.setAttribute('aria-hidden', 'true'); setDropVisible(false);

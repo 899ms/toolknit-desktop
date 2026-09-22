@@ -1,4 +1,5 @@
 import { t } from '../../i18n.js';
+import { setModalInteractivity } from '../../app/modal-runtime.js';
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -100,18 +101,14 @@ export function createPdfToImageView({
     const modalVisible = processVisible || successVisible;
     const processInteractive = processVisible && !successVisible;
 
-    overlay.inert = !overlayVisible || workspaceVisible || modalVisible;
-    overlay.setAttribute('aria-hidden', String(!overlayVisible || workspaceVisible || modalVisible));
+    setModalInteractivity(overlay, overlayVisible && !workspaceVisible && !modalVisible);
     if (body) body.inert = workspaceVisible;
-    workspace.inert = !workspaceVisible || modalVisible;
-    workspace.setAttribute('aria-hidden', String(!workspaceVisible || modalVisible));
+    setModalInteractivity(workspace, workspaceVisible && !modalVisible);
     if (processMask) {
-      processMask.inert = !processInteractive;
-      processMask.setAttribute('aria-hidden', String(!processInteractive));
+      setModalInteractivity(processMask, processInteractive);
     }
     if (successOverlay) {
-      successOverlay.inert = !successVisible;
-      successOverlay.setAttribute('aria-hidden', String(!successVisible));
+      setModalInteractivity(successOverlay, successVisible);
     }
   }
 
@@ -164,8 +161,10 @@ export function createPdfToImageView({
     const { result, mode, limitedCount } = lastSuccess;
     if (successMeta) {
       const base = t(
-        mode === 'long'
-          ? 'home.pdfToImageTool.successLongImagesMeta'
+        mode === 'grid'
+          ? 'home.pdfToImageTool.successGridMeta'
+          : ['long', 'long-horizontal'].includes(mode)
+            ? 'home.pdfToImageTool.successLongImagesMeta'
           : 'home.pdfToImageTool.successImagesMeta'
       );
       successMeta.textContent = limitedCount > 0
@@ -174,14 +173,19 @@ export function createPdfToImageView({
     }
     if (successType) {
       successType.textContent = t(
-        mode === 'long'
-          ? 'home.pdfToImageTool.successTypeLongImages'
+        mode === 'grid'
+          ? 'home.pdfToImageTool.successTypeGrid'
+          : ['long', 'long-horizontal'].includes(mode)
+            ? 'home.pdfToImageTool.successTypeLongImages'
           : 'home.pdfToImageTool.successTypeImages'
       );
     }
     if (successCount) successCount.textContent = String(result.outputCount || result.outputs?.length || 0);
     if (successPath) successPath.textContent = displayFilesystemPath(result.outputDir || '~/Downloads');
-    if (successOpenFolder) successOpenFolder.style.display = isTauri ? '' : 'none';
+    // Keep the action visible in browser previews as well. The click handler
+    // still guards the native-only folder operation, matching the PDF rotate
+    // success dialog and keeping both result surfaces structurally identical.
+    if (successOpenFolder) successOpenFolder.style.display = '';
   }
 
   function closeSuccess(restore = true) {

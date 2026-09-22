@@ -188,6 +188,12 @@ function assertActive(shouldCancel) {
   if (shouldCancel?.()) throw new PdfCropCancelledError();
 }
 
+function applyCropStateToPage(page, state = {}) {
+  if (state.explicit === false) return;
+  const rotation = page.getRotation()?.angle || state.rotation || 0;
+  setPageBoxes(page, displayRectToPdfBox(state.rect, pageBaseBox(page), rotation));
+}
+
 function applyCropPlan(document, crops, shouldCancel, onProgress) {
   const pages = document.getPages();
   assertPdfCropPageCount(pages.length);
@@ -196,11 +202,7 @@ function applyCropPlan(document, crops, shouldCancel, onProgress) {
   }
   pages.forEach((page, index) => {
     assertActive(shouldCancel);
-    const state = crops[index] || {};
-    if (state.explicit !== false) {
-      const rotation = page.getRotation()?.angle || state.rotation || 0;
-      setPageBoxes(page, displayRectToPdfBox(state.rect, pageBaseBox(page), rotation));
-    }
+    applyCropStateToPage(page, crops[index]);
     onProgress?.({ completed: index + 1, total: pages.length });
   });
   return pages;
@@ -214,6 +216,34 @@ export async function exportCroppedPdf({ bytes, crops, shouldCancel, onProgress 
   applyCropPlan(document, crops, shouldCancel, onProgress);
   assertActive(shouldCancel);
   return new Uint8Array(await document.save({ useObjectStreams: true }));
+}
+
+export async function exportCroppedPdfPage({
+  bytes,
+  crop,
+  pageIndex = 0,
+  shouldCancel,
+  onProgress
+}) {
+  const input = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []);
+  if (!input.length) throw new Error('PDF data is empty');
+  assertActive(shouldCancel);
+  const source = await PDFDocument.load(input.slice());
+  const pages = source.getPages();
+  assertPdfCropPageCount(pages.length);
+  if (!Number.isSafeInteger(pageIndex) || pageIndex < 0 || pageIndex >= pages.length) {
+    throw new Error('Current PDF page is out of range');
+  }
+  assertActive(shouldCancel);
+  applyCropStateToPage(pages[pageIndex], crop);
+  onProgress?.({ completed: 1, total: 1, page: pageIndex + 1 });
+  flattenPdfFormForPageCopy(source);
+  assertActive(shouldCancel);
+  const output = await PDFDocument.create();
+  const [page] = await output.copyPages(source, [pageIndex]);
+  output.addPage(page);
+  assertActive(shouldCancel);
+  return new Uint8Array(await output.save({ useObjectStreams: true }));
 }
 
 export async function splitCroppedPdfPages({ bytes, crops, baseName, shouldCancel, onProgress }) {

@@ -9,7 +9,7 @@
             <i data-lucide="arrow-left"></i>
             <span data-i18n="settings.back">返回首页</span>
           </button>
-          <span class="pdf-merge-v2-top-tag pdf-split-v2-top-tag">PDF SPLITTER · TOOL PAGE 2.3</span>
+          <span class="pdf-merge-v2-top-tag pdf-split-v2-top-tag">PDF SPLITTER · TOOL PAGE 3.0</span>
         </div>
         <div class="home-v2-top-actions pdf-merge-v2-top-actions">
           <button class="home-v2-nav-link" type="button" data-home-link="website">
@@ -133,6 +133,7 @@
         <div class="audio-convert-process-bar-fill" id="pdfSplitProcessBarFill"></div>
       </div>
       <div class="audio-convert-process-text" id="pdfSplitProcessText" data-i18n="home.pdfSplit.processing">正在拆分...</div>
+      <button class="audio-convert-cancel-btn" id="pdfSplitProcessCancel" type="button"><i data-lucide="x"></i><span data-i18n="common.cancel">取消</span></button>
     </div>
 
 <div class="audio-clip-success-overlay" id="pdfSplitSuccessOverlay">
@@ -159,28 +160,21 @@
       </div>
     </div>
 
-<section class="pdf-page-workspace" id="pdfSplitWorkspace" aria-hidden="true">
-      <header class="pdf-page-workspace-header">
-        <div>
-          <p class="pdf-merge-selection-eyebrow" id="pdfSplitWorkspaceStatus"></p>
-          <h2 class="pdf-page-workspace-title" data-i18n="home.pdfSplit.resultTitle">拆分页选择</h2>
-          <p class="pdf-page-workspace-file" id="pdfSplitWorkspaceHint"></p>
-        </div>
-        <div class="pdf-page-workspace-header-actions">
-          <span class="pdf-page-workspace-count" id="pdfSplitSelectedCount"></span>
-          <button class="pdf-page-workspace-close" id="pdfSplitWorkspaceClose" type="button" aria-label="Close">
-            <i data-lucide="x" aria-hidden="true"></i>
-          </button>
-        </div>
-      </header>
-      <div class="pdf-merge-page-stage" id="pdfSplitPageStage">
-        <div class="pdf-merge-page-strip" id="pdfSplitPageStrip" aria-live="polite"></div>
-      </div>
-      <footer class="pdf-page-workspace-footer">
-        <div class="pdf-page-workspace-status" id="pdfSplitSelectionMeta"></div>
-        <div class="pdf-page-workspace-footer-actions">
-          <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary" id="pdfSplitSelectAllBtn" data-i18n="home.pdfSplit.selectAll">全选</button>
-          <button class="pdf-merge-selection-btn pdf-merge-selection-btn-primary" id="pdfSplitDownloadAllBtn" data-i18n="home.pdfSplit.downloadSelected">导出已选页面</button>
-        </div>
-      </footer>
-    </section>
+<section id="pdfSplitWorkspace" class="pdf-workbench" role="dialog" aria-modal="true" aria-label="PDF 拆分工作台" aria-hidden="true" inert>
+  <button id="pdfSplitWorkspaceClose" type="button"></button>
+  <div id="pdfSplitPageStrip" aria-live="polite"></div>
+  <div class="pdf-workbench-actions" id="pdfSplitWorkbenchActions">
+    <div class="pdf-editor-filecard-meta">
+      <strong id="pdfSplitWorkspaceStatus"></strong>
+      <span class="pdf-editor-filecard-stats" id="pdfSplitWorkspaceHint"></span>
+      <span class="pdf-editor-filecard-stats" id="pdfSplitSelectedCount"></span>
+    </div>
+    <button class="pdf-editor-tool" id="pdfSplitSelectAllBtn" type="button"></button>
+    <div class="pdf-workbench-export">
+      <span class="pdf-editor-filecard-stats" id="pdfSplitSelectionMeta"></span>
+      <button class="pdf-editor-tool" id="pdfSplitDownloadCurrentBtn" type="button"><i data-lucide="file-down"></i><span data-i18n="home.pdfSplit.exportCurrent">导出当前页</span></button>
+      <button class="pdf-editor-tool" id="pdfSplitDownloadAllBtn" data-export-primary type="button"><i data-lucide="files"></i><span></span></button>
+      <button class="pdf-editor-tool" id="pdfSplitDownloadZipBtn" type="button"><i data-lucide="archive"></i><span data-i18n="home.pdfSplit.exportZip">导出独立页（ZIP）</span></button>
+    </div>
+  </div>
+</section>

@@ -4,6 +4,7 @@ import { createCDriveCleanupController } from './c-drive-controller.js';
 import { createLargeFileCleanupController } from './large-file-controller.js';
 import './large-file.css';
 import './c-drive.css';
+import './cleanup-tools-light.css';
 
 function initialize(context, createController) {
   const { overlay } = context || {};

@@ -12,6 +12,8 @@ const [
   compatibilityUi,
   compatibilityCore,
   featureStyles,
+  themeStyles,
+  themeIndex,
   appStyles,
   finalToolStyles
 ] = await Promise.all([
@@ -22,6 +24,8 @@ const [
   read('../src/markdown-editor-ui.js'),
   read('../src/markdown-editor-core.js'),
   read('../src/features/markdown-editor/markdown-editor.css'),
+  read('../src/styles/themes/markdown-editor-light.css'),
+  read('../src/styles/themes/index.css'),
   readGlobalStyles(import.meta.url),
   read('../src/tool-page-v2-final.css')
 ]);
@@ -35,12 +39,15 @@ assert.match(controller, /lifecycle\.use\(bindToolPageChrome\(shell, close\)\)/)
 assert.match(controller, /owner\.use\(mountToolPageBackground\(shell\)\)/);
 assert.match(controller, /isOpenSession\(owner\)/);
 assert.match(controller, /htmlLabels: false/, 'Mermaid labels must stay in sanitizable native SVG text');
-assert.match(controller, /return \{ open, close, dispose \}/);
+assert.match(controller, /function importMarkdown\(markdownText, sourceName = ''\)/);
+assert.match(controller, /localStorage\.removeItem\(MARKDOWN_ASSET_KEY\)/);
+assert.match(controller, /return \{ open, close, dispose, importMarkdown \}/);
 assert.match(controller, /from ['"]\.\.\/\.\.\/platform\/tauri-runtime\.js['"]/);
 assert.doesNotMatch(controller, /from ['"]@tauri-apps\//);
 assert.doesNotMatch(controller, /\.addEventListener\(/);
 assert.match(template, /data-lucide="save"/);
 assert.doesNotMatch(template, /data-lucide="cloud-check"/);
+assert.match(template, /tool-page-v2-shell tool-page-v2-light md-tool-shell/, 'Markdown must opt into the shared daytime shell');
 assert.match(previewSecurity, /template\.content\.querySelectorAll\(['"]img['"]\)/);
 assert.match(previewSecurity, /template\.content\.querySelectorAll\(['"]a['"]\)/);
 assert.match(previewSecurity, /link\.removeAttribute\(['"]target['"]\)/);
@@ -49,6 +56,16 @@ assert.match(previewSecurity, /!\['http:', 'https:'\]\.includes\(parsed\.protoco
 assert.match(compatibilityUi, /from ['"]\.\/features\/markdown-editor\/tool\.js['"]/);
 assert.match(compatibilityCore, /from ['"]\.\/features\/markdown-editor\/core\.js['"]/);
 assert.match(featureStyles, /\.md-workbench\s*\{/);
+const previewBackgrounds = [...featureStyles.matchAll(/^\.md-preview-pane[ \t]*\{([^\r\n}]*)\}/gm)]
+  .map(match => /\bbackground:\s*([^;]+);/.exec(match[1])?.[1]).filter(Boolean);
+assert.ok(previewBackgrounds.length > 0);
+assert.ok(previewBackgrounds.every(color => color === '#fff'), 'preview backgrounds must stay opaque white');
+assert.match(themeIndex, /@import url\('\.\/markdown-editor-light\.css'\);/, 'the daytime theme index must load Markdown styles');
+assert.match(themeStyles, /\.md-tool-shell > \.tool-page-v2-bg[\s\S]*display: none !important/, 'the daytime theme must suppress the dark background runtime');
+assert.match(themeStyles, /html\[data-theme="light"\] \.md-tool-shell \.md-outline-panel/, 'the daytime theme must cover the document rail');
+assert.match(themeStyles, /html\[data-theme="light"\] \.md-tool-shell \.md-toolbar/, 'the daytime theme must cover the editor toolbar');
+assert.match(themeStyles, /html\[data-theme="light"\] \.md-tool-shell \.md-codemirror \.cm-editor/, 'the daytime theme must cover CodeMirror');
+assert.match(themeStyles, /html\[data-theme="light"\] \.md-tool-shell \.md-help-page/, 'the daytime theme must cover the syntax reference');
 assert.match(
   featureStyles,
   /\.md-editor-view\[data-view="preview"\] \.md-input-pane,[\s\S]*\.md-editor-view\[data-view="editor"\] \.md-preview-pane[\s\S]*display: none !important/,

@@ -1,19 +1,19 @@
+import { createPreviewPlayback } from './preview-playback.js';
+import { createPreviewRequest } from './preview-request.js';
 import { createLifecycleScope } from '../../app/tool-lifecycle.js';
 import { onLangChange } from '../../i18n.js';
 import { loadTauriDialog, tauriCorePromise, tauriEventPromise } from '../../platform/tauri-runtime.js';
+import { formatFileSize } from '../../shared/file-size.js';
 import { frameTimeLabel, normalizeVideoFrameFormat, normalizeVideoFrameTimestamp, validateVideoFrameInput } from '../../video-frame-core.js';
 import {
   VIDEO_EXTENSIONS,
   clearQueuedVideoPreview,
   createPreviewQueue,
-  fileNameFromPath,
   localVideoFile,
   registerNativeVideoDrop,
   scheduleVideoPreview,
   setDropVisible
 } from './shared.js';
-
-const PREVIEW_WINDOW_MS = 30_000;
 
 export function createVideoFrameController({
   overlay,
@@ -41,9 +41,15 @@ export function createVideoFrameController({
   const previewVideo = byId('videoFramePreviewVideo');
   const previewImage = byId('videoFramePreviewImage');
   const previewToggle = byId('videoFramePreviewToggle');
+  const expandToggle = byId('videoFrameExpandToggle');
   const timeline = byId('videoFrameTimeline');
   const timestampInput = byId('videoFrameTimestamp');
   const timeLabel = byId('videoFrameTime');
+  const currentTimeLabel = byId('videoFrameCurrentTime');
+  const durationLabel = byId('videoFrameDuration');
+  const resolutionLabel = byId('videoFrameResolution');
+  const frameRateLabel = byId('videoFrameRate');
+  const fileSizeLabel = byId('videoFrameFileSize');
   const fileName = byId('videoFrameName');
   const formatOptions = byId('videoFrameFormat');
   const processMask = byId('videoFrameProcessMask');
@@ -64,9 +70,6 @@ export function createVideoFrameController({
   let stepMs = 33;
   let timestampMs = 0;
   let outputFormat = 'png';
-  let previewRange = null;
-  let previewToken = 0;
-  let previewLoading = false;
   let processing = false;
   let operationId = 0;
   let outputPath = '';
@@ -82,18 +85,34 @@ export function createVideoFrameController({
     processMask?.classList.toggle('visible', visible);
   }
 
-  function updateToggle() {
-    const playing = Boolean(previewVideo && !previewVideo.paused && !previewVideo.ended);
-    const enabled = Boolean(file?.path && duration > 0 && !previewLoading);
-    if (previewToggle) {
-      previewToggle.disabled = !enabled;
-      previewToggle.classList.toggle('is-loading', previewLoading);
-      previewToggle.classList.toggle('is-playing', playing);
-      previewToggle.setAttribute('aria-pressed', String(playing));
-      previewToggle.setAttribute('aria-label', playing ? '暂停视频' : '播放视频');
+  const playback = createPreviewPlayback({
+    media: previewVideo,
+    requestClip: args => createPreviewRequest('render_video_preview_clip', args,
+      async () => (await tauriCorePromise).invoke),
+    onState: () => updateToggle(),
+    onTime: value => updateTimestamp(value, false),
+    onError: error => {
+      if (!current(session)) return;
+      notify(t(error?.message === 'video-preview:decode-failed' ? 'home.videoFrame.decodeFailed' : 'home.videoFrame.previewFailed'));
+      updateTimestamp(timestampMs);
     }
-    previewToggle?.querySelector('.video-gif-preview-play-icon')?.toggleAttribute('hidden', playing);
-    previewToggle?.querySelector('.video-gif-preview-pause-icon')?.toggleAttribute('hidden', !playing);
+  });
+
+  function updateToggle() {
+    const { active, loading, playing } = playback.state();
+    if (previewToggle) {
+      previewToggle.disabled = !file?.path || duration <= 0;
+      previewToggle.classList.toggle('is-loading', loading);
+      previewToggle.classList.toggle('is-playing', playing);
+      previewToggle.setAttribute('aria-pressed', String(active));
+      previewToggle.setAttribute('aria-busy', String(loading));
+      const key = loading ? 'home.videoFrame.cancelLoading' : active ? 'home.videoFrame.pause' : 'home.videoFrame.play';
+      previewToggle.setAttribute('aria-label', t(key));
+      previewToggle.setAttribute('title', t(key));
+    }
+    previewToggle?.querySelector('.video-gif-preview-play-icon')?.toggleAttribute('hidden', active);
+    previewToggle?.querySelector('.video-gif-preview-pause-icon')?.toggleAttribute('hidden', !active);
+    if (previewImage && !previewVideo.hidden) previewImage.hidden = true;
   }
 
   function updateTimestamp(value, render = true, immediate = false) {
@@ -101,74 +120,37 @@ export function createVideoFrameController({
     if (timeline) timeline.value = String(timestampMs);
     if (timestampInput) timestampInput.value = String(timestampMs);
     if (timeLabel) timeLabel.textContent = frameTimeLabel(timestampMs);
+    if (currentTimeLabel) currentTimeLabel.textContent = frameTimeLabel(timestampMs);
     if (render && file?.path) {
-      if (previewRange && timestampMs >= previewRange.startMs && timestampMs <= previewRange.endMs && previewVideo) {
-        previewVideo.currentTime = Math.max(0, (timestampMs - previewRange.startMs) / 1000);
-        previewVideo.hidden = false;
+      const reusable = playback.seek(timestampMs);
+      if (reusable) {
+        clearQueuedVideoPreview(previewQueue, previewImage);
         if (previewImage) previewImage.hidden = true;
-      } else {
-        previewVideo?.pause();
-        previewVideo && (previewVideo.hidden = true);
-        if (previewImage) {
-          previewImage.hidden = false;
-          scheduleVideoPreview(previewQueue, previewImage, file.path, timestampMs, { immediate, notify });
-        }
+      } else if (previewImage) {
+        previewImage.hidden = false;
+        scheduleVideoPreview(previewQueue, previewImage, file.path, timestampMs, { immediate, notify });
       }
     }
     return timestampMs;
   }
 
   function clearPreview() {
-    previewToken += 1;
-    previewRange = null;
-    previewLoading = false;
+    playback.reset();
     clearQueuedVideoPreview(previewQueue, previewImage);
-    if (previewVideo) {
-      previewVideo.pause();
-      previewVideo.removeAttribute('src');
-      previewVideo.load();
-      previewVideo.hidden = true;
-    }
-    updateToggle();
   }
 
-  async function loadPreviewClip(at = timestampMs, autoplay = false) {
-    if (!isTauri || !file?.path || !previewVideo) return false;
-    const end = maxMs();
-    if (!end) return false;
-    const windowMs = Math.min(PREVIEW_WINDOW_MS, end);
-    const start = end > windowMs ? Math.min(Math.floor(at / windowMs) * windowMs, end - windowMs) : 0;
-    const range = { startMs: start, endMs: Math.max(start + 1, Math.min(end, start + windowMs)) };
-    const token = ++previewToken;
-    previewLoading = true;
-    updateToggle();
-    try {
-      const { invoke } = await tauriCorePromise;
-      const result = await invoke('render_video_preview_clip', { inputPath: file.path, startMs: range.startMs, endMs: range.endMs });
-      const source = result?.media_data_url || result?.mediaDataUrl;
-      if (!source || token !== previewToken) return false;
-      previewVideo.pause();
-      previewVideo.src = source;
-      previewVideo.hidden = false;
-      if (previewImage) previewImage.hidden = true;
-      previewVideo.load();
-      previewRange = range;
-      updateTimestamp(at, true, true);
-      if (autoplay) await previewVideo.play();
-      return true;
-    } catch (error) {
-      if (token === previewToken) {
-        previewRange = null;
-        if (file?.path && previewImage) {
-          previewVideo.hidden = true;
-          previewImage.hidden = false;
-          scheduleVideoPreview(previewQueue, previewImage, file.path, at, { immediate: true, notify });
-        }
-      }
-      return false;
-    } finally {
-      if (token === previewToken) { previewLoading = false; updateToggle(); }
-    }
+  function setExpanded(expanded) {
+    const sidebar = overlay.querySelector('.video-media-v2-sidebar');
+    if (expanded && sidebar?.contains(documentRef.activeElement)) expandToggle?.focus();
+    overlay.classList.toggle('is-expanded', expanded);
+    sidebar?.toggleAttribute('inert', expanded);
+    sidebar?.setAttribute('aria-hidden', String(expanded));
+    expandToggle?.setAttribute('aria-pressed', String(expanded));
+    const label = t(expanded ? 'home.videoFrame.collapse' : 'home.videoFrame.expand');
+    expandToggle?.setAttribute('aria-label', label);
+    expandToggle?.setAttribute('title', label);
+    expandToggle?.querySelector('[data-expand-icon="expand"]')?.toggleAttribute('hidden', expanded);
+    expandToggle?.querySelector('[data-expand-icon="collapse"]')?.toggleAttribute('hidden', !expanded);
   }
 
   async function loadFile(path) {
@@ -187,8 +169,15 @@ export function createVideoFrameController({
       duration = nextDuration;
       stepMs = Number.isFinite(probe?.frame_rate) && probe.frame_rate > 0 && probe.frame_rate <= 240 ? 1000 / probe.frame_rate : 33;
       clearPreview();
+      playback.reset(file.path, maxMs());
       if (fileName) fileName.textContent = file.name;
       timeline && (timeline.max = String(maxMs()));
+      durationLabel && (durationLabel.textContent = frameTimeLabel(maxMs()));
+      const width = Number(probe?.width) || 0;
+      const height = Number(probe?.height) || 0;
+      resolutionLabel && (resolutionLabel.textContent = width && height ? `${width} × ${height}` : '--');
+      frameRateLabel && (frameRateLabel.textContent = Number(probe?.frame_rate) > 0 ? `${Number(probe.frame_rate).toFixed(2).replace(/\.00$/, '')} FPS` : '--');
+      fileSizeLabel && (fileSizeLabel.textContent = file.size > 0 ? formatFileSize(file.size) : '--');
       empty && (empty.hidden = true);
       editor && (editor.hidden = false);
       overlay.classList.add('is-editing');
@@ -200,21 +189,18 @@ export function createVideoFrameController({
 
   async function chooseFile() {
     if (!isTauri || processing) { notify(t('home.videoFrame.desktopOnly')); return; }
+    const owner = session;
     try {
       const { open } = await loadTauriDialog();
       const selected = await open({ multiple: false, filters: [{ name: 'Video', extensions: VIDEO_EXTENSIONS }] });
-      if (typeof selected === 'string') await loadFile(selected);
+      if (current(owner) && typeof selected === 'string') await loadFile(selected);
     } catch (error) { console.error('[Video Frame] file picker failed:', error); }
   }
 
   async function playPreview() {
-    if (!file?.path || previewLoading || !previewVideo) return;
-    if (!previewRange || timestampMs < previewRange.startMs || timestampMs > previewRange.endMs) {
-      await loadPreviewClip(timestampMs, true);
-      return;
-    }
-    try { previewVideo.hidden = false; if (previewImage) previewImage.hidden = true; updateTimestamp(timestampMs, true, true); await previewVideo.play(); }
-    catch (error) { notify(error?.message || '无法播放视频。'); }
+    if (!isTauri || !file?.path) return;
+    clearQueuedVideoPreview(previewQueue, previewImage);
+    await playback.play(timestampMs);
   }
 
   function clearFile() {
@@ -224,6 +210,11 @@ export function createVideoFrameController({
     timestampMs = 0;
     clearPreview();
     timeline && (timeline.max = '0');
+    durationLabel && (durationLabel.textContent = frameTimeLabel(0));
+    currentTimeLabel && (currentTimeLabel.textContent = frameTimeLabel(0));
+    resolutionLabel && (resolutionLabel.textContent = '--');
+    frameRateLabel && (frameRateLabel.textContent = '--');
+    fileSizeLabel && (fileSizeLabel.textContent = '--');
     overlay.classList.remove('is-editing');
     editor && (editor.hidden = true);
     empty && (empty.hidden = false);
@@ -233,18 +224,21 @@ export function createVideoFrameController({
     if (!isTauri || !file?.path || processing) return;
     const owner = session;
     const request = ++operationId;
+    playback.pause();
     processing = true;
     setProgress(8, t('home.videoFrame.processing'));
     let release = null;
     try {
       const [{ invoke }, { listen }] = await Promise.all([tauriCorePromise, tauriEventPromise]);
       const outputDir = await getOutputDir('Videos');
+      if (!current(owner) || request !== operationId) return;
       const rawUnlisten = await listen('video-frame-progress', event => {
         if (!current(owner) || request !== operationId) return;
         const value = Math.max(0, Math.min(1, Number(event?.payload?.progress) || 0));
         setProgress(Math.max(8, value * 100), event?.payload?.phase === 'publish' ? '正在发布图片...' : '正在定位并导出帧...');
       });
       release = session?.use ? session.use(rawUnlisten) : rawUnlisten;
+      if (!current(owner) || request !== operationId) { release?.(); return; }
       const result = await invoke('extract_video_frame', { inputPath: file.path, outputDir, timestampMs, format: normalizeVideoFrameFormat(outputFormat) });
       release?.();
       if (!current(owner) || request !== operationId) return;
@@ -263,24 +257,30 @@ export function createVideoFrameController({
 
   function cancel() {
     operationId += 1;
+    const wasProcessing = processing;
     processing = false;
     setProgress(0, undefined, false);
-    if (isTauri) void tauriCorePromise.then(({ invoke }) => invoke('cancel_convert')).catch(() => {});
+    if (isTauri && wasProcessing) void tauriCorePromise.then(({ invoke }) => invoke('cancel_convert')).catch(() => {});
   }
 
   function bindActions() {
     const action = (id, handler) => { const node = byId(id); if (node) lifecycle.event(node, 'click', event => { event.stopPropagation(); handler(event); }); };
     action('videoFrameBack', close);
     action('videoFrameV2Settings', openSettings);
-    action('videoFramePick', () => { void chooseFile(); });
     action('videoFrameChange', () => { void chooseFile(); });
+    overlay.querySelectorAll('[data-video-pick="frame"]').forEach(node => lifecycle.event(node, 'click', () => { void chooseFile(); }));
     action('videoFramePrev', () => updateTimestamp(timestampMs - stepMs));
     action('videoFrameNext', () => updateTimestamp(timestampMs + stepMs));
+    action('videoFrameStart', () => updateTimestamp(0));
+    action('videoFrameBackFive', () => updateTimestamp(timestampMs - 5000));
+    action('videoFrameForwardFive', () => updateTimestamp(timestampMs + 5000));
+    action('videoFrameEnd', () => updateTimestamp(maxMs()));
     action('videoFrameExport', () => { void exportFrame(); });
     action('videoFrameCancelBtn', cancel);
     action('videoFrameSuccessOk', () => success?.classList.remove('visible'));
     action('videoFrameOpenFolder', () => { if (outputPath) void openOutputFolder(outputPath); success?.classList.remove('visible'); });
-    action('videoFramePreviewToggle', () => { if (previewVideo && !previewVideo.paused && !previewVideo.ended) previewVideo.pause(); else void playPreview(); });
+    action('videoFramePreviewToggle', () => { if (playback.state().active) playback.pause(); else void playPreview(); });
+    action('videoFrameExpandToggle', () => setExpanded(!overlay.classList.contains('is-expanded')));
     overlay.querySelectorAll('[data-home-link="website"]').forEach(node => lifecycle.event(node, 'click', () => openExternalUrl('https://toolknit.com')));
     overlay.querySelectorAll('[data-open-support]').forEach(node => lifecycle.event(node, 'click', openSupport));
     overlay.querySelectorAll('[data-action]').forEach(node => lifecycle.event(node, 'click', () => handleWindowAction(node.dataset.action)));
@@ -292,25 +292,46 @@ export function createVideoFrameController({
       outputFormat = normalizeVideoFrameFormat(button.dataset.format);
       formatOptions.querySelectorAll('[data-format]').forEach(item => item.classList.toggle('active', item === button));
     });
-    lifecycle.event(previewVideo, 'play', updateToggle);
-    lifecycle.event(previewVideo, 'pause', updateToggle);
-    lifecycle.event(previewVideo, 'ended', updateToggle);
-    lifecycle.event(previewVideo, 'timeupdate', () => {
-      if (!previewRange || !previewVideo || previewVideo.seeking) return;
-      updateTimestamp(previewRange.startMs + Math.round(previewVideo.currentTime * 1000), false);
+    lifecycle.event(documentRef, 'keydown', event => {
+      if (!overlay.classList.contains('visible') || success?.classList.contains('visible')) return;
+      if (event.key === 'Escape' && overlay.classList.contains('is-expanded')) {
+        event.preventDefault();
+        setExpanded(false);
+        return;
+      }
+      const target = event.target;
+      if (target && (target.matches?.('input, textarea, select, button, [contenteditable="true"]') || target.isContentEditable)) return;
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        const direction = event.key === 'ArrowLeft' ? -1 : 1;
+        const delta = event.shiftKey ? Math.max(1000, Math.round(stepMs * 10)) : stepMs;
+        event.preventDefault();
+        updateTimestamp(timestampMs + direction * delta);
+      } else if (event.key === 'Home' || event.key === 'End') {
+        event.preventDefault();
+        updateTimestamp(event.key === 'Home' ? 0 : maxMs());
+      } else if (event.key === ' ') {
+        event.preventDefault();
+        previewToggle?.click();
+      }
     });
-    lifecycle.event(previewVideo, 'seeked', () => {
-      if (!previewRange || !previewVideo) return;
-      updateTimestamp(previewRange.startMs + Math.round(previewVideo.currentTime * 1000), false);
-    });
-    lifecycle.use(registerLanguageChange(() => refreshIcons()));
+    lifecycle.use(registerLanguageChange(() => {
+      const expanded = overlay.classList.contains('is-expanded');
+      expandToggle?.setAttribute('aria-label', t(expanded ? 'home.videoFrame.collapse' : 'home.videoFrame.expand'));
+      expandToggle?.setAttribute('title', t(expanded ? 'home.videoFrame.collapse' : 'home.videoFrame.expand'));
+      updateToggle();
+      refreshIcons();
+    }));
   }
 
   function open() {
     if (disposed) return;
+    if (session && overlay.classList.contains('visible')) return;
     session?.dispose();
     session = createLifecycleScope();
+    overlay.removeAttribute('inert');
     overlay.classList.add('visible');
+    setExpanded(false);
+    updateToggle();
     overlay.setAttribute('aria-hidden', 'false');
     if (!plasma && plasmaBackground) plasma = initStandardToolPlasma(plasmaBackground);
   }
@@ -321,7 +342,10 @@ export function createVideoFrameController({
     session?.dispose();
     session = null;
     clearFile();
+    setExpanded(false);
     success?.classList.remove('visible');
+    if (overlay.contains(documentRef.activeElement)) documentRef.activeElement?.blur();
+    overlay.setAttribute('inert', '');
     overlay.classList.remove('visible');
     overlay.setAttribute('aria-hidden', 'true');
     setDropVisible(overlay, dropZone, false);
@@ -347,6 +371,7 @@ export function createVideoFrameController({
       if (disposed) return;
       disposed = true;
       close();
+      playback.dispose();
       nativeDropUnlisten?.();
       nativeDropUnlisten = null;
       lifecycle.dispose();

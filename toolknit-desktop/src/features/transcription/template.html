@@ -7,7 +7,7 @@
             <i data-lucide="arrow-left"></i>
             <span data-i18n="settings.back">返回首页</span>
           </button>
-          <span class="pdf-merge-v2-top-tag transcription-v2-top-tag">TEXT TOOLS · TOOL PAGE 2.3</span>
+          <span class="pdf-merge-v2-top-tag transcription-v2-top-tag">TEXT TOOLS · TOOL PAGE 3.0</span>
         </div>
         <div class="home-v2-top-actions pdf-merge-v2-top-actions">
           <button class="home-v2-nav-link" type="button" data-home-link="website">
@@ -59,54 +59,63 @@
           </div>
         </aside>
         <main class="pdf-merge-v2-workspace transcription-v2-workspace">
-          <section class="pdf-merge-v2-upload transcription-v2-upload" aria-label="上传音频或视频">
-            <div class="pdf-merge-v2-upload-copy">
-              <span class="pdf-merge-v2-upload-eyebrow">DROP OR SELECT</span>
-              <h2>把需要识别的音频或视频放到这里</h2>
-              <p>拖入文件或点击上传。识别完成后会在下方显示 JSON、TXT、SRT 等输出文件。</p>
-            </div>
-            <button class="audio-convert-cta pdf-merge-v2-cta" id="transcriptionCta" type="button">
-              <i data-lucide="upload"></i>
-              <span id="transcriptionCtaText" data-i18n="home.transcription.cta">上传音频或视频</span>
-            </button>
-          </section>
-          <section class="pdf-merge-v2-options transcription-v2-options" aria-label="识别参数">
-            <div class="audio-convert-format-selector">
-              <span class="audio-convert-format-label" data-i18n="home.transcription.language">识别语言</span>
-              <div class="audio-convert-format-options" id="transcriptionLanguageOptions">
-                <button type="button" class="audio-convert-format-option active" data-language="auto" data-i18n="home.transcription.languageAuto">自动识别</button>
-                <button type="button" class="audio-convert-format-option" data-language="zh" data-i18n="home.transcription.languageChinese">中文</button>
-                <button type="button" class="audio-convert-format-option" data-language="en" data-i18n="home.transcription.languageEnglish">English</button>
+          <div class="transcription-v2-view transcription-v2-operation-view" id="transcriptionOperationView" aria-hidden="false">
+            <section class="pdf-merge-v2-upload transcription-v2-upload" aria-label="上传音频或视频">
+              <div class="pdf-merge-v2-upload-copy">
+                <span class="pdf-merge-v2-upload-eyebrow">DROP OR SELECT</span>
+                <h2>把需要识别的音频或视频放到这里</h2>
+                <p>拖入文件或点击上传。识别完成后会切换到字幕预览。</p>
               </div>
-            </div>
-            <label class="transcription-refine-toggle transcription-v2-refine">
-              <input type="checkbox" id="transcriptionRefine">
-              <span class="transcription-refine-control" aria-hidden="true"></span>
-              <span data-i18n="home.transcription.refine">使用 AI 二次润色文字与标点（保留所有字幕时间轴）</span>
-            </label>
-          </section>
-          <section class="pdf-merge-v2-queue transcription-v2-queue" aria-label="字幕预览和输出文件">
-            <div class="pdf-merge-v2-section-head">
-              <div>
-                <span class="pdf-merge-v2-section-kicker">SUBTITLE PREVIEW</span>
-                <h2 data-i18n="home.transcription.previewTitle">字幕预览</h2>
-              </div>
-              <p data-i18n="home.transcription.previewHint">识别完成后会在这里直接预览带时间轴的字幕，也可以复制纯文本。</p>
-            </div>
+              <button class="audio-convert-cta pdf-merge-v2-cta" id="transcriptionCta" type="button">
+                <i data-lucide="upload"></i>
+                <span id="transcriptionCtaText" data-i18n="home.transcription.cta">上传音频或视频</span>
+              </button>
+            </section>
             <div class="transcription-selected-file" id="transcriptionSelectedFile" role="status" aria-live="polite" hidden>
               <i data-lucide="file-audio"></i>
               <span id="transcriptionSelectedFileName"></span>
+              <button class="transcription-selected-file-remove" id="transcriptionRemoveFileBtn" type="button" data-i18n-title="common.remove" data-i18n-aria-label="common.remove" title="移除文件" aria-label="移除文件">
+                <i data-lucide="x"></i>
+              </button>
             </div>
-            <div class="transcription-v2-preview is-empty" id="transcriptionPreview" aria-live="polite">
-              <div class="transcription-v2-preview-empty">
-                <i data-lucide="subtitles"></i>
-                <strong data-i18n="home.transcription.previewEmptyTitle">暂无字幕预览</strong>
-                <span data-i18n="home.transcription.previewEmptyDesc">上传媒体并完成识别后，会在这里显示可滚动的时间轴字幕。</span>
+            <section class="pdf-merge-v2-options transcription-v2-options" aria-label="识别参数">
+              <div class="audio-convert-format-selector">
+                <span class="audio-convert-format-label" data-i18n="home.transcription.language">识别语言</span>
+                <div class="audio-convert-format-options" id="transcriptionLanguageOptions">
+                  <button type="button" class="audio-convert-format-option active" data-language="auto" data-i18n="home.transcription.languageAuto">自动识别</button>
+                  <button type="button" class="audio-convert-format-option" data-language="zh" data-i18n="home.transcription.languageChinese">中文</button>
+                  <button type="button" class="audio-convert-format-option" data-language="en" data-i18n="home.transcription.languageEnglish">English</button>
+                </div>
               </div>
-            </div>
-            <div class="transcription-v2-attachment-head">
-              <span>OUTPUT FILES</span>
-              <div class="transcription-v2-attachment-actions">
+              <label class="transcription-refine-toggle transcription-v2-refine">
+                <input type="checkbox" id="transcriptionRefine">
+                <span class="transcription-refine-control" aria-hidden="true"></span>
+                <span data-i18n="home.transcription.refine">使用 AI 二次润色文字与标点（保留所有字幕时间轴）</span>
+              </label>
+            </section>
+            <section class="transcription-v2-empty-state" id="transcriptionEmptyState" aria-label="等待选择媒体文件">
+              <div class="transcription-v2-empty-icon"><i data-lucide="file-audio"></i></div>
+              <h2 data-i18n="home.transcription.emptyTitle">等待选择音频或视频文件</h2>
+              <p data-i18n="home.transcription.emptyDesc">选择媒体后，ToolKnit 会先准备音频，再开始离线识别。</p>
+            </section>
+            <footer class="pdf-merge-v2-actions transcription-v2-actions">
+              <span>确认文件、语言和润色选项后开始识别；长音视频会按进度持续更新。</span>
+              <button class="audio-convert-process-btn pdf-merge-v2-process" id="transcriptionProcessBtn" data-i18n="home.transcription.process" style="display:none;">开始识别</button>
+            </footer>
+          </div>
+
+          <section class="transcription-v2-view transcription-v2-result-view" id="transcriptionResultView" aria-labelledby="transcriptionResultTitle" aria-hidden="true" hidden inert>
+            <header class="transcription-v2-result-head">
+              <div class="transcription-v2-result-copy">
+                <span class="pdf-merge-v2-section-kicker">SUBTITLE PREVIEW</span>
+                <h2 id="transcriptionResultTitle" data-i18n="home.transcription.previewTitle">字幕预览</h2>
+                <p data-i18n="home.transcription.previewHint">识别完成后会在这里直接预览带时间轴的字幕，也可以复制纯文本。</p>
+              </div>
+              <div class="transcription-v2-result-actions">
+                <button class="transcription-v2-copy-btn" id="transcriptionResetBtn" type="button">
+                  <i data-lucide="rotate-ccw"></i>
+                  <span data-i18n="home.transcription.reset">重置</span>
+                </button>
                 <button class="transcription-v2-copy-btn" id="transcriptionCopyTextBtn" type="button" disabled>
                   <i data-lucide="copy"></i>
                   <span data-i18n="home.transcription.copyText">复制纯文本</span>
@@ -116,22 +125,13 @@
                   <span data-i18n="home.transcription.openOutputDir">打开目录</span>
                 </button>
               </div>
+            </header>
+            <div class="transcription-v2-result-source">
+              <i data-lucide="file-audio"></i>
+              <span id="transcriptionResultFileName"></span>
             </div>
-            <div class="audio-convert-files pdf-merge-v2-files transcription-v2-files" id="transcriptionFiles" data-empty="暂无输出附件 · 识别完成后自动生成 JSON / SRT / TXT"></div>
+            <div class="transcription-v2-preview" id="transcriptionPreview" aria-live="polite"></div>
           </section>
-          <section class="audio-convert-formats pdf-merge-v2-info transcription-note transcription-v2-info" aria-label="输出文件">
-            <h3 class="audio-convert-formats-title" data-i18n="home.transcription.outputTitle">识别结果</h3>
-            <div class="pdf-merge-info-grid">
-              <div class="pdf-merge-info-item"><i data-lucide="file-json"></i><span data-i18n="home.transcription.rawJson">原始 JSON</span></div>
-              <div class="pdf-merge-info-item"><i data-lucide="subtitles"></i><span data-i18n="home.transcription.rawSrt">原始 SRT</span></div>
-              <div class="pdf-merge-info-item"><i data-lucide="file-text"></i><span data-i18n="home.transcription.rawTxt">原始 TXT</span></div>
-              <div class="pdf-merge-info-item"><i data-lucide="sparkles"></i><span data-i18n="home.transcription.refinedTxt">润色 TXT</span></div>
-            </div>
-          </section>
-          <footer class="pdf-merge-v2-actions transcription-v2-actions">
-            <span>确认文件、语言和润色选项后开始识别；长音视频会按进度持续更新。</span>
-            <button class="audio-convert-process-btn pdf-merge-v2-process" id="transcriptionProcessBtn" data-i18n="home.transcription.process" style="display:none;">开始识别</button>
-          </footer>
         </main>
       </div>
       <input id="transcriptionInput" type="file" accept="audio/*,video/*,.mp3,.aac,.m4a,.wav,.flac,.alac,.ogg,.wma,.mp4,.mkv,.avi,.mov,.webm,.flv,.wmv,.ts" hidden>

@@ -1,4 +1,5 @@
 import { createLifecycleScope } from './tool-lifecycle.js';
+import { CUSTOM_BACKGROUND_STORAGE_KEY, DEFAULT_DARK_BACKGROUND_SRC, initializeDefaultBackground } from './custom-background-default.js';
 
 const DEFAULT_BROWSER_MAX_BYTES = 8 * 1024 * 1024;
 const IMPORT_LABELS = Object.freeze({
@@ -38,14 +39,19 @@ export function createCustomBackgroundSettingsRuntime({
   tauriCorePromise,
   tauriEventPromise,
   settingsOverlay,
-  storageKey = 'toolknit.customBackground.v1',
+  allowCustomBackground = () => true,
+  onThemeChange = () => () => {},
+  storageKey = CUSTOM_BACKGROUND_STORAGE_KEY,
   changeEvent = 'toolknit-custom-background-change',
   maxBrowserBytes = DEFAULT_BROWSER_MAX_BYTES,
   translate = key => key,
   showToast = () => {},
   onLanguageChange = () => () => {}
 } = {}) {
+  if (storageKey === CUSTOM_BACKGROUND_STORAGE_KEY) initializeDefaultBackground(windowRef);
   const preview = root?.getElementById?.('settingsBackgroundPreview');
+  const backgroundCard = preview?.closest?.('.settings-v2-background-card');
+  const backgroundControls = backgroundCard?.querySelector?.('[data-background-controls]');
   const summary = root?.getElementById?.('settingsBackgroundSummary');
   const chooseImage = root?.getElementById?.('chooseBackgroundImage');
   const chooseVideo = root?.getElementById?.('chooseBackgroundVideo');
@@ -60,6 +66,7 @@ export function createCustomBackgroundSettingsRuntime({
   let previewMedia = null;
   let previewMediaErrorRelease = null;
   let importBusy = false;
+  let policyRevision = 0;
 
   function readMetadata() {
     try {
@@ -91,10 +98,20 @@ export function createCustomBackgroundSettingsRuntime({
   }
 
   function syncControls() {
-    const disabled = importBusy;
+    const blocked = !allowCustomBackground();
+    const disabled = importBusy || blocked;
+    if (blocked && backgroundControls?.contains(root?.activeElement)) {
+      root.activeElement?.blur?.();
+      if (settingsOverlay?.classList.contains('visible')) root.querySelector('[data-theme-choice="light"]')?.focus?.();
+    }
+    backgroundCard?.classList.toggle('is-theme-disabled', blocked);
+    backgroundCard?.setAttribute('aria-disabled', String(blocked));
+    if (backgroundControls) backgroundControls.inert = blocked;
     if (chooseImage) chooseImage.disabled = disabled;
     if (chooseVideo) chooseVideo.disabled = disabled;
     if (clearButton) clearButton.disabled = disabled || !hasMetadata();
+    if (imageInput) imageInput.disabled = disabled;
+    if (videoInput) videoInput.disabled = disabled;
   }
 
   function setImportState(active, { percent = 0, phase = 'preparing' } = {}) {
@@ -137,7 +154,7 @@ export function createCustomBackgroundSettingsRuntime({
   function syncPreviewPlayback() {
     const media = previewMedia;
     if (!isVideoElement(media, windowRef)) return;
-    const shouldPlay = Boolean(settingsOverlay?.classList.contains('visible') && !windowRef?.document?.hidden);
+    const shouldPlay = Boolean(allowCustomBackground() && !scope.disposed && settingsOverlay?.classList.contains('visible') && !windowRef?.document?.hidden);
     if (shouldPlay) media.play().catch(() => {});
     else media.pause();
   }
@@ -151,12 +168,17 @@ export function createCustomBackgroundSettingsRuntime({
     const kind = metadata.type === 'video'
       ? translate('settings.chooseBackgroundVideo')
       : translate('settings.chooseBackgroundImage');
-    summary.textContent = `${kind} · ${metadata.name || mediaName(metadata.path) || translate('settings.customBackground')}`;
+    const name = metadata.src === DEFAULT_DARK_BACKGROUND_SRC
+      ? translate('settings.defaultDarkBackground')
+      : metadata.name || mediaName(metadata.path) || translate('settings.customBackground');
+    summary.textContent = `${kind} · ${name}`;
   }
 
   async function render(metadata) {
+    if (scope.disposed) return;
     resetPreview();
     const token = renderToken;
+    if (!allowCustomBackground()) { setSummary(metadata); return; }
     if (!metadata) {
       setSummary(null);
       dispatchChange(null);
@@ -169,7 +191,7 @@ export function createCustomBackgroundSettingsRuntime({
         src = await invoke('get_custom_background_media_url', { path: metadata.path });
       }
       if (!src) throw new Error('Background source is unavailable');
-      if (token !== renderToken || !preview) return;
+      if (scope.disposed || token !== renderToken || !allowCustomBackground() || !preview) return;
       const type = mediaType(metadata.type || metadata.media_type);
       const media = root.createElement(type === 'video' ? 'video' : 'img');
       media.src = src;
@@ -214,7 +236,7 @@ export function createCustomBackgroundSettingsRuntime({
   }
 
   async function importBrowser(file, type) {
-    if (!file || importBusy) return;
+    if (scope.disposed || !allowCustomBackground() || !file || importBusy) return;
     const mime = String(file.type || '').toLowerCase();
     const extension = String(file.name || '').toLowerCase().split('.').pop();
     const allowed = type === 'video'
@@ -233,6 +255,7 @@ export function createCustomBackgroundSettingsRuntime({
     try {
       setImportState(true, { percent: 48, phase: 'copying' });
       const src = await fileToDataUrl(file);
+      if (scope.disposed) return;
       const metadata = { type, media_type: type, name: file.name, mime: file.type, size: file.size, src };
       saveMetadata(metadata);
       setImportState(true, { percent: 88, phase: 'finalizing' });
@@ -248,10 +271,12 @@ export function createCustomBackgroundSettingsRuntime({
   }
 
   async function chooseDesktop(type) {
-    if (importBusy) return;
+    if (scope.disposed || !allowCustomBackground() || importBusy) return;
+    const revision = policyRevision;
     let unlistenProgress = null;
     try {
       const { open } = await import('@tauri-apps/plugin-dialog');
+      if (scope.disposed || revision !== policyRevision || !allowCustomBackground()) return;
       const extensions = type === 'video'
         ? ['mp4', 'webm', 'ogv', 'ogg', 'mov']
         : ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'];
@@ -261,9 +286,10 @@ export function createCustomBackgroundSettingsRuntime({
         title: type === 'video' ? translate('settings.chooseBackgroundVideo') : translate('settings.chooseBackgroundImage'),
         filters: [{ name: type === 'video' ? 'Video' : 'Image', extensions }]
       });
-      if (!selected || Array.isArray(selected)) return;
+      if (scope.disposed || revision !== policyRevision || !allowCustomBackground() || !selected || Array.isArray(selected)) return;
       const jobId = `background-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       const [{ invoke }, { listen }] = await Promise.all([tauriCorePromise, tauriEventPromise]);
+      if (scope.disposed || revision !== policyRevision || !allowCustomBackground()) return;
       setImportState(true, { percent: type === 'video' ? 6 : 10, phase: type === 'video' ? 'analyzing' : 'copying' });
       unlistenProgress = await listen('custom-background-import-progress', event => {
         const progress = event?.payload || {};
@@ -271,7 +297,9 @@ export function createCustomBackgroundSettingsRuntime({
         if (progressJobId && progressJobId !== jobId) return;
         setImportState(true, { percent: progress.percent, phase: progress.phase || 'preparing' });
       });
+      if (scope.disposed || revision !== policyRevision || !allowCustomBackground()) return;
       const asset = await invoke('import_custom_background', { sourcePath: selected, jobId });
+      if (scope.disposed) return;
       const metadata = {
         type: mediaType(asset?.media_type || type),
         media_type: asset?.media_type || type,
@@ -292,7 +320,7 @@ export function createCustomBackgroundSettingsRuntime({
   }
 
   async function clear() {
-    if (importBusy) return;
+    if (scope.disposed || !allowCustomBackground() || importBusy) return;
     try {
       if (isTauri) {
         const { invoke } = await tauriCorePromise;
@@ -314,10 +342,12 @@ export function createCustomBackgroundSettingsRuntime({
   }
 
   if (chooseImage) scope.event(chooseImage, 'click', () => {
+    if (!allowCustomBackground() || importBusy) return;
     if (isTauri) void chooseDesktop('image');
     else imageInput?.click();
   });
   if (chooseVideo) scope.event(chooseVideo, 'click', () => {
+    if (!allowCustomBackground() || importBusy) return;
     if (isTauri) void chooseDesktop('video');
     else videoInput?.click();
   });
@@ -336,6 +366,10 @@ export function createCustomBackgroundSettingsRuntime({
   }
   if (root) scope.event(root, 'visibilitychange', syncPreviewPlayback);
   scope.use(onLanguageChange(() => setSummary(readMetadata())));
+  scope.use(onThemeChange(() => {
+    policyRevision += 1;
+    void render(readMetadata());
+  }));
   void render(readMetadata());
 
   return Object.freeze({

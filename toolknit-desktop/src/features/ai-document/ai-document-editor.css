@@ -452,7 +452,7 @@
   padding: 34px 34px 56px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: safe center;
   gap: 46px;
   background:
     radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.045), transparent 28%),
@@ -840,8 +840,24 @@
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: minmax(300px, 360px);
+    grid-template-rows: minmax(0, 1fr);
     overflow-x: auto;
     overflow-y: hidden;
+  }
+
+  .ai-doc-edit-side-card {
+    min-height: 0;
+    max-height: 100%;
+    align-content: start;
+    overflow-y: auto;
+  }
+
+  .ai-doc-edit-v2 .ai-doc-edit-export-btn {
+    align-self: start;
+  }
+
+  .ai-doc-edit-v2 .ai-doc-edit-export-btn span {
+    display: inline;
   }
 }
 

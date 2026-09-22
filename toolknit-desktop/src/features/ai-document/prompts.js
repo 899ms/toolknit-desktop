@@ -92,7 +92,7 @@ export const AI_DOC_SYSTEM_PROMPT = `你是一位顶级文档排版设计师，�
 
 坐标系：x 范围 0-794, y 范围 0-1123`;
 
-export const AI_DOC_EDITOR_DEMO_LAYOUT = Object.freeze({
+export const AI_DOC_EDITOR_DEMO_LAYOUT = /* @__PURE__ */ Object.freeze({
   ready: true,
   summary: 'AI document editor development fixture',
   pages: [{

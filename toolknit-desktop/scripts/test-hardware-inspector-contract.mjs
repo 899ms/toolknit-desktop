@@ -135,6 +135,8 @@ class FakeNode extends EventTarget {
     this.className = '';
     this.textContent = '';
     this.disabled = false;
+    this.scrollTop = 0;
+    this.tables = [];
     this.classList = {
       add: () => {},
       remove: () => {}
@@ -143,6 +145,7 @@ class FakeNode extends EventTarget {
 
   append(...children) { this.children.push(...children); }
   replaceChildren(...children) { this.children = children; }
+  querySelectorAll() { return this.tables; }
 }
 
 const originalDocument = globalThis.document;
@@ -197,7 +200,11 @@ try {
       prefix: 'hardwareTest',
       command: 'full_snapshot',
       text: key => labels.en[key] || key,
-      render: (_content, data) => { rendered.push(data.current.value); },
+      render: (content, data) => {
+        rendered.push(data.current.value);
+        content.tables = [{ scrollLeft: 0 }];
+        content.scrollTop = 0;
+      },
       updatedAt: () => '',
       live: {
         command: 'live_snapshot',
@@ -217,12 +224,21 @@ try {
   liveSnapshot.open();
   await new Promise(resolve => setImmediate(resolve));
   assert.deepEqual(rendered, [1]);
+  content.scrollTop = 500;
+  content.tables[0].scrollLeft = 180;
+  const currentLive = liveSnapshot.refreshLive();
+  await Promise.resolve();
+  resolveLive({ value: 2 });
+  await currentLive;
+  assert.deepEqual(rendered, [1, 2]);
+  assert.equal(content.scrollTop, 500, 'live refresh preserves the reading position');
+  assert.equal(content.tables[0].scrollLeft, 180, 'live refresh preserves table horizontal scroll');
   const staleLive = liveSnapshot.refreshLive();
   await Promise.resolve();
   liveSnapshot.close();
-  resolveLive({ value: 2 });
+  resolveLive({ value: 3 });
   await staleLive;
-  assert.deepEqual(rendered, [1]);
+  assert.deepEqual(rendered, [1, 2]);
   liveSnapshot.dispose();
 } finally {
   globalThis.document = originalDocument;

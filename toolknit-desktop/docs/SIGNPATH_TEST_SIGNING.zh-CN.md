@@ -22,7 +22,7 @@
 
 `toolknit-test-signed-<run-id>` 产物包含测试签名安装包、`.sha256`、`verification.json` 和 `provenance.json`。原始未签名 EXE 单独保留 7 天；验签成功的结果保留 14 天。
 
-验证脚本会检查 PE 结构、签名前后有效载荷一致、CMS 密码学签名、SHA-256 Authenticode 摘要、证书有效期和代码签名用途。只允许 Windows 状态 `Valid` 或测试证书预期的 `NotTrusted`；后者明确写入报告，不伪装成系统信任。
+验证脚本会检查 PE 结构、签名前后有效载荷一致、CMS 密码学签名、SHA-256 Authenticode 摘要、证书有效期和代码签名用途。Windows 状态通常为 `Valid` 或测试证书预期的 `NotTrusted`；部分 Windows runner 对未受信任的测试证书链返回 `UnknownError`，在前述密码学检查已通过时也接受该状态。实际状态和 `testCertificateTrustWarning` 会写入报告，不伪装成系统信任。
 
 在本机用 PowerShell 7 复核，可将 SignPath 测试证书页面中的指纹传给 `-ExpectedThumbprint`：
 

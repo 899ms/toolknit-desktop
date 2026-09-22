@@ -57,7 +57,7 @@ check(
   'The frontend must not receive generic shell, filesystem, process, HTTP, or opener permissions'
 );
 
-for (const workflowPath of ['.github/workflows/ci.yml', '.github/workflows/release.yml']) {
+for (const workflowPath of ['.github/workflows/ci.yml', '.github/workflows/release.yml', '.github/workflows/test-signing.yml']) {
   const workflow = read(workflowPath);
   const actionLines = workflow.match(/^\s*-?\s*uses:\s*[^\s#]+/gm) || [];
   check(actionLines.length > 0, `${workflowPath} must use at least one action`);
@@ -67,6 +67,12 @@ for (const workflowPath of ['.github/workflows/ci.yml', '.github/workflows/relea
   }
 }
 const releaseWorkflow = read('.github/workflows/release.yml');
+const testSigningWorkflow = read('.github/workflows/test-signing.yml');
+check(testSigningWorkflow.includes('signing-policy-slug: test-signing'), 'Test signing must use the test policy');
+check(!/release-signing|action-gh-release|contents:\s*write|pull_request_target/.test(testSigningWorkflow), 'Test signing must not publish releases, elevate repository access or sign untrusted PRs');
+check(testSigningWorkflow.includes("github.ref == 'refs/heads/ToolKnit-Desktop-V3.0-正式版'"), 'Test signing must be restricted to the reviewed V3 branch');
+check(testSigningWorkflow.includes('archive: false') && testSigningWorkflow.includes('skip-decompress: true'), 'The PE artifact configuration requires raw upload and download');
+check(testSigningWorkflow.includes('./scripts/test-signpath-verifier.ps1') && testSigningWorkflow.includes('./scripts/verify-test-signature.ps1'), 'Test signing must exercise and run cryptographic verification');
 check(!releaseWorkflow.includes('$tag = "${{ github.ref_name }}"'), 'Release tags must not be interpolated directly into PowerShell');
 check(releaseWorkflow.includes('RELEASE_TAG: ${{ github.ref_name }}') && releaseWorkflow.includes('$tag = $env:RELEASE_TAG'), 'Release tags must enter PowerShell through an environment variable');
 

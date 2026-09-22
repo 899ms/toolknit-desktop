@@ -2119,7 +2119,9 @@ mod cleanup_large_file_tests {
         use windows::Win32::Storage::FileSystem::{
             SetFileAttributesW, FILE_ATTRIBUTE_HIDDEN, FILE_ATTRIBUTE_NORMAL,
         };
-        let dir = cleanup_test_dir("links");
+        // Resolve the parent before invoking cmd.exe: an unquoted `..` segment
+        // can be parsed as a switch by mklink on runners whose path has no spaces.
+        let dir = std::fs::canonicalize(cleanup_test_dir("links")).expect("canonicalize cleanup test dir");
         let original = dir.join("original.mp4");
         make_sparse_file(&original, 11 * MB);
         std::fs::hard_link(&original, dir.join("alias.mp4")).unwrap();

@@ -1,6 +1,8 @@
 # ToolKnit Desktop 3.0.0
 
-> V3.0 正式版发布准备。桌面端、Tauri、Rust、CLI/MCP 的版本统一为 3.0.0；本地安装包生成不等于已在 GitHub 发布。
+> V3.0 正式版。桌面端与 CLI / MCP 统一升级至 3.0.0，新增 PDF 转 Markdown 与剪贴板历史，完善双主题、AI 工作流和本地文件处理体验。
+
+## 新增与改进
 
 - 12 个分类、68 项工具；CLI / MCP 保持 46 项已发布能力。
 - 新增本地 PDF 文本转 Markdown、AI 视觉 PDF 转 Markdown、Windows 剪贴板历史，复用编辑器和工具页主题。
@@ -10,6 +12,33 @@
 - 升级色彩空间对比、视频预览与 GIF 工作区；首页、帮助、设置和依赖弹层保持双主题一致。
 - 界面英文使用 Montserrat，保留 PDF 专用字体；清理旧字体、旧首页截图和不再使用的静态资源。
 - 正式版关闭 F12/DevTools 与远程调试入口，默认不携带按需下载的 FFmpeg 或 AI 模型。
+
+## 下载与安装
+
+- Windows 安装包：本页 Assets 中的 `toolknit-desktop_3.0.0_x64-setup.exe`，适用于 Windows 10 1803（内部版本 17134）及以上的 x64 系统，包括 Windows 11。
+- 安装器携带 WebView2 引导程序；缺少运行时时需要联网安装。FFmpeg、Office 渲染运行时和 AI 模型按具体功能需要检测与下载。
+- V3.0.0 安装包暂未进行正式 Authenticode 代码签名。SignPath 测试签名不等于正式受信任签名，本次不使用测试签名包。请从本仓库 Release 下载，并核对随包提供的 `.sha256` 文件。
+- 正式版关闭 F12 / DevTools。反馈问题时请附版本号、Windows 版本、操作步骤、错误提示与脱敏截图。
+
+## CLI / MCP
+
+需要 Node.js 20.12 或更高版本：
+
+```sh
+npm install -g @toolknit/cli@3.0.0
+toolknit --version
+toolknit mcp serve
+```
+
+CLI / MCP 保持 46 项已发布能力，不代表桌面端全部 68 项工具均开放命令行调用。详细参数与 MCP 配置见 [CLI 使用指南](https://github.com/ZihangDong/toolknit-desktop/blob/v3.0.0/toolknit-desktop/cli/README.md)。
+
+## 隐私与使用边界
+
+- 普通文件工具优先在本机处理；使用 AI 功能时，所选内容会发送至用户自行配置的模型服务。
+- 剪贴板监控由用户主动开启，记录开启后的复制内容并保存在本机；请注意其中可能包含个人信息。
+- 系统盘扫描会跳过受保护路径，但扫描结果不等于可直接删除的安全清单，请核实后再清理。
+
+---
 
 以下保留 V2.3.1 的历史发布说明，安装与签名信息仅针对该历史版本。
 

@@ -1,0 +1,1576 @@
+/* PPT Draft feature styles. Kept local to the lazy PPT Draft entry. */
+/* Preview and result cards */
+      .ppt-draft-assets {
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.11);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .ppt-draft-assets-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .ppt-draft-assets-head > div {
+        flex: 1 1 220px;
+        min-width: 0;
+        display: grid;
+        gap: 4px;
+      }
+
+      .ppt-draft-assets-head strong {
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 13px;
+      }
+
+      .ppt-draft-assets-head span,
+      .ppt-draft-asset-status {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
+      .ppt-draft-assets-head .ppt-draft-assets-add {
+        flex: 0 0 auto;
+        width: auto;
+        max-width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 34px;
+        padding: 7px 11px;
+        white-space: nowrap;
+      }
+
+      .ppt-draft-assets-add svg,
+      .ppt-draft-asset-remove svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      .ppt-draft-asset-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .ppt-draft-asset-item {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr) 30px;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.045);
+      }
+
+      .ppt-draft-asset-thumb {
+        width: 44px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .ppt-draft-asset-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .ppt-draft-asset-thumb.is-empty {
+        color: rgba(255, 255, 255, 0.42);
+      }
+
+      .ppt-draft-asset-copy {
+        min-width: 0;
+        display: grid;
+        gap: 3px;
+      }
+
+      .ppt-draft-asset-copy strong,
+      .ppt-draft-asset-copy span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .ppt-draft-asset-copy strong {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 12px;
+      }
+
+      .ppt-draft-asset-copy span {
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 10px;
+      }
+
+      .ppt-draft-asset-remove {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 9px;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.62);
+        cursor: pointer;
+      }
+
+      .ppt-draft-asset-remove:hover {
+        border-color: rgba(255, 255, 255, 0.3);
+        color: #fff;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .ppt-draft-visual-slot.is-image {
+        padding: 0;
+        border: 1px solid color-mix(in srgb, var(--pd-line), white 12%);
+        background: var(--pd-panel);
+      }
+
+      .ppt-draft-visual-slot.is-image::before {
+        display: none;
+      }
+
+      .ppt-draft-visual-slot.is-image .ppt-draft-visual-slot-image {
+        object-fit: cover;
+      }
+
+      .ppt-draft-visual-slot-badge {
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: 7px;
+        overflow: hidden;
+        padding: 4px 6px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.66);
+        color: #fff !important;
+        font-size: 9px !important;
+        font-weight: 700;
+        letter-spacing: 0 !important;
+        text-overflow: ellipsis;
+        text-transform: none !important;
+        white-space: nowrap;
+      }
+
+      .ppt-draft-slide-asset-status {
+        justify-self: start;
+        padding: 4px 7px;
+        border: 1px solid rgba(255, 190, 120, 0.24);
+        border-radius: 999px;
+        color: rgba(255, 212, 166, 0.86);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .ppt-draft-slide-asset-status.is-ready {
+        border-color: rgba(124, 220, 173, 0.24);
+        color: rgba(161, 239, 196, 0.9);
+      }
+
+      .ppt-draft-preview-result {
+        gap: 18px;
+      }
+
+      .ppt-draft-overlay .ppt-outline-preview {
+        align-self: stretch;
+        min-height: 0;
+      }
+
+      .ppt-draft-overlay .ppt-draft-preview-summary {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 16px;
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 22px;
+        background:
+          radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.10), transparent 34%),
+          rgba(255, 255, 255, 0.045);
+      }
+
+      .ppt-draft-summary-main {
+        min-width: 0;
+        display: grid;
+        gap: 7px;
+      }
+
+      .ppt-draft-summary-eyebrow {
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .ppt-draft-summary-title {
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 15px;
+        font-weight: 800;
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .ppt-draft-summary-takeaway {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 12px;
+        line-height: 1.55;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .ppt-draft-summary-side {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+        max-width: 230px;
+      }
+
+      .ppt-draft-visual-list {
+        display: grid;
+        gap: 18px;
+      }
+
+      .ppt-draft-slide-card {
+        min-width: 0;
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.11);
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.038);
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        -webkit-app-region: no-drag;
+      }
+
+      .ppt-draft-slide-card:hover {
+        border-color: rgba(255, 255, 255, 0.28);
+        background: rgba(255, 255, 255, 0.07);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+      }
+
+      .ppt-draft-slide-card:focus-visible {
+        outline: 2px solid rgba(255, 255, 255, 0.72);
+        outline-offset: 3px;
+      }
+
+      .ppt-draft-slide-head {
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+      }
+
+      .ppt-draft-slide-head-main {
+        min-width: 0;
+        display: grid;
+        gap: 4px;
+      }
+
+      .ppt-draft-slide-head-main strong {
+        color: rgba(255, 255, 255, 0.94);
+        font-size: 14px;
+        line-height: 1.25;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .ppt-draft-slide-head-main span {
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 11px;
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .ppt-draft-slide-number {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .ppt-draft-slide-canvas {
+        --pd-bg: #0b0d12;
+        --pd-panel: #141823;
+        --pd-panel-alt: #1d2330;
+        --pd-text: #f7f8fa;
+        --pd-muted: #9ba6b5;
+        --pd-accent: #a78bfa;
+        --pd-accent-soft: #c4b5fd;
+        --pd-warm: #ff9a76;
+        --pd-line: #2c3444;
+        --pd-grid: #253044;
+        --pd-surface: #101521;
+        position: relative;
+        isolation: isolate;
+        aspect-ratio: 16 / 9;
+        min-height: 0;
+        padding: 18px;
+        border-radius: 20px;
+        border: 1px solid color-mix(in srgb, var(--pd-line), white 10%);
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--pd-accent), transparent 70%), transparent 28%),
+          linear-gradient(135deg, var(--pd-bg), color-mix(in srgb, var(--pd-bg), var(--pd-panel) 40%));
+        color: var(--pd-text);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035);
+      }
+
+      .ppt-draft-slide-canvas::before,
+      .ppt-draft-slide-canvas::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .ppt-draft-slide-canvas::before {
+        inset: 0;
+        background-image:
+          linear-gradient(color-mix(in srgb, var(--pd-grid), transparent 72%) 1px, transparent 1px),
+          linear-gradient(90deg, color-mix(in srgb, var(--pd-grid), transparent 72%) 1px, transparent 1px);
+        background-size: 34px 34px;
+        mask-image: linear-gradient(120deg, rgba(0,0,0,0.64), transparent 72%);
+      }
+
+      .ppt-draft-slide-canvas::after {
+        right: -10%;
+        top: -32%;
+        width: 52%;
+        aspect-ratio: 1;
+        border: 1px solid color-mix(in srgb, var(--pd-accent), transparent 30%);
+        border-radius: 50%;
+        opacity: 0.52;
+      }
+
+      .ppt-draft-slide-canvas.theme-minimal-light {
+        --pd-bg: #f5f2ec;
+        --pd-panel: #ffffff;
+        --pd-panel-alt: #e9e3d9;
+        --pd-text: #15171c;
+        --pd-muted: #616773;
+        --pd-accent: #4f46e5;
+        --pd-accent-soft: #4338ca;
+        --pd-warm: #e76f51;
+        --pd-line: #d4cdc2;
+        --pd-grid: #e2dbd0;
+        --pd-surface: #f0ece5;
+      }
+
+      .ppt-draft-slide-canvas.theme-minimal-mono {
+        --pd-bg: #ffffff;
+        --pd-panel: #f7f7f7;
+        --pd-panel-alt: #efefef;
+        --pd-text: #111111;
+        --pd-muted: #6b6b6b;
+        --pd-accent: #111111;
+        --pd-accent-soft: #3a3a3a;
+        --pd-warm: #8a8a8a;
+        --pd-line: #d8d8d8;
+        --pd-grid: #ececec;
+        --pd-surface: #f5f5f5;
+      }
+
+      .ppt-draft-slide-canvas.theme-tech-blue {
+        --pd-bg: #07111d;
+        --pd-panel: #0d1d33;
+        --pd-panel-alt: #112844;
+        --pd-text: #f7fbff;
+        --pd-muted: #9fc0e8;
+        --pd-accent: #67e8f9;
+        --pd-accent-soft: #a5f3fc;
+        --pd-warm: #ff9f68;
+        --pd-line: #1b4668;
+        --pd-grid: #16314d;
+        --pd-surface: #0a1727;
+      }
+
+      .ppt-draft-canvas-topline {
+        position: absolute;
+        top: 16px;
+        left: 18px;
+        right: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--pd-accent-soft);
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.92;
+      }
+
+      .ppt-draft-canvas-page {
+        color: var(--pd-muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .ppt-draft-canvas-title {
+        margin: 0;
+        color: var(--pd-text);
+        font-size: clamp(17px, 2.1vw, 24px);
+        font-weight: 900;
+        line-height: 1.08;
+        letter-spacing: -0.03em;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .ppt-draft-canvas-claim {
+        margin: 0;
+        color: var(--pd-accent-soft);
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.42;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .ppt-draft-canvas-bullets {
+        display: grid;
+        gap: 7px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .ppt-draft-canvas-bullets li {
+        position: relative;
+        padding-left: 16px;
+        color: var(--pd-text);
+        font-size: 10px;
+        line-height: 1.36;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .ppt-draft-canvas-bullets li::before {
+        content: "";
+        position: absolute;
+        top: 0.55em;
+        left: 0;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--pd-accent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--pd-accent), transparent 78%);
+      }
+
+      .ppt-draft-canvas-panel,
+      .ppt-draft-visual-slot,
+      .ppt-draft-mini-panel {
+        border: 1px solid color-mix(in srgb, var(--pd-line), white 12%);
+        background: color-mix(in srgb, var(--pd-panel), transparent 4%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      }
+
+      .ppt-draft-visual-slot {
+        min-width: 0;
+        min-height: 0;
+        position: relative;
+        display: grid;
+        place-items: center;
+        align-content: center;
+        gap: 8px;
+        padding: 13px;
+        border-radius: 18px;
+        overflow: hidden;
+        color: var(--pd-muted);
+        text-align: center;
+      }
+
+      .ppt-draft-visual-slot.is-svg {
+        padding: 0;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .ppt-draft-visual-slot.is-svg::before {
+        content: none;
+      }
+
+      .ppt-draft-visual-slot-image {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .ppt-draft-visual-slot::before {
+        content: "";
+        position: absolute;
+        inset: 12px;
+        border: 1px dashed color-mix(in srgb, var(--pd-accent), transparent 20%);
+        border-radius: 14px;
+        opacity: 0.7;
+      }
+
+      .ppt-draft-visual-slot i {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--pd-accent), transparent 82%);
+        color: var(--pd-accent);
+        font-style: normal;
+        font-size: 16px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .ppt-draft-visual-slot strong {
+        max-width: 88%;
+        color: var(--pd-text);
+        font-size: 10px;
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .ppt-draft-visual-slot span {
+        color: var(--pd-muted);
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .ppt-draft-visual-slot.is-portrait {
+        aspect-ratio: 9 / 16;
+        justify-self: end;
+        width: min(35%, 118px);
+      }
+
+      .ppt-draft-canvas-footer {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        border-top: 1px solid color-mix(in srgb, var(--pd-line), transparent 0%);
+        padding-top: 7px;
+        color: var(--pd-muted);
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .ppt-draft-canvas-layout {
+        position: absolute;
+        inset: 42px 18px 34px;
+        min-width: 0;
+        min-height: 0;
+      }
+
+      .ppt-draft-slide-canvas.layout-cover .ppt-draft-canvas-layout,
+      .ppt-draft-slide-canvas.layout-closing .ppt-draft-canvas-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 145px;
+        align-items: center;
+        gap: 18px;
+      }
+
+      .ppt-draft-slide-canvas.layout-cover .ppt-draft-canvas-layout::before,
+      .ppt-draft-slide-canvas.layout-cover .ppt-draft-canvas-layout::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .ppt-draft-slide-canvas.layout-cover .ppt-draft-canvas-layout::before {
+        top: -42px;
+        right: -8px;
+        width: 34%;
+        height: calc(100% + 76px);
+        border: 1px solid color-mix(in srgb, var(--pd-accent), transparent 32%);
+        background: color-mix(in srgb, var(--pd-accent), transparent 86%);
+        transform: skewX(-7deg);
+        transform-origin: center;
+      }
+
+      .ppt-draft-slide-canvas.layout-cover .ppt-draft-canvas-layout::after {
+        left: 42%;
+        right: 5%;
+        top: 57%;
+        height: 1px;
+        background: var(--pd-warm);
+        transform: rotate(-55deg);
+        opacity: 0.8;
+      }
+
+      .ppt-draft-cover-copy {
+        position: relative;
+        z-index: 1;
+        min-width: 0;
+        display: grid;
+        gap: 12px;
+      }
+
+      .ppt-draft-slide-canvas.layout-cover .ppt-draft-visual-slot {
+        position: relative;
+        z-index: 1;
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--pd-warm), transparent 36%);
+      }
+
+      .ppt-draft-slide-canvas.layout-cover .ppt-draft-visual-slot::after {
+        content: "";
+        position: absolute;
+        inset: -62px -42px;
+        border: 1px solid color-mix(in srgb, var(--pd-accent), transparent 24%);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .ppt-draft-slide-canvas.layout-cover .ppt-draft-visual-slot.is-svg {
+        box-shadow: none;
+      }
+
+      .ppt-draft-cover-copy .ppt-draft-canvas-title {
+        font-size: clamp(24px, 3.4vw, 40px);
+        max-width: 94%;
+      }
+
+      .ppt-draft-cover-eyebrow,
+      .ppt-draft-cover-brand,
+      .ppt-draft-cover-audience {
+        min-width: 0;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .ppt-draft-cover-eyebrow {
+        color: var(--pd-accent-soft);
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+      }
+
+      .ppt-draft-cover-brand {
+        color: var(--pd-accent);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .ppt-draft-cover-rule {
+        display: block;
+        width: min(46%, 160px);
+        height: 2px;
+        border-radius: 999px;
+        background: var(--pd-accent);
+      }
+
+      .ppt-draft-cover-audience {
+        color: var(--pd-muted);
+        font-size: 9px;
+        line-height: 1.35;
+        font-style: normal;
+      }
+
+      .ppt-draft-cover-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+      }
+
+      .ppt-draft-cover-meta span {
+        min-height: 22px;
+        padding: 0 9px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        border: 1px solid color-mix(in srgb, var(--pd-line), white 10%);
+        background: color-mix(in srgb, var(--pd-panel), transparent 18%);
+        color: var(--pd-text);
+        font-size: 8px;
+        font-weight: 900;
+      }
+
+      .ppt-draft-closing-actions {
+        padding: 12px 14px;
+        border-radius: 16px;
+      }
+
+      .ppt-draft-closing-actions .ppt-draft-canvas-bullets {
+        gap: 9px;
+      }
+
+      .ppt-draft-closing-actions .ppt-draft-canvas-bullets li {
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .ppt-draft-slide-canvas.layout-standard .ppt-draft-canvas-layout,
+      .ppt-draft-slide-canvas.layout-visual .ppt-draft-canvas-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(130px, 0.78fr);
+        gap: 16px;
+        align-items: stretch;
+      }
+
+      .ppt-draft-standard-copy {
+        min-width: 0;
+        display: grid;
+        align-content: start;
+        gap: 12px;
+        padding-top: 14px;
+      }
+
+      .ppt-draft-standard-copy .ppt-draft-canvas-panel {
+        min-height: 116px;
+        padding: 14px;
+        border-radius: 18px;
+      }
+
+      .ppt-draft-slide-canvas.layout-visual .ppt-draft-canvas-layout {
+        grid-template-columns: minmax(155px, 1fr) minmax(0, 0.86fr);
+      }
+
+      .ppt-draft-slide-canvas.layout-visual .ppt-draft-visual-slot {
+        min-height: 100%;
+      }
+
+      .ppt-draft-slide-canvas.layout-comparison .ppt-draft-canvas-layout {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 12px;
+      }
+
+      .ppt-draft-comparison-title {
+        display: grid;
+        gap: 6px;
+        max-width: 82%;
+      }
+
+      .ppt-draft-comparison-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .ppt-draft-mini-panel {
+        min-width: 0;
+        min-height: 0;
+        border-radius: 18px;
+        padding: 13px;
+        display: grid;
+        align-content: start;
+        gap: 10px;
+      }
+
+      .ppt-draft-mini-panel strong {
+        color: var(--pd-accent);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .ppt-draft-slide-canvas.layout-process .ppt-draft-canvas-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 0.78fr) minmax(0, 1fr);
+        gap: 16px;
+        align-items: stretch;
+      }
+
+      .ppt-draft-process-title {
+        min-width: 0;
+        display: grid;
+        align-content: center;
+        gap: 10px;
+      }
+
+      .ppt-draft-process-steps {
+        display: grid;
+        gap: 8px;
+        align-content: center;
+      }
+
+      .ppt-draft-process-step {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: 30px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        padding: 8px 10px;
+        border-radius: 15px;
+        background: color-mix(in srgb, var(--pd-panel), transparent 8%);
+        border: 1px solid color-mix(in srgb, var(--pd-line), white 8%);
+      }
+
+      .ppt-draft-process-step span {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        background: var(--pd-accent);
+        color: var(--pd-bg);
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .ppt-draft-process-step strong {
+        color: var(--pd-text);
+        font-size: 10px;
+        line-height: 1.28;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .ppt-draft-slide-canvas.layout-gallery .ppt-draft-canvas-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.08fr);
+        gap: 16px;
+      }
+
+      .ppt-draft-gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .ppt-draft-gallery-cell {
+        min-width: 0;
+        display: grid;
+        align-content: center;
+        gap: 6px;
+        min-height: 70px;
+        padding: 11px;
+        border-radius: 16px;
+        background: color-mix(in srgb, var(--pd-panel), transparent 5%);
+        border: 1px solid color-mix(in srgb, var(--pd-line), white 8%);
+      }
+
+      .ppt-draft-gallery-cell i {
+        width: 20px;
+        height: 20px;
+        border-radius: 8px;
+        background: var(--pd-accent);
+        opacity: 0.9;
+      }
+
+      .ppt-draft-gallery-cell span {
+        color: var(--pd-text);
+        font-size: 9px;
+        font-weight: 800;
+        line-height: 1.22;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .ppt-draft-slide-foot {
+        min-width: 0;
+        display: grid;
+        gap: 8px;
+      }
+
+      .ppt-draft-visual-note {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 8px;
+        align-items: baseline;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .ppt-draft-visual-note strong {
+        color: rgba(255, 255, 255, 0.72);
+        white-space: nowrap;
+      }
+
+      .ppt-draft-visual-note span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .ppt-draft-slide-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .ppt-draft-slide-tags span {
+        min-height: 22px;
+        max-width: 100%;
+        padding: 0 9px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.54);
+        font-size: 11px;
+        line-height: 20px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      #pptDraftOutlineStatus {
+        margin-top: 8px;
+      }
+/* Draft editor */
+      .ppt-draft-editor-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1006;
+        display: none;
+        flex-direction: column;
+        background: #08080d;
+        color: #ffffff;
+      }
+
+      .ppt-draft-editor-overlay.visible {
+        display: flex;
+      }
+
+      .ppt-draft-editor-overlay .plasma-bg {
+        opacity: 1;
+      }
+
+      .ppt-draft-editor-header {
+        position: relative;
+        z-index: 2;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        min-height: 64px;
+        padding: 0 28px;
+        background: rgba(8, 8, 9, 0.94);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        -webkit-app-region: drag;
+      }
+
+      .ppt-draft-editor-header .settings-back,
+      .ppt-draft-editor-header button {
+        -webkit-app-region: no-drag;
+      }
+
+      .ppt-draft-editor-topbar-left {
+        min-width: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .ppt-draft-editor-back {
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 0 14px;
+        margin: 0;
+        border: 1px solid var(--line-strong);
+        border-radius: 10px;
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.03);
+        font: inherit;
+        cursor: pointer;
+        transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+      }
+
+      .ppt-draft-editor-back:hover {
+        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.28);
+      }
+
+      .ppt-draft-editor-back svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .ppt-draft-editor-top-tag {
+        min-width: 0;
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .ppt-draft-editor-deck-title {
+        min-width: 0;
+        max-width: 420px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 12px;
+      }
+
+      .ppt-draft-editor-export {
+        min-width: 0;
+        height: 42px;
+        margin: 0;
+        justify-content: center;
+      }
+
+      .ppt-draft-editor-inspector .ppt-draft-editor-export {
+        width: auto;
+        margin: 0 16px;
+        justify-self: stretch;
+      }
+
+      .ppt-draft-editor-main {
+        position: relative;
+        z-index: 1;
+        flex: 1 1 auto;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 18px;
+        padding: 0 30px 28px;
+      }
+
+      .ppt-draft-editor-preview,
+      .ppt-draft-editor-inspector {
+        min-height: 0;
+        border: 1px solid rgba(255, 255, 255, 0.11);
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.045);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        overflow: hidden;
+      }
+
+      .ppt-draft-editor-preview {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      .ppt-draft-editor-preview-head,
+      .ppt-draft-editor-inspector-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 15px 18px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+      }
+
+      .ppt-draft-editor-preview-head strong,
+      .ppt-draft-editor-inspector-head strong {
+        color: rgba(255, 255, 255, 0.94);
+        font-size: 14px;
+        font-weight: 850;
+      }
+
+      .ppt-draft-editor-preview-head span,
+      .ppt-draft-editor-inspector-head span {
+        color: rgba(255, 255, 255, 0.46);
+        font-size: 11px;
+        line-height: 1.35;
+      }
+
+      .ppt-draft-editor-actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        padding: 0 16px;
+      }
+
+      .ppt-draft-editor-action-btn {
+        min-width: 0;
+        min-height: 38px;
+        padding: 0 10px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
+        -webkit-app-region: no-drag;
+      }
+
+      .ppt-draft-editor-action-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.28);
+        transform: translateY(-1px);
+      }
+
+      .ppt-draft-editor-action-btn:disabled {
+        cursor: wait;
+        opacity: 0.5;
+        transform: none;
+      }
+
+      .ppt-draft-editor-action-btn-restore {
+        background: rgba(255, 255, 255, 0.085);
+      }
+
+      .ppt-draft-editor-preview-body {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 150px minmax(0, 1fr);
+        gap: 16px;
+        padding: 16px;
+      }
+
+      .ppt-draft-editor-strip {
+        min-height: 0;
+        display: grid;
+        align-content: start;
+        gap: 9px;
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+
+      .ppt-draft-editor-strip::-webkit-scrollbar,
+      .ppt-draft-editor-inspector::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .ppt-draft-editor-strip::-webkit-scrollbar-thumb,
+      .ppt-draft-editor-inspector::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.16);
+        border-radius: 999px;
+      }
+
+      .ppt-draft-editor-thumb {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr);
+        gap: 8px;
+        align-items: center;
+        min-height: 52px;
+        padding: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.045);
+        color: rgba(255, 255, 255, 0.72);
+        text-align: left;
+        cursor: grab;
+        -webkit-app-region: no-drag;
+      }
+
+      .ppt-draft-editor-thumb:hover,
+      .ppt-draft-editor-thumb.active {
+        border-color: rgba(255, 255, 255, 0.42);
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+      }
+
+      .ppt-draft-editor-thumb.dragging {
+        opacity: 0.55;
+        cursor: grabbing;
+      }
+
+      .ppt-draft-editor-thumb.drop-target {
+        border-color: rgba(255, 255, 255, 0.68);
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+      }
+
+      .ppt-draft-editor-thumb-num {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .ppt-draft-editor-thumb-title {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 11px;
+        font-weight: 750;
+      }
+
+      .ppt-draft-editor-canvas-wrap {
+        min-width: 0;
+        min-height: 0;
+        display: grid;
+        place-items: center;
+        overflow: auto;
+        padding: 12px;
+        border-radius: 20px;
+        background: rgba(0, 0, 0, 0.22);
+      }
+
+      .ppt-draft-editor-canvas {
+        width: min(100%, 780px);
+        min-width: 460px;
+      }
+
+      .ppt-draft-editor-inspector {
+        display: grid;
+        align-content: start;
+        gap: 14px;
+        padding-bottom: 18px;
+        overflow-y: auto;
+      }
+
+      .ppt-draft-editor-field {
+        display: grid;
+        gap: 7px;
+        padding: 0 16px;
+        color: rgba(255, 255, 255, 0.52);
+        font-size: 12px;
+      }
+
+      .ppt-draft-editor-field input,
+      .ppt-draft-editor-field textarea {
+        width: 100%;
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.92);
+        outline: none;
+        padding: 11px 12px;
+        line-height: 1.55;
+        resize: vertical;
+        -webkit-app-region: no-drag;
+      }
+
+      .ppt-draft-editor-field input {
+        height: 40px;
+      }
+
+      .ppt-draft-editor-field input:focus,
+      .ppt-draft-editor-field textarea:focus {
+        border-color: rgba(255, 255, 255, 0.42);
+        background: rgba(255, 255, 255, 0.09);
+      }
+
+      .ppt-draft-editor-note {
+        margin: 0 16px;
+        padding: 12px 13px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 11px;
+        line-height: 1.55;
+      }
+/* Narrow layouts */
+@media (max-width: 980px) {
+        .ppt-draft-overlay .ppt-draft-preview-summary { grid-template-columns: 1fr; }
+        .ppt-draft-summary-side { justify-content: flex-start; max-width: none; }
+        .ppt-draft-slide-canvas.layout-cover .ppt-draft-canvas-layout,
+        .ppt-draft-slide-canvas.layout-closing .ppt-draft-canvas-layout,
+        .ppt-draft-slide-canvas.layout-standard .ppt-draft-canvas-layout,
+        .ppt-draft-slide-canvas.layout-visual .ppt-draft-canvas-layout,
+        .ppt-draft-slide-canvas.layout-process .ppt-draft-canvas-layout,
+        .ppt-draft-slide-canvas.layout-gallery .ppt-draft-canvas-layout {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+        .ppt-draft-visual-slot,
+        .ppt-draft-visual-slot.is-portrait {
+          width: auto;
+          aspect-ratio: auto;
+          min-height: 92px;
+        }
+        .ppt-ai-preset-title { align-items: flex-start; flex-direction: column; gap: 4px; }
+        .ppt-ai-preset-title em { white-space: normal; }
+        .ppt-draft-editor-main { grid-template-columns: 1fr; overflow-y: auto; }
+        .ppt-draft-editor-preview-body { grid-template-columns: 1fr; }
+        .ppt-draft-editor-strip { grid-auto-flow: column; grid-auto-columns: minmax(120px, 1fr); overflow-x: auto; overflow-y: hidden; }
+        .ppt-draft-editor-canvas { min-width: 0; }
+}
+/* Draft v2 workspace */
+      /* ===== PPT AI Draft · Tool Page 2.0 ===== */
+      .ppt-draft-v2 .pdf-merge-v2-body {
+        grid-template-columns: minmax(286px, 340px) minmax(0, 1fr);
+      }
+
+      .ppt-draft-v2 .pdf-merge-v2-poster::after {
+        content: 'PPTX';
+        right: 18px;
+        bottom: -8px;
+        font-size: 76px;
+        letter-spacing: 0;
+      }
+
+      .ppt-draft-v2 .ppt-draft-v2-workspace {
+        display: grid;
+        grid-template-rows: minmax(0, 1fr);
+        overflow: hidden;
+      }
+
+      .ppt-draft-v2 .ppt-outline-grid {
+        height: 100%;
+        min-height: 0;
+        align-items: stretch;
+        grid-template-columns: minmax(340px, 0.92fr) minmax(360px, 1.08fr);
+        gap: 22px;
+        padding: 0;
+        border-top: 0;
+        border-bottom: 0;
+        overflow: hidden;
+      }
+
+      .ppt-draft-v2 .ppt-outline-compose,
+      .ppt-draft-v2 .ppt-outline-preview {
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-right: 4px;
+      }
+
+      .ppt-draft-v2 .ppt-outline-compose::-webkit-scrollbar,
+      .ppt-draft-v2 .ppt-outline-preview::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .ppt-draft-v2 .ppt-outline-compose::-webkit-scrollbar-thumb,
+      .ppt-draft-v2 .ppt-outline-preview::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.16);
+        border-radius: 999px;
+      }
+
+      .ppt-draft-v2 .ppt-outline-empty {
+        height: 100%;
+        min-height: 0;
+        border: 1px dashed rgba(255, 255, 255, 0.16);
+        border-radius: 20px;
+        background:
+          radial-gradient(circle at 50% 26%, rgba(255, 255, 255, 0.09), transparent 44%),
+          rgba(255, 255, 255, 0.018);
+      }
+
+      .ppt-draft-v2 .ppt-outline-empty svg {
+        width: 60px;
+        height: 60px;
+        padding: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.9);
+        box-shadow: none;
+      }
+
+      .ppt-draft-v2 .ppt-outline-empty strong {
+        margin-top: 4px;
+        font-size: 19px;
+      }
+
+      .ppt-draft-v2 .ppt-outline-empty span {
+        max-width: 380px;
+        color: rgba(255, 255, 255, 0.52);
+      }
+
+      .ppt-draft-v2-empty-hints {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 6px;
+      }
+
+      .ppt-draft-v2 .ppt-draft-v2-empty-hints span {
+        display: inline-flex;
+        align-items: center;
+        max-width: none;
+        padding: 5px 11px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.56);
+        font-size: 11px;
+        line-height: 1;
+      }
+
+      #pptDraftGenerateBtn,
+      #pptDraftOutlineImportBtn {
+        opacity: 1;
+        transform: none;
+        box-shadow: 0 8px 32px rgba(255, 255, 255, 0.12);
+      }
+
+      #pptDraftGenerateBtn:hover,
+      #pptDraftOutlineImportBtn:hover,
+      #pptDraftGenerateBtn:active,
+      #pptDraftOutlineImportBtn:active {
+        transform: none;
+      }
+
+      #pptDraftGenerateBtn:disabled,
+      #pptDraftOutlineImportBtn:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
+
+      #pptDraftSuccessOverlay .audio-convert-success-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #pptDraftSuccessOverlay .audio-clip-success-dialog {
+        max-width: 560px;
+        width: min(92vw, 560px);
+      }
+
+      #pptDraftSuccessOverlay .audio-clip-success-meta {
+        max-width: 460px;
+      }
+
+      #pptDraftSuccessOverlay .audio-clip-success-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #pptDraftSuccessOverlay .audio-clip-success-btn {
+        min-height: 44px;
+        padding: 0 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.15;
+        overflow: visible;
+        text-overflow: clip;
+      }
+
+      #pptDraftSummary {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 6px;
+        align-items: start;
+      }
+
+      #pptDraftSummary .ppt-draft-summary-main {
+        min-width: 0;
+      }
+
+      #pptDraftSummary .ppt-draft-summary-side {
+        max-width: none;
+        justify-content: flex-start;
+      }
+
+      .ppt-draft-v2 #pptDraftOutlineStatus[data-ready="true"] {
+        margin: 0 0 4px;
+        padding: 9px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.82);
+      }
+
+      @media (max-width: 980px) {
+        .ppt-draft-v2 .ppt-outline-grid {
+          grid-template-columns: 1fr;
+        }
+        .ppt-draft-v2 .ppt-outline-row {
+          grid-template-columns: 1fr;
+        }
+        .ppt-draft-v2 .ppt-outline-compose,
+        .ppt-draft-v2 .ppt-outline-preview {
+          overflow: visible;
+          padding-right: 0;
+        }
+      }
+
+      /* Keep the draft page usable in the same narrow stacked layout as the
+         other PPT tools. This must come after the v2 workspace declaration so
+         its fixed two-column grid cannot override the mobile breakpoint. */
+      @media (max-width: 980px) {
+        .ppt-draft-v2 .pdf-merge-v2-body {
+          grid-template-columns: 1fr;
+          grid-template-rows: max-content max-content;
+          align-content: start;
+          overflow-y: auto;
+        }
+
+        .ppt-draft-v2 .pdf-merge-v2-poster,
+        .ppt-draft-v2 .ppt-draft-v2-workspace {
+          min-height: 0;
+          overflow: hidden;
+        }
+
+        .ppt-draft-v2 .pdf-merge-v2-poster {
+          height: auto !important;
+          min-height: max-content !important;
+        }
+
+        .ppt-draft-v2 .ppt-draft-v2-workspace {
+          height: auto;
+          overflow: visible;
+        }
+
+        .ppt-draft-v2 .ppt-outline-grid {
+          height: auto;
+          overflow: visible;
+        }
+
+        .ppt-draft-v2 .ppt-outline-compose,
+        .ppt-draft-v2 .ppt-outline-preview {
+          overflow: visible;
+          padding-right: 0;
+        }
+      }

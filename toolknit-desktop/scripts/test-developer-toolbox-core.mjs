@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { decodeBase64Utf8, decodeJwt, decodeUrlComponent, describeDeveloperToolError, encodeBase64Utf8, encodeUrlComponent, formatJsonText, generateUuidV4 } from '../src/developer-toolbox-core.js';
+import { decodeBase64Utf8, decodeJwt, decodeUrlComponent, describeDeveloperToolError, encodeBase64Utf8, encodeUrlComponent, formatJsonText, generateUuidV4 } from '../src/features/developer-toolbox/core.js';
 
 assert.equal(formatJsonText('{"b":2,"a":[true]}', '2'), '{\n  "b": 2,\n  "a": [\n    true\n  ]\n}');
 assert.equal(formatJsonText('{"b":2,"a":[true]}', '0'), '{"b":2,"a":[true]}');

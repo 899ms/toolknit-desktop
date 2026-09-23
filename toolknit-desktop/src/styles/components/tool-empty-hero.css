@@ -1,0 +1,109 @@
+/* Shared upload empty state used by image tools and PDF workspaces. */
+.tk-empty-hero {
+  --tk-empty-hero-ink: #f5f5f5;
+  --tk-empty-hero-muted: rgba(245, 245, 245, .62);
+  --tk-empty-hero-quiet: rgba(245, 245, 245, .48);
+  --tk-empty-hero-button-bg: #ffffff;
+  --tk-empty-hero-button-ink: #090909;
+  --tk-empty-hero-icon-bg: #ffffff;
+  --tk-empty-hero-icon-ink: #111111;
+  --tk-empty-hero-icon-line: rgba(17, 17, 17, .16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0;
+  padding: 32px;
+  color: var(--tk-empty-hero-ink);
+  text-align: center;
+}
+
+.tk-empty-hero-icon {
+  flex: 0 0 auto;
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 18px;
+  border: 1px solid var(--tk-empty-hero-icon-line);
+  border-radius: 50%;
+  background: var(--tk-empty-hero-icon-bg);
+  color: var(--tk-empty-hero-icon-ink);
+}
+
+.tk-empty-hero-icon svg {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.tk-empty-hero-kicker {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--tk-empty-hero-quiet);
+  font-family: var(--tk-font-display-en), sans-serif;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+.tk-empty-hero strong {
+  color: var(--tk-empty-hero-ink);
+  font-size: 25px;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.tk-empty-hero-description {
+  max-width: 420px;
+  margin-top: 8px;
+  color: var(--tk-empty-hero-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.tk-empty-hero em {
+  min-width: 120px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding: 0 20px;
+  border: 1px solid var(--tk-empty-hero-button-bg);
+  border-radius: 999px;
+  background: var(--tk-empty-hero-button-bg);
+  color: var(--tk-empty-hero-button-ink);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1;
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.tk-empty-hero:hover em {
+  border-color: #303030;
+  background: #303030;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.tk-empty-hero em svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
+@media (max-width: 640px) {
+  .tk-empty-hero { padding: 24px; }
+  .tk-empty-hero strong { font-size: 21px; }
+  .tk-empty-hero-description { font-size: 12px; }
+}

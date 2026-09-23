@@ -1,0 +1,81 @@
+/* PPT workflow-specific layout stays lazy with its controllers. Shared PPT primitives remain in styles.css for the still-static draft/render tools. */
+.ppt-text-v2 .ppt-text-list,
+.ppt-compress-v2 .ppt-compress-stats,
+.ppt-outline-v2 .ppt-outline-preview,
+.ppt-outline-v2 .ppt-outline-compose { contain: layout paint; }
+
+.ppt-outline-guide {
+  margin: 0 0 14px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .045);
+}
+
+.ppt-outline-guide-head,
+.ppt-outline-guide-intro,
+.ppt-outline-guide-section,
+.ppt-outline-guide-story,
+.ppt-outline-guide-next { display: flex; flex-direction: column; gap: 8px; }
+
+.ppt-outline-guide-head {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.ppt-outline-guide-head > div { display: flex; flex-direction: column; gap: 4px; }
+.ppt-outline-guide-eyebrow { color: #969ba5; font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+.ppt-outline-guide-head strong { color: #f4f5f7; font-size: 16px; }
+.ppt-outline-guide-intro { padding: 14px; border-radius: 10px; background: rgba(255, 255, 255, .055); }
+.ppt-outline-guide-intro strong { color: #ffffff; font-size: 15px; line-height: 1.6; }
+.ppt-outline-guide-intro p,
+.ppt-outline-guide-story p,
+.ppt-outline-guide-next p { margin: 0; color: #aeb3bd; font-size: 12px; line-height: 1.6; }
+.ppt-outline-guide-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.ppt-outline-guide-section { min-width: 0; padding: 12px; border: 1px solid rgba(255, 255, 255, .09); border-radius: 10px; background: rgba(0, 0, 0, .12); }
+.ppt-outline-guide-section strong,
+.ppt-outline-guide-story strong,
+.ppt-outline-guide-next strong,
+.ppt-outline-guide-slides-title { color: #e9ebef; font-size: 12px; }
+.ppt-outline-guide-section.is-warning { border-color: rgba(245, 182, 78, .38); }
+.ppt-outline-guide-list { display: flex; flex-direction: column; gap: 5px; }
+.ppt-outline-guide-list span { color: #aeb3bd; font-size: 12px; line-height: 1.5; }
+.ppt-outline-guide-story,
+.ppt-outline-guide-next { margin-top: 10px; padding: 12px; border-radius: 10px; background: rgba(255, 255, 255, .035); }
+.ppt-outline-guide-slides { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.ppt-outline-guide-slide { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; padding: 11px 12px; border: 1px solid rgba(255, 255, 255, .09); border-radius: 10px; background: rgba(0, 0, 0, .12); }
+.ppt-outline-guide-slide-number { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #f3f4f6; color: #161719; font-size: 11px; font-weight: 800; }
+.ppt-outline-guide-slide-content { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ppt-outline-guide-slide-content strong { color: #f4f5f7; font-size: 13px; }
+.ppt-outline-guide-slide-content p { margin: 0; color: #aeb3bd; font-size: 11px; line-height: 1.5; }
+
+@media (max-width: 620px) {
+  .ppt-outline-guide-grid { grid-template-columns: 1fr; }
+  .ppt-outline-guide-head { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-width: 980px) {
+  .ppt-outline-v2 .ppt-outline-v2-workspace,
+  .ppt-outline-v2 .ppt-outline-grid {
+    height: auto;
+    overflow: visible;
+    grid-auto-rows: max-content;
+    grid-template-rows: max-content;
+  }
+
+  .ppt-outline-v2 .ppt-outline-compose,
+  .ppt-outline-v2 .ppt-outline-preview {
+    contain: none;
+  }
+}
+
+/* Only the side-by-side layout needs a shrinkable inner scroller. Stacked
+   pages retain the shared workspace minimum while the outer body scrolls. */
+@media (min-width: 981px) and (max-height: 520px) {
+  .ppt-text-v2 .ppt-text-v2-workspace,
+  .ppt-compress-v2 .ppt-compress-v2-workspace,
+  .ppt-outline-v2 .ppt-outline-v2-workspace { min-height: 0; }
+}

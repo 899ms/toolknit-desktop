@@ -1,0 +1,4 @@
+#pdfSplitProcessCancel { display: inline-flex; align-items: center; justify-content: center; gap: 8px; line-height: 1.25; }
+#pdfSplitProcessCancel svg { width: 16px; height: 16px; }
+html[data-theme="light"] #pdfSplitProcessCancel { color: #171717; background: #f5f6f7; border-color: #d7d9dd; }
+html[data-theme="light"] #pdfSplitProcessCancel:hover { background: #e9eaec; border-color: #bfc2c7; }

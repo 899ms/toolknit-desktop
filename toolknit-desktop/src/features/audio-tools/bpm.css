@@ -1,0 +1,1044 @@
+/* Audio tools own their feature-specific presentation. Shared dialog primitives stay global. */
+
+/* ===== BPM Detect Tool Page ===== */
+      .bpm-detect-overlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        background: #0a0a0f;
+        z-index: 1001;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+      }
+
+      .bpm-hero-title {
+        background: linear-gradient(90deg, #e8e8ec, #a0a0a8, #e8e8ec) !important;
+        background-size: 200% auto !important;
+        -webkit-background-clip: text !important;
+        background-clip: text !important;
+      }
+
+      .bpm-detect-v2 .pdf-merge-v2-poster::after {
+        content: 'BPM';
+        right: 18px;
+        font-size: 96px;
+        letter-spacing: 0.02em;
+      }
+
+      .bpm-detect-v2 .pdf-merge-v2-body {
+        grid-template-columns: minmax(286px, 336px) minmax(340px, 1fr) minmax(280px, 360px);
+        align-items: stretch;
+      }
+
+      .bpm-detect-v2 .bpm-detect-card {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+          rgba(9, 9, 10, 0.84);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+        overflow: hidden;
+      }
+
+      .bpm-detect-v2 .bpm-detect-control-card {
+        padding: 28px;
+        overflow: hidden;
+      }
+
+      .bpm-detect-v2 .bpm-analysis-panel {
+        padding: 28px;
+      }
+
+      .bpm-detect-v2 .bpm-demo-panel {
+        padding: 28px;
+      }
+
+      .bpm-detect-v2 .bpm-detect-hero-top {
+        align-items: flex-start;
+        gap: 14px;
+        flex: 0 0 auto;
+      }
+
+      .bpm-detect-v2 .bpm-detect-hero-top .pdf-merge-v2-title {
+        max-width: 100%;
+      }
+
+      .bpm-detect-v2 .bpm-detect-hero-top .pdf-merge-v2-subtitle {
+        max-width: 100%;
+        text-align: left;
+      }
+
+      .bpm-detect-v2 .bpm-detect-cta {
+        width: fit-content;
+        margin-top: 6px;
+      }
+
+      .bpm-detect-v2 .bpm-detect-flow {
+        display: grid;
+        gap: 10px;
+        margin-top: 2px;
+        flex: 0 0 auto;
+      }
+
+      .bpm-detect-v2 .bpm-detect-flow > div {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 10px 12px;
+        padding: 14px 14px 13px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .bpm-detect-v2 .bpm-detect-flow > div span {
+        grid-row: 1 / span 2;
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.56);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+        font-size: 12px;
+      }
+
+      .bpm-detect-v2 .bpm-detect-flow > div strong {
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 14px;
+      }
+
+      .bpm-detect-v2 .bpm-detect-flow > div p {
+        grid-column: 2;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.46);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .bpm-detect-v2 .bpm-analysis-panel {
+        justify-content: center;
+        gap: 22px;
+      }
+
+      .bpm-detect-v2 .bpm-panel-head {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .bpm-detect-v2 .bpm-panel-head h2 {
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: -0.045em;
+      }
+
+      .bpm-detect-v2 .bpm-panel-head p,
+      .bpm-detect-v2 .bpm-analysis-empty,
+      .bpm-detect-v2 .bpm-demo-status {
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .bpm-detect-v2 .bpm-analysis-empty {
+        padding: 14px 16px;
+        border: 1px dashed rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .bpm-detect-v2 .bpm-result {
+        display: none;
+        width: 100%;
+        max-width: none;
+        padding: 0;
+      }
+
+      .bpm-detect-v2 .bpm-result.visible {
+        display: flex;
+      }
+
+      .bpm-detect-v2 .bpm-result-number {
+        font-size: clamp(56px, 5vw, 78px);
+      }
+
+      .bpm-detect-v2 .bpm-result-timeline {
+        max-width: none;
+        height: 130px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        overflow: visible;
+      }
+
+      .bpm-detect-v2 .bpm-timeline-track {
+        height: 76px;
+        gap: 4px;
+        padding: 0;
+        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.36));
+      }
+
+      .bpm-detect-v2 .bpm-timeline-bar {
+        border-radius: 999px 999px 2px 2px;
+        background: rgba(255, 255, 255, 0.62);
+        min-width: 3px;
+      }
+
+      .bpm-detect-v2 .bpm-timeline-label {
+        top: 0;
+        left: 0;
+        color: rgba(255, 255, 255, 0.34);
+      }
+
+      .bpm-detect-v2 .bpm-result-meta {
+        width: min(100%, 520px);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .bpm-detect-v2 .bpm-result-meta-item {
+        min-width: 0;
+        padding: 12px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.025);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .bpm-detect-v2 .bpm-result-meta-item span {
+        color: rgba(255, 255, 255, 0.42);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .bpm-detect-v2 .bpm-result-meta-item strong {
+        min-width: 0;
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 13px;
+        line-height: 1.35;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .bpm-detect-v2 .bpm-candidate-list {
+        width: min(100%, 560px);
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: -2px;
+      }
+
+      .bpm-detect-v2 .bpm-candidate-chip {
+        display: inline-flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 5px;
+        min-width: 76px;
+        min-height: 34px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.035);
+        color: rgba(255, 255, 255, 0.68);
+        cursor: pointer;
+        -webkit-app-region: no-drag;
+        transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+      }
+
+      .bpm-detect-v2 .bpm-candidate-chip span {
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+      }
+
+      .bpm-detect-v2 .bpm-candidate-chip em {
+        font-style: normal;
+        font-size: 10px;
+        font-weight: 900;
+        opacity: 0.66;
+      }
+
+      .bpm-detect-v2 .bpm-candidate-chip:hover,
+      .bpm-detect-v2 .bpm-candidate-chip.active {
+        transform: translateY(-1px);
+        border-color: rgba(255, 255, 255, 0.32);
+        background: rgba(255, 255, 255, 0.92);
+        color: #09090a;
+      }
+
+      .bpm-detect-v2 .bpm-result-actions {
+        flex-wrap: wrap;
+      }
+
+      .bpm-detect-v2 .bpm-demo-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border-color: rgba(255, 255, 255, 0.12);
+        background:
+          radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.055), transparent 44%),
+          rgba(8, 8, 9, 0.34);
+        box-shadow: none;
+      }
+
+      .bpm-detect-v2 .bpm-demo-content {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .bpm-detect-v2 .bpm-demo-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .bpm-detect-v2 .bpm-demo-header h2 {
+        margin: 4px 0 0;
+        color: var(--ink);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: -0.045em;
+      }
+
+      .bpm-detect-v2 .bpm-demo-close {
+        width: 42px;
+        height: 42px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.045);
+      }
+
+      .bpm-detect-v2 .bpm-demo-close svg {
+        width: 19px;
+        height: 19px;
+      }
+
+      .bpm-detect-v2 .bpm-demo-body {
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .bpm-detect-v2 .bpm-demo-status {
+        max-width: 320px;
+        margin: 0;
+        text-align: center;
+      }
+
+      .bpm-detect-v2 .bpm-demo-bpm-display {
+        margin-top: 2px;
+      }
+
+      .bpm-detect-v2 .bpm-demo-visualizer {
+        width: min(100%, 220px);
+        height: 220px;
+      }
+
+      .bpm-detect-v2 .bpm-demo-rings {
+        position: absolute;
+        inset: 0;
+      }
+
+      .bpm-detect-v2 .bpm-demo-rings span {
+        position: absolute;
+        inset: 24px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        animation: bpmRingPulse 3.2s ease-in-out infinite;
+      }
+
+      .bpm-detect-v2 .bpm-demo-rings span:nth-child(2) {
+        inset: 44px;
+        animation-delay: 0.4s;
+      }
+
+      .bpm-detect-v2 .bpm-demo-rings span:nth-child(3) {
+        inset: 64px;
+        animation-delay: 0.8s;
+      }
+
+      .bpm-detect-v2 .bpm-demo-beat-indicator {
+        width: 68px;
+        height: 68px;
+        border-width: 2px;
+      }
+
+      .bpm-detect-v2 .bpm-demo-info {
+        max-width: none;
+      }
+
+      .bpm-detect-v2 .bpm-demo-play-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+      }
+
+      .bpm-detect-v2 .bpm-formats {
+        margin-top: auto;
+        padding-inline: 0;
+        align-items: flex-start;
+        flex: 0 0 auto;
+      }
+
+      .bpm-detect-v2 .bpm-formats-title {
+        text-align: left;
+      }
+
+      .bpm-detect-v2 .bpm-formats-grid {
+        justify-content: flex-start;
+      }
+
+      @keyframes bpmRingPulse {
+        0%, 100% { transform: scale(0.95); opacity: 0.22; }
+        50% { transform: scale(1.05); opacity: 0.48; }
+      }
+
+      .bpm-detect-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .bpm-detect-overlay .plasma-bg {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .bpm-detect-body {
+        position: relative;
+        z-index: 1;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        padding: 24px 32px;
+        gap: 12px;
+      }
+
+      .bpm-detect-hero {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 16px;
+        position: relative;
+        z-index: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .bpm-detect-hero-top {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        flex-shrink: 0;
+      }
+
+      .bpm-detect-hero-top > * {
+        opacity: 0;
+        transform: translateY(12px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+
+      .bpm-detect-overlay.visible .bpm-detect-hero-top > * {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .bpm-detect-overlay.visible .bpm-detect-hero-top > *:nth-child(1) { transition-delay: 0.08s; }
+      .bpm-detect-overlay.visible .bpm-detect-hero-top > *:nth-child(2) { transition-delay: 0.16s; }
+      .bpm-detect-overlay.visible .bpm-detect-hero-top > *:nth-child(3) { transition-delay: 0.24s; }
+      .bpm-detect-overlay.visible .bpm-detect-hero-top > *:nth-child(4) { transition-delay: 0.32s; }
+
+      .bpm-detect-cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 8px;
+        padding: 14px 32px;
+        border-radius: 9999px;
+        background: #ffffff;
+        border: none;
+        color: #000000;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        -webkit-app-region: no-drag;
+        box-shadow: 0 8px 32px rgba(255, 255, 255, 0.12);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        animation: ctaPulse 2.5s ease-in-out infinite;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .bpm-detect-cta::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 9999px;
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+        animation: ctaRipple 2.5s ease-out infinite;
+        pointer-events: none;
+      }
+
+      .bpm-detect-cta:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 12px 40px rgba(255, 255, 255, 0.18);
+        background: #f0f0f0;
+        animation-play-state: paused;
+      }
+
+      .bpm-detect-cta:hover::before {
+        animation-play-state: paused;
+      }
+
+      .bpm-detect-cta:active {
+        transform: translateY(0) scale(0.98);
+      }
+
+      .bpm-detect-cta svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      /* BPM Result Card */
+      .bpm-result {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        padding: 32px 40px;
+        max-width: 520px;
+        width: 100%;
+        flex-shrink: 0;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+
+      .bpm-result.visible {
+        display: flex;
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .bpm-result-number {
+        font-size: 72px;
+        font-weight: 800;
+        line-height: 1;
+        color: transparent;
+        background: linear-gradient(90deg, #e8e8ec, #a0a0a8, #e8e8ec);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        animation: titleShine 4s linear infinite;
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+
+      .bpm-result-number .bpm-unit {
+        font-size: 20px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.5);
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.5);
+      }
+
+      .bpm-result-timeline {
+        width: 100%;
+        max-width: 420px;
+        height: 60px;
+        position: relative;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+      }
+
+      .bpm-timeline-label {
+        position: absolute;
+        top: 6px;
+        left: 10px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.3);
+      }
+
+      .bpm-timeline-track {
+        position: absolute;
+        bottom: 8px;
+        left: 0;
+        right: 0;
+        height: 24px;
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        padding: 0 8px;
+      }
+
+      .bpm-timeline-bar {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 2px 2px 0 0;
+        min-height: 3px;
+        transition: height 0.3s ease;
+      }
+
+      .bpm-timeline-bar.beat {
+        background: #ffffff;
+        box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+      }
+
+      .bpm-result-hint {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.5);
+        padding: 6px 16px;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        display: none;
+      }
+
+      .bpm-result-hint.visible {
+        display: block;
+      }
+
+      .bpm-result-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 4px;
+      }
+
+      .bpm-result-btn {
+        padding: 12px 32px;
+        border-radius: 9999px;
+        border: none;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        -webkit-app-region: no-drag;
+        transition: transform 0.2s ease, box-shadow 0.3s ease, opacity 0.2s ease;
+      }
+
+      .bpm-result-btn-primary {
+        background: #fff;
+        color: #111;
+      }
+
+      .bpm-result-btn-primary:hover {
+        opacity: 0.85;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 255, 255, 0.2);
+      }
+
+      .bpm-result-btn-primary:active {
+        transform: translateY(0);
+      }
+
+      .bpm-formats {
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 32px 16px;
+        gap: 10px;
+        -webkit-app-region: no-drag;
+      }
+
+      .bpm-formats-title {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.45);
+        margin: 0;
+      }
+
+      .bpm-formats-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        max-width: 640px;
+      }
+
+      .bpm-format-chip {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 13px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.75);
+        transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        cursor: default;
+      }
+
+      .bpm-format-chip:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+      }
+
+      .bpm-detect-overlay.drag-over .bpm-detect-body {
+        animation: dragShake 0.35s ease-in-out;
+      }
+
+      /* ===== BPM Beat Demo Overlay ===== */
+      .bpm-demo-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1005;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(22, 22, 24, 0.92);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .bpm-demo-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      .bpm-demo-content {
+        background: rgba(28, 28, 30, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 24px;
+        padding: 32px 40px;
+        max-width: 460px;
+        width: 90%;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        transform: scale(0.9) translateY(20px);
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+
+      .bpm-demo-overlay.visible .bpm-demo-content {
+        transform: scale(1) translateY(0);
+      }
+
+      .bpm-demo-header {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .bpm-demo-close {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.6);
+        transition: background 0.2s ease, color 0.2s ease;
+        -webkit-app-region: no-drag;
+      }
+
+      .bpm-demo-close:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+      }
+
+      .bpm-demo-body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .bpm-demo-bpm-display {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+
+      .bpm-demo-bpm-number {
+        font-size: 56px;
+        font-weight: 800;
+        line-height: 1;
+        color: transparent;
+        background: linear-gradient(90deg, #e8e8ec, #a0a0a8, #e8e8ec);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        animation: titleShine 4s linear infinite;
+      }
+
+      .bpm-demo-bpm-unit {
+        font-size: 18px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .bpm-demo-visualizer {
+        width: 120px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .bpm-demo-beat-indicator {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        transition: transform 0.08s ease, background 0.08s ease, box-shadow 0.08s ease;
+      }
+
+      .bpm-demo-beat-indicator.beat-active {
+        transform: scale(1.4);
+        background: #ffffff;
+        border-color: #ffffff;
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
+      }
+
+      .bpm-demo-controls {
+        display: flex;
+        gap: 12px;
+      }
+
+      .bpm-demo-play-btn, .bpm-demo-stop-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 28px;
+        border-radius: 9999px;
+        border: none;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        -webkit-app-region: no-drag;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .bpm-demo-play-btn {
+        background: #ffffff;
+        color: #161618;
+      }
+
+      .bpm-demo-play-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 255, 255, 0.3);
+      }
+
+      .bpm-demo-stop-btn {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+      }
+
+      .bpm-demo-stop-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+      }
+
+      .bpm-demo-info {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        width: 100%;
+        max-width: 320px;
+      }
+
+      .bpm-demo-info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .bpm-demo-info-label {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .bpm-demo-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        outline: none;
+        cursor: pointer;
+      }
+
+      .bpm-demo-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #ffffff;
+        cursor: pointer;
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+      }
+
+      .bpm-demo-slider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #ffffff;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+      }
+
+/* ===== BPM Detect · Tool Page 2.0 final overrides ===== */
+      .bpm-detect-v2 .pdf-merge-v2-bg {
+        opacity: 0.38;
+        filter: grayscale(1) contrast(1.12) brightness(0.7);
+      }
+
+      .bpm-detect-v2 .pdf-merge-v2-body {
+        grid-template-columns: minmax(286px, 336px) minmax(340px, 1fr) minmax(280px, 360px);
+        grid-template-rows: minmax(0, 1fr);
+        align-items: stretch;
+        gap: 20px;
+        overflow: hidden;
+      }
+
+      .bpm-detect-v2 .bpm-detect-control-card,
+      .bpm-detect-v2 .bpm-analysis-panel,
+      .bpm-detect-v2 .bpm-demo-panel {
+        min-height: 0;
+      }
+
+      .bpm-detect-v2 .bpm-detect-control-card {
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      .bpm-detect-v2 .bpm-detect-control-card::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+        display: none;
+      }
+
+      .bpm-detect-v2 .bpm-analysis-panel {
+        justify-content: center;
+      }
+
+      .bpm-detect-v2 .bpm-demo-panel {
+        justify-content: space-between;
+      }
+
+      .bpm-detect-v2 .bpm-demo-content {
+        width: 100%;
+        max-width: none;
+        padding: 0;
+        gap: 20px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        transform: none;
+      }
+
+      .bpm-detect-v2 .bpm-demo-panel.visible .bpm-demo-content {
+        transform: none;
+      }
+
+      .bpm-detect-v2 .bpm-demo-body {
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+      }
+
+      .bpm-detect-v2 .bpm-result-timeline {
+        height: clamp(96px, 15vh, 122px);
+      }
+
+      .bpm-detect-v2 .bpm-timeline-track {
+        height: clamp(58px, 10vh, 76px);
+      }
+
+      .bpm-detect-v2 .bpm-demo-panel.visible {
+        border-color: rgba(255, 255, 255, 0.12);
+        background:
+          radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.055), transparent 44%),
+          rgba(8, 8, 9, 0.34);
+      }
+
+      @media (max-width: 1220px) {
+        .bpm-detect-v2 .pdf-merge-v2-body {
+          grid-template-columns: minmax(260px, 310px) minmax(320px, 1fr) minmax(260px, 320px);
+          gap: 16px;
+        }
+
+        .bpm-detect-v2 .bpm-detect-control-card,
+        .bpm-detect-v2 .bpm-analysis-panel,
+        .bpm-detect-v2 .bpm-demo-panel {
+          padding: 22px;
+        }
+      }
+
+      @media (max-width: 980px) {
+        .bpm-detect-v2 .pdf-merge-v2-body {
+          grid-template-columns: 1fr;
+          overflow-y: auto;
+        }
+
+        .bpm-detect-v2 .bpm-detect-control-card,
+        .bpm-detect-v2 .bpm-analysis-panel,
+        .bpm-detect-v2 .bpm-demo-panel {
+          min-height: 420px;
+        }
+      }

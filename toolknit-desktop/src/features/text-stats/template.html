@@ -1,0 +1,138 @@
+<div class="pdf-merge-overlay pdf-merge-v2 text-stats-v2" id="textStatsOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="textStatsBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="textStatsDropZone">
+        <span class="drop-hint" data-i18n="home.textStats.dropHint">松手即可读取文档</span>
+      </div>
+      <header class="pdf-merge-v2-topbar text-stats-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="textStatsBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">TEXT STATS · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="textStatsV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="pdf-merge-v2-body text-stats-v2-body" id="textStatsBody">
+        <aside class="pdf-merge-v2-poster text-stats-v2-poster" aria-label="文本统计说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.textStats.heroLabel">Text Tool</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.textStats.title">文本统计器</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.textStats.subtitle">粘贴文本或上传文档，离线统计字数、词数、段落、阅读时长、词频和文本结构。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong data-i18n="home.textStats.localNote">文档只在本机读取，不上传服务器；适合论文、文案、字幕、会议纪要和长文稿快速体检。</strong>
+          </div>
+          <input id="textStatsFileInput" type="file" accept=".txt,.md,.markdown,.csv,.tsv,.json,.html,.htm,.docx,.pdf,text/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+          <button class="audio-convert-cta pdf-merge-v2-cta text-stats-v2-upload-btn" id="textStatsCta" type="button">
+            <i data-lucide="file-up"></i>
+            <span data-i18n="home.textStats.uploadDoc">上传文档统计</span>
+          </button>
+          <div class="pdf-merge-v2-steps" aria-label="文本统计流程">
+            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong data-i18n="home.textStats.step1Title">输入或上传</strong><p data-i18n="home.textStats.step1Desc">直接粘贴文本，或读取 TXT / Markdown / DOCX / PDF 等文档。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>02</span><div><strong data-i18n="home.textStats.step2Title">本地解析</strong><p data-i18n="home.textStats.step2Desc">在本机提取正文，自动去除常见文档结构噪声。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>03</span><div><strong data-i18n="home.textStats.step3Title">深度统计</strong><p data-i18n="home.textStats.step3Desc">输出字符、词语、句段、阅读时间、词频和文本密度。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>04</span><div><strong data-i18n="home.textStats.step4Title">复制结果</strong><p data-i18n="home.textStats.step4Desc">一键复制结构化统计结果，方便交给客户或团队。</p></div></div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace text-stats-v2-workspace">
+          <section class="text-stats-v2-editor" aria-label="文本输入区">
+            <div class="text-stats-v2-editor-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">INPUT SOURCE</span>
+                <h2 data-i18n="home.textStats.inputTitle">文本来源</h2>
+              </div>
+              <div class="text-stats-v2-source" id="textStatsFileInfo">
+                <i data-lucide="file-text"></i>
+                <div>
+                  <strong id="textStatsFileName" data-i18n="home.textStats.manualInput">手动输入</strong>
+                  <span id="textStatsFileMeta" data-i18n="home.textStats.manualMeta">实时统计当前文本框内容</span>
+                </div>
+                <div class="text-stats-v2-source-mark" aria-hidden="true">
+                  <i data-lucide="text"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-stats-v2-drop-card" id="textStatsDropCard">
+              <div>
+                <span>DROP OR SELECT</span>
+                <p data-i18n="home.textStats.dropCopy">拖入文档，或继续在下方粘贴文字。支持 TXT / MD / CSV / JSON / HTML / DOCX / PDF。</p>
+              </div>
+              <button class="text-stats-btn text-stats-v2-select-btn" id="textStatsSelectFileBtn" type="button">
+                <i data-lucide="upload"></i>
+                <span data-i18n="home.textStats.selectFile">选择文档</span>
+              </button>
+            </div>
+
+            <textarea class="text-stats-textarea text-stats-v2-textarea" id="textStatsInput" data-i18n-placeholder="home.textStats.placeholder" placeholder="在此输入或粘贴文本..."></textarea>
+            <div class="text-stats-actions text-stats-v2-actions">
+              <button class="text-stats-btn text-stats-clear-btn" id="textStatsClearBtn" type="button" data-i18n="home.textStats.clear">清空</button>
+              <button class="text-stats-btn text-stats-export-btn" id="textStatsExportMdBtn" type="button" data-i18n="home.textStats.exportMd">导出 MD 文档</button>
+              <button class="text-stats-btn text-stats-copy-btn" id="textStatsCopyBtn" type="button" data-i18n="home.textStats.copyStats">复制统计结果</button>
+            </div>
+          </section>
+
+          <section class="text-stats-v2-results" aria-label="统计结果">
+            <div class="text-stats-v2-result-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">ANALYSIS</span>
+                <h2 data-i18n="home.textStats.resultTitle">统计结果</h2>
+              </div>
+              <p data-i18n="home.textStats.resultHint">结果会随文本实时更新，长文会自动节流，保持输入顺滑。</p>
+            </div>
+
+            <div class="text-stats-v2-result-scroll">
+              <div class="text-stats-results" id="textStatsResults">
+                <div class="text-stats-card is-primary"><div class="text-stats-card-icon"><i data-lucide="type"></i></div><div class="text-stats-card-value" id="textStatsChars">0</div><div class="text-stats-card-label" data-i18n="home.textStats.chars">总字符数</div></div>
+                <div class="text-stats-card is-primary"><div class="text-stats-card-icon"><i data-lucide="file-text"></i></div><div class="text-stats-card-value" id="textStatsWords">0</div><div class="text-stats-card-label" data-i18n="home.textStats.words">单词总数</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="languages"></i></div><div class="text-stats-card-value" id="textStatsChineseChars">0</div><div class="text-stats-card-label" data-i18n="home.textStats.chineseChars">中文字符</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="a-large-small"></i></div><div class="text-stats-card-value" id="textStatsEnglishWords">0</div><div class="text-stats-card-label" data-i18n="home.textStats.englishWords">英文单词数</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="hash"></i></div><div class="text-stats-card-value" id="textStatsCharsNoSpace">0</div><div class="text-stats-card-label" data-i18n="home.textStats.charsNoSpace">不含空格字符</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="space"></i></div><div class="text-stats-card-value" id="textStatsSpaces">0</div><div class="text-stats-card-label" data-i18n="home.textStats.spaces">空格数</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="align-justify"></i></div><div class="text-stats-card-value" id="textStatsLines">0</div><div class="text-stats-card-label" data-i18n="home.textStats.lines">行数</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="align-left"></i></div><div class="text-stats-card-value" id="textStatsParagraphs">0</div><div class="text-stats-card-label" data-i18n="home.textStats.paragraphs">段落数</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="message-square"></i></div><div class="text-stats-card-value" id="textStatsSentences">0</div><div class="text-stats-card-label" data-i18n="home.textStats.sentences">句子数</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="case-sensitive"></i></div><div class="text-stats-card-value" id="textStatsLetters">0</div><div class="text-stats-card-label" data-i18n="home.textStats.letters">英文字母</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="arrow-up"></i></div><div class="text-stats-card-value" id="textStatsUppercase">0</div><div class="text-stats-card-label" data-i18n="home.textStats.uppercase">大写字母</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="arrow-down"></i></div><div class="text-stats-card-value" id="textStatsLowercase">0</div><div class="text-stats-card-label" data-i18n="home.textStats.lowercase">小写字母</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="binary"></i></div><div class="text-stats-card-value" id="textStatsDigits">0</div><div class="text-stats-card-label" data-i18n="home.textStats.digits">数字字符</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="hash"></i></div><div class="text-stats-card-value" id="textStatsNumbers">0</div><div class="text-stats-card-label" data-i18n="home.textStats.numbers">数字片段</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="quote"></i></div><div class="text-stats-card-value" id="textStatsPunctuation">0</div><div class="text-stats-card-label" data-i18n="home.textStats.punctuation">标点符号</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="ruler"></i></div><div class="text-stats-card-value" id="textStatsLongestLine">0</div><div class="text-stats-card-label" data-i18n="home.textStats.longestLine">最长行字符</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="bar-chart-2"></i></div><div class="text-stats-card-value" id="textStatsAvgLineLength">0</div><div class="text-stats-card-label" data-i18n="home.textStats.avgLineLength">平均行长</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="list-checks"></i></div><div class="text-stats-card-value" id="textStatsNonEmptyLines">0</div><div class="text-stats-card-label" data-i18n="home.textStats.nonEmptyLines">有效行数</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="sparkles"></i></div><div class="text-stats-card-value" id="textStatsUniqueWords">0</div><div class="text-stats-card-label" data-i18n="home.textStats.uniqueWords">唯一词/字</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="repeat-2"></i></div><div class="text-stats-card-value" id="textStatsRepeatedWords">0</div><div class="text-stats-card-label" data-i18n="home.textStats.repeatedWords">重复词/字</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="text-cursor-input"></i></div><div class="text-stats-card-value" id="textStatsAvgWordLength">0</div><div class="text-stats-card-label" data-i18n="home.textStats.avgWordLength">平均词长</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="scan-text"></i></div><div class="text-stats-card-value" id="textStatsAvgSentenceLength">0</div><div class="text-stats-card-label" data-i18n="home.textStats.avgSentenceLength">平均句长</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="a-arrow-up"></i></div><div class="text-stats-card-value" id="textStatsReadingTime">0</div><div class="text-stats-card-label" data-i18n="home.textStats.readingTime">预计阅读(分钟)</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="mic-2"></i></div><div class="text-stats-card-value" id="textStatsSpeakingTime">0</div><div class="text-stats-card-label" data-i18n="home.textStats.speakingTime">预计朗读(分钟)</div></div>
+                <div class="text-stats-card"><div class="text-stats-card-icon"><i data-lucide="gauge"></i></div><div class="text-stats-card-value" id="textStatsLexicalDensity">0%</div><div class="text-stats-card-label" data-i18n="home.textStats.lexicalDensity">词汇密度</div></div>
+              </div>
+
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>

@@ -1,0 +1,5 @@
+.pdf-ai-markdown-v2 .pdf-text-extract-file-metrics { max-width: 260px; min-width: 0; }
+.pdf-ai-markdown-v2 .pdf-text-extract-file-metrics strong { overflow-wrap: anywhere; }
+.pdf-ai-markdown-v2 .pdf-text-extract-result-actions { flex-wrap: wrap; }
+.pdf-ai-provider { display: flex; flex-wrap: wrap; gap: 8px 14px; overflow-wrap: anywhere; }
+.pdf-ai-provider strong { color: var(--pdf-text-ink); font-weight: 500; }

@@ -12,7 +12,7 @@ import {
   snapCropToCenter,
   sourceRectToDisplay,
   transformedImageSize
-} from '../src/image-crop-core.js';
+} from '../src/features/image-crop/core.js';
 
 const bounds = { width: 1200, height: 800 };
 assert.deepEqual(fitCropToRatio(bounds, 1, 1), { x: 200, y: 0, width: 800, height: 800 });

@@ -11,10 +11,6 @@
 .tool-page-v2-body { height: auto !important; min-height: 0 !important; }
 .tool-page-v2-rail,
 .tool-page-v2-workspace,
-.md-workbench,
-.color-replace-stage-section,
-.color-replace-controls,
-.developer-toolbox-workspace,
 .crypto-sidebar,
 .crypto-workspace {
   background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.018)), rgba(10,10,11,.56);
@@ -23,233 +19,19 @@
 }
 
 /* Markdown: one framed workbench with two equal inner surfaces. */
-.md-workbench {
-  display: grid !important;
-  grid-template-columns: minmax(0,1fr);
-  grid-template-rows: auto minmax(0,1fr);
-  gap: 14px;
-  padding: 16px;
-  overflow: hidden !important;
-  border: 1px solid rgba(255,255,255,.13) !important;
-  border-radius: 24px !important;
-  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.018)), rgba(10,10,11,.56) !important;
-  box-shadow: 0 22px 70px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.025) !important;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-}
-.md-toolbar {
-  grid-column: 1;
-  min-width: 0;
-  min-height: 52px;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 13px;
-  background: rgba(8,10,10,.62);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
-}
-.md-editor-view {
-  min-width: 0;
-  min-height: 0;
-  display: grid !important;
-  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
-  gap: 14px;
-  overflow: hidden;
-}
-.md-input-pane,
-.md-preview-pane {
-  grid-column: auto !important;
-  grid-row: auto !important;
-  min-width: 0;
-  min-height: 0;
-  height: auto;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: none;
-}
-.md-input-pane { grid-column: 1 !important; grid-row: 1 !important; background: rgba(7,10,10,.68); }
-.md-preview-pane { grid-column: 2 !important; grid-row: 1 !important; background: rgba(244,247,245,.94); }
-.md-input-pane,
-.md-preview-pane { display: grid !important; }
-.md-codemirror { min-height: 0; overflow: auto; }
-.md-help-page { grid-column: 1; grid-row: 2; min-height: 0; height: auto; border-radius: 15px; }
-.md-editor-view[data-view="preview"] .md-input-pane { display: none; }
-.md-editor-view[data-view="preview"] .md-preview-pane { display: grid; }
-.md-editor-view[data-view="editor"] .md-preview-pane { display: none; }
-.md-editor-view[data-view="editor"] .md-input-pane { display: grid; }
 
 /* Image replacement: three sibling surfaces on desktop, stacked in order on
    narrow windows so the export controls remain reachable. */
-.color-replace-main { grid-template-columns: minmax(300px,340px) minmax(0,1fr) minmax(300px,324px) !important; }
-.color-replace-stage-section { display: grid !important; grid-template-rows: auto minmax(0,1fr) auto; row-gap: 14px; padding: 22px; overflow: hidden !important; }
-.color-replace-controls { display: flex; flex-direction: column; min-height: 0; padding: 0 22px 22px; overflow-y: auto !important; scrollbar-gutter: stable; }
-.color-replace-controls > section { flex: 0 0 auto; }
-.color-replace-stage { min-height: 0; }
-.color-replace-stage-actions { min-width: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
-.color-replace-stage-footer { min-width: 0; flex-wrap: wrap; gap: 8px 16px; }
 
 /* The color replacer uses a neutral white control accent. Keep the empty
    state quiet until an image is loaded; the legacy display rule otherwise
    overrides the native [hidden] behavior of the busy indicator. */
-.color-replace-shell .color-replace-busy[hidden] { display: none !important; }
-.color-replace-shell .color-replace-busy span { border-top-color: #fff; }
-.color-replace-shell .color-replace-empty svg,
-.color-replace-shell .color-replace-stage-footer svg,
-.color-replace-shell .color-pair > button > svg,
-.color-replace-shell .color-pair > label > svg,
-.color-replace-shell .color-pair-arrow svg,
-.color-replace-shell .color-replace-range output { color: rgba(255,255,255,.9); }
-.color-replace-shell .color-pair > button.is-active { border-color: rgba(255,255,255,.72); }
-.color-replace-shell .color-target-picker { cursor: pointer; }
-.color-replace-shell input[type="range"] { accent-color: #fff; }
-.color-replace-shell .color-replace-toggle input:checked + i { background: #fff; }
-.color-replace-shell .color-replace-toggle input:checked + i::after { background: #171819; }
-.color-replace-shell .color-replace-format button.is-active {
-  border-color: #fff;
-  background: #fff;
-  color: #111;
-}
-.color-replace-shell .color-replace-export { border-color: #fff; background: #fff; color: #111; }
-.color-replace-shell .color-replace-stage-actions [data-cr-compare] {
-  color: #fff !important;
-}
-.color-replace-shell .color-replace-stage-actions [data-cr-compare]:disabled {
-  opacity: 1;
-  color: #fff !important;
-  cursor: not-allowed;
-}
-.color-replace-shell .color-replace-stage-actions [data-cr-compare] > span,
-.color-replace-shell .color-replace-stage-actions [data-cr-compare] > svg,
-.color-replace-shell .color-replace-stage-actions [data-cr-pick] > span,
-.color-replace-shell .color-replace-stage-actions [data-cr-pick] > svg {
-  color: #fff !important;
-}
-.color-replace-shell .color-replace-stage-actions [data-cr-export],
-.color-replace-shell .color-replace-stage-actions [data-cr-export]:disabled {
-  opacity: 1;
-  border-color: #fff;
-  background: #fff;
-  color: #111 !important;
-}
-.color-replace-shell .color-replace-stage-actions [data-cr-export] > span,
-.color-replace-shell .color-replace-stage-actions [data-cr-export] > svg { color: #111 !important; }
-.color-replace-shell .color-replace-stage-actions [data-cr-export] { cursor: pointer; }
-.color-replace-shell .color-replace-stage-actions [data-cr-export]:disabled { cursor: not-allowed; }
-.app-toast.color-replace-export-toast .app-toast-message { display: inline; }
-.app-toast.color-replace-export-toast .color-replace-output-link {
-  color: #0969da;
-  font-weight: 750;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-  cursor: pointer;
-  overflow-wrap: anywhere;
-}
-.app-toast.color-replace-export-toast .color-replace-output-link:hover { color: #034ea2; }
-.app-toast.color-replace-export-toast .color-replace-output-link:focus-visible {
-  outline: 2px solid #0969da;
-  outline-offset: 2px;
-  border-radius: 2px;
-}
 
 /* Developer toolbox and crypto fill the workspace instead of ending at the
    intrinsic textarea height. */
-.developer-toolbox-workspace { display: grid !important; grid-template-rows: auto minmax(0,1fr); gap: 16px; min-height: 0; padding: 24px !important; overflow: hidden !important; }
-.developer-toolbox-panel { min-height: 0; height: 100%; max-width: none; padding: 20px; border-radius: 16px; overflow: auto; background: rgba(8,10,10,.38); }
-.developer-toolbox-editor,
-.developer-toolbox-single { min-height: 0; height: 100%; grid-template-rows: auto minmax(0,1fr) auto; }
-.developer-toolbox-field { min-height: 0; grid-template-rows: auto minmax(0,1fr); }
-.developer-toolbox-field textarea { min-height: 0; height: 100%; resize: none; }
-.developer-toolbox-jwt-grid { min-height: 0; height: 100%; }
-.developer-toolbox-jwt-grid pre { min-height: 0; height: 100%; }
 
 /* Developer tools use the same neutral white accent as the rest of ToolKnit.
    A fixed label row keeps input and output editors on one horizontal line. */
-.developer-toolbox-shell .developer-toolbox-heading span:first-child,
-.developer-toolbox-shell .developer-toolbox-nav-label,
-.developer-toolbox-shell .developer-toolbox-mode-label,
-.developer-toolbox-shell .developer-toolbox-privacy { color: rgba(255,255,255,.88); }
-.developer-toolbox-shell .developer-toolbox-nav button.is-active,
-.developer-toolbox-shell .developer-toolbox-control-row button.is-primary,
-.developer-toolbox-shell .developer-toolbox-actions button.is-primary,
-.developer-toolbox-shell .developer-toolbox-segment button.is-active {
-  border-color: #fff;
-  background: #fff;
-  color: #111;
-}
-.developer-toolbox-shell .developer-toolbox-status {
-  border-color: rgba(255,255,255,.5);
-  color: #fff;
-}
-.developer-toolbox-shell .developer-toolbox-status.is-error {
-  border-color: #ff5757;
-  background: rgba(153,20,20,.18);
-  color: #fff;
-}
-.developer-toolbox-shell .developer-toolbox-field {
-  grid-template-rows: 28px minmax(0,1fr);
-  color: rgba(255,255,255,.9);
-  font-size: 13px;
-}
-.developer-toolbox-shell .developer-toolbox-field > span { min-height: 28px; }
-.developer-toolbox-shell .developer-toolbox-field textarea {
-  box-sizing: border-box;
-  border-color: rgba(255,255,255,.22);
-  color: #fff;
-  font-size: 14px;
-}
-.developer-toolbox-shell .developer-toolbox-field textarea:focus {
-  outline: none;
-  border-color: #fff;
-  box-shadow: inset 0 0 0 1px #fff;
-}
-.developer-toolbox-shell .developer-toolbox-control-row label,
-.developer-toolbox-shell .developer-toolbox-jwt-grid article > span { color: rgba(255,255,255,.9); font-size: 13px; }
-.developer-toolbox-shell .developer-toolbox-jwt-grid pre { color: #fff; font-size: 14px; }
-.developer-toolbox-shell [data-dev-clear] { border-radius: 999px; }
-.developer-toolbox-select-field { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.9); font-size: 13px; }
-.developer-toolbox-select { position: relative; }
-.developer-toolbox-shell .developer-toolbox-select-trigger {
-  min-width: 108px;
-  min-height: 34px;
-  justify-content: space-between;
-  padding: 0 11px 0 13px;
-  border-color: #fff;
-  border-radius: 10px;
-  background: #fff;
-  color: #111;
-  font-weight: 750;
-}
-.developer-toolbox-select-trigger svg { width: 15px; height: 15px; transition: transform .16s ease; }
-.developer-toolbox-select-trigger[aria-expanded="true"] svg { transform: rotate(180deg); }
-.developer-toolbox-select-menu {
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 6px);
-  right: 0;
-  display: grid;
-  gap: 5px;
-  min-width: 138px;
-  padding: 7px;
-  border: 1px solid rgba(0,0,0,.1);
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 16px 36px rgba(0,0,0,.34);
-}
-.developer-toolbox-select-menu[hidden] { display: none; }
-.developer-toolbox-shell .developer-toolbox-select-menu button {
-  width: 100%;
-  min-height: 34px;
-  justify-content: flex-start;
-  padding: 0 11px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #111;
-  font-weight: 700;
-}
-.developer-toolbox-shell .developer-toolbox-select-menu button:hover,
-.developer-toolbox-shell .developer-toolbox-select-menu button:focus-visible,
-.developer-toolbox-shell .developer-toolbox-select-menu button.is-selected { background: #e9eaec; color: #111; outline: none; }
 
 /* Hash & Crypto follows the same monochrome control language. Risk banners
    are state-driven, so the legacy base display rule must never override the
@@ -318,12 +100,12 @@
   display: grid !important;
   place-items: center;
   padding: 0 !important;
-  border: 1px solid rgba(255,255,255,.24) !important;
+  border: 1px solid var(--crypto-icon-border, rgba(255,255,255,.24)) !important;
   border-radius: 50% !important;
   background: rgba(255,255,255,.04);
 }
 .crypto-shell [data-random]:hover,
-.crypto-shell [data-copy]:hover { border-color: #fff !important; background: rgba(255,255,255,.1); }
+.crypto-shell [data-copy]:hover { border-color: var(--crypto-icon-hover-border, #fff) !important; background: rgba(255,255,255,.1); }
 .crypto-shell [data-random] svg,
 .crypto-shell [data-copy] svg { width: 15px; height: 15px; }
 
@@ -432,220 +214,30 @@
 .crypto-io textarea { min-height: 0; height: 100%; resize: none; }
 
 @media (min-width:1560px) {
-  .md-tool-main, .developer-toolbox-main, .crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
-  .color-replace-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) minmax(320px,360px) !important; }
+  .crypto-main { grid-template-columns: minmax(320px,356px) minmax(0,1fr) !important; }
 }
 @media (max-width:1180px) {
-  .md-tool-main, .developer-toolbox-main, .crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
-  .color-replace-main { grid-template-columns: 250px minmax(0,1fr) !important; grid-template-rows: minmax(470px,auto) auto !important; align-content: start; }
-  .color-replace-stage-section { grid-column: 2; grid-row: 1; }
-  .color-replace-controls { grid-column: 2; grid-row: 2; min-height: 800px !important; }
-  .color-replace-stage-actions { justify-content: flex-start; }
+  .crypto-main { grid-template-columns: 250px minmax(0,1fr) !important; }
 }
 @media (max-width:760px) {
   .tool-page-v2-body { overflow: visible; }
-  .md-workbench { display: flex !important; flex-direction: column; min-height: 680px !important; flex: 0 0 680px; padding: 12px; }
-  .md-toolbar { flex: 0 0 auto; }
-  .md-editor-view { display: block !important; min-height: 0; flex: 1 1 auto; overflow: hidden; }
-  .md-input-pane, .md-preview-pane { height: 100%; min-height: 0; }
-  .md-preview-pane { display: none; }
-  .md-editor-view[data-view="preview"] .md-preview-pane { display: grid; }
-  .md-editor-view[data-view="preview"] .md-input-pane { display: none; }
-  .md-editor-view[data-view="editor"] .md-input-pane { display: grid; }
-  .md-editor-view[data-view="editor"] .md-preview-pane { display: none; }
-  .developer-toolbox-workspace { min-height: 700px !important; padding: 18px !important; overflow: visible !important; }
-  .developer-toolbox-panel { height: auto; min-height: 560px; }
-  .developer-toolbox-editor, .developer-toolbox-single { height: auto; min-height: 520px; }
-  .developer-toolbox-field textarea { min-height: 260px; height: 260px; }
   .crypto-workspace { min-height: 760px !important; overflow: visible !important; }
   .crypto-panel { height: auto; min-height: 560px; }
   .crypto-io textarea { min-height: 220px; height: 220px; }
-  .color-replace-main { display: flex !important; flex-direction: column; }
-  .color-replace-stage-section { flex: 0 0 520px; height: 520px; min-height: 520px !important; }
-  .color-replace-controls { flex: 0 0 auto; min-height: 800px !important; overflow: visible !important; }
 }
 
 /* Markdown editor: the toolbar has an explicit inner scrolling rail. This
    makes its horizontal scrollbar discoverable and keeps every button on the
    same baseline at every window width. */
-.md-workbench > [hidden] { display: none !important; }
-.md-toolbar {
-  display: block;
-  min-height: 68px;
-  padding: 0;
-  overflow: hidden;
-}
-.md-toolbar-scroll {
-  width: 100%;
-  height: 67px;
-  overflow-x: scroll;
-  overflow-y: hidden;
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,.5) transparent;
-}
-.md-toolbar-scroll::-webkit-scrollbar { height: 7px; }
-.md-toolbar-scroll::-webkit-scrollbar-track { background: transparent; }
-.md-toolbar-scroll::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(255,255,255,.42); }
-.md-toolbar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.74); }
-.md-toolbar-content {
-  width: max-content;
-  min-width: 100%;
-  min-height: 59px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px 10px;
-}
-.md-toolbar-content .md-toolbar-group {
-  height: 34px;
-  display: flex;
-  align-items: center;
-}
-.md-toolbar-actions {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-.md-toolbar .md-help-action,
-.md-toolbar .md-view-switch,
-.md-toolbar .md-view-switch button { align-self: center; }
-.md-toolbar .md-help-action {
-  min-height: 34px;
-  margin-left: 0;
-  place-items: center;
-}
-.md-toolbar .md-help-action span { display: inline; }
-.md-toolbar .md-view-switch { margin-left: 0; border-right: 0; }
-.md-view-switch button.is-active { background: #fff; color: #111; }
 
 /* Help is a real workbench mode. The explicit state class remains reliable
    even when legacy display rules use !important. */
-.md-workbench.is-help-open .md-editor-view { display: none !important; }
-.md-workbench.is-help-open .md-help-page {
-  display: block !important;
-  grid-column: 1;
-  grid-row: 2;
-  min-height: 0;
-  height: 100%;
-}
-.md-help-page {
-  min-height: 0;
-  height: 100%;
-  overflow: auto;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 15px;
-  background: #eef2ef;
-  color: #17201d;
-  scrollbar-gutter: stable;
-}
-.md-help-page:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-.md-help-document { width: min(980px,100%); padding: 0 clamp(26px,5vw,68px) 76px; }
-.md-help-hero {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 26px;
-  padding: 48px 0 30px;
-}
-.md-help-hero > div { min-width: 0; }
-.md-help-hero h1 { max-width: 680px; line-height: 1.15; }
-.md-help-return {
-  min-height: 38px;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 8px;
-  padding: 0 14px;
-  border: 1px solid #17201d;
-  border-radius: 999px;
-  background: #17201d;
-  color: #fff;
-  cursor: pointer;
-}
-.md-help-return:hover { background: #314039; }
-.md-help-return svg { width: 15px; height: 15px; }
-.md-help-overview {
-  display: grid;
-  grid-template-columns: repeat(3,minmax(0,1fr));
-  gap: 10px;
-  padding: 22px 0;
-  border-bottom: 1px solid #ccd5d1;
-}
-.md-help-overview > div { display: grid; gap: 5px; padding: 14px 16px; border: 1px solid #d3dbd7; border-radius: 10px; background: rgba(255,255,255,.48); }
-.md-help-overview b { font-size: 13px; }
-.md-help-overview span { color: #607069; font-size: 11px; line-height: 1.55; }
-.md-help-document section { grid-template-columns: minmax(184px,230px) minmax(0,1fr); align-items: start; }
-.md-help-section-title { display: grid; gap: 8px; }
-.md-help-section-title > span { color: #607069; font-size: 10px; font-weight: 800; letter-spacing: .1em; }
-.md-help-section-title h2 { margin: 0; }
-.md-help-section-title p { font-size: 12px; }
-.md-help-document section:last-child { grid-template-columns: minmax(184px,230px) minmax(0,1fr); }
-.md-help-document section:last-child .md-help-section-title { grid-column: 1 / -1; max-width: 560px; }
 
 /* All directory labels now use one left text edge. Heading level remains in
    the source document, but does not make the rail look diagonally staggered. */
-.md-outline button {
-  display: flex;
-  align-items: center;
-  min-height: 36px;
-  height: 36px;
-  padding: 0 10px !important;
-  border-left-color: transparent;
-  line-height: 1.2;
-}
-.md-outline button span { flex: 1 1 auto; min-width: 0; }
-.md-outline button:hover,
-.md-outline button.is-active {
-  border-left-color: #fff;
-  background: rgba(255,255,255,.09);
-  color: #fff;
-}
-.md-draft-state svg { color: rgba(255,255,255,.92); }
-.markdown-body blockquote { border-left-color: #fff; background: rgba(255,255,255,.64); }
-.markdown-body input[type="checkbox"] { accent-color: #fff; }
-.markdown-body .is-outline-highlight,
-.cm-line.is-outline-highlight {
-  background: rgba(255,255,255,.13);
-  box-shadow: inset 3px 0 #fff;
-}
-.md-codemirror .cm-content { caret-color: #fff; }
-
-@media (max-width:760px) {
-  .md-toolbar { min-height: 68px; }
-  .md-toolbar-actions { margin-left: 0; }
-  .md-help-page { flex: 1 1 auto; min-height: 0; height: auto; }
-  .md-help-hero { align-items: flex-start; flex-direction: column; }
-  .md-help-overview { grid-template-columns: 1fr; }
-  .md-help-document section,
-  .md-help-document section:last-child { grid-template-columns: 1fr; gap: 16px; }
-  .md-help-document section:last-child .md-help-section-title { grid-column: auto; }
-}
 
 /* Markdown uses an intentionally dark editor and help-page return control.
    Keep their text readable when broad button and editor theme rules load. */
-.markdown-editor-overlay .md-help-return,
-.markdown-editor-overlay .md-help-return:hover,
-.markdown-editor-overlay .md-help-return:focus-visible {
-  background: #17201d !important;
-  color: #fff !important;
-}
-.markdown-editor-overlay .md-help-return span,
-.markdown-editor-overlay .md-help-return svg {
-  color: #fff !important;
-  stroke: currentColor;
-}
 
 /* CodeMirror draws selection behind the document text. A deep neutral layer
    preserves contrast for both pointer selections and keyboard selections. */
-.markdown-editor-overlay .md-codemirror .cm-selectionBackground,
-.markdown-editor-overlay .md-codemirror.cm-focused .cm-selectionBackground {
-  background: rgba(79, 96, 89, .92) !important;
-}
-.markdown-editor-overlay .md-codemirror .cm-content ::selection,
-.markdown-editor-overlay .md-codemirror .cm-line ::selection {
-  color: #fff !important;
-  background: rgba(79, 96, 89, .92) !important;
-}

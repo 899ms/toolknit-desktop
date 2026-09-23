@@ -1,7 +1,7 @@
 export const IMAGE_BATCH_LIMITS = Object.freeze({
   maxFiles: 100,
-  maxBytesPerFile: 20 * 1024 * 1024,
-  maxPixelsPerFile: 40_000_000
+  maxBytesPerFile: 100 * 1024 * 1024,
+  maxPixelsPerFile: 160_000_000
 });
 
 const SUPPORTED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif']);
@@ -69,6 +69,16 @@ export function getImageBatchFailureSummary(result, maxVisible = 8) {
     visibleErrors,
     remainingCount: Math.max(0, failCount - visibleErrors.length)
   };
+}
+
+// For completed compression batches, successes count published outputs only.
+// The remaining valid inputs were retained without an unnecessary output copy.
+export function getImageCompressionOutcome(result, inputCount) {
+  const total = Number.isSafeInteger(inputCount) && inputCount >= 0 ? inputCount : 0;
+  const successCount = Number.isSafeInteger(result?.success_count) && result.success_count >= 0
+    ? result.success_count : 0;
+  const { failCount } = getImageBatchFailureSummary(result);
+  return { successCount, failCount, unchangedCount: Math.max(0, total - successCount - failCount) };
 }
 
 export function validateImageBatchSelection(files) {

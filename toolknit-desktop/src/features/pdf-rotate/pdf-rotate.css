@@ -1,0 +1,16 @@
+/* PDF Rotate feature-specific shell rules */
+.pdf-rotate-scope { margin: 0; padding: 0; border: 0; min-width: 0; }
+.pdf-rotate-scope legend { margin-bottom: 10px; font-size: 13px; }
+.pdf-rotate-scope-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pdf-rotate-controls { display: grid; gap: 10px; }
+.pdf-rotate-turns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pdf-rotate-scope-options .pdf-editor-tool,
+.pdf-rotate-turns .pdf-editor-tool { padding: 8px 6px; min-width: 0; height: auto; min-height: 38px; white-space: normal; }
+.pdf-rotate-scope-options .pdf-editor-tool.is-active:not(:disabled) { border-color: currentColor; background: #303034; color: #ffffff; }
+.pdf-rotate-v2 .pdf-merge-v2-poster::after {
+  content: 'ROT';
+}
+
+.pdf-rotate-v2 .pdf-merge-v2-workspace {
+  grid-template-rows: auto minmax(210px, 1fr) auto auto;
+}

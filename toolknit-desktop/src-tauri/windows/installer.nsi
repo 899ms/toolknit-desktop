@@ -15,6 +15,7 @@ ManifestDPIAwareness PerMonitorV2
 !include MUI2.nsh
 !include FileFunc.nsh
 !include x64.nsh
+!include WinVer.nsh
 !include WordFunc.nsh
 !include "utils.nsh"
 !include "FileAssociation.nsh"
@@ -396,7 +397,34 @@ FunctionEnd
   !include "{{this}}"
 {{/each}}
 
+; ToolKnit uses the Windows WebView2 runtime. Windows 7/8/8.1 cannot run the
+; Evergreen runtime, so fail before copying application files with a clear
+; localized message instead of the later, opaque WebView2 bootstrapper error.
+LangString unsupportedWindows ${LANG_ENGLISH} "ToolKnit Desktop requires Windows 10 or later. Windows 7, 8 and 8.1 are not supported."
+LangString unsupportedWindows ${LANG_SIMPCHINESE} "ToolKnit Desktop 需要 Windows 10 或更高版本，Windows 7、8 和 8.1 不受支持。"
+LangString unsupportedWindowsVersion ${LANG_ENGLISH} "ToolKnit Desktop requires Windows 10 version 1803 (build 17134) or later. Please update Windows before installing."
+LangString unsupportedWindowsVersion ${LANG_SIMPCHINESE} "ToolKnit Desktop 需要 Windows 10 1803（内部版本 17134）或更高版本，请先更新 Windows。"
+
 Function .onInit
+  ${IfNot} ${AtLeastWin10}
+    MessageBox MB_ICONSTOP "$(unsupportedWindows)"
+    Abort
+  ${EndIf}
+
+  ; AtLeastWin10 only checks the major Windows version. WebView2 Evergreen
+  ; requires the 1803 build line, so reject older Windows 10 builds too.
+  ReadRegStr $0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuildNumber"
+  ${If} $0 == ""
+    ReadRegStr $0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
+  ${EndIf}
+  ${If} $0 != ""
+    ${VersionCompare} "17134" "$0" $1
+    ${If} $1 = 1
+      MessageBox MB_ICONSTOP "$(unsupportedWindowsVersion)"
+      Abort
+    ${EndIf}
+  ${EndIf}
+
   ${GetOptions} $CMDLINE "/P" $PassiveMode
   ${IfNot} ${Errors}
     StrCpy $PassiveMode 1
@@ -509,12 +537,21 @@ Section WebView2
 
       install_webview2:
         DetailPrint "$(installingWebview2)"
-        ExecWait "$6 ${WEBVIEW2INSTALLERARGS} /install" $1
+        ; Quote the extracted path: a Windows profile or TEMP directory may
+        ; contain spaces, and an unquoted command fails before WebView2 runs.
+        ExecWait '"$6" ${WEBVIEW2INSTALLERARGS} /install' $1
+        Delete "$6"
+        ; 3010 means the runtime was installed and Windows requests a reboot.
+        ; It is still a usable installation and must not be shown as a failure.
         ${If} $1 = 0
+        ${OrIf} $1 = 3010
           DetailPrint "$(webview2InstallSuccess)"
         ${Else}
           DetailPrint "$(webview2InstallError)"
-          Abort "$(webview2AbortError)"
+          ; Keep the bootstrapper exit code visible in the final dialog so a
+          ; user can distinguish network, policy and unsupported-OS failures.
+          MessageBox MB_ICONSTOP "$(webview2AbortError)$\n$\n$(webview2InstallError)"
+          Abort
         ${EndIf}
       webview2_done:
     ${EndIf}

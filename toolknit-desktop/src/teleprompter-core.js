@@ -1,3 +1,46 @@
+import { simplifyChineseText } from './core/chinese-text.js';
+export { simplifyChineseText } from './core/chinese-text.js';
+
+// Bounded local edit alignment, anchored at the transcript's newest character.
+// Inputs are normalized text; this module has no DOM or platform dependency.
+function alignSpeechTail(query, target) {
+  let previous = Array.from({ length: target.length + 1 }, () => ({ score: 0 }));
+  for (let row = 1; row <= query.length; row += 1) {
+    const current = [{ score: 0 }];
+    for (let column = 1; column <= target.length; column += 1) {
+      const exact = query[row - 1] === target[column - 1];
+      const candidates = [
+        [previous[column - 1], exact ? 3 : -2, exact ? 1 : 0],
+        [previous[column], -2, 0],
+        [current[column - 1], -2, 0]
+      ];
+      let best = { score: 0 };
+      for (const [cell, delta, match] of candidates) {
+        if (cell.score + delta <= best.score) continue;
+        best = {
+          score: cell.score + delta,
+          queryStart: cell.score ? cell.queryStart : row - 1,
+          start: cell.score ? cell.start : column - 1,
+          matches: (cell.matches || 0) + match
+        };
+      }
+      current.push(best);
+    }
+    previous = current;
+  }
+  return previous.flatMap((cell, end) => {
+    if (!cell.score) return [];
+    const querySpan = query.length - cell.queryStart;
+    const span = end - cell.start;
+    return [{
+      ...cell, end,
+      coverage: querySpan / query.length,
+      accuracy: cell.matches / Math.max(querySpan, span),
+      endAnchor: query.at(-1) === target[end - 1]
+    }];
+  });
+}
+
 export const TELEPROMPTER_LIMITS = Object.freeze({
   maxInputChars: 160_000,
   maxSentences: 4_000,
@@ -49,33 +92,6 @@ function splitLongSentence(entry) {
   const tail = trimWithOffset(entry.text.slice(cursor), entry.start + cursor);
   if (tail.text) pieces.push({ ...entry, ...tail });
   return pieces;
-}
-
-// Whisper models sometimes emit traditional variants for spoken Mandarin.
-// Matching collapses the common ones so scripts in simplified Chinese still
-// track when the transcript comes back traditional.
-const TRADITIONAL_TO_SIMPLIFIED = new Map(Object.entries({
-  '艦': '舰', '彙': '汇', '匯': '汇', '級': '级', '創': '创', '業': '业', '務': '务',
-  '實': '实', '現': '现', '點': '点', '間': '间', '時': '时', '為': '为', '會': '会',
-  '後': '后', '裡': '里', '這': '这', '說': '说', '對': '对', '開': '开', '關': '关',
-  '們': '们', '從': '从', '見': '见', '車': '车', '電': '电', '動': '动', '應': '应',
-  '話': '话', '語': '语', '讓': '让', '體': '体', '學': '学', '將': '将', '與': '与',
-  '於': '于', '來': '来', '內': '内', '無': '无', '節': '节', '當': '当', '處': '处',
-  '屬': '属', '據': '据', '備': '备', '專': '专', '號': '号',
-  '質': '质', '資': '资', '費': '费', '環': '环', '聲': '声', '響': '响', '顯': '显',
-  '飛': '飞', '機': '机', '構': '构', '標': '标', '統': '统', '斷': '断', '邊': '边',
-  '變': '变', '輸': '输', '轉': '转', '連': '连', '運': '运', '進': '进', '遠': '远',
-  '適': '适', '選': '选', '錄': '录', '鍵': '键', '盤': '盘', '壓': '压', '縮': '缩',
-  '織': '织', '經': '经', '濟': '济', '廣': '广', '滅': '灭', '營': '营', '藝': '艺',
-  '觀': '观', '釋': '释', '鏡': '镜', '錯': '错', '長': '长', '門': '门', '問': '问',
-  '單': '单', '嚴': '严', '優': '优', '壊': '坏', '廢': '废', '強': '强', '獨': '独',
-  '獲': '获', '證': '证', '護': '护', '觸': '触', '覺': '觉', '覽': '览', '釐': '厘'
-}));
-
-// Raw 1:1 traditional→simplified mapping for transcript text. Shared by the
-// teleprompter matcher and the transcription output post-processing.
-export function simplifyChineseText(value) {
-  return String(value || '').replace(/./g, character => TRADITIONAL_TO_SIMPLIFIED.get(character) || character);
 }
 
 export function normalizeSpeechText(value) {
@@ -239,36 +255,43 @@ export function findSpeechMatch(sentences, transcript, currentIndex = 0, options
   return { index: best.index, score: Number(best.score.toFixed(4)) };
 }
 
-// Fraction (0..1) of the sentence the reader has already covered, estimated
-// from the latest transcript tail. Used to draw the per-sentence reading line.
-// Longest exact prefix first, then a guarded fuzzy extension over the rolling
-// transcript tail tolerates an occasional mis-heard word without jumping ahead.
+function compactSpeech(value) {
+  return normalizeSpeechText(value).replace(/\s+/g, '');
+}
+
+export function findSpeechPosition(sentences, transcript, currentIndex = 0, { rolling = false, floorIndex = 0 } = {}) {
+  const query = compactSpeech(transcript).slice(-80);
+  if (query.length === 2 && query === compactSpeech(sentences[currentIndex]?.text)) {
+    return { index: currentIndex, progress: 1, score: 1, endAnchor: true };
+  }
+  if (query.length < 3) return null;
+  const start = Math.max(0, floorIndex, currentIndex - (rolling ? 3 : 0));
+  const end = Math.min(sentences.length, currentIndex + 7);
+  const positions = [];
+  let target = '';
+  for (let index = start; index < end; index += 1) {
+    const text = compactSpeech(sentences[index]?.normalized || sentences[index]?.text);
+    for (let offset = 0; offset < text.length; offset += 1) {
+      positions.push({ index, progress: (offset + 1) / text.length });
+    }
+    target += text;
+  }
+  let best = null;
+  for (const match of alignSpeechTail(query, target)) {
+    const position = positions[match.end - 1];
+    if (!position || match.coverage < 0.65 || match.matches < Math.max(3, Math.ceil(Math.min(query.length, 24) * 0.6))) continue;
+    const distance = position.index - currentIndex;
+    if (match.accuracy < (query.length < 6 ? 0.9 : 0.72)) continue;
+    if (distance > 1 && (match.matches < 6 || match.accuracy < 0.8)) continue;
+    const rank = match.score - Math.max(0, distance - 1) * 1.5;
+    if (!best || rank > best.rank) best = { ...position, score: match.accuracy, rank, endAnchor: match.endAnchor };
+  }
+  return best;
+}
+
+// Fraction (0..1) covered by an ordered transcript-tail alignment.
 export function speechReadingProgress(transcript, sentenceText) {
-  const target = normalizeSpeechText(sentenceText).replace(/\s+/g, '');
-  const query = normalizeSpeechText(transcript).replace(/\s+/g, '').slice(-200);
-  if (!target || !query) return 0;
-  let matched = 0;
-  const maxExact = Math.min(target.length, query.length);
-  for (let length = maxExact; length >= 4; length -= 1) {
-    if (query.includes(target.slice(0, length))) {
-      matched = length;
-      break;
-    }
-  }
-  let guard = 0;
-  while (matched < target.length && guard < 24) {
-    const next = target.slice(matched, matched + 4);
-    if (!next) break;
-    const tail = query.slice(-Math.max(next.length + 10, 18));
-    const recent = target.slice(0, matched + next.length).slice(-12);
-    if (tail.includes(next) || diceSimilarity(tail, recent) >= 0.62) {
-      matched += next.length;
-      guard += 1;
-    } else {
-      break;
-    }
-  }
-  return Math.min(1, matched / target.length);
+  return findSpeechPosition([{ text: sentenceText }], transcript)?.progress || 0;
 }
 
 function appendSpeechContext(previous, next, maxChars = 440) {
@@ -329,6 +352,9 @@ export function createSpeechFollower(sentences, startIndex = 0) {
   let pendingIndex = -1;
   let pendingCount = 0;
   let finalEvidence = '';
+  let pendingEvidence = '';
+  let lastRolling = null;
+  let rollingFloor = currentIndex;
 
   return {
     get index() { return currentIndex; },
@@ -337,15 +363,34 @@ export function createSpeechFollower(sentences, startIndex = 0) {
       pendingIndex = -1;
       pendingCount = 0;
       finalEvidence = '';
+      pendingEvidence = '';
+      lastRolling = null;
+      rollingFloor = currentIndex;
       return currentIndex;
     },
-    push(transcript, { final = false, context = transcript, cumulative = false } = {}) {
+    push(transcript, { final = false, context = transcript, cumulative = false,
+      rolling = false, windowStart = 0, windowEnd = 0, utterance = 0, recognitionSession = 0 } = {}) {
       if (!list.length) return null;
       const latest = String(transcript || '').trim();
+      const normalized = compactSpeech(latest);
+      if (rolling) {
+        if (lastRolling && (lastRolling.recognitionSession !== recognitionSession || lastRolling.utterance !== utterance)) {
+          lastRolling = null;
+          rollingFloor = currentIndex;
+          pendingCount = 0;
+          pendingIndex = -1;
+        }
+        if (lastRolling && windowEnd <= lastRolling.windowEnd) return null;
+        const duplicate = lastRolling?.text === normalized && lastRolling.utterance === utterance
+          && windowStart < lastRolling.windowEnd;
+        lastRolling = { text: normalized, windowEnd, utterance, recognitionSession };
+        if (duplicate) return null;
+      }
       if (final) finalEvidence = cumulative ? latest : appendSpeechContext(finalEvidence, latest);
       const evidence = final ? finalEvidence : latest;
-      const evidenceMatch = findSpeechMatch(list, evidence, currentIndex, { lookBehind: 0, lookAhead: 12 });
-      const match = evidenceMatch || findSpeechMatch(list, context, currentIndex, { lookBehind: 0, lookAhead: 12 });
+      const position = findSpeechPosition(list, evidence, currentIndex, { rolling, floorIndex: rollingFloor });
+      const evidenceMatch = position || (!rolling && findSpeechMatch(list, evidence, currentIndex, { lookBehind: 0, lookAhead: 6 }));
+      const match = evidenceMatch || (!rolling && findSpeechMatch(list, context, currentIndex, { lookBehind: 0, lookAhead: 6 }));
       if (!match || match.index < currentIndex) {
         pendingIndex = -1;
         pendingCount = 0;
@@ -355,29 +400,33 @@ export function createSpeechFollower(sentences, startIndex = 0) {
         pendingIndex = -1;
         pendingCount = 0;
         const sentence = list[currentIndex]?.normalized || list[currentIndex]?.text || '';
-        const progress = speechReadingProgress(evidence, sentence);
-        const completed = final && Boolean(evidenceMatch) && (progress >= 0.72 || match.score >= 0.9);
+        const progress = position?.progress ?? speechReadingProgress(evidence, sentence);
+        const completed = (final || rolling) && Boolean(evidenceMatch) && progress >= 0.99
+          && match.score >= 0.85 && (position?.endAnchor ?? true);
         if (completed && currentIndex < list.length - 1) {
           currentIndex += 1;
           finalEvidence = '';
-          return { ...match, index: currentIndex, moved: true, completed: true, progress };
+          return { ...match, index: currentIndex, moved: true, completed: true, progress: 0 };
         }
         if (completed) finalEvidence = '';
         return { ...match, moved: false, completed, progress };
       }
-      if (pendingIndex === match.index) pendingCount += 1;
+      if (pendingIndex === match.index) {
+        if (pendingEvidence !== normalized) pendingCount += 1;
+      }
       else {
         pendingIndex = match.index;
         pendingCount = 1;
       }
+      pendingEvidence = normalized;
       const isLargeJump = match.index - currentIndex > 3;
-      const confirmed = match.score >= 0.82 || (final && !isLargeJump && match.score >= 0.6) || pendingCount >= 2;
+      const confirmed = (!isLargeJump && (match.score >= 0.82 || (final && match.score >= 0.6))) || pendingCount >= 2;
       if (!confirmed) return { ...match, moved: false, pending: true };
       currentIndex = match.index;
       pendingIndex = -1;
       pendingCount = 0;
       finalEvidence = '';
-      return { ...match, moved: true };
+      return { ...match, moved: true, progress: position?.progress ?? 0 };
     }
   };
 }

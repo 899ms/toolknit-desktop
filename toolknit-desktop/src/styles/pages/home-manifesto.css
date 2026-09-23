@@ -1,0 +1,262 @@
+/* ===== Home: open-source manifesto + directional Gaussian glass ===== */
+.app.is-v2-home .tool-result-card,
+.app.is-v2-home .favorite-item {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018) 46%, rgba(5, 6, 7, 0.16)),
+    rgba(14, 15, 16, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.28),
+    0 14px 34px rgba(0, 0, 0, 0.13);
+  -webkit-backdrop-filter: blur(24px) saturate(132%) contrast(104%);
+  backdrop-filter: blur(24px) saturate(132%) contrast(104%);
+}
+
+.app.is-v2-home .tool-result-card::before,
+.app.is-v2-home .favorite-item::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -54%;
+  right: -18%;
+  width: 88%;
+  height: 92%;
+  pointer-events: none;
+  background: linear-gradient(118deg, transparent 6%, rgba(255, 255, 255, 0.17) 48%, rgba(255, 255, 255, 0.025) 72%, transparent 100%);
+  filter: blur(24px);
+  transform: rotate(-8deg) translate3d(0, 0, 0);
+  opacity: 0.72;
+  transition: opacity 220ms ease, transform 360ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.app.is-v2-home .tool-result-card::after,
+.app.is-v2-home .favorite-item::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(100deg, rgba(255, 255, 255, 0.055), transparent 18% 72%, rgba(255, 255, 255, 0.025)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 38%);
+}
+
+.app.is-v2-home .tool-result-card > *,
+.app.is-v2-home .favorite-item > * {
+  position: relative;
+  z-index: 1;
+}
+
+.app.is-v2-home .tool-result-card:hover,
+.app.is-v2-home .favorite-item:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.026) 46%, rgba(5, 6, 7, 0.14)),
+    rgba(18, 19, 20, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    0 18px 42px rgba(0, 0, 0, 0.26);
+}
+
+.app.is-v2-home .tool-result-card:hover::before,
+.app.is-v2-home .favorite-item:hover::before {
+  opacity: 1;
+  transform: rotate(-5deg) translate3d(-8%, 9%, 0);
+}
+
+.app.is-v2-home .tool-result-tag {
+  min-height: 25px;
+  min-width: 64px;
+  justify-content: center;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 999px;
+  color: #070808;
+  background: #ffffff;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.24), inset 0 0 0 1px rgba(0, 0, 0, 0.035);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.app.is-v2-home .github-strip {
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 0.25fr);
+  align-items: stretch;
+  gap: 42px;
+  margin-top: 72px;
+  padding: 32px 34px;
+  border-color: rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(112deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.018) 42%, transparent 68%),
+    rgba(8, 9, 10, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 20px 48px rgba(0, 0, 0, 0.16);
+  -webkit-backdrop-filter: blur(26px) saturate(125%);
+  backdrop-filter: blur(26px) saturate(125%);
+}
+
+.app.is-v2-home .github-strip::before {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.026) 1px, transparent 1px),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.07), transparent 36%);
+  background-size: 36px 36px, 36px 36px, auto;
+  opacity: 0.38;
+}
+
+.app.is-v2-home .github-manifesto {
+  min-width: 0;
+}
+
+.app.is-v2-home .github-section-index {
+  display: block;
+  margin-bottom: 18px;
+  color: rgba(255, 255, 255, 0.42);
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.app.is-v2-home .github-intro {
+  gap: 18px;
+}
+
+.app.is-v2-home .github-mark {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+}
+
+.app.is-v2-home .github-intro strong {
+  margin-top: 6px;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.18;
+}
+
+.app.is-v2-home .github-intro p {
+  max-width: 760px;
+  margin: 12px 0 15px;
+  color: rgba(245, 245, 243, 0.68);
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.app.is-v2-home .github-principles {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+}
+
+.app.is-v2-home .github-principles > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.app.is-v2-home .github-principles > span:not(:last-child)::after {
+  content: '';
+  width: 1px;
+  height: 12px;
+  margin: 0 14px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.app.is-v2-home .github-principles svg {
+  width: 14px;
+  height: 14px;
+}
+
+.app.is-v2-home .github-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.app.is-v2-home .github-actions .github-repo {
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.app.is-v2-home .github-open {
+  min-height: 36px;
+  padding-inline: 14px;
+}
+
+.app.is-v2-home .github-stat {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 6px 0 6px 32px;
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.app.is-v2-home .github-stat-value {
+  gap: 12px;
+}
+
+.app.is-v2-home .github-stat-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.app.is-v2-home .github-stat strong {
+  font-size: 44px;
+  line-height: 1;
+}
+
+.app.is-v2-home .github-stat-note {
+  max-width: 190px;
+  margin-top: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--tk-font-display-cn), var(--tk-font-display-en), "Segoe UI Symbol", sans-serif;
+  font-size: 11px;
+  line-height: 1.65;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+@media (max-width: 960px) {
+  .app.is-v2-home .github-strip {
+    grid-template-columns: 1fr;
+    gap: 26px;
+    padding: 26px;
+  }
+
+  .app.is-v2-home .github-stat {
+    padding: 24px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+    border-left: 0;
+  }
+
+  .app.is-v2-home .github-stat-note { max-width: 420px; }
+}
+
+@media (max-width: 600px) {
+  .app.is-v2-home .github-strip { padding: 22px 20px; }
+  .app.is-v2-home .github-intro { display: block; }
+  .app.is-v2-home .github-mark { margin-bottom: 14px; }
+  .app.is-v2-home .github-intro strong { font-size: 21px; }
+  .app.is-v2-home .github-principles { align-items: flex-start; flex-direction: column; }
+  .app.is-v2-home .github-principles > span:not(:last-child)::after { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app.is-v2-home .tool-result-card::before,
+  .app.is-v2-home .favorite-item::before { transition: none; }
+}
+

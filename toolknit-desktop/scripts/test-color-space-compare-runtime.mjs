@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createColorWheels } from '../src/features/color-space-compare/wheel.js';
 import {
   COLOR_SPACE_SLIDER_CONFIG,
   fmtColorNumber,
@@ -6,14 +7,14 @@ import {
   spaceToXyz,
   xyzToAllSpaces,
   xyzToDisplayRgb,
-} from '../src/color-space-compare-core.js';
+} from '../src/features/color-space-compare/core.js';
 import {
   bindColorNumberInput,
   getColorSliderPresentation,
   preserveColorSpaceValues,
   replaceColorSpaceChannel,
   stepColorValue,
-} from '../src/color-space-compare-controls.js';
+} from '../src/features/color-space-compare/controls.js';
 
 function approx(actual, expected, epsilon, message) {
   assert.ok(Math.abs(actual - expected) <= epsilon, `${message}: expected ${expected}, got ${actual}`);
@@ -337,5 +338,109 @@ assertSliderTakeover({ dirty: true, sliderKey: 'h' });
 assertSliderTakeover({ dirty: false, sliderKey: 'h' });
 assertSliderTakeover({ dirty: true, sliderKey: 's' });
 assertSliderTakeover({ dirty: false, sliderKey: 's' });
+
+// Exercise the actual wheel handlers alongside the numeric editor. This caught
+// PR #67's stale draft replay; geometry-only tests cannot detect it.
+class WheelElement extends FakeInput {
+  constructor() {
+    super();
+    this.children = [];
+    this.dataset = {};
+    this.style = {};
+    this.attributes = new Map();
+    this.captures = new Set();
+    this.classList = { toggle() {} };
+  }
+  append(...children) { this.children.push(...children); }
+  replaceChildren(...children) { this.children = children; }
+  setAttribute(key, value) { this.attributes.set(key, value); }
+  removeEventListener(type, handler) {
+    this.listeners.set(type, (this.listeners.get(type) || []).filter(fn => fn !== handler));
+  }
+  getBoundingClientRect() { return { left: 0, top: 0, width: 100, height: 100 }; }
+  setPointerCapture(id) { this.captures.add(id); }
+  releasePointerCapture(id) { this.captures.delete(id); }
+}
+
+const savedGlobals = Object.fromEntries(['document', 'requestAnimationFrame', 'cancelAnimationFrame']
+  .map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+try {
+  const elements = [];
+  const frames = new Map();
+  let frameId = 0;
+  globalThis.document = { createElement() { const el = new WheelElement(); elements.push(el); return el; } };
+  globalThis.requestAnimationFrame = fn => { frames.set(++frameId, fn); return frameId; };
+  globalThis.cancelAnimationFrame = id => frames.delete(id);
+  const input = new FakeInput('30');
+  let model = { h: 30, s: 40, v: 50 };
+  let updates = 0;
+  const editor = bindColorNumberInput(input, {
+    config: COLOR_SPACE_SLIDER_CONFIG.hsv.channels[0],
+    getCurrentValue: () => model.h,
+    applyTransientValue: h => { model.h = h; },
+    applyCommittedValue: h => { model.h = h; },
+    stepValue() {},
+  });
+  const wheels = createColorWheels(new WheelElement(), {
+    getValues: () => ({ ...model }),
+    applyValues: (_, values) => { model = values; updates += 1; },
+    getDisplayRgb: () => ({ r: 0, g: 0, b: 0 }),
+    beforeInteraction: () => editor.finishEditing(),
+  });
+  const hit = elements.find(el => el.dataset.role === 'wheel-hit');
+  const pointer = (type, x, y, id = 1) => hit.emit(type, {
+    type, pointerId: id, pointerType: 'mouse', button: 0, clientX: x, clientY: y,
+  });
+  wheels.open();
+  input.focus();
+  input.value = '12';
+  input.emit('input');
+  pointer('pointerdown', 50, 95);
+  pointer('pointerup', 50, 95);
+  input.blur();
+  assert.equal(model.h, 270, 'Blurring a numeric draft must not overwrite a wheel selection.');
+  assert.equal(editor.isEditing(), false);
+
+  pointer('pointerdown', 95, 50);
+  const beforeMoves = updates;
+  for (let i = 0; i < 100; i += 1) pointer('pointermove', 50, 5);
+  assert.equal(updates, beforeMoves, 'High frequency moves must wait for one frame.');
+  assert.equal(frames.size, 1);
+  pointer('pointerup', 50, 5);
+  assert.equal(model.h, 90, 'Pointer up must flush the last pending pick.');
+  assert.equal(updates, beforeMoves + 1);
+  assert.equal(frames.size, 0);
+  assert.equal(hit.captures.size, 0);
+
+  model.h = 359;
+  hit.emit('keydown', { key: 'ArrowRight' });
+  assert.equal(model.h, 4, 'Keyboard hue wraps around the ring.');
+  pointer('pointerdown', 50, 95);
+  pointer('pointermove', 5, 50);
+  pointer('pointercancel', 5, 50);
+  assert.equal(frames.size, 0);
+  assert.equal(model.h, 270, 'Cancellation must discard pending moves.');
+  assert.equal(hit.captures.size, 0);
+
+  pointer('pointerdown', 95, 50);
+  pointer('pointermove', 50, 5);
+  wheels.close();
+  assert.equal(frames.size, 0);
+  assert.equal(hit.captures.size, 0);
+  const afterClose = updates;
+  pointer('pointerdown', 50, 95);
+  assert.equal(updates, afterClose, 'Hidden wheels must ignore input.');
+  wheels.open();
+  pointer('pointerdown', 50, 95);
+  assert.equal(updates, afterClose + 1, 'Reopening must retain a single working listener.');
+  wheels.destroy();
+  wheels.destroy();
+  assert.ok(elements.every(el => [...el.listeners.values()].every(list => list.length === 0)));
+} finally {
+  for (const [key, descriptor] of Object.entries(savedGlobals)) {
+    if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+    else delete globalThis[key];
+  }
+}
 
 console.log('Color space compare runtime regression checks passed');

@@ -1,6 +1,8 @@
 import { Renderer, Program, Mesh, Triangle } from 'ogl';
+import { createBackgroundFrameLimiter } from './shared/animation-policy.js';
 
 const MAX_COLORS = 8;
+const BACKGROUND_DPR_MAX = 1.25;
 
 const hexToRGB = hex => {
   const c = hex.replace('#', '').padEnd(6, '0');
@@ -206,7 +208,7 @@ export function initFerrofluid(containerEl, options = {}) {
   try {
     renderer = new Renderer({
       webgl: 2,
-      dpr: dpr ?? Math.min(window.devicePixelRatio || 1, 2),
+      dpr: dpr ?? Math.min(window.devicePixelRatio || 1, BACKGROUND_DPR_MAX),
       alpha: true,
       antialias: true
     });
@@ -270,6 +272,10 @@ export function initFerrofluid(containerEl, options = {}) {
   let mouseTarget = [0, 0];
   let lastTime = 0;
   let rafId = null;
+  let isVisible = true;
+  let pageVisible = typeof document === 'undefined' || !document.hidden;
+  let destroyed = false;
+  const frameLimiter = createBackgroundFrameLimiter();
 
   const onPointerMove = e => {
     const rect = canvas.getBoundingClientRect();
@@ -286,8 +292,24 @@ export function initFerrofluid(containerEl, options = {}) {
     canvas.addEventListener('pointermove', onPointerMove);
   }
 
+  const stopLoop = () => {
+    if (rafId !== null) cancelAnimationFrame(rafId);
+    rafId = null;
+  };
+
+  const startLoop = () => {
+    if (rafId === null && !destroyed && isVisible && pageVisible) {
+      rafId = requestAnimationFrame(loop);
+    }
+  };
+
   const loop = t => {
-    rafId = requestAnimationFrame(loop);
+    rafId = null;
+    if (destroyed || !isVisible || !pageVisible) return;
+    if (!frameLimiter.shouldRender(t)) {
+      startLoop();
+      return;
+    }
     uniforms.iTime.value = t * 0.001;
     if (mouseDampening > 0) {
       if (!lastTime) lastTime = t;
@@ -308,14 +330,38 @@ export function initFerrofluid(containerEl, options = {}) {
     } catch (e) {
       console.error(e);
     }
+    startLoop();
   };
 
-  rafId = requestAnimationFrame(loop);
+  const intersectionObserver = typeof IntersectionObserver === 'function'
+    ? new IntersectionObserver(([entry]) => {
+      const wasVisible = isVisible;
+      isVisible = Boolean(entry?.isIntersecting);
+      if (isVisible && !wasVisible) startLoop();
+      else if (!isVisible) stopLoop();
+    }, { threshold: 0 })
+    : null;
+  intersectionObserver?.observe(containerEl);
+  const onVisibilityChange = () => {
+    pageVisible = !document.hidden;
+    pageVisible ? startLoop() : stopLoop();
+  };
+  const onPageHide = () => { pageVisible = false; stopLoop(); };
+  const onPageShow = () => { pageVisible = !document.hidden; startLoop(); };
+  document.addEventListener('visibilitychange', onVisibilityChange);
+  window.addEventListener('pagehide', onPageHide);
+  window.addEventListener('pageshow', onPageShow);
+  startLoop();
 
   return () => {
-    if (rafId) cancelAnimationFrame(rafId);
+    destroyed = true;
+    stopLoop();
     if (mouseInteraction) canvas.removeEventListener('pointermove', onPointerMove);
     ro.disconnect();
+    intersectionObserver?.disconnect();
+    document.removeEventListener('visibilitychange', onVisibilityChange);
+    window.removeEventListener('pagehide', onPageHide);
+    window.removeEventListener('pageshow', onPageShow);
     if (canvas.parentElement === containerEl) {
       containerEl.removeChild(canvas);
     }

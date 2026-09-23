@@ -33,7 +33,7 @@ After a successful connection, the Agent exposes 46 ToolKnit tools: nine PDF too
 - `toolknit_pdf_rotate` rotates PDF page orientation.
 - `toolknit_pdf_encrypt` adds passwords and permissions to a PDF.
 - `toolknit_pdf_decrypt` unlocks a password-protected PDF.
-- `toolknit_pdf_compress` reduces PDF file size.
+- `toolknit_pdf_compress` defaults to structure-preserving optimization; explicit `mode=raster` creates a lossy image-only PDF. `target_bytes` is a strict cap. Inspect `status` and `outputs`; unmet targets produce no file.
 - `toolknit_pdf_enhance` improves scanned-page readability.
 - `toolknit_pdf_to_image` exports PDF pages as individual images or a stitched long image.
 - `toolknit_ai_document` creates the PDF, editable project, clean previews, numbered control maps, and first revision.

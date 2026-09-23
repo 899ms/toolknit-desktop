@@ -1,0 +1,473 @@
+      /* ===== AI Polish Tool ===== */
+      .ai-polish-overlay {
+        background: #0a0a0f;
+      }
+
+      .ai-polish-overlay .audio-convert-body {
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ai-polish-overlay .audio-convert-hero {
+        flex: 0 0 auto;
+        padding-bottom: 8px;
+      }
+
+      /* Drawer container: holds two separate glass panels with gap */
+      .ai-polish-drawer {
+        width: 100%;
+        flex: 1;
+        min-height: 0;
+        margin: 20px auto 0;
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 0;
+        position: relative;
+        animation: drawerSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .ai-polish-arrow {
+        flex: 0 0 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.3);
+      }
+
+      .ai-polish-arrow svg {
+        width: 28px;
+        height: 28px;
+        animation: arrowSlide 2s ease-in-out infinite;
+      }
+
+      @keyframes arrowSlide {
+        0%, 100% { transform: translateX(0); opacity: 0.4; }
+        50% { transform: translateX(6px); opacity: 0.8; }
+      }
+
+      .ai-polish-drawer.processing .ai-polish-arrow {
+        color: rgba(167, 139, 250, 0.8);
+      }
+
+      .ai-polish-drawer.processing .ai-polish-arrow svg {
+        animation: arrowPulse 0.8s ease-in-out infinite;
+      }
+
+      @keyframes arrowPulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.3); opacity: 1; }
+      }
+
+      @keyframes drawerSlideUp {
+        from { opacity: 0; transform: translateY(24px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .ai-polish-drawer::before {
+        display: none;
+      }
+
+      /* Left panel: editable input - frosted glass */
+      .ai-polish-left-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 18px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px) saturate(1.2);
+        -webkit-backdrop-filter: blur(20px) saturate(1.2);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+        min-width: 0;
+        transition: border-color 0.3s ease;
+      }
+
+      .ai-polish-left-panel:focus-within {
+        border-color: rgba(167, 139, 250, 0.4);
+      }
+
+      /* Right panel: directions / result - frosted glass */
+      .ai-polish-right-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 18px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px) saturate(1.2);
+        -webkit-backdrop-filter: blur(20px) saturate(1.2);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+        min-width: 0;
+      }
+
+      .ai-polish-panel-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.5);
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .ai-polish-textarea {
+        width: 100%;
+        flex: 1;
+        min-height: 0;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+        font-family: inherit;
+        line-height: 1.7;
+        padding: 16px;
+        resize: none;
+        outline: none;
+        transition: all 0.25s ease;
+        overflow-y: auto;
+      }
+
+      .ai-polish-textarea:focus {
+        border-color: rgba(167, 139, 250, 0.5);
+        box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.08);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .ai-polish-textarea::placeholder {
+        color: rgba(255, 255, 255, 0.25);
+      }
+
+      /* Blur state when processing */
+      .ai-polish-drawer.processing .ai-polish-left-panel,
+      .ai-polish-drawer.processing .ai-polish-right-panel {
+        filter: blur(6px);
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .ai-polish-drawer.processing .ai-polish-arrow {
+        pointer-events: none;
+      }
+
+      /* Right panel empty state */
+      .ai-polish-right-empty {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+      }
+
+      .ai-polish-empty-icon-wrap {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        animation: emptyPulse 2.5s ease-in-out infinite;
+      }
+
+      @keyframes emptyPulse {
+        0%, 100% {
+          box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.15);
+          transform: scale(1);
+        }
+        50% {
+          box-shadow: 0 0 0 12px rgba(255, 255, 255, 0);
+          transform: scale(1.05);
+        }
+      }
+
+      .ai-polish-empty-icon {
+        width: 28px;
+        height: 28px;
+        color: #ffffff;
+        animation: emptyFloat 3s ease-in-out infinite;
+      }
+
+      @keyframes emptyFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+      }
+
+      .ai-polish-right-empty p {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.5);
+        text-align: center;
+        line-height: 1.6;
+      }
+
+      /* Phase 2: Direction options */
+      .ai-polish-directions {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        animation: fadeInUp 0.4s ease;
+      }
+
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .ai-polish-directions-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        margin-bottom: 16px;
+        letter-spacing: 0.5px;
+      }
+
+      .ai-polish-direction-cancel {
+        display: block;
+        margin: 16px auto 0;
+        padding: 7px 22px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: transparent;
+        color: rgba(255, 255, 255, 0.4);
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+      }
+
+      .ai-polish-direction-cancel:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.7);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .ai-polish-direction-list {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        width: 100%;
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .ai-polish-direction-btn {
+        width: 100%;
+        padding: 14px 18px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.85);
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: inherit;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+
+      .ai-polish-direction-btn::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(180deg, #a78bfa, #6a5acd);
+        transform: scaleY(0);
+        transition: transform 0.25s ease;
+        transform-origin: center;
+      }
+
+      .ai-polish-direction-btn:hover {
+        background: rgba(167, 139, 250, 0.08);
+        border-color: rgba(167, 139, 250, 0.3);
+        transform: translateX(4px);
+      }
+
+      .ai-polish-direction-btn:hover::before {
+        transform: scaleY(1);
+      }
+
+      .ai-polish-direction-btn-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.95);
+      }
+
+      .ai-polish-direction-btn-desc {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.4);
+        line-height: 1.5;
+      }
+
+      /* Phase 3: Polished result */
+      .ai-polish-result {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        animation: fadeInUp 0.4s ease;
+        position: relative;
+      }
+
+      .ai-polish-polished {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 14px;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: rgba(255, 255, 255, 0.9);
+        font-family: inherit;
+        position: relative;
+      }
+
+      .ai-polish-copy-fab {
+        position: absolute;
+        top: -40px;
+        right: 0;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: rgba(255, 255, 255, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 2;
+      }
+
+      .ai-polish-copy-fab svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .ai-polish-copy-fab:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        transform: translateY(-1px);
+      }
+
+      .ai-polish-copy-fab:active {
+        transform: translateY(0) scale(0.95);
+      }
+
+      .ai-polish-copy-fab.copied {
+        background: rgba(34, 197, 94, 0.2);
+        border-color: rgba(34, 197, 94, 0.4);
+        color: #4ade80;
+      }
+
+      .ai-polish-comparison-actions {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+      }
+
+      .ai-polish-action-btn {
+        padding: 8px 22px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+      }
+
+      .ai-polish-action-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.9);
+        transform: translateY(-1px);
+      }
+
+      .ai-polish-action-copy {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: rgba(255, 255, 255, 0.8);
+        color: #1a1a2e;
+        box-shadow: 0 2px 12px rgba(255, 255, 255, 0.15);
+      }
+
+      .ai-polish-action-copy:hover {
+        background: #ffffff;
+        color: #1a1a2e;
+        box-shadow: 0 4px 16px rgba(255, 255, 255, 0.25);
+      }
+
+      /* Disable start button when no input */
+      .ai-polish-overlay .audio-convert-cta.disabled {
+        opacity: 0.4;
+        pointer-events: none;
+      }
+
+      /* Bottom usage guide - fixed at bottom */
+      .ai-polish-guide {
+        flex: 0 0 auto;
+        padding: 12px 24px;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .ai-polish-guide-step {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(8px);
+      }
+
+      .ai-polish-guide-step-text {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+        white-space: nowrap;
+      }
+
+      .ai-polish-guide-arrow {
+        color: rgba(255, 255, 255, 0.2);
+        font-size: 14px;
+        align-self: center;
+      }
+
+      /* Scrollbar for comparison panels */
+      .ai-polish-original::-webkit-scrollbar,
+      .ai-polish-polished::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      .ai-polish-original::-webkit-scrollbar-thumb,
+      .ai-polish-polished::-webkit-scrollbar-thumb {
+        background: #c0c0c0;
+        border-radius: 9999px;
+      }

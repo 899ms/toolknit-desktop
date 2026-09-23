@@ -12,7 +12,7 @@ import {
   selectInstalledModels,
   transitionBgRemovalState,
   undoEditStroke
-} from '../src/bg-removal-core.js';
+} from '../src/features/bg-removal/core.js';
 
 let state = 'empty';
 for (const next of ['processing', 'ready', 'processing', 'editing', 'saving', 'saved']) {
@@ -60,23 +60,48 @@ assert.equal(joinNativePath('/home/test/ToolKnit/', '背景移除'), '/home/test
 assert.equal(parentDirectoryFromPath('C:\\Users\\test\\Downloads\\ToolKnit\\背景移除\\result.png'), 'C:\\Users\\test\\Downloads\\ToolKnit\\背景移除');
 assert.equal(parentDirectoryFromPath('/home/test/ToolKnit/背景移除/result.png'), '/home/test/ToolKnit/背景移除');
 
-const css = await readFile(new URL('../src/bg-removal.css', import.meta.url), 'utf8');
+const css = await readFile(new URL('../src/features/bg-removal/bg-removal.css', import.meta.url), 'utf8');
+const lightCss = await readFile(new URL('../src/styles/themes/bg-removal-light.css', import.meta.url), 'utf8');
 assert.match(css, /\.bg-removal-overlay \[hidden\]\s*\{[^}]*display:\s*none\s*!important/s);
 assert.match(css, /max-width:\s*839px/);
 assert.match(css, /\.is-compare[\s\S]*\.bg-removal-canvas-original/);
+assert.match(lightCss, /@media \(max-width:\s*839px\)[\s\S]*\.bg-removal-params-button\s*\{[^}]*background:\s*#f5f6f7;[^}]*color:\s*#171717;/,
+  'the compact parameter drawer trigger must remain visible in light mode');
 
-const ui = await readFile(new URL('../src/bg-removal-ui.js', import.meta.url), 'utf8');
+const ui = await readFile(new URL('../src/features/bg-removal/tool.js', import.meta.url), 'utf8');
+const template = await readFile(new URL('../src/features/bg-removal/template.js', import.meta.url), 'utf8');
 const main = await readFile(new URL('../src/main.js', import.meta.url), 'utf8');
 const native = await readFile(new URL('../src-tauri/src/onnx_segmenter.rs', import.meta.url), 'utf8');
 assert.equal((ui.match(/function handleAction\(/g) || []).length, 1, 'actions must be bound through one dispatcher');
 assert.equal((ui.match(/function startNativeDragListener\(/g) || []).length, 1, 'native drag listener must have one implementation');
 assert.doesNotMatch(ui, /scheduleSave|saveWorking|debounceSegment/);
-assert.match(ui, /data-bgr-success/, 'export completion must use the standard success dialog');
-assert.doesNotMatch(ui, /data-bgr-toast|showInlineToast/, 'background removal must not use inline toast feedback');
-assert.doesNotMatch(ui, /data-bgr-result-path/, 'the workspace must not duplicate the saved output path');
+assert.match(template, /data-bgr-success/, 'export completion must use the standard success dialog');
+assert.doesNotMatch(ui + template, /data-bgr-toast|showInlineToast/, 'background removal must not use inline toast feedback');
+assert.doesNotMatch(ui + template, /data-bgr-result-path/, 'the workspace must not duplicate the saved output path');
 assert.match(ui, /invoke\('open_path', \{ path: savedPath \}\)/, 'open folder must use the exported file path returned by Rust');
 assert.doesNotMatch(ui, /invoke\('open_path', \{ path: outputDir \}\)/, 'open folder must not use a predicted output directory');
+assert.match(ui, /enhanceToolSelects\(\[modelSelect\]\)/, 'model selection must use the shared white custom dropdown');
+assert.match(ui, /modelSelectControl\?\.dispose\(\)/, 'the model dropdown must release its detached menu on disposal');
+assert.doesNotMatch(ui, /\[toolbar, zoombar\][\s\S]{0,600}?addEventListener\('pointerdown'/, 'floating controls must not intercept their own pointer-down events during capture');
+assert.match(ui, /compareButton\.setPointerCapture\(event\.pointerId\)/, 'hold-to-compare must retain its pointer until release');
+assert.match(ui, /compareButton\.addEventListener\('lostpointercapture', releaseCompare/, 'hold-to-compare must recover when pointer capture is lost');
+const releaseCompareSource = ui.slice(
+  ui.indexOf('const releaseCompare = event => {'),
+  ui.indexOf("compareButton.addEventListener('pointerdown'")
+);
+assert.match(releaseCompareSource, /setCompareHeld\(false\);/, 'releasing compare must restore the processed result');
+assert.doesNotMatch(releaseCompareSource, /releaseCompare\(\);/, 'compare release must not recurse');
+assert.match(ui, /viewport\.addEventListener\('lostpointercapture'/, 'canvas interactions must recover after lost pointer capture');
+assert.match(ui, /window\.addEventListener\('pointerup'/, 'canvas interactions must recover when release happens outside the viewport');
+assert.match(ui, /window\.addEventListener\('blur'/, 'canvas interactions must recover when the window loses focus');
+assert.match(ui, /document\.elementFromPoint\(clientX, clientY\)/, 'the brush cursor must honor the real pointer hit target');
+assert.match(ui, /cursorBlockedByControls/, 'floating controls must explicitly block stale brush-cursor frames');
+assert.doesNotMatch(ui, /querySelector\('\.bg-removal-brush-cursor'\)\?\.remove\(\)/, 'the brush cursor must remain a stable node instead of being recreated at control boundaries');
+assert.match(ui, /bgRemovalTemplate/, 'the tool entry must delegate markup to the feature template');
+assert.doesNotMatch(ui, /function htmlTemplate\(/, 'the tool entry must not retain the markup template');
 assert.match(css, /\.bg-removal-zoom-value\s*\{[^}]*font-size:\s*15px/s);
+assert.match(css, /\.bg-removal-brush-cursor\s*\{[^}]*pointer-events:\s*none/s, 'the custom brush cursor must never become a pointer target');
+assert.match(css, /\.bg-removal-brush-cursor\.is-visible\s*\{[^}]*visibility:\s*visible/s, 'the persistent brush cursor must use an explicit visible state');
 
 const modelCatalog = native.match(/pub const MATTING_MODELS:[\s\S]*?=\s*\[([\s\S]*?)\];/)?.[1] || '';
 assert.match(modelCatalog, /id:\s*"modnet"/, 'the supported matting catalog must expose MODNet');
@@ -84,6 +109,7 @@ assert.doesNotMatch(modelCatalog, /id:\s*"(?:isnet|u2net)"/, 'models without com
 assert.doesNotMatch(native, /matting:no-official-source|matting:download-busy/, 'download coordination must not leak internal busy/source errors');
 assert.match(main, /let mattingDownloadPromise = null;/, 'matting downloads must share one frontend promise');
 assert.match(main, /await installMattingModel\(mattingDownloadSource\)/, 'the dependency gate must reuse the shared matting download and source setting');
+assert.match(main, /function openMattingModelManager\(\)\s*\{\s*openSettingsOverlay\(\);/, 'model management must reveal its parent settings page before opening the dialog');
 assert.doesNotMatch(main, /console\.info\('\[BgRemoval\] matting model (?:present|missing)/, 'normal model-gate flow must not pollute the console');
 
 console.log('background removal core tests passed');

@@ -1,0 +1,65 @@
+.icon-gen-v2 .pdf-merge-v2-poster::after {
+  right: 18px;
+  content: 'ICON';
+  font-size: 96px;
+}
+
+.icon-gen-v2 .pdf-merge-v2-workspace {
+  grid-template-rows: auto minmax(190px, 1fr) auto auto;
+}
+
+.icon-gen-v2 .pdf-merge-v2-queue {
+  padding-top: 18px;
+}
+
+.icon-gen-v2 .pdf-merge-v2-files {
+  max-height: 238px;
+}
+
+.icon-gen-v2 #iconGenFiles .audio-convert-file-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  max-width: none;
+  text-align: left;
+}
+
+.icon-gen-v2 #iconGenFiles:empty::before {
+  content: '暂无图标源图 · 点击上传 PNG / JPG / WebP 文件';
+}
+
+/* A source image has four fields, unlike the shared three-column PDF queue. */
+.icon-gen-v2 #iconGenFiles .audio-convert-file-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-height: 68px;
+}
+
+.icon-gen-v2 #iconGenFiles .audio-convert-file-remove {
+  flex: 0 0 30px;
+}
+
+html[data-theme="light"] .icon-gen-v2 .audio-convert-file-size {
+  color: #65686f;
+}
+
+.icon-gen-v2 .pdf-merge-v2-files .audio-convert-file-thumb {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+#iconGenSuccessOverlay .audio-convert-success-btn:disabled {
+  background: #f0f0f3;
+  color: #92959c;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+#iconGenSuccessOverlay .audio-convert-success-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

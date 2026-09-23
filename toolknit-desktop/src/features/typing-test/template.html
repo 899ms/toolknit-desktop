@@ -1,0 +1,154 @@
+<div class="pdf-merge-overlay pdf-merge-v2 typing-test-v2" id="typingTestOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="typingTestBg"></div>
+      <header class="pdf-merge-v2-topbar">
+        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="typingTestBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">TYPING · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="typingTestV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="audio-convert-body pdf-merge-v2-body typing-test-v2-body" id="typingTestBody">
+        <aside class="pdf-merge-v2-poster typing-test-v2-poster" aria-label="打字测试说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.typingTest.heroLabel">Creative Tool</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.typingTest.title">打字测试器</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.typingTest.subtitle">中英文双语词库，四档难度，实时统计打字速度与准确率。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>输入内容只在本机统计，中文输入法已做组合输入适配。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="打字测试流程">
+            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong>选择词库</strong><p>中英文、难度和时长自由组合。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>02</span><div><strong>开始输入</strong><p>点击开始后，敲下第一个字符自动计时。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>03</span><div><strong>实时反馈</strong><p>当前字符、错误字符和正确字符即时标记。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>04</span><div><strong>查看结果</strong><p>输出 WPM、CPM、准确率与综合评级。</p></div></div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace typing-test-v2-workspace">
+          <div class="typing-test-main">
+          <!-- Settings panel -->
+          <div class="typing-test-settings" id="typingTestSettings">
+            <div class="typing-test-setting-group">
+              <label class="typing-test-setting-label">
+                <i data-lucide="languages" aria-hidden="true"></i>
+                <span data-i18n="home.typingTest.language">语言</span>
+              </label>
+              <div class="typing-test-options" id="typingTestLangOptions">
+                <button class="typing-test-option" data-value="en" data-i18n="home.typingTest.english">英文</button>
+                <button class="typing-test-option active" data-value="zh" data-i18n="home.typingTest.chinese">中文</button>
+              </div>
+            </div>
+            <div class="typing-test-setting-group">
+              <label class="typing-test-setting-label">
+                <i data-lucide="gauge" aria-hidden="true"></i>
+                <span data-i18n="home.typingTest.difficulty">难度</span>
+              </label>
+              <div class="typing-test-options" id="typingTestDifficultyOptions">
+                <button class="typing-test-option active" data-value="easy" data-i18n="home.typingTest.easy">简单</button>
+                <button class="typing-test-option" data-value="medium" data-i18n="home.typingTest.medium">中等</button>
+                <button class="typing-test-option" data-value="hard" data-i18n="home.typingTest.hard">困难</button>
+                <button class="typing-test-option" data-value="master" data-i18n="home.typingTest.master">大师</button>
+              </div>
+            </div>
+            <div class="typing-test-setting-group">
+              <label class="typing-test-setting-label">
+                <i data-lucide="timer" aria-hidden="true"></i>
+                <span data-i18n="home.typingTest.duration">时长</span>
+              </label>
+              <div class="typing-test-options" id="typingTestDurationOptions">
+                <button class="typing-test-option" data-value="15" data-i18n="home.typingTest.duration15">15秒</button>
+                <button class="typing-test-option active" data-value="30" data-i18n="home.typingTest.duration30">30秒</button>
+                <button class="typing-test-option" data-value="60" data-i18n="home.typingTest.duration60">60秒</button>
+                <button class="typing-test-option" data-value="120" data-i18n="home.typingTest.duration120">120秒</button>
+              </div>
+            </div>
+            <button class="typing-test-start-btn" id="typingTestStartBtn">
+              <i data-lucide="play" aria-hidden="true"></i>
+              <span data-i18n="home.typingTest.start">开始测试</span>
+            </button>
+          </div>
+
+          <!-- Test area -->
+          <div class="typing-test-area" id="typingTestArea" style="display:none;">
+            <div class="typing-test-stats" id="typingTestStats">
+              <div class="typing-test-stat">
+                <span class="typing-test-stat-value" id="typingTestTime">30</span>
+                <span class="typing-test-stat-label" data-i18n="home.typingTest.timeLeft">剩余时间</span>
+              </div>
+              <div class="typing-test-stat">
+                <span class="typing-test-stat-value" id="typingTestWpm">0</span>
+                <span class="typing-test-stat-label" data-i18n="home.typingTest.wpm">WPM</span>
+              </div>
+              <div class="typing-test-stat">
+                <span class="typing-test-stat-value" id="typingTestAccuracy">100%</span>
+                <span class="typing-test-stat-label" data-i18n="home.typingTest.accuracy">准确率</span>
+              </div>
+            </div>
+            <div class="typing-test-text-wrap">
+              <div class="typing-test-text" id="typingTestText"></div>
+              <div class="typing-test-hint" data-i18n="home.typingTest.focusHint">点击下方文本区域开始输入</div>
+              <input type="text" class="typing-test-input" id="typingTestInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            </div>
+            <button class="typing-test-reset-btn" id="typingTestResetBtn" data-i18n="home.typingTest.restart">重新开始</button>
+          </div>
+
+          <!-- Result panel -->
+          <div class="typing-test-result" id="typingTestResult" style="display:none;">
+            <div class="typing-test-result-title" data-i18n="home.typingTest.resultTitle">测试结果</div>
+            <div class="typing-test-result-grid">
+              <div class="typing-test-result-item">
+                <span class="typing-test-result-value" id="typingTestResultWpm">0</span>
+                <span class="typing-test-result-label" data-i18n="home.typingTest.wpm">WPM</span>
+              </div>
+              <div class="typing-test-result-item">
+                <span class="typing-test-result-value" id="typingTestResultCpm">0</span>
+                <span class="typing-test-result-label" data-i18n="home.typingTest.cpm">CPM</span>
+              </div>
+              <div class="typing-test-result-item">
+                <span class="typing-test-result-value" id="typingTestResultAccuracy">0%</span>
+                <span class="typing-test-result-label" data-i18n="home.typingTest.accuracy">准确率</span>
+              </div>
+              <div class="typing-test-result-item">
+                <span class="typing-test-result-value" id="typingTestResultCorrect">0</span>
+                <span class="typing-test-result-label" data-i18n="home.typingTest.correct">正确</span>
+              </div>
+              <div class="typing-test-result-item">
+                <span class="typing-test-result-value" id="typingTestResultWrong">0</span>
+                <span class="typing-test-result-label" data-i18n="home.typingTest.wrong">错误</span>
+              </div>
+              <div class="typing-test-result-item">
+                <span class="typing-test-result-value" id="typingTestResultRating">-</span>
+                <span class="typing-test-result-label" data-i18n="home.typingTest.rating">评级</span>
+              </div>
+            </div>
+            <div class="typing-test-result-actions">
+              <button class="typing-test-start-btn" id="typingTestAgainBtn" data-i18n="home.typingTest.testAgain">再次测试</button>
+              <button class="typing-test-reset-btn" id="typingTestBackBtn" data-i18n="home.typingTest.backToSettings">返回设置</button>
+            </div>
+          </div>
+          </div>
+        </main>
+      </div>
+    </div>

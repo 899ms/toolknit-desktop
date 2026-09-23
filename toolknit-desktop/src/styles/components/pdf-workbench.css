@@ -1,0 +1,102 @@
+/* Editor geometry is shared without loading its editing controller. */
+.pdf-workbench {
+  position: fixed;
+  inset: 0;
+  z-index: 1004;
+  background: #101012;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.pdf-workbench.visible { visibility: visible; opacity: 1; pointer-events: auto; }
+.pdf-workbench-shell { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; min-height: 0; font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif; }
+/* The shared shell owns navigation geometry. Keep workbench geometry owned by
+   this component so opting into the shell never changes the three-column body. */
+.pdf-workbench-shell.tool-page-v2-shell { display: flex; grid-template-rows: none; overflow: hidden; background: transparent; }
+.pdf-workbench-shell.tool-page-v2-shell::after { display: none; }
+.pdf-workbench .pdf-workbench-body { display: grid; flex: 1; min-height: 0; overflow: hidden; }
+.pdf-workbench .pdf-editor-canvas-stage { min-height: 100%; box-sizing: border-box; }
+.pdf-workbench .pdf-editor-main-canvas[hidden] { display: none; }
+.pdf-workbench .pdf-editor-tile.is-current { outline: 2px solid #ffffff; outline-offset: -2px; }
+.pdf-workbench .pdf-editor-tile.is-selected:not(.is-current) { border-color: #969699; }
+.pdf-workbench .pdf-editor-tile-frame { min-height: 148px; }
+.pdf-workbench .pdf-editor-tile-select {
+  z-index: 2;
+}
+.pdf-workbench .pdf-editor-tile-select > svg {
+  display: block;
+  width: 12px;
+  height: 12px;
+  color: inherit;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+.pdf-workbench .pdf-editor-tile-select > svg * {
+  fill: none;
+  stroke: currentColor;
+}
+.pdf-workbench .pdf-editor-tile.is-selected .pdf-editor-tile-select > svg { opacity: 1; }
+.pdf-workbench .pdf-editor-tile[draggable="true"] { cursor: grab; }
+.pdf-workbench .pdf-editor-tile[draggable="true"]:active,
+.pdf-workbench .pdf-editor-tile.is-dragging { cursor: grabbing; opacity: .72; }
+.pdf-workbench .pdf-editor-tile.is-drag-target { outline: 2px solid currentColor; outline-offset: 3px; }
+.pdf-workbench .pdf-workbench-actions {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+.pdf-workbench .pdf-workbench-actions::-webkit-scrollbar { width: 6px; }
+.pdf-workbench .pdf-workbench-actions::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.18);
+}
+.pdf-workbench .pdf-merge-workbench-section { display: grid; gap: 8px; }
+.pdf-workbench .pdf-merge-workbench-section-title { font-size: 12px; font-weight: 800; letter-spacing: .04em; }
+.pdf-workbench .pdf-merge-workbench-button-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pdf-workbench .pdf-merge-workbench-button-row .pdf-editor-tool { min-width: 0; }
+.pdf-workbench .pdf-merge-delete-button:not(:disabled) { color: #9c2222; border-color: rgba(156, 34, 34, .35); }
+.pdf-workbench .pdf-merge-workbench-rule { color: var(--muted); line-height: 1.4; }
+.pdf-workbench .pdf-workbench-export { margin-top: auto; display: grid; gap: 10px; padding-top: 16px; border-top: 1px solid var(--line); }
+.pdf-workbench .pdf-workbench-export button { min-height: 42px; height: auto; white-space: normal; }
+.pdf-workbench .pdf-editor-filecard > svg { flex: 0 0 24px; width: 24px; height: 24px; }
+.pdf-workbench.pdf-editor-v2 [data-export-primary].pdf-editor-tool {
+  color: #111111;
+  background: #ffffff;
+}
+.pdf-workbench.pdf-editor-v2 [data-export-primary].pdf-editor-tool:is(:hover, :focus-visible, :active):not(:disabled) {
+  color: #ffffff;
+  background: #303030;
+  border-color: #303030;
+  transform: none;
+}
+.pdf-workbench.pdf-editor-v2 [data-export-primary].pdf-editor-tool > :is(svg, i) {
+  color: inherit;
+  stroke: currentColor;
+}
+html[data-theme="light"] .pdf-workbench .pdf-editor-tile.is-current { outline-color: #171717; }
+html[data-theme="light"] .pdf-workbench.pdf-editor-v2 [data-export-primary].pdf-editor-tool:not(:disabled) {
+  color: #ffffff;
+  background: #171717;
+  border-color: #171717;
+}
+html[data-theme="light"] .pdf-workbench.pdf-editor-v2 [data-export-primary].pdf-editor-tool:is(:hover, :focus-visible, :active):not(:disabled) {
+  color: #ffffff;
+  background: #303030;
+  border-color: #303030;
+}
+@media (max-width: 980px) {
+  .pdf-workbench .pdf-workbench-body { overflow-y: auto; grid-template-rows: minmax(190px, 250px) minmax(520px, 1fr) auto; }
+  .pdf-workbench .pdf-editor-page-strip { overflow-y: auto; }
+  .pdf-workbench .pdf-editor-tool-panel { min-height: 410px; }
+}

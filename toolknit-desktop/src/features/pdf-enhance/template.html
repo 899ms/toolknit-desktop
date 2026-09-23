@@ -1,0 +1,175 @@
+<div class="pdf-merge-overlay pdf-merge-v2 pdf-enhance-v2" id="pdfEnhanceOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="pdfEnhancePlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="pdfEnhanceDropZone">
+        <span class="drop-hint" data-i18n="home.pdfEnhance.dropHint">松手即可上传</span>
+      </div>
+      <header class="pdf-merge-v2-topbar pdf-enhance-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left pdf-enhance-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="pdfEnhanceBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag pdf-enhance-v2-top-tag">PDF ENHANCER · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="pdfEnhanceV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="pdf-merge-v2-body pdf-enhance-v2-body" id="pdfEnhanceBody">
+        <aside class="pdf-merge-v2-poster pdf-enhance-v2-poster" aria-label="PDF 文字增强说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.pdfEnhance.heroLabel">PDF Enhancer</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.pdfEnhance.title">PDF 文字增强</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.pdfEnhance.subtitle">增强扫描件和图像型 PDF 的文字可读性，提供对比度与锐化处理。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>适合扫描件、拍照件和文字发灰的图像型 PDF，处理过程只在本机完成。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="增强流程">
+            <div class="pdf-merge-v2-step is-active">
+              <span>01</span>
+              <div>
+                <strong>添加文件</strong>
+                <p>上传一个需要增强文字可读性的 PDF。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>02</span>
+              <div>
+                <strong>选择强度</strong>
+                <p>按扫描件质量选择轻度、中度或强力增强。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>03</span>
+              <div>
+                <strong>增强文字</strong>
+                <p>提升对比度并锐化文字边缘。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>04</span>
+              <div>
+                <strong>导出结果</strong>
+                <p>生成新的增强版 PDF 并保存到本地。</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace pdf-enhance-v2-workspace">
+          <section class="pdf-merge-v2-upload pdf-enhance-v2-upload" aria-label="上传 PDF 文件">
+            <div class="pdf-merge-v2-upload-copy">
+              <span class="pdf-merge-v2-upload-eyebrow">DROP OR SELECT</span>
+              <h2>把需要增强的 PDF 放到这里</h2>
+              <p>当前功能面向扫描件和图像型 PDF，会重新生成页面图像，让文字更醒目。</p>
+            </div>
+            <button class="audio-convert-cta pdf-merge-v2-cta" id="pdfEnhanceCta" type="button">
+              <i data-lucide="upload"></i>
+              <span data-i18n="home.pdfEnhance.cta">上传 PDF 文件</span>
+            </button>
+          </section>
+
+          <section class="pdf-merge-v2-options pdf-enhance-v2-options" aria-label="增强参数">
+            <div class="audio-convert-format-selector">
+              <span class="audio-convert-format-label" data-i18n="home.pdfEnhance.strengthLabel">增强强度</span>
+              <div class="audio-convert-format-options" id="pdfEnhanceStrengthOptions">
+                <button class="audio-convert-format-option active" data-strength="light" data-i18n="home.pdfEnhance.strengthLight">轻度</button>
+                <button class="audio-convert-format-option" data-strength="medium" data-i18n="home.pdfEnhance.strengthMedium">中度</button>
+                <button class="audio-convert-format-option" data-strength="strong" data-i18n="home.pdfEnhance.strengthStrong">强力</button>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-options-hint pdf-enhance-strength-hint" id="pdfEnhanceStrengthHint" data-i18n="home.pdfEnhance.strengthLightHint">轻度：自适应对比度 + 3x3 锐化，保留原始色彩</div>
+          </section>
+
+          <section class="pdf-merge-v2-queue pdf-enhance-v2-queue" aria-label="待增强文件">
+            <div class="pdf-merge-v2-section-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">ENHANCE QUEUE</span>
+                <h2>待增强文件</h2>
+              </div>
+              <p>一次处理一个 PDF，重新选择文件会直接替换当前队列。</p>
+            </div>
+            <div class="audio-convert-files pdf-merge-v2-files pdf-enhance-v2-files" id="pdfEnhanceFiles" aria-live="polite"></div>
+          </section>
+
+          <section class="audio-convert-formats pdf-merge-v2-info pdf-enhance-v2-info" aria-label="增强说明">
+            <h3 class="audio-convert-formats-title" data-i18n="home.pdfEnhance.infoTitle">增强说明</h3>
+            <div class="pdf-merge-info-grid">
+              <div class="pdf-merge-info-item">
+                <i data-lucide="zap"></i>
+                <span data-i18n="home.pdfEnhance.info1">仅适用于扫描件和图像型 PDF，输出会栅格化页面</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="contrast"></i>
+                <span data-i18n="home.pdfEnhance.info2">输出不保留原始可搜索文字、链接或表单</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="scissors"></i>
+                <span data-i18n="home.pdfEnhance.info3">自适应对比度与锐化处理，强化文字轮廓</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="shield"></i>
+                <span data-i18n="home.pdfEnhance.info4">纯本地处理，文件不上传服务器</span>
+              </div>
+            </div>
+          </section>
+
+          <footer class="pdf-merge-v2-actions pdf-enhance-v2-actions">
+            <span>确认文件和增强强度后开始处理，完成后会保存一份新的增强版 PDF。</span>
+            <button class="audio-convert-process-btn pdf-merge-v2-process" id="pdfEnhanceProcessBtn" data-i18n="home.pdfEnhance.processBtn" style="display:none;">开始增强</button>
+          </footer>
+        </main>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask" id="pdfEnhanceProcessMask">
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="audio-convert-process-content">
+        <div class="audio-convert-spinner"></div>
+        <div class="audio-convert-process-text" id="pdfEnhanceProcessText" data-i18n="home.pdfEnhance.processing">正在增强...</div>
+        <div class="audio-convert-process-bar">
+          <div class="audio-convert-process-bar-fill" id="pdfEnhanceProcessBarFill"></div>
+        </div>
+      </div>
+    </div>
+
+<div class="audio-clip-success-overlay" id="pdfEnhanceSuccessOverlay">
+      <div class="audio-clip-success-dialog">
+        <div class="audio-clip-success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <h3 class="audio-clip-success-title" data-i18n="home.pdfEnhance.successTitle">增强完成</h3>
+        <div class="audio-clip-success-meta" id="pdfEnhanceSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfEnhance.successCount">处理页数</span>
+            <span class="audio-convert-success-value" id="pdfEnhanceSuccessCount"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfEnhance.successPath">保存路径</span>
+            <span class="audio-convert-success-value" id="pdfEnhanceSuccessPath"></span>
+          </div>
+        </div>
+        <div class="audio-clip-success-actions">
+          <button class="audio-clip-success-btn audio-clip-success-btn-secondary" id="pdfEnhanceSuccessOpenFolder" data-i18n="home.pdfEnhance.openFolder">打开文件夹</button>
+          <button class="audio-clip-success-btn audio-clip-success-btn-primary" id="pdfEnhanceSuccessOk" data-i18n="home.pdfEnhance.ok">确定</button>
+        </div>
+      </div>
+    </div>

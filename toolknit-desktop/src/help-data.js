@@ -2,15 +2,19 @@ import { getLang } from './i18n.js';
 import { HELP_CONTENT_EN } from './help-data-en.js';
 
 export const HELP_CONTENT = {
+  'clipboard-history': {
+    title: '剪贴板历史',
+    html: `<div class="help-doc"><h2>剪贴板历史</h2><p>在 Windows 桌面版主动开启监控后，记录后续复制的文字、图片和文件路径。已有系统剪贴板内容和 Win+V 历史不会自动导入。</p><h3>记录与回查</h3><p>按日期浏览时间线，搜索内容或来源应用，按类型、日期及收藏筛选。详情显示记录时间（含毫秒和采集时区）、来源、大小和内容；来源未知时不会猜测。文件仅保存路径，重新复制不会执行剪切移动。</p><h3>后台与隐私</h3><p>返回首页、切换工具或关闭到托盘后继续记录；暂停或完全退出后停止。下次启动默认关闭，可在记录设置中选择恢复仍在运行的监控。正文、图片和路径在本机加密保存，不上传。</p><p>默认保留 7 天、2000 条、256 MB。收藏不自动删除，收藏占满容量时暂停新增。清空历史默认保留收藏，不清空系统当前剪贴板，不删除源文件。</p><p>遵循应用提供的禁止记录标记，支持按进程名排除应用。并非所有密码或敏感内容都会带标记，复制敏感信息前请暂停。极快更新、剪贴板占用及特殊格式可能读取失败；状态区展示跳过和失败计数。网页预览不提供系统监控。</p></div>`
+  },
   'overview': {
     title: '功能概览',
     html: `<div class="help-doc">
       <h2>ToolKnit 功能概览</h2>
-      <p>ToolKnit 2.3 是一款<strong>本地优先</strong>的 Windows 多功能工具箱，当前提供 12 个分类、65 个桌面工具，并通过 CLI / MCP 向 IDE Agent 暴露 46 项能力。PDF、PPT、图像、音视频、文本、计算、创意、开发者、清理和硬件处理默认在本机完成。</p>
+      <p>ToolKnit 3.0 是一款<strong>本地优先</strong>的 Windows 多功能工具箱，当前提供 12 个分类、68 个桌面工具，并通过 CLI / MCP 向 IDE Agent 暴露 46 项能力。基础文件处理在本机完成；AI 工具仅在用户主动调用后向所选服务发送必要内容。</p>
 
       <h3>工具分类一览</h3>
       <div class="help-tool-grid">
-        <div class="help-tool-card"><div class="help-tool-card-name">PDF 工具</div><div class="help-tool-card-desc">编辑、合并、拆分、添加页码、转图像、旋转、加密、解密、压缩、文字增强与 Excel 转 PDF</div></div>
+        <div class="help-tool-card"><div class="help-tool-card-name">PDF 工具</div><div class="help-tool-card-desc">编辑、合并、拆分、添加页码、转图像、本地文本转 Markdown、AI PDF 转 Markdown、旋转、加密、解密、压缩、文字增强与 Excel 转 PDF</div></div>
         <div class="help-tool-card"><div class="help-tool-card-name">PPT 工具</div><div class="help-tool-card-desc">转 PDF / 图像、素材与文字提取、压缩、AI 大纲和黑白极简草稿</div></div>
         <div class="help-tool-card"><div class="help-tool-card-name">图像工具</div><div class="help-tool-card-desc">格式转换、图片压缩、长图拼接、图标生成器、图像与屏幕取色</div></div>
         <div class="help-tool-card"><div class="help-tool-card-name">音频工具</div><div class="help-tool-card-desc">格式转换、BPM 测速、剪辑、从视频提取音频</div></div>
@@ -19,13 +23,13 @@ export const HELP_CONTENT = {
         <div class="help-tool-card"><div class="help-tool-card-name">计算器工具</div><div class="help-tool-card-desc">体脂率、时间戳、房贷、利息、密码生成</div></div>
         <div class="help-tool-card"><div class="help-tool-card-name">创意工具</div><div class="help-tool-card-desc">配色提取、打字测试</div></div>
         <div class="help-tool-card"><div class="help-tool-card-name">清理工具</div><div class="help-tool-card-desc">扫描大文件、AI 元数据建议、移入回收站</div></div>
-        <div class="help-tool-card"><div class="help-tool-card-name">硬件工具</div><div class="help-tool-card-desc">只读查看整机、CPU、内存、显卡、主板、磁盘、网络和传感器</div></div>
+        <div class="help-tool-card"><div class="help-tool-card-name">硬件与系统工具</div><div class="help-tool-card-desc">只读查看整机、CPU、内存、显卡、主板、磁盘、网络和传感器；主动开启剪贴板历史监控</div></div>
         <div class="help-tool-card"><div class="help-tool-card-name">AI 工具</div><div class="help-tool-card-desc">AI 润色、翻译、可编辑文档、可编辑表格</div></div>
       </div>
 
       <h3>核心特性</h3>
       <ul>
-        <li><strong>本地优先</strong>：源文件默认不上传 ToolKnit 服务器；只有用户主动调用 AI 时才向所选 AI 服务发送必要文字或元数据</li>
+        <li><strong>本地优先</strong>：源文件默认不上传 ToolKnit 服务器；只有用户主动调用 AI 时才向所选 AI 服务发送必要文字、元数据或页面图像</li>
         <li><strong>批量操作</strong>：支持批量文件处理，提高工作效率</li>
         <li><strong>拖拽上传</strong>：支持拖拽文件到工具页面直接处理</li>
         <li><strong>双语界面</strong>：支持中文和英文切换</li>
@@ -270,6 +274,34 @@ export const HELP_CONTENT = {
 
       <div class="help-note">
         <p>每次只能读取一个 PDF，文件最大 150 MB、最多 200 页。受密码保护的 PDF 需要先使用“PDF 文件解密”处理。导出期间可取消，工具会清理未完成的临时文件。</p>
+      </div>
+    </div>`
+  },
+
+  'pdf-text-markdown': {
+    title: 'PDF 文本提取 / Markdown',
+    html: `<div class="help-doc">
+      <h2>PDF 文本提取 / Markdown</h2>
+      <p>读取电子 PDF 自带的文本层，按页面重建阅读顺序并生成 Markdown。解析全部在本机完成，源文件不会修改或上传。</p>
+
+      <h3>使用方法</h3>
+      <ol class="help-steps">
+        <li>选择一个包含可复制文字的 PDF 文件</li>
+        <li>确认页数和文件信息后，点击“开始提取 Markdown”</li>
+        <li>等待工具逐页识别标题、段落、列表和基础表格</li>
+        <li>完成后点击“导入 Markdown 编辑器”，继续预览、编辑、复制或导出 .md</li>
+      </ol>
+
+      <h3>结果与限制</h3>
+      <ul>
+        <li>每页会保留 source-page 注释，便于回查原 PDF 页码</li>
+        <li>结果区可按原页码切换 Markdown 预览，每页显示前 2,000 字符；导入编辑器时保留完整内容。“重新选择”会清空本次结果</li>
+        <li>双栏、旋转页和复杂表格会尽量重建，但结果仍取决于 PDF 内部文本坐标</li>
+        <li>单次支持 1 个 PDF，最大 150 MB、300 页和 200 万个提取字符</li>
+      </ul>
+
+      <div class="help-note">
+        <p>扫描件或图片型 PDF 没有文本层时，本工具不会生成空白 Markdown。请改用 AI 视觉版逐页识别。</p>
       </div>
     </div>`
   },
@@ -780,6 +812,16 @@ toolknit ppt draft --outline-file outline.json --output-dir out --theme minimal-
     html: `<div class="help-doc"><h2>打字测试器</h2><p>选择中文或英文、难度和时长后开始输入，实时显示速度和准确率。</p><h3>使用方法</h3><ol class="help-steps"><li>设置语言、难度与测试时长</li><li>点击“开始测试”，再点击输入区域开始打字</li><li>结束后查看 WPM、准确率等结果；需要重测时点击“重新开始”</li></ol><div class="help-note"><p>这是桌面端的交互工具，不提供 CLI 或 IDE Agent 调用。</p></div></div>`
   },
 
+  'pdf-ai-markdown': {
+    title: 'AI PDF 转 Markdown',
+    html: `<div class="help-doc">
+      <h2>AI PDF 转 Markdown</h2>
+      <p>适合扫描件、图片型 PDF、表格及复杂版式。文件在本机逐页渲染为图片，点击开始后，截图和识别内容会发送给设置中的 AI 服务。需要支持图片输入的 OpenAI 兼容视觉模型和有效 API Key。</p>
+      <ol class="help-steps"><li>选择或拖入一个 PDF，最大 150 MB、120 页；密码保护文件请先解密。</li><li>核对模型和服务地址，确认文件允许外发，再点击开始转换。服务商可能按图片和文本用量计费。</li><li>逐页识别文字、标题、列表、表格、图片说明和公式，再分批分析全文并生成独立导读。</li><li>检查页码预览和识别备注，点击“导入 Markdown 编辑器”继续编辑、复制或导出 .md。</li></ol>
+      <h3>结果与恢复</h3><ul><li>保留 source-page 注释；预览每页前 3,000 字符，编辑器接收完整结果。</li><li>部分失败时可重试未完成页，不重新请求成功页面。导读失败不影响已识别原文。</li><li>取消会停止后续处理并保留本次会话已完成内容；关闭、返回或重新选择会清空本次会话。</li><li>图表以可见内容说明保留，不自动下载图片或补造无法识别的数据；复杂表格和公式需要人工核对。</li></ul>
+      <div class="help-note"><p>普通文本模型无法读取图片。识别精度取决于原图和模型；工具不保证内容完全准确。电子 PDF 可优先使用无需联网的“PDF 文本提取 / Markdown”。</p></div>
+    </div>`
+  },
   'ai-polish': {
     title: 'AI 文字润色',
     html: `<div class="help-doc">
@@ -1248,7 +1290,7 @@ toolknit ppt draft --outline-file outline.json --output-dir out --theme minimal-
 
   'developer-tools': {
     title: '开发者工具',
-    html: `<div class="help-doc"><h2>2.3 开发者工具</h2><p>这里集中介绍本次新增的本地工具。它们默认在需要时加载，关闭页面后会释放 Worker、Canvas 和临时任务。</p><h3>Markdown 文档编辑器</h3><p>支持 GFM、任务列表、Mermaid、数学公式、目录跳转、草稿恢复，以及 Markdown 和离线 HTML 导出。导出本地图片时会自动整理 assets 目录。</p><h3>智能颜色替换</h3><p>使用吸管选择源色和目标色，可调节感知阈值、边缘柔化、亮度保持和八连通智能保护。预览使用降采样 Worker，导出由 Rust 按原始分辨率完成。</p><h3>Hash &amp; Crypto</h3><p>覆盖常用 Hash、HMAC、国密、AES 文件加密、RSA 和 SM2。旧算法仅用于兼容，敏感输入不会写入历史或本地存储。</p></div>`
+    html: `<div class="help-doc"><h2>3.0 开发者工具</h2><p>这里集中介绍本次新增的本地工具。它们默认在需要时加载，关闭页面后会释放 Worker、Canvas 和临时任务。</p><h3>Markdown 文档编辑器</h3><p>支持 GFM、任务列表、Mermaid、数学公式、目录跳转、草稿恢复，以及 Markdown 和离线 HTML 导出。导出本地图片时会自动整理 assets 目录。</p><h3>智能颜色替换</h3><p>使用吸管选择源色和目标色，可调节感知阈值、边缘柔化、亮度保持和八连通智能保护。预览使用降采样 Worker，导出由 Rust 按原始分辨率完成。</p><h3>Hash &amp; Crypto</h3><p>覆盖常用 Hash、HMAC、国密、AES 文件加密、RSA 和 SM2。旧算法仅用于兼容，敏感输入不会写入历史或本地存储。</p></div>`
   },
   'hardware-tools': {
     title: '硬件工具总览',

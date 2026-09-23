@@ -1,0 +1,288 @@
+/* PPT render layout is lazy-owned by this feature. */
+.ppt-render-v2 .ppt-render-v2-workspace,
+.ppt-render-v2 .ppt-render-v2-results,
+.ppt-render-v2 .ppt-render-v2-stats {
+  contain: layout paint;
+}
+
+/* Do not depend on another lazy tool to supply HTML hidden semantics. */
+.ppt-render-v2 [hidden] {
+  display: none;
+}
+
+.ppt-render-v2 .pdf-merge-v2-poster {
+  overflow-y: auto;
+}
+
+      .ppt-render-stats {
+        margin-top: 2px;
+      }
+
+      .ppt-render-actions {
+        justify-content: center;
+        padding-top: 2px;
+      }
+
+      .ppt-render-export {
+        min-width: 190px;
+      }
+
+      .ppt-render-v2 .pdf-merge-v2-bg {
+        opacity: 0.36;
+        filter: grayscale(1) contrast(1.14) brightness(0.74);
+      }
+
+      .ppt-render-v2-pdf .pdf-merge-v2-poster::after {
+        content: 'PPT';
+        right: 18px;
+        bottom: -14px;
+        font-size: 110px;
+        letter-spacing: 0;
+      }
+
+      .ppt-render-v2-image .pdf-merge-v2-poster::after {
+        content: 'PNG';
+        right: 16px;
+        bottom: -12px;
+        font-size: 108px;
+        letter-spacing: 0;
+      }
+
+      .ppt-render-v2 .pdf-merge-v2-body {
+        grid-template-columns: minmax(286px, 356px) minmax(0, 1fr);
+      }
+
+      .ppt-render-v2-workspace {
+        position: relative;
+        padding: 24px;
+      }
+
+      .ppt-render-v2 .ppt-render-v2-workspace {
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+      }
+
+      .ppt-render-v2-file {
+        min-height: 18px;
+        max-width: 100%;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 12px;
+        line-height: 1.45;
+        word-break: break-all;
+      }
+
+      .ppt-render-v2-empty {
+        flex: 1 0 auto;
+        min-height: 260px;
+        display: grid;
+        place-items: center;
+        align-content: center;
+        gap: 12px;
+        padding: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        background:
+          radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.08), transparent 34%),
+          rgba(255, 255, 255, 0.018);
+        color: rgba(255, 255, 255, 0.54);
+        text-align: center;
+      }
+
+      .ppt-render-v2-empty > svg {
+        width: 56px;
+        height: 56px;
+        padding: 13px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      .ppt-render-v2-empty strong {
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      .ppt-render-v2-empty > span {
+        max-width: 520px;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      .ppt-render-v2-results {
+        min-height: 0;
+        display: grid;
+        gap: 14px;
+      }
+
+      .ppt-render-v2-summary {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.56);
+        font-size: 13px;
+      }
+
+      .ppt-render-v2-summary strong {
+        color: rgba(255, 255, 255, 0.92);
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .ppt-render-v2-summary span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .ppt-render-v2-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .ppt-render-v2-stats .ppt-compress-stat {
+        min-width: 0;
+        min-height: 88px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.03);
+        display: grid;
+        align-content: center;
+      }
+
+      .ppt-render-v2-stats .ppt-compress-stat strong,
+      .ppt-render-v2-stats .ppt-compress-stat em {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .ppt-render-v2-note {
+        margin: 0;
+        padding: 13px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-left-width: 3px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.026);
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 12px;
+        line-height: 1.62;
+      }
+
+      .ppt-render-v2-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      .ppt-render-v2 .ppt-render-v2-export {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: auto;
+        height: auto;
+        margin: 0;
+        opacity: 1;
+        transform: none;
+        min-width: 160px;
+        min-height: 42px;
+        padding: 10px 20px;
+        border: 0;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #050506;
+        font-weight: 900;
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.26), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+      }
+
+      .ppt-render-v2-stats .ppt-compress-stat span,
+      .ppt-render-v2-stats .ppt-compress-stat em {
+        color: var(--muted, rgba(255, 255, 255, 0.5));
+        font-size: 12px;
+        font-style: normal;
+      }
+
+      .ppt-render-v2-stats .ppt-compress-stat strong {
+        margin-block: 6px;
+        font-size: 20px;
+        color: var(--ink, #fff);
+      }
+
+      .ppt-render-v2 .ppt-render-v2-file {
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+      }
+
+      .ppt-render-v2 .ppt-render-v2-export:hover {
+        transform: none;
+        background: #e9e9e9;
+      }
+
+      @media (max-width: 980px) {
+        .ppt-render-v2 .pdf-merge-v2-body {
+          grid-template-columns: 1fr;
+        }
+
+        .ppt-render-v2-stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 780px) {
+        .ppt-render-v2-workspace {
+          padding: 20px;
+        }
+      }
+
+      @media (max-width: 1280px) {
+        .ppt-render-v2 .pdf-merge-v2-body {
+          grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+          gap: 18px;
+          padding: 20px 22px 24px;
+        }
+
+        .ppt-render-v2-stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-height: 760px) {
+
+        .ppt-render-v2-empty {
+          min-height: 210px;
+        }
+      }
+
+      @media (max-width: 980px) {
+        .ppt-render-v2 .pdf-merge-v2-body {
+          grid-template-columns: 1fr;
+          grid-template-rows: max-content max-content;
+          align-content: start;
+          overflow-y: auto;
+        }
+        .ppt-render-v2 .pdf-merge-v2-poster,
+        .ppt-render-v2 .ppt-render-v2-workspace {
+          min-height: 0;
+          overflow: hidden;
+        }
+        .ppt-render-v2 .pdf-merge-v2-poster {
+          height: auto !important;
+          min-height: max-content !important;
+        }
+        .ppt-render-v2 .ppt-render-v2-workspace { height: auto; }
+      }

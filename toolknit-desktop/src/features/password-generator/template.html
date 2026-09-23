@@ -1,0 +1,164 @@
+<div class="pdf-merge-overlay pdf-merge-v2 mortgage-calc-v2 password-gen-v2" id="passwordGenOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="passwordGenBg"></div>
+      <header class="pdf-merge-v2-topbar">
+        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="passwordGenBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">PASSWORD · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="passwordGenV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="audio-convert-body pdf-merge-v2-body mortgage-calc-v2-body password-gen-v2-body" id="passwordGenBody">
+        <aside class="pdf-merge-v2-poster password-gen-v2-poster" aria-label="密码生成说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.passwordGen.heroLabel">Security Tool</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.passwordGen.title">密码生成器</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.passwordGen.subtitle">快速生成安全密码，支持简易、中等、终极三种强度等级，自定义字符数量。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>密码只在本机生成与复制，不保存到云端。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="密码生成流程">
+            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong>选强度</strong><p>简易、中等、终极三档预设一键切换。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>02</span><div><strong>调长度</strong><p>滑块快速调整密码长度和生成密度。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>03</span><div><strong>勾选规则</strong><p>字符集、排除易混字符都可以自由组合。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>04</span><div><strong>复制使用</strong><p>查看强度、历史记录并快速复制结果。</p></div></div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace mortgage-calc-v2-workspace password-gen-v2-workspace" id="passwordGenMain">
+          <section class="password-gen-settings-panel mortgage-calc-input-panel" aria-label="密码生成设置">
+            <div class="password-gen-panel-head mortgage-calc-panel-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">PASSWORD RULES</span>
+                <h2>生成规则</h2>
+              </div>
+              <p>先调规则，再生成。</p>
+            </div>
+            <div class="password-gen-form mortgage-calc-form">
+              <div class="mortgage-calc-field">
+                <label data-i18n="home.passwordGen.strengthLevel">强度等级</label>
+                <div class="password-gen-strength-tabs" id="passwordGenStrengthTabs">
+                  <button class="password-gen-strength-tab active" type="button" data-strength="simple" data-i18n="home.passwordGen.simple">简易</button>
+                  <button class="password-gen-strength-tab" type="button" data-strength="medium" data-i18n="home.passwordGen.medium">中等</button>
+                  <button class="password-gen-strength-tab" type="button" data-strength="ultimate" data-i18n="home.passwordGen.ultimate">终极</button>
+                </div>
+                <div class="password-gen-strength-desc" id="passwordGenStrengthDesc" data-i18n="home.passwordGen.simpleDesc">字母+数字</div>
+              </div>
+
+              <div class="mortgage-calc-field">
+                <label data-i18n="home.passwordGen.length">密码长度</label>
+                <div class="password-gen-length-row">
+                  <input type="range" id="passwordGenLengthSlider" min="4" max="64" value="16" step="1" class="password-gen-slider">
+                  <span class="password-gen-length-value" id="passwordGenLengthValue">16</span>
+                </div>
+              </div>
+
+              <div class="mortgage-calc-field">
+                <label data-i18n="home.passwordGen.options">高级选项</label>
+                <div class="password-gen-options">
+                  <label class="password-gen-option">
+                    <input type="checkbox" id="passwordGenUppercase" checked>
+                    <span data-i18n="home.passwordGen.uppercase">大写字母 (A-Z)</span>
+                  </label>
+                  <label class="password-gen-option">
+                    <input type="checkbox" id="passwordGenLowercase" checked>
+                    <span data-i18n="home.passwordGen.lowercase">小写字母 (a-z)</span>
+                  </label>
+                  <label class="password-gen-option">
+                    <input type="checkbox" id="passwordGenNumbers" checked>
+                    <span data-i18n="home.passwordGen.numbers">数字 (0-9)</span>
+                  </label>
+                  <label class="password-gen-option">
+                    <input type="checkbox" id="passwordGenSymbols">
+                    <span data-i18n="home.passwordGen.symbols">特殊符号 (!@#$…)</span>
+                  </label>
+                  <label class="password-gen-option">
+                    <input type="checkbox" id="passwordGenExcludeSimilar">
+                    <span data-i18n="home.passwordGen.excludeSimilar">排除易混淆字符 (0O1lI)</span>
+                  </label>
+                </div>
+              </div>
+
+              <button class="mortgage-calc-calc-btn" id="passwordGenBtn" type="button" data-i18n="home.passwordGen.generate">生成密码</button>
+            </div>
+          </section>
+
+          <section class="password-gen-result-panel mortgage-calc-result-panel" aria-label="密码生成结果">
+            <div class="password-gen-panel-head mortgage-calc-panel-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">SECURE OUTPUT</span>
+                <h2 data-i18n="home.passwordGen.resultTitle">结果</h2>
+              </div>
+              <p>输出强度、历史和复制操作。</p>
+            </div>
+            <div class="password-gen-result-empty mortgage-calc-result-empty" id="passwordGenResultEmpty">
+              <div class="password-gen-empty-icon-wrap mortgage-calc-empty-icon-wrap">
+                <i data-lucide="key-round"></i>
+              </div>
+              <p data-i18n="home.passwordGen.empty">点击生成按钮创建密码</p>
+            </div>
+            <div class="password-gen-result-content mortgage-calc-result-content" id="passwordGenResultContent" style="display:none;">
+              <div class="password-gen-output-row">
+                <div class="password-gen-output" id="passwordGenOutput"></div>
+                <button class="password-gen-copy-btn" id="passwordGenCopyBtn" type="button" data-i18n="home.passwordGen.copy">复制</button>
+              </div>
+              <div class="password-gen-strength-bar-wrap">
+                <div class="password-gen-strength-label">
+                  <span data-i18n="home.passwordGen.strength">强度</span>
+                  <span id="passwordGenStrengthText">--</span>
+                </div>
+                <div class="password-gen-strength-bar">
+                  <div class="password-gen-strength-fill" id="passwordGenStrengthFill"></div>
+                </div>
+              </div>
+              <div class="password-gen-composition-grid" aria-label="密码字符构成统计">
+                <div class="password-gen-composition-item">
+                  <span data-i18n="home.passwordGen.statTotal">总长度</span>
+                  <strong id="passwordGenStatTotal">0</strong>
+                </div>
+                <div class="password-gen-composition-item">
+                  <span data-i18n="home.passwordGen.statLetters">英文字母</span>
+                  <strong id="passwordGenStatLetters">0</strong>
+                </div>
+                <div class="password-gen-composition-item">
+                  <span data-i18n="home.passwordGen.statNumbers">数字</span>
+                  <strong id="passwordGenStatNumbers">0</strong>
+                </div>
+                <div class="password-gen-composition-item">
+                  <span data-i18n="home.passwordGen.statSymbols">符号</span>
+                  <strong id="passwordGenStatSymbols">0</strong>
+                </div>
+              </div>
+              <div class="password-gen-history-section">
+                <div class="password-gen-history-heading">
+                  <div class="password-gen-history-title" data-i18n="home.passwordGen.history">生成历史</div>
+                  <button class="password-gen-clear-btn" id="passwordGenClearBtn" type="button" data-i18n="home.passwordGen.clearSensitive">清除敏感内容</button>
+                </div>
+                <div class="password-gen-history-list" id="passwordGenHistoryList"></div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>

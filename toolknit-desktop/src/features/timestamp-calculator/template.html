@@ -1,0 +1,145 @@
+<div class="pdf-merge-overlay pdf-merge-v2 timestamp-calc-v2" id="tsCalcOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="tsCalcBg"></div>
+      <header class="pdf-merge-v2-topbar">
+        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="tsCalcBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">TIMESTAMP · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="tsCalcV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="audio-convert-body pdf-merge-v2-body timestamp-calc-v2-body" id="tsCalcBody">
+        <aside class="pdf-merge-v2-poster timestamp-calc-v2-poster" aria-label="时间戳计算说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.timestampCalc.heroLabel">Time Tool</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.timestampCalc.title">时间戳计算器</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.timestampCalc.subtitle">Unix 时间戳与日期时间互转，支持秒和毫秒。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>实时取本机时间，支持秒级与毫秒级复制，适合接口调试和日志排查。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="时间戳转换流程">
+            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong>查看当前时间</strong><p>实时显示 Unix 秒与毫秒，可直接复制。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>02</span><div><strong>选择转换方向</strong><p>时间戳转日期，或把日期时间转回时间戳。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>03</span><div><strong>切换输出格式</strong><p>本地时间、UTC、ISO 8601 与相对时间按需切换。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>04</span><div><strong>复制结果</strong><p>结果区保留本地、UTC 和相对时间，方便对照。</p></div></div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace timestamp-calc-v2-workspace" id="tsCalcMain">
+          <section class="ts-calc-input-panel" aria-label="时间戳输入">
+            <div class="ts-calc-panel-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">LIVE CLOCK</span>
+                <h2 data-i18n="home.timestampCalc.currentTimestamp">当前时间戳</h2>
+              </div>
+              <p>秒级 / 毫秒级实时刷新。</p>
+            </div>
+            <div class="ts-calc-current-section">
+              <div class="ts-calc-current-row">
+                <div class="ts-calc-current-value" id="tsCalcNowSec">--</div>
+                <span class="ts-calc-unit" data-i18n="home.timestampCalc.seconds">秒</span>
+                <button class="ts-calc-copy-btn" id="tsCalcCopyNowSec" type="button" data-i18n="home.timestampCalc.copy">复制</button>
+              </div>
+              <div class="ts-calc-current-row">
+                <div class="ts-calc-current-value ts-calc-current-ms" id="tsCalcNowMs">--</div>
+                <span class="ts-calc-unit" data-i18n="home.timestampCalc.milliseconds">毫秒</span>
+                <button class="ts-calc-copy-btn" id="tsCalcCopyNowMs" type="button" data-i18n="home.timestampCalc.copy">复制</button>
+              </div>
+            </div>
+            <div class="ts-calc-mode-tabs" id="tsCalcModeTabs">
+              <button class="ts-calc-mode-tab active" type="button" data-mode="ts2date" data-i18n="home.timestampCalc.tsToDate">时间戳 → 日期</button>
+              <button class="ts-calc-mode-tab" type="button" data-mode="date2ts" data-i18n="home.timestampCalc.dateToTs">日期 → 时间戳</button>
+            </div>
+            <div class="ts-calc-form" id="tsCalcTs2DateForm">
+              <div class="ts-calc-field">
+                <label data-i18n="home.timestampCalc.enterTimestamp">输入时间戳</label>
+                <input type="text" id="tsCalcInput" placeholder="1700000000 / 1700000000000">
+              </div>
+              <div class="ts-calc-field">
+                <label data-i18n="home.timestampCalc.format">格式</label>
+                <div class="ts-calc-format-tabs" id="tsCalcFormatTabs">
+                  <button class="ts-calc-format-tab active" type="button" data-fmt="local" data-i18n="home.timestampCalc.localTime">本地时间</button>
+                  <button class="ts-calc-format-tab" type="button" data-fmt="utc" data-i18n="home.timestampCalc.utcTime">UTC 时间</button>
+                  <button class="ts-calc-format-tab" type="button" data-fmt="iso" data-i18n="home.timestampCalc.iso">ISO 8601</button>
+                  <button class="ts-calc-format-tab" type="button" data-fmt="relative" data-i18n="home.timestampCalc.relativeTime">相对时间</button>
+                </div>
+              </div>
+            </div>
+            <div class="ts-calc-form" id="tsCalcDate2TsForm" style="display:none;">
+              <div class="ts-calc-field">
+                <label data-i18n="home.timestampCalc.enterDate">选择日期时间</label>
+                <input type="datetime-local" id="tsCalcDateInput" step="1">
+              </div>
+              <div class="ts-calc-field">
+                <label data-i18n="home.timestampCalc.format">格式</label>
+                <div class="ts-calc-format-tabs" id="tsCalcFormatTabs2">
+                  <button class="ts-calc-format-tab active" type="button" data-fmt="unix" data-i18n="home.timestampCalc.unix">Unix 秒</button>
+                  <button class="ts-calc-format-tab" type="button" data-fmt="ms" data-i18n="home.timestampCalc.ms">毫秒</button>
+                  <button class="ts-calc-format-tab" type="button" data-fmt="iso" data-i18n="home.timestampCalc.iso">ISO 8601</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="ts-calc-result-panel" aria-label="时间戳转换结果">
+            <div class="ts-calc-panel-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">CONVERSION</span>
+                <h2 data-i18n="home.timestampCalc.result">转换结果</h2>
+              </div>
+              <p>同时给出本地、UTC 和相对时间。</p>
+            </div>
+            <div class="ts-calc-result-empty" id="tsCalcResultEmpty">
+              <div class="ts-calc-empty-icon-wrap">
+                <i data-lucide="clock"></i>
+              </div>
+              <p data-i18n="home.timestampCalc.result">转换结果</p>
+            </div>
+            <div class="ts-calc-result-content" id="tsCalcResultContent" style="display:none;">
+              <div class="ts-calc-result-card" id="tsCalcResultCard">
+                <div class="ts-calc-result-label" id="tsCalcResultLabel" data-i18n="home.timestampCalc.resultLabel">结果</div>
+                <div class="ts-calc-result-value-row">
+                  <div class="ts-calc-result-value" id="tsCalcResultValue">--</div>
+                  <button class="ts-calc-copy-btn" id="tsCalcCopyResult" type="button" data-i18n="home.timestampCalc.copy">复制</button>
+                </div>
+              </div>
+              <div class="ts-calc-detail" id="tsCalcDetail">
+                <div class="ts-calc-detail-row">
+                  <span data-i18n="home.timestampCalc.localTime">本地时间</span>
+                  <span id="tsCalcDetailLocal">--</span>
+                </div>
+                <div class="ts-calc-detail-row">
+                  <span data-i18n="home.timestampCalc.utcTime">UTC 时间</span>
+                  <span id="tsCalcDetailUtc">--</span>
+                </div>
+                <div class="ts-calc-detail-row">
+                  <span data-i18n="home.timestampCalc.relativeTime">相对时间</span>
+                  <span id="tsCalcDetailRelative">--</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>

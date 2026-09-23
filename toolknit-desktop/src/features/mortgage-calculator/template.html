@@ -1,0 +1,144 @@
+<div class="pdf-merge-overlay pdf-merge-v2 mortgage-calc-v2" id="mortgageCalcOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="mortgageCalcBg"></div>
+      <header class="pdf-merge-v2-topbar">
+        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="mortgageCalcBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">MORTGAGE · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="mortgageCalcV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="audio-convert-body pdf-merge-v2-body mortgage-calc-v2-body" id="mortgageCalcBody">
+        <aside class="pdf-merge-v2-poster mortgage-calc-v2-poster" aria-label="房贷计算说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.mortgageCalc.heroLabel">Finance Tool</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.mortgageCalc.title">房贷计算器</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.mortgageCalc.subtitle">支持等额本息、等额本金两种还款方式，自动计算月供、总利息、还款明细。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>贷款参数只在本机计算，适合提前估算月供压力与总利息成本。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="房贷计算流程">
+            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong>输入贷款参数</strong><p>填写贷款金额、期限与年利率。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>02</span><div><strong>选择还款方式</strong><p>等额本息月供固定，等额本金逐月递减。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>03</span><div><strong>计算总成本</strong><p>查看月供、总还款、总利息与利息占比。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>04</span><div><strong>核对明细</strong><p>滚动查看每期本金、利息和剩余本金。</p></div></div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace mortgage-calc-v2-workspace" id="mortgageCalcMain">
+          <section class="mortgage-calc-input-panel" aria-label="贷款参数输入">
+            <div class="mortgage-calc-panel-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">LOAN DATA</span>
+                <h2>贷款参数</h2>
+              </div>
+              <p>填好参数后点击计算。</p>
+            </div>
+            <div class="mortgage-calc-form">
+              <div class="mortgage-calc-field">
+                <label data-i18n="home.mortgageCalc.loanAmount">贷款金额</label>
+                <div class="mortgage-calc-input-row">
+                  <input type="number" id="mortgageCalcAmount" placeholder="100" value="100" min="1" max="10000" step="1">
+                  <span class="mortgage-calc-unit" data-i18n="home.mortgageCalc.loanAmountUnit">万元</span>
+                </div>
+              </div>
+              <div class="mortgage-calc-field">
+                <label data-i18n="home.mortgageCalc.loanTerm">贷款期限</label>
+                <div class="mortgage-calc-input-row">
+                  <input type="number" id="mortgageCalcTerm" placeholder="30" value="30" min="1" max="50" step="1">
+                  <span class="mortgage-calc-unit" data-i18n="home.mortgageCalc.loanTermUnit">年</span>
+                </div>
+              </div>
+              <div class="mortgage-calc-field">
+                <label data-i18n="home.mortgageCalc.interestRate">年利率</label>
+                <div class="mortgage-calc-input-row">
+                  <input type="number" id="mortgageCalcRate" placeholder="4.2" value="4.2" min="0.01" max="20" step="0.01">
+                  <span class="mortgage-calc-unit" data-i18n="home.mortgageCalc.interestRateUnit">%</span>
+                </div>
+              </div>
+              <div class="mortgage-calc-field mortgage-calc-field-wide">
+                <label data-i18n="home.mortgageCalc.paymentMethod">还款方式</label>
+                <div class="mortgage-calc-method-tabs" id="mortgageCalcMethodTabs">
+                  <button class="mortgage-calc-method-tab active" type="button" data-method="equalPayment" data-i18n="home.mortgageCalc.equalPayment">等额本息</button>
+                  <button class="mortgage-calc-method-tab" type="button" data-method="equalPrincipal" data-i18n="home.mortgageCalc.equalPrincipal">等额本金</button>
+                </div>
+              </div>
+              <button class="mortgage-calc-calc-btn" id="mortgageCalcBtn" type="button" data-i18n="home.mortgageCalc.calculate">计算</button>
+            </div>
+          </section>
+
+          <section class="mortgage-calc-result-panel" aria-label="房贷计算结果">
+            <div class="mortgage-calc-panel-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">PAYMENT PLAN</span>
+                <h2 data-i18n="home.mortgageCalc.result">计算结果</h2>
+              </div>
+              <p>月供、利息和完整还款明细。</p>
+            </div>
+            <div class="mortgage-calc-result-empty" id="mortgageCalcResultEmpty">
+              <div class="mortgage-calc-empty-icon-wrap">
+                <i data-lucide="landmark"></i>
+              </div>
+              <p data-i18n="home.mortgageCalc.result">计算结果</p>
+            </div>
+            <div class="mortgage-calc-result-content" id="mortgageCalcResultContent" style="display:none;">
+              <div class="mortgage-calc-cards">
+                <div class="mortgage-calc-card">
+                  <div class="mortgage-calc-card-label" id="mortgageCalcMonthlyLabel" data-i18n="home.mortgageCalc.monthlyPayment">月供</div>
+                  <div class="mortgage-calc-card-value" id="mortgageCalcMonthlyValue">--</div>
+                  <div class="mortgage-calc-card-tag" id="mortgageCalcMonthlyTag" data-i18n="home.mortgageCalc.fixedMonthly">每月固定</div>
+                </div>
+                <div class="mortgage-calc-card">
+                  <div class="mortgage-calc-card-label" data-i18n="home.mortgageCalc.totalPayment">还款总额</div>
+                  <div class="mortgage-calc-card-value" id="mortgageCalcTotalValue">--</div>
+                  <div class="mortgage-calc-card-tag" id="mortgageCalcTotalTag">--</div>
+                </div>
+                <div class="mortgage-calc-card">
+                  <div class="mortgage-calc-card-label" data-i18n="home.mortgageCalc.totalInterest">总利息</div>
+                  <div class="mortgage-calc-card-value" id="mortgageCalcInterestValue">--</div>
+                  <div class="mortgage-calc-card-tag" id="mortgageCalcInterestTag">--</div>
+                </div>
+                <div class="mortgage-calc-card">
+                  <div class="mortgage-calc-card-label" data-i18n="home.mortgageCalc.interestRatio">利息占比</div>
+                  <div class="mortgage-calc-card-value" id="mortgageCalcRatioValue">--</div>
+                  <div class="mortgage-calc-card-tag">--</div>
+                </div>
+              </div>
+              <div class="mortgage-calc-schedule-section">
+                <div class="mortgage-calc-schedule-title" data-i18n="home.mortgageCalc.paymentSchedule">还款明细</div>
+                <div class="mortgage-calc-schedule-table">
+                  <div class="mortgage-calc-schedule-header">
+                    <span data-i18n="home.mortgageCalc.month">期</span>
+                    <span data-i18n="home.mortgageCalc.monthlyPrincipal">本金</span>
+                    <span data-i18n="home.mortgageCalc.monthlyInterest">利息</span>
+                    <span data-i18n="home.mortgageCalc.remainingPrincipal">剩余本金</span>
+                  </div>
+                  <div class="mortgage-calc-schedule-body" id="mortgageCalcScheduleBody"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>

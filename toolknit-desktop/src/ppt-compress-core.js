@@ -403,6 +403,7 @@ async function buildImageCompressionPlan(zip, media, config, options, removedPat
 
   const occupiedPaths = new Set(Object.keys(zip.files).map(normalizeZipPath).filter(Boolean));
   for (const partPath of media.sort()) {
+    if (options.signal?.aborted) fail('cancelled', 'PPT compression was cancelled.');
     if (removedPaths.has(partPath)) continue;
     const extension = extensionFromPath(partPath);
     if (!isCompressibleMediaExtension(extension)) {
@@ -425,7 +426,8 @@ async function buildImageCompressionPlan(zip, media, config, options, removedPat
         level: config.level,
         quality: imageConfig.quality,
         maxDimension: imageConfig.maxDimension,
-        allowPngToJpeg: imageConfig.allowPngToJpeg
+        allowPngToJpeg: imageConfig.allowPngToJpeg,
+        signal: options.signal
       }), extension);
     } catch {
       plan.operations.failed_images += 1;
@@ -568,6 +570,7 @@ function levelConfig(level) {
 }
 
 export async function compressPptxBytes(bytes, options = {}) {
+  if (options.signal?.aborted) fail('cancelled', 'PPT compression was cancelled.');
   const data = assertPptxCompressBytes(bytes, options.sourceName || 'presentation.pptx');
   const config = levelConfig(options.level || 'medium');
   let zip;
@@ -654,6 +657,7 @@ export async function compressPptxBytes(bytes, options = {}) {
     options,
     removedPaths
   );
+  if (options.signal?.aborted) fail('cancelled', 'PPT compression was cancelled.');
   for (const [key, value] of Object.entries(imagePlan.operations)) {
     operations[key] = (operations[key] || 0) + value;
   }
@@ -708,6 +712,7 @@ export async function compressPptxBytes(bytes, options = {}) {
     removedPaths,
     additions: imagePlan.additions
   });
+  if (options.signal?.aborted) fail('cancelled', 'PPT compression was cancelled.');
   const compressed = await outputZip.generateAsync({
     type: 'uint8array',
     compression: 'DEFLATE',

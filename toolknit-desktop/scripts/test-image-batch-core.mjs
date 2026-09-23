@@ -3,6 +3,7 @@ import {
   IMAGE_BATCH_LIMITS,
   ImageBatchError,
   getImageBatchFailureSummary,
+  getImageCompressionOutcome,
   getImageExtension,
   isSupportedImageCompressionFileName,
   isSupportedImageFileName,
@@ -11,6 +12,9 @@ import {
   validateImageCompressionSelection,
   validateImageBatchSelection
 } from '../src/image-batch-core.js';
+
+assert.equal(IMAGE_BATCH_LIMITS.maxBytesPerFile, 100 * 1024 * 1024);
+assert.equal(IMAGE_BATCH_LIMITS.maxPixelsPerFile, 160_000_000);
 
 assert.equal(getImageExtension('photo.JPEG'), 'jpeg');
 assert.equal(getImageExtension('no-extension'), '');
@@ -41,6 +45,14 @@ assert.deepEqual(getImageBatchFailureSummary({ fail_count: 0, errors: [] }), {
   visibleErrors: [],
   remainingCount: 0
 });
+
+for (const [success, fail, total, unchanged] of [
+  [3, 0, 3, 0], [1, 0, 3, 2], [0, 0, 3, 3], [1, 1, 3, 1], [0, 3, 3, 0], [0, 1, 3, 2]
+]) {
+  assert.deepEqual(getImageCompressionOutcome({ success_count: success, fail_count: fail, errors: [] }, total), {
+    successCount: success, failCount: fail, unchangedCount: unchanged
+  });
+}
 
 const selected = validateImageBatchSelection([
   { name: 'one.png', path: 'D:/input/one.png', size: 1024 },

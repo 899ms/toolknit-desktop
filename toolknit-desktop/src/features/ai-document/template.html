@@ -1,0 +1,313 @@
+<div class="pdf-merge-overlay pdf-merge-v2 ai-doc-overlay ai-doc-v2" id="aiDocOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="aiDocBg"></div>
+      <header class="pdf-merge-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="aiDocBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">AI DOCUMENT · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span data-i18n="home.webVersion">网页版</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span data-i18n="home.supportAuthor">支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="aiDocV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="pdf-merge-v2-body ai-doc-v2-body" id="aiDocBody">
+        <aside class="pdf-merge-v2-poster ai-doc-v2-poster" aria-label="AI 文档生成说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.aiDoc.heroLabel">AI Document</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.aiDoc.title">AI 文档生成</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.aiDoc.subtitle">对话式描述需求，AI 自动规划排版，生成专业 PDF 文档。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>AI REQUEST</span>
+            <strong data-i18n="home.aiDoc.localNote">AI 会调用你配置的模型服务生成内容；渲染、编辑和导出 PDF 都在本机完成。</strong>
+          </div>
+          <div class="ai-doc-v2-capability-grid" aria-label="AI 文档能力">
+            <div><strong>1-8</strong><span data-i18n="home.aiDoc.capPages">页 A4 文档</span></div>
+            <div><strong>PDF</strong><span data-i18n="home.aiDoc.capExport">本地导出</span></div>
+            <div><strong>LAYERS</strong><span data-i18n="home.aiDoc.capLayers">图层可编辑</span></div>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="AI 文档生成流程">
+            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong data-i18n="home.aiDoc.step1Title">描述需求</strong><p data-i18n="home.aiDoc.step1Desc">说清用途、页数、风格、结构和是否允许模拟数据。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>02</span><div><strong data-i18n="home.aiDoc.step2Title">生成版式</strong><p data-i18n="home.aiDoc.step2Desc">AI 会把标题、正文、表格、强调块规划成 A4 页面。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>03</span><div><strong data-i18n="home.aiDoc.step3Title">预览编辑</strong><p data-i18n="home.aiDoc.step3Desc">点击缩略图进入编辑器，微调文字、图层、字号和图片。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>04</span><div><strong data-i18n="home.aiDoc.step4Title">导出交付</strong><p data-i18n="home.aiDoc.step4Desc">最终使用同一渲染器导出 PDF，保证预览和文件一致。</p></div></div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace ai-doc-v2-workspace" id="aiDocMain">
+          <section class="ai-doc-chat-panel ai-doc-v2-chat-card" id="aiDocChatPanel" aria-label="AI 文档需求对话">
+            <div class="ai-doc-v2-card-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">PROMPT BRIEF</span>
+                <h2 data-i18n="home.aiDoc.demandTitle">文档需求</h2>
+              </div>
+              <p data-i18n="home.aiDoc.demandHint">用自然语言描述即可；越具体，版式和内容越稳。</p>
+            </div>
+            <div class="ai-doc-chat-messages" id="aiDocChatMessages">
+              <div class="ai-doc-chat-msg ai-doc-chat-msg-ai">
+                <div class="ai-doc-chat-avatar"><img src="/assets/toolknit-icon.png" alt="AI" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"></div>
+                <div class="ai-doc-chat-bubble" data-i18n="home.aiDoc.welcome">你好！你可以直接说清文档用途、页数、风格、结构和是否允许模拟数据。我会规划版式，并把标题、正文、表格、强调块等做成可编辑模块。</div>
+              </div>
+              <div class="ai-doc-chat-msg ai-doc-chat-msg-ai">
+                <div class="ai-doc-chat-avatar"><img src="/assets/toolknit-icon.png" alt="AI" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"></div>
+                <div class="ai-doc-chat-bubble ai-doc-chip-bubble">
+                  <div class="ai-doc-chip-title" data-i18n="home.aiDoc.chipTitle">点击场景可填入一段高质量示例指令：</div>
+                  <div class="ai-doc-prompt-chips" id="aiDocPromptChips">
+                    <button class="ai-doc-prompt-chip" data-i18n="home.aiDoc.chipRent" data-prompt="请帮我生成一份标准个人租房合同，要求：1. 包含出租方和承租方信息栏；2. 明确房屋地址、面积、租金、押金、付款方式；3. 详细列出租赁期限、房屋用途、维修责任；4. 加入违约条款、提前解约条件和费用承担；5. 末尾预留双方签字和日期区域；6. 排版专业，使用 A4 页面，包含标题、副标题、章节标题、正文、列表项、签字区和日期。内容详实，每页至少 15 个区域，禁止大面积留白。">租房合同</button>
+                    <button class="ai-doc-prompt-chip" data-i18n="home.aiDoc.chipResign" data-prompt="请帮我生成一份正式离职申请书/离职报告，要求：1. 标题为离职报告；2. 包含申请人信息、部门、职位、入职日期；3. 说明离职原因、最后工作日；4. 表达感谢和工作交接意愿；5. 加入交接事项清单；6. 末尾预留签名和日期区域；7. 排版专业，使用 A4 页面，包含标题、副标题、章节标题、正文、列表项、签字区和日期。内容详实，每页至少 15 个区域。">离职报告</button>
+                    <button class="ai-doc-prompt-chip" data-i18n="home.aiDoc.chipMeeting" data-prompt="请帮我生成一份项目周会会议纪要，要求：1. 包含会议主题、时间、地点、主持人、参会人员；2. 列出会议议程和讨论事项；3. 详细记录每个议题的讨论内容、结论和待办事项；4. 明确责任人（Responsible）和截止时间（Deadline）；5. 加入下次会议安排；6. 排版专业，使用 A4 页面，包含标题、副标题、章节标题、正文、列表项。内容详实，每页至少 15 个区域，禁止大面积留白。">会议纪要</button>
+                    <button class="ai-doc-prompt-chip" data-i18n="home.aiDoc.chipPrd" data-prompt="请帮我生成一份产品需求文档（PRD），要求：1. 标题为产品需求文档；2. 包含产品背景、目标用户、核心目标；3. 详细描述功能需求，拆分为多个功能模块；4. 每个功能包含需求描述、业务流程、输入输出、异常处理；5. 加入非功能需求、项目排期、风险说明；6. 排版专业，使用 A4 页面，包含标题、副标题、章节标题、正文、列表项、表格行。内容详实，每页至少 15 个区域，禁止大面积留白。">产品需求文档</button>
+                    <button class="ai-doc-prompt-chip" data-i18n="home.aiDoc.chipBusiness" data-prompt="请帮我生成一份初创项目商业计划书，要求：1. 标题为商业计划书；2. 包含项目概述、市场痛点、解决方案；3. 详细分析目标市场、市场规模、竞争对手；4. 描述商业模式、盈利模式、运营计划；5. 介绍团队、财务预测、融资需求；6. 加入风险分析和未来规划；7. 排版专业，使用 A4 页面，至少 3 页，包含标题、副标题、章节标题、正文、列表项、表格行、强调段落和注释。内容详实，每页至少 15 个区域。">商业计划书</button>
+                    <button class="ai-doc-prompt-chip" data-i18n="home.aiDoc.chipResume" data-prompt="请帮我生成一份个人简历，要求：1. 标题为个人简历；2. 包含个人信息、联系方式、求职意向；3. 详细列出教育背景、工作经历（每段经历包含公司名称、职位、时间、工作职责和业绩）；4. 列出专业技能、项目经验、证书荣誉；5. 加入自我评价；6. 排版专业，使用 A4 页面，包含标题、副标题、章节标题、正文、列表项、表格行。内容详实，每页至少 15 个区域，禁止大面积留白。">个人简历</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="ai-doc-v2-input-helper">
+              <span data-i18n="home.aiDoc.inputHelp">Enter 发送，Shift + Enter 换行</span>
+              <span id="aiDocInputCounter">0</span>
+            </div>
+            <div class="ai-doc-chat-input-area">
+              <textarea class="ai-doc-chat-input" id="aiDocChatInput" data-i18n-placeholder="home.aiDoc.inputPlaceholder" placeholder="描述文档用途、页数、风格、结构、数据要求..." rows="3"></textarea>
+              <button class="ai-doc-chat-send" id="aiDocChatSend" data-i18n-aria-label="home.aiDoc.send" aria-label="发送">
+                <i data-lucide="send"></i>
+                <span data-i18n="home.aiDoc.send">发送</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="ai-doc-canvas-panel ai-doc-v2-preview-card" id="aiDocCanvasPanel" aria-label="AI 文档预览">
+            <div class="ai-doc-v2-card-head ai-doc-v2-preview-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">A4 PREVIEW</span>
+                <h2 data-i18n="home.aiDoc.previewTitle">文档预览</h2>
+              </div>
+              <p id="aiDocPreviewMeta" data-i18n="home.aiDoc.previewWaiting">等待生成</p>
+            </div>
+            <div class="ai-doc-canvas-empty" id="aiDocCanvasEmpty">
+              <div class="ai-doc-v2-empty-mark">
+                <i data-lucide="file-text"></i>
+              </div>
+              <p data-i18n="home.aiDoc.canvasEmptyHint">AI 生成文档后预览将显示在此处</p>
+              <div class="ai-doc-v2-empty-guide">
+                <div><i data-lucide="message-square-text"></i><span data-i18n="home.aiDoc.emptyGuidePrompt">先把用途、页数、风格说清楚</span></div>
+                <div><i data-lucide="scan-eye"></i><span data-i18n="home.aiDoc.emptyGuidePreview">生成后点击页面进入编辑器</span></div>
+                <div><i data-lucide="download"></i><span data-i18n="home.aiDoc.emptyGuideExport">编辑完成后本地导出 PDF</span></div>
+              </div>
+            </div>
+            <div class="ai-doc-thumb-scroll" id="aiDocThumbScroll" style="display:none;">
+              <!-- A4 thumbnails will be rendered here -->
+            </div>
+            <div class="ai-doc-canvas-toolbar" id="aiDocCanvasToolbar" style="display:none;">
+              <button class="ai-doc-pill-btn ai-doc-secondary-btn" id="aiDocResetBtn" type="button">
+                <i data-lucide="rotate-ccw"></i>
+                <span data-i18n="home.aiDoc.reset">重新开始</span>
+              </button>
+              <button class="ai-doc-pill-btn ai-doc-secondary-btn" id="aiDocOpenEditorBtn" type="button">
+                <i data-lucide="scan-eye"></i>
+                <span data-i18n="home.aiDoc.openEditor">进入编辑器</span>
+              </button>
+              <button class="ai-doc-pill-btn" id="aiDocExportBtn" type="button">
+                <i data-lucide="download"></i>
+                <span data-i18n="home.aiDoc.export">导出 PDF</span>
+              </button>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+<div class="ai-doc-edit-overlay ai-doc-edit-v2 pdf-merge-v2" id="aiDocEditOverlay">
+      <div class="plasma-bg ai-doc-edit-bg" id="aiDocEditBg"></div>
+      <header class="pdf-merge-v2-topbar ai-doc-edit-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left ai-doc-edit-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="aiDocEditBack" type="button" data-i18n-title="settings.back" title="返回预览">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag ai-doc-edit-top-tag">AI DOCUMENT EDITOR · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span data-i18n="home.webVersion">网页版</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span data-i18n="home.supportAuthor">支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="aiDocEditV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="ai-doc-edit-workbench">
+        <section class="ai-doc-edit-preview-pane" aria-label="文档页面预览">
+          <div class="ai-doc-edit-preview-head">
+            <div>
+              <span>CANVAS PREVIEW</span>
+              <h2>文档画布</h2>
+            </div>
+            <p>点击图层后在右侧调整文字、颜色、层级和细节样式。</p>
+          </div>
+          <div class="ai-doc-edit-scroll" id="aiDocEditScroll">
+            <!-- Full A4 pages rendered here for editing -->
+          </div>
+        </section>
+
+        <aside class="ai-doc-edit-side-panel" aria-label="文档编辑操作区">
+          <button class="ai-doc-pill-btn ai-doc-edit-export-btn" id="aiDocEditExportBtn" type="button">
+            <i data-lucide="download"></i>
+            <span data-i18n="home.aiDoc.export">导出 PDF</span>
+          </button>
+
+          <section class="ai-doc-edit-side-card ai-doc-edit-side-card-status">
+            <div class="ai-doc-edit-side-card-head">
+              <span>01 / LAYER</span>
+              <h3>当前图层</h3>
+            </div>
+            <div class="ai-doc-edit-selection-status" id="aiDocSelectionStatus" data-i18n="home.aiDoc.noLayerSelected">未选择图层</div>
+            <div class="ai-doc-edit-tool-row" role="toolbar" aria-label="撤销与重做">
+              <button class="ai-doc-edit-icon-btn" id="aiDocUndoBtn" type="button" data-i18n-title="home.aiDoc.undo" disabled>
+                <i data-lucide="undo-2"></i>
+                <span>撤销</span>
+              </button>
+              <button class="ai-doc-edit-icon-btn" id="aiDocRedoBtn" type="button" data-i18n-title="home.aiDoc.redo" disabled>
+                <i data-lucide="redo-2"></i>
+                <span>重做</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="ai-doc-edit-side-card">
+            <div class="ai-doc-edit-side-card-head">
+              <span>02 / TEXT</span>
+              <h3>文字样式</h3>
+            </div>
+            <div class="ai-doc-edit-style-group" aria-label="文档样式">
+              <label class="ai-doc-style-number" title="字号">
+                <span>Aa</span>
+                <input id="aiDocFontSizeInput" type="number" min="6" max="96" step="1" value="14" disabled>
+              </label>
+              <button class="ai-doc-edit-icon-btn" id="aiDocBoldBtn" type="button" title="加粗" disabled><i data-lucide="bold"></i><span>加粗</span></button>
+              <div class="ai-doc-style-align-group" role="group" aria-label="文字对齐">
+                <button class="ai-doc-edit-icon-btn" id="aiDocAlignLeftBtn" type="button" title="左对齐" disabled><i data-lucide="align-left"></i></button>
+                <button class="ai-doc-edit-icon-btn" id="aiDocAlignCenterBtn" type="button" title="居中" disabled><i data-lucide="align-center"></i></button>
+                <button class="ai-doc-edit-icon-btn" id="aiDocAlignRightBtn" type="button" title="右对齐" disabled><i data-lucide="align-right"></i></button>
+              </div>
+            </div>
+          </section>
+
+          <section class="ai-doc-edit-side-card">
+            <div class="ai-doc-edit-side-card-head">
+              <span>03 / COLOR</span>
+              <h3>颜色与边框</h3>
+            </div>
+            <div class="ai-doc-edit-color-grid" aria-label="颜色设置">
+              <label class="ai-doc-color-control ai-doc-color-control-text" title="文字颜色"><span>A</span><input id="aiDocTextColorInput" type="color" value="#242424" disabled><em>文字</em></label>
+              <label class="ai-doc-color-control ai-doc-color-control-background" title="背景颜色"><span></span><input id="aiDocBackgroundColorInput" type="color" value="#ffffff" disabled><em>背景</em></label>
+              <label class="ai-doc-color-control ai-doc-color-control-border" title="边框颜色"><span></span><input id="aiDocBorderColorInput" type="color" value="#d8d8d6" disabled><em>边框</em></label>
+            </div>
+          </section>
+
+          <section class="ai-doc-edit-side-card">
+            <div class="ai-doc-edit-side-card-head">
+              <span>04 / ARRANGE</span>
+              <h3>层级操作</h3>
+            </div>
+            <div class="ai-doc-edit-tool-row ai-doc-edit-arrange-row" role="toolbar" aria-label="层级操作">
+              <button class="ai-doc-edit-icon-btn" id="aiDocMoveUpBtn" type="button" data-i18n-title="home.aiDoc.moveLayerUp" disabled>
+                <i data-lucide="arrow-up"></i>
+                <span>上移</span>
+              </button>
+              <button class="ai-doc-edit-icon-btn" id="aiDocMoveDownBtn" type="button" data-i18n-title="home.aiDoc.moveLayerDown" disabled>
+                <i data-lucide="arrow-down"></i>
+                <span>下移</span>
+              </button>
+              <button class="ai-doc-edit-icon-btn ai-doc-edit-delete-btn" id="aiDocDeleteBtn" type="button" data-i18n-title="home.aiDoc.deleteLayer" disabled>
+                <i data-lucide="trash-2"></i>
+                <span>删除</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="ai-doc-edit-side-card">
+            <div class="ai-doc-edit-side-card-head">
+              <span>05 / GLOBAL</span>
+              <h3>全文样式</h3>
+            </div>
+            <div class="ai-doc-global-style-group" aria-label="全文样式">
+              <select id="aiDocGlobalAlignSelect" title="全文文字对齐">
+                <option value="">全文对齐</option><option value="left">全文左对齐</option><option value="center">全文居中</option><option value="right">全文右对齐</option>
+              </select>
+              <button class="ai-doc-global-style-apply" id="aiDocApplyGlobalStyleBtn" type="button" title="应用到全部文字">应用到全部</button>
+            </div>
+          </section>
+
+          <section class="ai-doc-edit-side-card ai-doc-edit-side-card-detail">
+            <div class="ai-doc-edit-side-card-head">
+              <span>06 / DETAIL</span>
+              <h3>细节样式</h3>
+              <button class="ai-doc-edit-icon-btn ai-doc-more-style-btn" id="aiDocMoreStyleBtn" type="button" title="更多样式" disabled><i data-lucide="sliders-horizontal"></i><span>展开</span></button>
+            </div>
+            <div class="ai-doc-style-inspector" id="aiDocStyleInspector" aria-hidden="true">
+              <div class="ai-doc-style-inspector-title">细节样式 <button id="aiDocStyleInspectorClose" type="button" title="关闭"><i data-lucide="x"></i></button></div>
+              <label>行距 <output id="aiDocLineHeightValue">1.58</output><input id="aiDocLineHeightInput" type="range" min="1" max="3" step="0.05" value="1.58" disabled></label>
+              <label>内边距 <output id="aiDocPaddingValue">0</output><input id="aiDocPaddingInput" type="range" min="0" max="80" step="1" value="0" disabled></label>
+              <label>边框粗细 <output id="aiDocBorderWidthValue">0</output><input id="aiDocBorderWidthInput" type="range" min="0" max="12" step="1" value="0" disabled></label>
+              <label>透明度 <output id="aiDocOpacityValue">100%</output><input id="aiDocOpacityInput" type="range" min="0.05" max="1" step="0.05" value="1" disabled></label>
+            </div>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+<div class="audio-clip-success-overlay" id="aiDocSuccessOverlay">
+      <div class="audio-clip-success-dialog">
+        <div class="audio-clip-success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <h3 class="audio-clip-success-title" data-i18n="home.aiDoc.exportSuccess">PDF 已导出</h3>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.aiDoc.successPath">保存路径</span>
+            <span class="audio-convert-success-value" id="aiDocSuccessPath"></span>
+          </div>
+        </div>
+        <div class="audio-clip-success-actions">
+          <button class="audio-clip-success-btn audio-clip-success-btn-secondary" id="aiDocSuccessOpenFolder" data-i18n="home.aiDoc.openFolder">打开文件夹</button>
+          <button class="audio-clip-success-btn audio-clip-success-btn-primary" id="aiDocSuccessOk" data-i18n="home.aiDoc.ok">确定</button>
+        </div>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask" id="aiDocMask">
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="audio-convert-process-text" id="aiDocMaskText" data-i18n="home.aiDoc.generating">AI 正在生成文档...</div>
+    </div>

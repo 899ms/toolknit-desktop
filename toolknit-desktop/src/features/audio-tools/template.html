@@ -1,0 +1,339 @@
+<div class="pdf-merge-overlay pdf-merge-v2 bpm-detect-v2 bpm-detect-overlay" id="bpmDetectOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="bpmPlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="bpmDropZone"><span class="drop-hint" data-i18n="home.bpmDetect.dropHint">松手即可上传</span></div>
+      <header class="pdf-merge-v2-topbar bpm-detect-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left bpm-detect-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="bpmDetectBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag bpm-detect-v2-top-tag">BPM DETECTOR · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="bpmDetectV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="pdf-merge-v2-body bpm-detect-body" id="bpmDetectBody">
+        <aside class="bpm-detect-card bpm-detect-control-card">
+          <div class="bpm-detect-hero-top" id="bpmDetectHeroTop">
+            <div class="pdf-merge-v2-poster-kicker" data-i18n="home.bpmDetect.heroLabel">BPM Detector</div>
+            <h1 class="pdf-merge-v2-title bpm-hero-title" data-i18n="home.bpmDetect.title">BPM 节拍测速器</h1>
+            <p class="pdf-merge-v2-subtitle" data-i18n="home.bpmDetect.subtitle">上传纯音乐或 Beat，自动分析检测 BPM 节拍速度，支持常见音频格式，离线分析不上传服务器。</p>
+            <button class="bpm-detect-cta pdf-merge-v2-cta" id="bpmDetectCta" type="button">
+              <i data-lucide="upload"></i>
+              <span data-i18n="home.bpmDetect.cta">上传音频文件</span>
+            </button>
+          </div>
+          <div class="bpm-detect-flow" aria-label="BPM 检测流程">
+            <div><span>01</span><strong>上传音频</strong><p>支持 MP3、WAV、FLAC、AAC、OGG、M4A。</p></div>
+            <div><span>02</span><strong>本地分析</strong><p>限制安全内存占用，适合纯音乐和 Beat。</p></div>
+            <div><span>03</span><strong>查看节拍</strong><p>输出 BPM、波形时间线和倍速提示。</p></div>
+          </div>
+          <div class="bpm-formats">
+            <h3 class="bpm-formats-title" data-i18n="home.bpmDetect.formatsTitle">支持格式</h3>
+            <div class="bpm-formats-grid">
+              <div class="bpm-format-chip"><span>MP3</span></div>
+              <div class="bpm-format-chip"><span>WAV</span></div>
+              <div class="bpm-format-chip"><span>FLAC</span></div>
+              <div class="bpm-format-chip"><span>AAC</span></div>
+              <div class="bpm-format-chip"><span>OGG</span></div>
+              <div class="bpm-format-chip"><span>M4A</span></div>
+            </div>
+          </div>
+        </aside>
+        <section class="bpm-detect-card bpm-analysis-panel" aria-label="BPM 检测结果">
+          <div class="bpm-panel-head">
+            <span class="pdf-merge-v2-section-kicker">ANALYSIS RESULT</span>
+            <h2>检测结果</h2>
+            <p>上传完成后会在这里显示节拍速度、波形节拍点和可能的半速 / 倍速提示。</p>
+          </div>
+          <div class="bpm-result" id="bpmResult">
+            <div class="bpm-result-number">
+              <span id="bpmResultNumber">--</span>
+              <span class="bpm-unit" data-i18n="home.bpmDetect.bpmUnit">BPM</span>
+            </div>
+            <div class="bpm-result-timeline">
+              <span class="bpm-timeline-label" data-i18n="home.bpmDetect.beatTimeline">节拍时间线</span>
+              <div class="bpm-timeline-track" id="bpmTimelineTrack"></div>
+            </div>
+            <div class="bpm-result-meta" id="bpmResultMeta" aria-live="polite">
+              <div class="bpm-result-meta-item">
+                <span data-i18n="home.bpmDetect.confidenceLabel">置信度</span>
+                <strong id="bpmConfidenceValue">--</strong>
+              </div>
+              <div class="bpm-result-meta-item">
+                <span data-i18n="home.bpmDetect.keyLabel">可能调式</span>
+                <strong id="bpmKeyValue">--</strong>
+              </div>
+            </div>
+            <div class="bpm-result-hint" id="bpmResultHint"></div>
+            <div class="bpm-candidate-list" id="bpmCandidateList" aria-label="候选 BPM"></div>
+            <div class="bpm-result-actions">
+              <button class="bpm-result-btn bpm-result-btn-primary" id="bpmReanalyzeBtn" type="button" data-i18n="home.bpmDetect.reanalyze">重新分析</button>
+            </div>
+          </div>
+          <div class="bpm-analysis-empty" id="bpmAnalysisEmpty" data-i18n="home.bpmDetect.analysisEmpty">分析完成后，这里会显示 BPM 数字、节拍时间线和倍速提示。</div>
+        </section>
+        <section class="bpm-demo-panel bpm-detect-card" id="bpmDemoOverlay" aria-label="演示节拍工作区">
+          <div class="bpm-demo-content">
+            <div class="bpm-demo-header">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">BEAT DEMO WORKSPACE</span>
+                <h2 data-i18n="home.bpmDetect.demoBeat">演示节拍</h2>
+              </div>
+              <button class="bpm-demo-close" id="bpmDemoClose" type="button" title="清空演示">
+                <i data-lucide="headphones"></i>
+              </button>
+            </div>
+            <div class="bpm-demo-body">
+              <p class="bpm-demo-status" id="bpmDemoStatusText" data-i18n="home.bpmDetect.demoWorkspaceHint">分析完成后，即可在这里播放音频并叠加节拍器。</p>
+              <div class="bpm-demo-bpm-display">
+                <span class="bpm-demo-bpm-number" id="bpmDemoBpmNumber">--</span>
+                <span class="bpm-demo-bpm-unit" data-i18n="home.bpmDetect.bpmUnit">BPM</span>
+              </div>
+              <div class="bpm-demo-visualizer" id="bpmDemoVisualizer">
+                <div class="bpm-demo-rings" aria-hidden="true"><span></span><span></span><span></span></div>
+                <div class="bpm-demo-beat-indicator" id="bpmDemoBeatIndicator"></div>
+              </div>
+              <div class="bpm-demo-controls">
+                <button class="bpm-demo-play-btn" id="bpmDemoPlayBtn" type="button" disabled>
+                  <i data-lucide="play"></i>
+                  <span data-i18n="home.bpmDetect.startPlayback">开始播放</span>
+                </button>
+                <button class="bpm-demo-stop-btn" id="bpmDemoStopBtn" type="button" style="display:none;">
+                  <i data-lucide="square"></i>
+                  <span data-i18n="home.bpmDetect.stopPlayback">停止播放</span>
+                </button>
+              </div>
+              <div class="bpm-demo-info">
+                <div class="bpm-demo-info-item">
+                  <span class="bpm-demo-info-label" data-i18n="home.bpmDetect.audioVolume">音频音量</span>
+                  <input type="range" id="bpmDemoAudioVolume" min="0" max="100" value="30" class="bpm-demo-slider">
+                </div>
+                <div class="bpm-demo-info-item">
+                  <span class="bpm-demo-info-label" data-i18n="home.bpmDetect.beatVolume">节拍音量</span>
+                  <input type="range" id="bpmDemoBeatVolume" min="0" max="100" value="80" class="bpm-demo-slider">
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask" id="bpmProcessMask">
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="audio-convert-process-bar">
+        <div class="audio-convert-process-bar-fill" id="bpmProcessBarFill"></div>
+      </div>
+      <div class="audio-convert-process-text" id="bpmProcessText" data-i18n="home.bpmDetect.analyzing">正在分析节拍...</div>
+    </div>
+
+<div class="audio-clip-overlay pdf-merge-v2 audio-clip-v2" id="audioClipOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="audioClipPlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="audioClipDropZone"><span class="drop-hint" data-i18n="home.audioClip.dropHint">松手即可上传</span></div>
+      <header class="pdf-merge-v2-topbar audio-clip-v2-topbar">
+        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="audioClipBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">AUDIO CLIP · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="audioClipV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main class="audio-clip-body audio-clip-v2-body" id="audioClipBody">
+        <aside class="pdf-merge-v2-poster audio-clip-v2-sidebar" aria-label="音频剪辑说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.audioClip.heroLabel">Audio Clip Editor</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.audioClip.title">音频剪辑</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.audioClip.subtitle">上传音频文件，通过波形可视化选择剪辑区域，支持播放预览、微调时间、导出剪辑片段。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>本机解码预览与剪辑导出，适合截取伴奏、播客片段、课程音频和短视频配乐。</strong>
+          </div>
+          <button class="audio-clip-cta pdf-merge-v2-cta audio-clip-v2-upload-btn" id="audioClipCta" type="button">
+            <i data-lucide="upload"></i>
+            <span data-i18n="home.audioClip.cta">上传音频文件</span>
+          </button>
+          <div class="audio-clip-formats">
+            <h3 class="audio-clip-formats-title" data-i18n="home.audioClip.formatsTitle">支持格式</h3>
+            <div class="audio-clip-formats-grid">
+              <div class="audio-clip-format-chip"><span>MP3</span></div>
+              <div class="audio-clip-format-chip"><span>WAV</span></div>
+              <div class="audio-clip-format-chip"><span>FLAC</span></div>
+              <div class="audio-clip-format-chip"><span>AAC</span></div>
+              <div class="audio-clip-format-chip"><span>OGG</span></div>
+              <div class="audio-clip-format-chip"><span>M4A</span></div>
+              <div class="audio-clip-format-chip"><span>WMA</span></div>
+            </div>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="音频剪辑流程">
+            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong>上传音频</strong><p>选择单个音频文件，读取时长并绘制波形。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>02</span><div><strong>选择片段</strong><p>拖动左右手柄定位起点与终点。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>03</span><div><strong>播放预览</strong><p>循环试听所选片段，可用 ±1s 快速微调。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>04</span><div><strong>导出剪辑</strong><p>输出到 ToolKnit 音频目录，完成后直接打开文件夹。</p></div></div>
+          </div>
+        </aside>
+
+        <section class="pdf-merge-v2-workspace audio-clip-v2-workspace" aria-label="音频剪辑工作台">
+          <section class="audio-clip-v2-wave-panel tk-vertical-stripe-surface" aria-label="波形预览">
+            <div class="audio-clip-hero-top audio-clip-v2-empty" id="audioClipHeroTop">
+              <div class="audio-clip-v2-empty-icon"><i data-lucide="audio-waveform"></i></div>
+              <div class="audio-convert-hero-label">DROP OR SELECT</div>
+              <h2>等待选择音频文件</h2>
+              <p>上传后会在这里显示高清波形。拖动左右手柄即可框选要导出的片段。</p>
+            </div>
+
+            <div class="audio-clip-waveform-wrap audio-clip-v2-waveform" id="audioClipWaveformWrap">
+              <canvas class="audio-clip-waveform-canvas" id="audioClipCanvas"></canvas>
+              <div class="audio-clip-selection" id="audioClipSelection" style="display:none;"></div>
+              <div class="audio-clip-handle audio-clip-handle-start" id="audioClipHandleStart" style="display:none;">
+                <div class="audio-clip-handle-line"></div>
+                <div class="audio-clip-handle-grip">
+                  <svg viewBox="0 0 8 24" width="8" height="24"><path d="M2 6 L6 6 L6 18 L2 18 Z" fill="currentColor"/></svg>
+                </div>
+                <div class="audio-clip-handle-label" id="audioClipHandleStartLabel">0:00</div>
+              </div>
+              <div class="audio-clip-handle audio-clip-handle-end" id="audioClipHandleEnd" style="display:none;">
+                <div class="audio-clip-handle-line"></div>
+                <div class="audio-clip-handle-grip">
+                  <svg viewBox="0 0 8 24" width="8" height="24"><path d="M2 6 L6 6 L6 18 L2 18 Z" fill="currentColor"/></svg>
+                </div>
+                <div class="audio-clip-handle-label" id="audioClipHandleEndLabel">0:00</div>
+              </div>
+              <div class="audio-clip-playhead" id="audioClipPlayhead" style="display:none;"></div>
+              <div class="audio-clip-time-labels">
+                <span id="audioClipTimeStart">0:00</span>
+                <span id="audioClipTimeEnd">0:00</span>
+              </div>
+            </div>
+          </section>
+
+          <footer class="audio-clip-v2-console" aria-label="剪辑操作区">
+            <div class="audio-clip-file-info" id="audioClipFileInfo">
+              <div class="audio-clip-file-icon">
+                <i data-lucide="music-2"></i>
+              </div>
+              <div class="audio-clip-file-name" id="audioClipFileName">--</div>
+              <div class="audio-clip-file-duration" id="audioClipFileDuration">--</div>
+              <button class="audio-clip-file-remove" id="audioClipFileRemove" type="button" aria-label="移除文件">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+
+            <div class="audio-clip-v2-control-row">
+              <div class="audio-clip-selection-info" id="audioClipSelectionInfo">
+                <span class="audio-clip-selection-label" data-i18n="home.audioClip.start">起点</span>
+                <span class="audio-clip-selection-label"><strong id="audioClipSelStart">0:00</strong></span>
+                <div class="audio-clip-selection-divider"></div>
+                <span class="audio-clip-selection-label" data-i18n="home.audioClip.end">终点</span>
+                <span class="audio-clip-selection-label"><strong id="audioClipSelEnd">0:00</strong></span>
+                <div class="audio-clip-selection-divider"></div>
+                <span class="audio-clip-selection-label" data-i18n="home.audioClip.duration">时长</span>
+                <span class="audio-clip-selection-label"><strong id="audioClipSelDuration">0:00</strong></span>
+              </div>
+
+              <div class="audio-clip-controls" id="audioClipControls">
+                <button class="audio-clip-btn-play" id="audioClipPlayBtn" type="button" title="Play/Pause">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                </button>
+                <button class="audio-clip-btn" id="audioClipMinusBtn" type="button" title="-1s" disabled>
+                  <i data-lucide="rewind"></i>
+                  <span>-1s</span>
+                </button>
+                <button class="audio-clip-btn" id="audioClipPlusBtn" type="button" title="+1s" disabled>
+                  <i data-lucide="fast-forward"></i>
+                  <span>+1s</span>
+                </button>
+                <button class="audio-clip-btn" id="audioClipResetBtn" type="button" title="Reset">
+                  <i data-lucide="rotate-ccw"></i>
+                  <span data-i18n="home.audioClip.reset">重置</span>
+                </button>
+                <div class="audio-clip-time-display">
+                  <span class="clip-time-current" id="audioClipCurrentTime">0:00</span>
+                  <span> / </span>
+                  <span id="audioClipTotalTime">0:00</span>
+                </div>
+              </div>
+
+              <button class="audio-clip-export pdf-merge-v2-process" id="audioClipExportBtn" type="button">
+                <i data-lucide="scissors"></i>
+                <span data-i18n="home.audioClip.export">导出剪辑</span>
+              </button>
+            </div>
+          </footer>
+        </section>
+      </main>
+    </div>
+
+<div class="audio-clip-success-overlay" id="audioClipSuccessOverlay">
+      <div class="audio-clip-success-dialog">
+        <div class="audio-clip-success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <h3 class="audio-clip-success-title" data-i18n="home.audioClip.successTitle">剪辑完成</h3>
+        <div class="audio-clip-success-meta" id="audioClipSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.audioClip.successSource">源文件</span>
+            <span class="audio-convert-success-value" id="audioClipSuccessFile"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.audioClip.successDuration">剪辑时长</span>
+            <span class="audio-convert-success-value" id="audioClipSuccessDuration"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.audioClip.successPath">保存路径</span>
+            <span class="audio-convert-success-value" id="audioClipSuccessPath"></span>
+          </div>
+        </div>
+        <div class="audio-clip-success-actions">
+          <button class="audio-clip-success-btn audio-clip-success-btn-secondary" id="audioClipSuccessOpenFolder" data-i18n="home.audioClip.openFolder">打开文件夹</button>
+          <button class="audio-clip-success-btn audio-clip-success-btn-primary" id="audioClipSuccessOk" data-i18n="home.audioClip.ok">确定</button>
+        </div>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask" id="audioClipProcessMask">
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="audio-convert-process-bar">
+        <div class="audio-convert-process-bar-fill" id="audioClipProcessBarFill"></div>
+      </div>
+      <div class="audio-convert-process-text" id="audioClipProcessText" data-i18n="home.audioClip.loading">正在加载...</div>
+    </div>

@@ -41,7 +41,7 @@ import { editAiTableProject, generateAiTableProject, inspectAiTableProjectFile, 
 import { installTranscriptionModel, listTranscriptionModels, setCurrentTranscriptionModel, transcribeMedia } from './lib/transcription-runtime.mjs';
 import { TaskRunner } from './lib/shared/task-runtime.mjs';
 
-const VERSION = '2.3.1';
+const VERSION = '3.0.0';
 const CLI_ABORT_CONTROLLER = new AbortController();
 let CLI_SIGNAL_COUNT = 0;
 
@@ -275,7 +275,11 @@ const PDF_COMMAND_HELP = {
   compress: `PDF 压缩（compress）
 
 用法：
-  toolknit pdf compress --input <file.pdf> --output <compressed.pdf> [--level <low|medium|high>] [--overwrite] [--json]
+toolknit pdf compress --input <file.pdf> --output <compressed.pdf> [--mode structure|raster] [--level low|medium|high] [--target-kb N | --target-mb N] [--clarity readable|compact] [--overwrite] [--json]
+
+structure 默认保留文字、链接、表单等结构。raster 显式进行有损图像化，不保留文字搜索、链接、表单、书签及无障碍标签。
+目标范围为 50 KB 至 50 MB（1 KB = 1024 字节），未达标不生成文件；原文件已达标时不重新编码。
+raster 指定目标时自动搜索参数，level 仅用于不指定目标的情况。readable 最低 72 DPI，compact 最低 36 DPI；均不保证文字可读性。
 
 压缩等级默认为 medium。此功能依赖 qpdf；请先运行 toolknit doctor 确认 qpdf 可用。
 
@@ -1034,7 +1038,7 @@ function parsePageRanges(value) {
 function parseOptions(tokens) {
   const values = { input: [] };
   const flags = new Set(['json', 'overwrite', 'password-stdin', 'stdin', 'help', 'dry-run', 'refine', 'skip-duplicates']);
-  const options = new Set(['input', 'output', 'output-dir', 'output-name', 'pages', 'images', 'ai-mode', 'rotation', 'level', 'strength', 'quality', 'clarity', 'banner', 'page-selections', 'page-rotations', 'project', 'operations', 'operations-file', 'steps', 'prompt', 'prompt-file', 'outline-file', 'page-count', 'slide-count', 'audience', 'purpose', 'tone', 'style', 'deck-type', 'theme', 'locale', 'format', 'start', 'end', 'start-ms', 'end-ms', 'frame-rate', 'width', 'track-index', 'timestamp-ms', 'count', 'language', 'source', 'mode', 'reference', 'spacing', 'scale', 'background', 'jpeg-quality']);
+  const options = new Set(['input', 'output', 'output-dir', 'output-name', 'pages', 'images', 'ai-mode', 'rotation', 'level', 'strength', 'quality', 'clarity', 'banner', 'page-selections', 'page-rotations', 'project', 'operations', 'operations-file', 'steps', 'prompt', 'prompt-file', 'outline-file', 'page-count', 'slide-count', 'audience', 'purpose', 'tone', 'style', 'deck-type', 'theme', 'locale', 'format', 'start', 'end', 'start-ms', 'end-ms', 'frame-rate', 'width', 'track-index', 'timestamp-ms', 'count', 'language', 'source', 'mode', 'reference', 'spacing', 'scale', 'background', 'jpeg-quality', 'target-kb', 'target-mb']);
   for (let index = 0; index < tokens.length; index++) {
     const token = tokens[index];
     if (!token.startsWith('--')) throw new ToolKnitError('USAGE', `Unexpected argument: ${token}`);
@@ -1187,7 +1191,11 @@ async function runPdfCommand(action, options, runtimeOptions = {}) {
   }
   if (action === 'compress') {
     if (options.input.length !== 1) throw new ToolKnitError('USAGE', 'pdf compress requires exactly one --input.');
-    return compressPdfFile({ input_path: options.input[0], output_path: requireOption(options, 'output'), level: options.level, overwrite }, runtimeOptions);
+    if (options['target-kb'] !== undefined && options['target-mb'] !== undefined) throw new ToolKnitError('USAGE', 'Use either --target-kb or --target-mb.');
+    const target = options['target-kb'] !== undefined ? Math.floor(Number(options['target-kb']) * 1024)
+      : options['target-mb'] !== undefined ? Math.floor(Number(options['target-mb']) * 1024 * 1024) : undefined;
+    return compressPdfFile({ input_path: options.input[0], output_path: requireOption(options, 'output'), level: options.level,
+      mode: options.mode, clarity: options.clarity, target_bytes: target, overwrite }, runtimeOptions);
   }
   if (action === 'enhance') {
     if (options.input.length !== 1) throw new ToolKnitError('USAGE', 'pdf enhance requires exactly one --input.');

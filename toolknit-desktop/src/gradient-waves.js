@@ -1,3 +1,5 @@
+import { createBackgroundFrameLimiter } from './shared/animation-policy.js';
+
 export class GradientWaves {
   static defaults = {
     horizonColor: '#5227FF',
@@ -56,6 +58,7 @@ export class GradientWaves {
     this.isVisible = true;
     this.isPageVisible = !document.hidden;
     this.t0 = performance.now();
+    this.frameLimiter = createBackgroundFrameLimiter();
 
     this.init();
   }
@@ -250,7 +253,17 @@ export class GradientWaves {
       this.isPageVisible = !document.hidden;
       this.isPageVisible ? this.tryStart() : this.tryStop();
     };
+    this.onPageHide = () => {
+      this.isPageVisible = false;
+      this.tryStop();
+    };
+    this.onPageShow = () => {
+      this.isPageVisible = !document.hidden;
+      this.isPageVisible ? this.tryStart() : this.tryStop();
+    };
     document.addEventListener('visibilitychange', this.onVisibility);
+    window.addEventListener('pagehide', this.onPageHide);
+    window.addEventListener('pageshow', this.onPageShow);
   }
 
   tryStart() {
@@ -268,6 +281,11 @@ export class GradientWaves {
 
   loop(t) {
     const gl = this.gl;
+
+    if (!this.frameLimiter.shouldRender(t)) {
+      this.raf = requestAnimationFrame((time) => this.loop(time));
+      return;
+    }
 
     gl.uniform1f(this.locations.iTime, (t - this.t0) * 0.001);
 
@@ -296,6 +314,8 @@ export class GradientWaves {
     this.canvas.removeEventListener('pointermove', this.onPointerMove);
     this.canvas.removeEventListener('pointerleave', this.onPointerLeave);
     document.removeEventListener('visibilitychange', this.onVisibility);
+    window.removeEventListener('pagehide', this.onPageHide);
+    window.removeEventListener('pageshow', this.onPageShow);
 
     this.resizeObserver?.disconnect();
     this.intersectionObserver?.disconnect();

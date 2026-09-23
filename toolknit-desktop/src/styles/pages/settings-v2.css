@@ -1,0 +1,243 @@
+/* ===== ToolKnit 2.0 Settings Surface ===== */
+.settings-overlay {
+  background: #050506;
+}
+
+.settings-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(255, 255, 255, 0.08), transparent 28%),
+    radial-gradient(circle at 84% 20%, rgba(255, 255, 255, 0.05), transparent 24%),
+    radial-gradient(circle at 50% 78%, rgba(255, 255, 255, 0.04), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%, rgba(0, 0, 0, 0.32));
+  opacity: 0.98;
+}
+
+.settings-overlay.visible {
+  background: rgba(5, 5, 6, 0.98);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.settings-header {
+  position: relative;
+  z-index: 2;
+  height: 68px;
+  padding: 0 28px;
+}
+
+.settings-back {
+  margin: 0;
+  min-height: 38px;
+  min-width: 94px;
+  padding: 0 14px 0 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  color: var(--ink);
+  fill: none;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 14px;
+  font-weight: 400;
+  transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+.settings-back:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+.settings-back:hover span {
+  opacity: 1;
+}
+
+.settings-back:hover .svg-wrapper-1 {
+  left: 0.7em;
+  transform: translateY(-50%);
+}
+
+.settings-back svg {
+  stroke: currentColor;
+  fill: none;
+}
+
+.settings-content {
+  position: relative;
+  z-index: 1;
+  width: min(1480px, calc(100vw - 56px));
+  grid-template-columns: minmax(310px, 360px) minmax(0, 1fr);
+  gap: 28px;
+  padding: 0 0 30px;
+}
+
+.settings-poster {
+  top: 24px;
+  min-height: min(620px, calc(100vh - 124px));
+  padding: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)),
+    rgba(10,10,11,0.76);
+  backdrop-filter: blur(18px);
+  overflow: hidden;
+}
+
+.settings-poster::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 24% 16%, rgba(255,255,255,0.06), transparent 28%),
+    radial-gradient(circle at 84% 76%, rgba(255,255,255,0.04), transparent 30%);
+  pointer-events: none;
+}
+
+.settings-poster > * {
+  position: relative;
+  z-index: 1;
+}
+
+.settings-poster .tk-mascot-lg {
+  display: none;
+}
+
+.settings-poster-copy {
+  width: 100%;
+}
+
+.settings-poster-kicker {
+  margin-bottom: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--muted);
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+}
+
+.settings-poster h2 {
+  font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 42px;
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.settings-poster p {
+  max-width: 290px;
+  color: #bebeb9;
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.settings-poster-meta {
+  width: 100%;
+  margin-top: 26px;
+}
+
+.settings-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.settings-section {
+  grid-column: span 6;
+  min-height: 164px;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015)),
+    rgba(255,255,255,0.025);
+  backdrop-filter: blur(14px);
+}
+
+.settings-section-wide {
+  grid-column: 1 / -1;
+  min-height: 172px;
+}
+
+.settings-section-title {
+  margin-bottom: 18px;
+  color: var(--quiet);
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+}
+
+.settings-row,
+.settings-toggle-row,
+.settings-radius-panel {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.settings-path {
+  color: rgba(245, 245, 243, 0.76);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.settings-btn,
+.settings-link,
+.lang-option,
+.settings-radius-option {
+  border-radius: 8px;
+  font-weight: 400;
+}
+
+.settings-btn {
+  min-height: 36px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.settings-btn:hover:not(:disabled),
+.settings-link:hover,
+.lang-option:hover,
+.settings-radius-option:hover {
+  transform: translateY(-1px);
+}
+
+.lang-option.active,
+.settings-radius-option.active {
+  color: var(--black);
+  background: var(--white);
+  border-color: var(--white);
+}
+
+.settings-hint {
+  margin-top: 11px;
+  color: rgba(245, 245, 243, 0.48);
+}
+
+@media (max-width: 1120px) {
+  .settings-content {
+    width: min(860px, calc(100vw - 48px));
+    grid-template-columns: 1fr;
+  }
+
+  .settings-poster {
+    position: relative;
+    top: auto;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .settings-content {
+    width: calc(100vw - 32px);
+  }
+
+  .settings-section,
+  .settings-section-wide {
+    grid-column: 1 / -1;
+  }
+}
+

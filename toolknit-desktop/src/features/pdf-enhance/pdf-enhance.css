@@ -1,0 +1,46 @@
+.pdf-enhance-v2 .pdf-merge-v2-poster::after {
+  content: 'SCAN';
+  font-size: 96px;
+}
+
+.pdf-enhance-v2 .pdf-merge-v2-workspace {
+  grid-template-rows: auto auto minmax(150px, 1fr) auto auto;
+}
+
+.pdf-enhance-v2 .pdf-merge-v2-files {
+  max-height: 220px;
+}
+
+.pdf-enhance-v2 #pdfEnhanceFiles:empty::before {
+  content: '暂无待增强 PDF · 点击上传或拖入一个扫描件 PDF';
+}
+
+.pdf-enhance-strength-hint {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-height: 420px) {
+  #pdfEnhanceSuccessOverlay {
+    box-sizing: border-box;
+    padding: 12px;
+    overflow-y: auto;
+  }
+
+  #pdfEnhanceSuccessOverlay .audio-clip-success-dialog {
+    max-height: calc(100vh - 24px);
+    padding: 18px 24px;
+    gap: 10px;
+    overflow-y: auto;
+  }
+
+  #pdfEnhanceSuccessOverlay .audio-clip-success-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  #pdfEnhanceSuccessOverlay .audio-clip-success-meta {
+    margin-bottom: 4px;
+  }
+}

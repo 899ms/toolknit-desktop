@@ -1,0 +1,370 @@
+<div class="pdf-merge-overlay pdf-merge-v2 cleanup-v2 audio-convert-overlay" id="largeFileCleanupOverlay" aria-hidden="true">
+      <div class="plasma-bg pdf-merge-v2-bg" id="largeFileCleanupPlasmaBg"></div>
+      <header class="pdf-merge-v2-topbar cleanup-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="largeFileCleanupBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">CLEANUP STUDIO · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="largeFileCleanupV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="pdf-merge-v2-body cleanup-large-files-body cleanup-v2-body">
+        <aside class="cleanup-v2-side" aria-label="扫描设置">
+          <div class="cleanup-v2-side-scroll">
+          <div class="cleanup-v2-side-head">
+            <div class="pdf-merge-v2-poster-kicker" data-i18n="home.cleanupLargeFilesPage.heroLabel">Cleanup Studio</div>
+            <h1 class="pdf-merge-v2-title cleanup-v2-title" data-i18n="home.cleanupLargeFilesPage.title">AI 大文件清理</h1>
+            <p class="pdf-merge-v2-subtitle" data-i18n="home.cleanupLargeFilesPage.subtitle">先本地扫描，再让 AI 只根据文件元数据给出保留或删除建议，最终由你确认。</p>
+          </div>
+
+          <div class="cleanup-v2-field">
+            <span class="cleanup-v2-label" data-i18n="home.cleanupLargeFilesPage.selectedFolder">当前目录</span>
+            <span class="cleanup-v2-path" id="largeFileCleanupFolder" data-i18n="home.cleanupLargeFilesPage.folderPlaceholder">请选择一个文件夹开始扫描</span>
+            <div class="cleanup-large-files-folder-actions">
+              <button class="cleanup-v2-btn" id="largeFileCleanupChooseFolder" type="button" data-i18n="home.cleanupLargeFilesPage.pickFolder">选择扫描目录</button>
+              <button class="cleanup-v2-btn cleanup-large-files-drive-btn" id="largeFileCleanupScanSystemDrive" type="button" data-i18n="home.cleanupLargeFilesPage.scanSystemDrive">扫描 C 盘</button>
+            </div>
+          </div>
+
+          <div class="cleanup-v2-field">
+            <div class="cleanup-v2-threshold">
+              <span class="cleanup-v2-label" data-i18n="home.cleanupLargeFilesPage.threshold">阈值</span>
+              <div class="cleanup-v2-threshold-row">
+                <input id="largeFileCleanupThreshold" type="number" min="10" max="102400" step="10" value="50">
+                <em data-i18n="home.cleanupLargeFilesPage.thresholdUnit">MB 起</em>
+              </div>
+            </div>
+            <div class="cleanup-v2-hint" data-i18n="home.cleanupLargeFilesPage.thresholdHint">默认 50MB，可按需提高到 100MB、500MB 或更高。</div>
+          </div>
+
+          <div class="cleanup-large-files-safety-note" role="note">
+            <strong data-i18n="home.cleanupLargeFilesPage.safetyTitle">整盘扫描安全边界</strong>
+            <p data-i18n="home.cleanupLargeFilesPage.safetyDesc">C 盘扫描只读取文件元数据，会跳过 Windows、程序安装目录、启动目录、AppData 和系统属性文件。AI 只提供建议，任何文件都需要你逐项确认后才会移入回收站。</p>
+          </div>
+
+          <div class="cleanup-v2-field">
+            <span class="cleanup-v2-label" data-i18n="home.cleanupLargeFilesPage.mode">扫描模式</span>
+            <div class="cleanup-large-files-chip-group cleanup-v2-chips" id="largeFileCleanupModeGroup">
+              <button type="button" class="cleanup-large-files-chip is-active" data-mode="video" data-i18n="home.cleanupLargeFilesPage.modeVideo">视频优先</button>
+              <button type="button" class="cleanup-large-files-chip" data-mode="all" data-i18n="home.cleanupLargeFilesPage.modeAll">全部大文件</button>
+              <button type="button" class="cleanup-large-files-chip" data-mode="archives" data-i18n="home.cleanupLargeFilesPage.modeArchives">压缩包</button>
+              <button type="button" class="cleanup-large-files-chip" data-mode="installers" data-i18n="home.cleanupLargeFilesPage.modeInstallers">安装包</button>
+              <button type="button" class="cleanup-large-files-chip" data-mode="documents" data-i18n="home.cleanupLargeFilesPage.modeDocuments">文档</button>
+              <button type="button" class="cleanup-large-files-chip" data-mode="images" data-i18n="home.cleanupLargeFilesPage.modeImages">图片素材</button>
+              <button type="button" class="cleanup-large-files-chip" data-mode="audio" data-i18n="home.cleanupLargeFilesPage.modeAudio">音频</button>
+              <button type="button" class="cleanup-large-files-chip" data-mode="models" data-i18n="home.cleanupLargeFilesPage.modeModels">模型 / 开发包</button>
+            </div>
+          </div>
+
+          <div class="cleanup-large-files-ai-card" id="largeFileCleanupAiCard" data-state="idle">
+            <div class="cleanup-large-files-ai-orb" aria-hidden="true">AI</div>
+            <div class="cleanup-large-files-ai-copy">
+              <div class="cleanup-large-files-ai-kicker" data-i18n="home.cleanupLargeFilesPage.aiKicker">AI 辅助判断</div>
+              <h3 id="largeFileCleanupAiTitle" data-i18n="home.cleanupLargeFilesPage.aiIdleTitle">先扫描，再让 AI 参与</h3>
+              <p id="largeFileCleanupAiDesc" data-i18n="home.cleanupLargeFilesPage.aiIdleDesc">AI 不扫描磁盘，也不会读取文件内容。扫描出候选文件后，它只根据文件名、大小、修改时间和目录线索给出建议。</p>
+              <div class="cleanup-large-files-ai-points">
+                <span data-i18n="home.cleanupLargeFilesPage.aiPointLocal">本地扫描</span>
+                <span data-i18n="home.cleanupLargeFilesPage.aiPointMeta">仅发元数据</span>
+                <span data-i18n="home.cleanupLargeFilesPage.aiPointConfirm">删除前人工确认</span>
+              </div>
+              <div class="cleanup-large-files-ai-progress" id="largeFileCleanupAiProgress" aria-hidden="true">
+                <span class="cleanup-large-files-ai-progress-bar"><i id="largeFileCleanupAiProgressFill"></i></span>
+                <span id="largeFileCleanupAiProgressText"></span>
+              </div>
+            </div>
+            <button class="cleanup-large-files-action cleanup-large-files-ai-action" id="largeFileCleanupAiBtn" type="button" data-i18n="home.cleanupLargeFilesPage.aiAnalyze">AI 轮询分析</button>
+          </div>
+          </div>
+
+          <div class="cleanup-large-files-scan-actions">
+            <button class="cleanup-v2-scan-btn cleanup-large-files-action-primary" id="largeFileCleanupScanBtn" type="button" data-i18n="home.cleanupLargeFilesPage.scan">开始扫描</button>
+            <button class="cleanup-v2-btn" id="largeFileCleanupCancel" type="button" hidden data-i18n="common.cancel">取消</button>
+          </div>
+        </aside>
+
+        <main class="cleanup-v2-main" aria-label="扫描结果选取">
+          <div class="cleanup-v2-main-head">
+            <div class="cleanup-v2-main-title">
+              <span class="pdf-merge-v2-section-kicker">SCAN RESULT</span>
+              <h2 data-i18n="home.cleanupLargeFilesPage.results">候选列表</h2>
+            </div>
+            <div class="cleanup-large-files-actions cleanup-v2-actions">
+              <button class="cleanup-large-files-action" id="largeFileCleanupSelectAllBtn" type="button" data-i18n="home.cleanupLargeFilesPage.selectAll">全选</button>
+              <button class="cleanup-large-files-action" id="largeFileCleanupClearBtn" type="button" data-i18n="home.cleanupLargeFilesPage.clearSelection">取消选择</button>
+              <button class="cleanup-large-files-action cleanup-large-files-action-danger" id="largeFileCleanupDeleteBtn" type="button" data-i18n="home.cleanupLargeFilesPage.deleteSelected">移入回收站</button>
+            </div>
+          </div>
+          <div class="cleanup-large-files-summary" id="largeFileCleanupSummary"></div>
+          <div class="cleanup-large-files-filters">
+            <label class="cleanup-large-files-search"><span data-i18n="home.cleanupLargeFilesPage.search">文件名 / 目录</span><input type="search" id="largeFileCleanupSearch"></label>
+            <label><span data-i18n="home.cleanupLargeFilesPage.columnsRisk">风险</span><select id="largeFileCleanupRiskFilter">
+              <option value="all" data-i18n="home.cleanupLargeFilesPage.filterAll">全部</option>
+              <option value="low" data-i18n="home.cleanupLargeFilesPage.risk_low">低风险</option>
+              <option value="medium" data-i18n="home.cleanupLargeFilesPage.risk_medium">需确认</option>
+              <option value="high" data-i18n="home.cleanupLargeFilesPage.risk_high">高风险</option>
+            </select></label>
+            <label><span data-i18n="home.cleanupLargeFilesPage.columnsCategory">类别</span><select id="largeFileCleanupCategoryFilter">
+              <option value="all" data-i18n="home.cleanupLargeFilesPage.filterAll">全部</option>
+              <option value="video" data-i18n="home.cleanupLargeFilesPage.category_video">视频</option>
+              <option value="archives" data-i18n="home.cleanupLargeFilesPage.category_archives">压缩包</option>
+              <option value="installers" data-i18n="home.cleanupLargeFilesPage.category_installers">安装包</option>
+              <option value="documents" data-i18n="home.cleanupLargeFilesPage.category_documents">文档</option>
+              <option value="images" data-i18n="home.cleanupLargeFilesPage.category_images">图片</option>
+              <option value="audio" data-i18n="home.cleanupLargeFilesPage.category_audio">音频</option>
+              <option value="models" data-i18n="home.cleanupLargeFilesPage.category_models">模型</option>
+            </select></label>
+          </div>
+          <p class="cleanup-large-files-scan-stats" id="largeFileCleanupScanStats" role="status"></p>
+          <div class="cleanup-large-files-list-wrap">
+            <table class="cleanup-large-files-table">
+              <thead>
+                <tr>
+                  <th><input id="largeFileCleanupSelectAllCheckbox" class="cleanup-large-files-check" type="checkbox" aria-label="select all"></th>
+                  <th data-i18n="home.cleanupLargeFilesPage.columnsName">文件</th>
+                  <th class="cleanup-large-files-size-sort-th">
+                    <div class="cleanup-large-files-size-sort" id="largeFileCleanupSizeSort">
+                      <button type="button" class="cleanup-large-files-size-sort-trigger" id="largeFileCleanupSizeSortTrigger" aria-haspopup="true" aria-expanded="false">
+                        <span data-i18n="home.cleanupLargeFilesPage.columnsSize">大小</span>
+                        <svg class="cleanup-large-files-size-sort-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"></path></svg>
+                      </button>
+                      <div class="cleanup-large-files-size-sort-menu" id="largeFileCleanupSizeSortMenu" role="menu">
+                        <button type="button" data-sort="default" role="menuitem" data-i18n="home.cleanupLargeFilesPage.sortDefault">默认</button>
+                        <button type="button" data-sort="desc" role="menuitem" data-i18n="home.cleanupLargeFilesPage.sortLargeFirst">文件大</button>
+                        <button type="button" data-sort="asc" role="menuitem" data-i18n="home.cleanupLargeFilesPage.sortSmallFirst">文件小</button>
+                      </div>
+                    </div>
+                  </th>
+                  <th data-i18n="home.cleanupLargeFilesPage.columnsCategory">类别</th>
+                  <th data-i18n="home.cleanupLargeFilesPage.columnsModified">修改时间</th>
+                  <th data-i18n="home.cleanupLargeFilesPage.columnsFolder">目录线索</th>
+                  <th data-i18n="home.cleanupLargeFilesPage.columnsRisk">风险</th>
+                </tr>
+              </thead>
+              <tbody id="largeFileCleanupTableBody"></tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+
+<div class="audio-convert-success-overlay cleanup-large-files-success-overlay" id="largeFileCleanupSuccessOverlay" role="dialog" aria-modal="true" aria-hidden="true" inert>
+      <div class="audio-convert-success-dialog">
+        <div class="audio-convert-success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+        <h3 class="audio-convert-success-title" data-i18n="home.cleanupLargeFilesPage.deleteSuccessTitle">清理完成</h3>
+        <div class="audio-convert-success-meta" id="largeFileCleanupSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.cleanupLargeFilesPage.successAnalyzedLabel">已分析候选</span>
+            <span class="audio-convert-success-value" id="largeFileCleanupSuccessAnalyzed"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.cleanupLargeFilesPage.deleteSelected">移入回收站</span>
+            <span class="audio-convert-success-value" id="largeFileCleanupSuccessMoved"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.cleanupLargeFilesPage.recycleBytes">待释放容量</span>
+            <span class="audio-convert-success-value" id="largeFileCleanupSuccessSize"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.cleanupLargeFilesPage.recycleNextStep">后续操作</span>
+            <span class="audio-convert-success-value" id="largeFileCleanupSuccessFolder"></span>
+          </div>
+        </div>
+        <div class="cleanup-large-files-success-failures" id="largeFileCleanupSuccessFailures" hidden></div>
+        <div class="audio-convert-success-actions">
+          <button class="audio-convert-success-btn audio-convert-success-btn-secondary" id="largeFileCleanupSuccessOpenFolder" data-i18n="home.cleanupLargeFilesPage.openRecycleBin">打开回收站</button>
+          <button class="audio-convert-success-btn audio-convert-success-btn-primary" id="largeFileCleanupSuccessOk" data-i18n="home.audioConvert.ok">确定</button>
+        </div>
+      </div>
+    </div>
+
+<div class="ffmpeg-overlay cleanup-drive-root-overlay" id="largeFileCleanupDriveRootOverlay" role="dialog" aria-modal="true" aria-labelledby="largeFileCleanupDriveRootTitle" aria-hidden="true" inert>
+      <div class="ffmpeg-overlay-bg"></div>
+      <div class="ffmpeg-overlay-content">
+        <div class="tk-mascot-lg" aria-hidden="true"></div>
+        <h2 class="ffmpeg-overlay-title" id="largeFileCleanupDriveRootTitle">确认扫描整个数据盘？</h2>
+        <p class="ffmpeg-overlay-desc" id="largeFileCleanupDriveRootDesc">你正在扫描整个数据盘，可能耗时较长。建议优先选择具体文件夹；如果确认这是素材盘、下载盘或备份盘，可以继续。</p>
+        <div class="cleanup-drive-root-tips">
+          <span data-i18n="home.cleanupLargeFilesPage.dataRootTipSlow">可能耗时较长</span>
+          <span data-i18n="home.cleanupLargeFilesPage.dataRootTipProtected">仍会跳过保护目录</span>
+          <span data-i18n="home.cleanupLargeFilesPage.dataRootTipConfirm">删除前仍需确认</span>
+        </div>
+        <label class="cleanup-drive-root-ack">
+          <input id="largeFileCleanupDriveRootAck" type="checkbox">
+          <span data-i18n="home.cleanupLargeFilesPage.dataRootAck">我了解整盘扫描可能耗时较长，并会逐项检查结果</span>
+        </label>
+        <div class="ffmpeg-overlay-actions">
+          <button class="ffmpeg-overlay-btn ffmpeg-overlay-cancel" id="largeFileCleanupDriveRootCancel" data-i18n="home.cleanupLargeFilesPage.dataRootCancel">改选文件夹</button>
+          <button class="ffmpeg-overlay-btn ffmpeg-overlay-confirm" id="largeFileCleanupDriveRootConfirm" disabled data-i18n="home.cleanupLargeFilesPage.dataRootConfirm">继续扫描</button>
+        </div>
+      </div>
+    </div>
+
+<div class="pdf-merge-overlay pdf-merge-v2 cleanup-v2 c-drive-cleanup-overlay" id="cDriveCleanupOverlay" aria-hidden="true">
+      <div class="plasma-bg pdf-merge-v2-bg" id="cDriveCleanupPlasmaBg"></div>
+      <header class="pdf-merge-v2-topbar cleanup-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="cDriveCleanupBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">SYSTEM CLEANUP · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="cDriveCleanupV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="pdf-merge-v2-body cleanup-v2-body c-drive-cleanup-body" id="cDriveCleanupBody">
+        <aside class="cleanup-v2-side c-drive-cleanup-side" aria-label="清理风险档选择">
+          <div class="cleanup-v2-side-head">
+            <div class="pdf-merge-v2-poster-kicker" data-i18n="home.cDriveCleanupPage.heroLabel">System Cleanup</div>
+            <h1 class="pdf-merge-v2-title cleanup-v2-title" data-i18n="home.cDriveCleanupPage.title">C盘清理</h1>
+            <p class="pdf-merge-v2-subtitle" data-i18n="home.cDriveCleanupPage.subtitle">按低、中、高三个风险档清理系统缓存与临时空间，清理前会完整说明影响。</p>
+          </div>
+
+          <div class="c-drive-cleanup-options" role="radiogroup" aria-label="清理风险档">
+            <button class="c-drive-cleanup-option" type="button" role="radio" aria-checked="false" data-tier="low">
+              <span class="c-drive-cleanup-option-risk c-drive-cleanup-risk-low" data-i18n="home.cDriveCleanupPage.tierLow">低风险</span>
+              <span class="c-drive-cleanup-option-name" data-i18n="home.cDriveCleanupPage.tierLowName">低风险缓存</span>
+              <span class="c-drive-cleanup-option-size"><i class="c-drive-cleanup-spinner" aria-hidden="true"></i><span data-i18n="home.cDriveCleanupPage.scanning">正在扫描</span></span>
+            </button>
+            <button class="c-drive-cleanup-option" type="button" role="radio" aria-checked="false" data-tier="medium">
+              <span class="c-drive-cleanup-option-risk c-drive-cleanup-risk-medium" data-i18n="home.cDriveCleanupPage.tierMedium">中风险</span>
+              <span class="c-drive-cleanup-option-name" data-i18n="home.cDriveCleanupPage.tierMediumName">中风险系统缓存</span>
+              <span class="c-drive-cleanup-option-size"><i class="c-drive-cleanup-spinner" aria-hidden="true"></i><span data-i18n="home.cDriveCleanupPage.scanning">正在扫描</span></span>
+            </button>
+            <button class="c-drive-cleanup-option" type="button" role="radio" aria-checked="false" data-tier="high">
+              <span class="c-drive-cleanup-option-risk c-drive-cleanup-risk-high" data-i18n="home.cDriveCleanupPage.tierHigh">高风险</span>
+              <span class="c-drive-cleanup-option-name" data-i18n="home.cDriveCleanupPage.tierHighName">高风险系统空间</span>
+              <span class="c-drive-cleanup-option-size"><i class="c-drive-cleanup-spinner" aria-hidden="true"></i><span data-i18n="home.cDriveCleanupPage.scanning">正在扫描</span></span>
+            </button>
+          </div>
+          <div class="c-drive-cleanup-tips" aria-label="清理使用提示">
+            <div class="c-drive-cleanup-tips-head">
+              <i data-lucide="info" aria-hidden="true"></i>
+              <span data-i18n="home.cDriveCleanupPage.tipsTitle">使用提示</span>
+            </div>
+            <ul class="c-drive-cleanup-tips-list">
+              <li data-i18n="home.cDriveCleanupPage.tips1">建议从低风险档开始清理，空间仍不足时再考虑中、高风险档。</li>
+              <li data-i18n="home.cDriveCleanupPage.tips2">清理为永久删除且不会进入回收站，请先阅读右侧说明再确认。</li>
+              <li data-i18n="home.cDriveCleanupPage.tips3">清理前请关闭正在占用相关文件的程序，避免文件被占用而跳过。</li>
+            </ul>
+          </div>
+        </aside>
+
+        <main class="cleanup-v2-main c-drive-cleanup-main" aria-label="清理说明与受保护区">
+          <div class="c-drive-cleanup-detail" id="cDriveCleanupDetail">
+            <section class="c-drive-cleanup-explain" id="cDriveCleanupExplain" aria-live="polite"></section>
+            <section class="c-drive-cleanup-protected" aria-labelledby="cDriveCleanupProtectedTitle">
+              <span class="pdf-merge-v2-section-kicker">PROTECTED</span>
+              <h3 id="cDriveCleanupProtectedTitle" data-i18n="home.cDriveCleanupPage.protectedTitle">以下内容不会被清理</h3>
+              <p class="c-drive-cleanup-protected-desc" data-i18n="home.cDriveCleanupPage.protectedDesc">清理只针对缓存、临时文件和系统空间项，绝不扫描或删除你的个人文件。</p>
+              <ul class="c-drive-cleanup-protected-list">
+                <li data-i18n="home.cDriveCleanupPage.protectedDownloads">下载、文档、桌面、图片、音乐、视频</li>
+                <li data-i18n="home.cDriveCleanupPage.protectedChats">微信 / QQ 聊天记录与文件</li>
+                <li data-i18n="home.cDriveCleanupPage.protectedBackups">WPS / Office 备份与自动恢复文件</li>
+                <li data-i18n="home.cDriveCleanupPage.protectedBrowser">浏览器书签、密码与登录状态（仅清理缓存）</li>
+                <li data-i18n="home.cDriveCleanupPage.protectedApps">已安装应用及其个人数据</li>
+              </ul>
+            </section>
+            <section class="c-drive-cleanup-how" aria-labelledby="cDriveCleanupHowTitle">
+              <h3 id="cDriveCleanupHowTitle" data-i18n="home.cDriveCleanupPage.howTitle">三步完成清理</h3>
+              <ol class="c-drive-cleanup-how-steps">
+                <li>
+                  <span class="c-drive-cleanup-how-step">01</span>
+                  <div>
+                    <strong data-i18n="home.cDriveCleanupPage.howStep1Title">自动扫描</strong>
+                    <p data-i18n="home.cDriveCleanupPage.howStep1Body">进入页面后自动扫描每个风险档的可释放空间，无需手动选择目录。</p>
+                  </div>
+                </li>
+                <li>
+                  <span class="c-drive-cleanup-how-step">02</span>
+                  <div>
+                    <strong data-i18n="home.cDriveCleanupPage.howStep2Title">选择档位</strong>
+                    <p data-i18n="home.cDriveCleanupPage.howStep2Body">在左侧选择低、中或高风险档，右侧会实时显示清理内容与影响。</p>
+                  </div>
+                </li>
+                <li>
+                  <span class="c-drive-cleanup-how-step">03</span>
+                  <div>
+                    <strong data-i18n="home.cDriveCleanupPage.howStep3Title">确认清理</strong>
+                    <p data-i18n="home.cDriveCleanupPage.howStep3Body">阅读确认弹框并等待 5 秒倒计时后，即可一键清理当前档。</p>
+                  </div>
+                </li>
+              </ol>
+            </section>
+          </div>
+          <footer class="c-drive-cleanup-footer">
+            <button class="c-drive-cleanup-confirm" id="cDriveCleanupConfirmBtn" type="button" disabled data-i18n="home.cDriveCleanupPage.confirmBtn">确认清理当前档</button>
+          </footer>
+        </main>
+      </div>
+    </div>
+
+<div class="c-drive-cleanup-mask" id="cDriveCleanupAdminMask" role="dialog" aria-modal="true" aria-labelledby="cDriveCleanupAdminTitle" aria-hidden="true">
+      <div class="c-drive-cleanup-dialog c-drive-cleanup-admin-dialog">
+        <div class="c-drive-cleanup-dialog-icon"><i data-lucide="shield-alert"></i></div>
+        <h3 id="cDriveCleanupAdminTitle" data-i18n="home.cDriveCleanupPage.adminTitle">需要管理员权限</h3>
+        <p class="c-drive-cleanup-dialog-body" data-i18n="home.cDriveCleanupPage.adminDesc">C盘清理涉及系统级缓存，需要以管理员身份运行 ToolKnit 才能完整执行。</p>
+        <div class="c-drive-cleanup-dialog-actions">
+          <button class="c-drive-cleanup-dialog-primary" id="cDriveCleanupAdminRelaunch" type="button" data-i18n="home.cDriveCleanupPage.adminRelaunch">以管理员身份重启</button>
+        </div>
+        <p class="c-drive-cleanup-admin-manual" data-i18n="home.cDriveCleanupPage.adminManual">也可以右键右下角任务栏中的 ToolKnit 退出，再回到桌面右键图标，选择“以管理员身份运行”。</p>
+      </div>
+    </div>
+
+<div class="c-drive-cleanup-mask" id="cDriveCleanupConfirmMask" role="dialog" aria-modal="true" aria-labelledby="cDriveCleanupConfirmTitle" aria-hidden="true">
+      <div class="c-drive-cleanup-dialog c-drive-cleanup-confirm-dialog">
+        <div class="c-drive-cleanup-dialog-icon"><i data-lucide="trash-2"></i></div>
+        <h3 id="cDriveCleanupConfirmTitle" data-i18n="home.cDriveCleanupPage.confirmTitle">确认清理</h3>
+        <p class="c-drive-cleanup-dialog-tier" id="cDriveCleanupConfirmTier"></p>
+        <div class="c-drive-cleanup-dialog-list" id="cDriveCleanupConfirmList"></div>
+        <p class="c-drive-cleanup-dialog-warn" data-i18n="home.cDriveCleanupPage.confirmPermanent">清理为永久删除，不会进入回收站。</p>
+        <p class="c-drive-cleanup-dialog-warn" id="cDriveCleanupConfirmConsequences" hidden></p>
+        <div class="c-drive-cleanup-dialog-actions">
+          <button class="c-drive-cleanup-dialog-cancel" id="cDriveCleanupConfirmCancel" type="button" data-i18n="common.cancel">取消</button>
+          <button class="c-drive-cleanup-dialog-primary c-drive-cleanup-dialog-danger" id="cDriveCleanupConfirmRun" type="button" disabled>确认清理（5s）</button>
+        </div>
+      </div>
+    </div>

@@ -1,0 +1,462 @@
+/* ===== Formal v2 homepage: the approved prototype is the only home shell. ===== */
+.home-v2-topbar,
+.home-v2-shader-overlay {
+  display: none;
+}
+
+      .app.is-v2-home {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        display: grid;
+        grid-template-rows: 68px minmax(0, 1fr);
+        overflow: hidden;
+        background: #000;
+        isolation: isolate;
+}
+
+.app.is-v2-home .sidebar,
+.app.is-v2-home .divider,
+.app.is-v2-home .main-header {
+  display: none;
+}
+
+body.v2-home-active .global-window-controls {
+  display: none;
+}
+
+.app.is-v2-home .home-v2-shader-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.app.is-v2-home .toolknit-custom-background-media {
+  opacity: 0.78;
+  filter: brightness(0.62) saturate(0.92) contrast(1.05);
+}
+
+.app.is-v2-home.has-custom-background .home-v2-shader-overlay {
+  display: block;
+  opacity: 0.72;
+  background:
+    linear-gradient(180deg, rgba(5, 5, 6, 0.38), rgba(5, 5, 6, 0.18) 34%, rgba(0, 0, 0, 0.5)),
+    radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.08), transparent 24%),
+    radial-gradient(circle at 84% 22%, rgba(255, 255, 255, 0.06), transparent 22%);
+}
+
+
+.app.is-v2-home .home-v2-topbar {
+  position: relative;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  align-items: center;
+  gap: 24px;
+  min-height: 68px;
+  padding: 0 28px;
+  background: rgba(8, 8, 9, 0.92);
+  -webkit-app-region: drag;
+}
+
+.home-v2-brand,
+.home-v2-nav-link,
+.home-v2-support-top,
+.home-v2-icon-button,
+.home-v2-window-button,
+.home-v2-top-actions,
+.home-v2-window-cluster,
+.home-v2-window-controls {
+  -webkit-app-region: no-drag;
+}
+
+/* The topbar itself can initiate a native drag from its empty space. Keep the
+   interactive cluster above every decorative layer so clicks remain reliable
+   after a resize or an overlay transition. */
+.home-v2-top-actions,
+.home-v2-window-cluster,
+.home-v2-window-controls {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.home-v2-brand {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  border: 0;
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+}
+
+.home-v2-brand img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  filter: grayscale(1) contrast(1.12) brightness(1.02);
+}
+
+.home-v2-brand-name,
+.home-v2-brand-version,
+.home-v2-topbar .home-v2-nav-link,
+.home-v2-topbar .home-v2-support-top {
+  font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.home-v2-brand-name {
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.home-v2-brand-version {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--muted);
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.home-v2-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  justify-self: end;
+}
+
+.home-v2-nav-link {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.home-v2-nav-link:hover,
+.home-v2-icon-button:hover,
+.home-v2-window-button:hover {
+  color: var(--ink);
+  background: #171717;
+}
+
+.home-v2-nav-link svg,
+.home-v2-support-top svg,
+.home-v2-icon-button svg,
+.home-v2-window-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.home-v2-support-top {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 13px;
+  border: 1px solid var(--white);
+  border-radius: var(--tk-nav-button-radius, 6px);
+  color: var(--black);
+  background: var(--white);
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: transform 150ms ease, background 150ms ease;
+}
+
+.home-v2-support-top:hover {
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.home-v2-window-cluster {
+  width: 155px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.home-v2-icon-button,
+.home-v2-window-button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.home-v2-window-controls {
+  display: flex;
+  align-items: center;
+}
+
+.app.is-v2-home .main {
+  grid-row: 2;
+  min-height: 0;
+  height: auto;
+  z-index: 2;
+}
+
+.app.is-v2-home .main-content {
+  height: 100%;
+  padding: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #3b3b38 transparent;
+  background: transparent;
+}
+
+.app.is-v2-home .main-content::-webkit-scrollbar { width: 8px; }
+.app.is-v2-home .main-content::-webkit-scrollbar-thumb { background: #343431; }
+
+.app.is-v2-home .content-section[data-category="home"] {
+  min-height: 100%;
+  height: auto;
+  color: var(--ink);
+}
+
+.app.is-v2-home .home-v2-shell {
+  width: min(1480px, 100%);
+  min-height: auto;
+  margin: 0 auto;
+  padding: 26px 40px 48px;
+  gap: 0;
+}
+
+
+.app.is-v2-home .hero-copy {
+  padding: 64px 16px 64px 0;
+}
+
+.app.is-v2-home .eyebrow {
+  margin-bottom: 25px;
+  color: var(--muted);
+}
+
+.app.is-v2-home .hero-desc { max-width: 530px; margin-top: 26px; }
+.app.is-v2-home .hero-actions { margin-top: 34px; }
+.app.is-v2-home .hero-support-note { margin-top: 24px; }
+.app.is-v2-home .hero-meta { margin-top: 24px; }
+.app.is-v2-home .hero-desc { color: #b1b0aa; }
+.app.is-v2-home .hero-support-note { color: rgba(245, 245, 243, 0.76); }
+
+.app.is-v2-home .github-strip {
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.28fr) auto;
+  padding: 26px 28px;
+}
+
+.app.is-v2-home .github-mini-chart,
+.app.is-v2-home .github-mini-status { display: none; }
+
+.app.is-v2-home .favorites { padding-top: 46px; }
+.app.is-v2-home .section-heading { margin-bottom: 26px; }
+.app.is-v2-home .tool-explorer { margin-top: 54px; }
+.app.is-v2-home .footer-note { padding-top: 30px; }
+.app.is-v2-home .tool-finder-title {
+  font-size: 27px;
+  font-weight: 400;
+  line-height: 1.08;
+}
+
+.app.is-v2-home .tool-finder-subtitle {
+  margin: 12px 0 0;
+  color: var(--muted);
+}
+
+.app.is-v2-home {
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Keep the approved prototype's favorite cards intact while allowing the
+   existing favorites store to populate them with real tools. */
+.app.is-v2-home .favorite-grid,
+.app.is-v2-home .favorites-content {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.app.is-v2-home .favorite-item {
+  position: relative;
+  min-height: 138px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 16px;
+  width: 100%;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  color: inherit;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+    rgba(255, 255, 255, 0.02);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 170ms ease, border-color 170ms ease, transform 170ms ease;
+}
+
+.app.is-v2-home .favorite-item:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.13);
+  transform: translateY(-1px);
+}
+
+.app.is-v2-home .favorite-item:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 3px;
+}
+
+.app.is-v2-home .favorites-content.is-managing .favorite-item {
+  padding-bottom: 58px;
+}
+
+.app.is-v2-home .favorite-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+}
+
+.app.is-v2-home .favorite-icon svg { width: 17px; height: 17px; }
+.app.is-v2-home .favorite-name { display: block; margin: 1px 0 0; font-size: 15px; font-weight: 400; }
+.app.is-v2-home .favorite-desc { display: block; max-width: 260px; margin-top: 10px; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.app.is-v2-home .favorite-category { display: block; margin-top: 14px; color: var(--quiet); font-size: 11px; text-transform: uppercase; }
+.app.is-v2-home .favorite-remove-btn {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--white);
+  border-radius: 999px;
+  color: var(--black);
+  background: var(--white);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.34);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px) scale(0.9);
+  transition: opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.app.is-v2-home .favorite-remove-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.4;
+}
+
+.app.is-v2-home .favorites-content.is-managing .favorite-remove-btn {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  animation: favoriteRemoveWiggle 1.15s ease-in-out infinite;
+}
+
+.app.is-v2-home .favorites-content.is-managing .favorite-item:nth-child(2n) .favorite-remove-btn { animation-delay: -0.22s; }
+.app.is-v2-home .favorites-content.is-managing .favorite-item:nth-child(3n) .favorite-remove-btn { animation-delay: -0.44s; }
+
+.app.is-v2-home .favorite-remove-btn:hover,
+.app.is-v2-home .favorite-remove-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42), 0 0 0 4px rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px) scale(1.06);
+  animation-play-state: paused;
+}
+
+@keyframes favoriteRemoveWiggle {
+  0%, 100% { rotate: 0deg; }
+  18% { rotate: -6deg; }
+  34% { rotate: 5deg; }
+  50% { rotate: -3deg; }
+  66% { rotate: 2deg; }
+}
+
+.app.is-v2-home .fav-empty-guide {
+  grid-column: 1 / -1;
+  min-height: 138px;
+}
+
+@media (max-width: 1120px) {
+  .app.is-v2-home .home-v2-topbar { grid-template-columns: 220px 1fr; }
+  .app.is-v2-home .home-v2-nav-link span { display: none; }
+}
+
+@media (max-width: 960px) {
+  .app.is-v2-home .home-v2-shell { padding-inline: 0; }
+}
+
+/* The legacy category breakpoint was 1280px; the approved v2 prototype keeps
+   its two-column hero until the narrower 1120px layout. */
+@media (min-width: 1121px) {
+  .app.is-v2-home .hero {
+    grid-template-columns: minmax(470px, 1.05fr) minmax(400px, 0.95fr);
+    align-items: center;
+  }
+
+
+  .app.is-v2-home .tool-finder-head {
+    grid-template-columns: minmax(0, 0.72fr) minmax(360px, 1.28fr);
+    gap: 42px;
+  }
+
+  .app.is-v2-home .tool-result-grid,
+  .app.is-v2-home .favorites-content {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .app.is-v2-home .favorites-content {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-search-field::after {
+    transition: none;
+  }
+
+  .primary-action,
+  .secondary-action,
+  .home-brand-link,
+  .tool-result-card,
+  .fav-item,
+  .back-to-top {
+    transition: none;
+  }
+}
+

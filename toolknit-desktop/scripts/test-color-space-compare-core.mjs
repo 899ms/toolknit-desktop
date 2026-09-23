@@ -1,7 +1,20 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
   COLOR_SPACE_SLIDER_CONFIG,
+  COLOR_WHEEL_GEOMETRY,
+  COLOR_WHEEL_TRIANGLE,
+  hslToWheelPoint,
+  hsvToWheelPoint,
+  hueToWheelPoint,
+  parseHexColor,
+  wheelPointToHsl,
+  wheelPointToHsv,
+  wheelPointToHue,
+  wheelRadiusIsRing,
+  wheelSquareToHsv,
+  wheelTriangleBarycentric,
   LAB_D65_WHITE_POINT,
   cmykToRgb,
   fmtColorNumber,
@@ -42,7 +55,7 @@ import {
   xyzToLinearDisplayP3,
   xyzToLinearRec2020,
   xyzToOklab
-} from '../src/color-space-compare-core.js';
+} from '../src/features/color-space-compare/core.js';
 
 function approx(actual, expected, epsilon = 1e-8, message = '') {
   assert.ok(
@@ -384,14 +397,99 @@ for (const space of editableSpaces) {
   }
 }
 
+// Wheel geometry must survive a round trip through every editable pick so the
+// handle drawn on screen always matches the linked HSV/HSL values.
+for (let s = 0; s <= 100; s += 10) {
+  for (let v = 0; v <= 100; v += 10) {
+    const point = hsvToWheelPoint(s, v);
+    const back = wheelPointToHsv(point.x, point.y);
+    approx(back.s, s, 1e-9, `HSV wheel round trip s=${s} v=${v}`);
+    approx(back.v, v, 1e-9, `HSV wheel round trip s=${s} v=${v}`);
+  }
+}
+
+// The SV square is rasterised from pixel offsets, so its corners must map to
+// the four canonical HSV extremes (white, pure hue, black, black-hue).
+const sqHalf = COLOR_WHEEL_GEOMETRY.squareRadius / Math.SQRT2;
+{
+  const point = wheelSquareToHsv(-sqHalf, -sqHalf, sqHalf);
+  approx(point.s, 0, 1e-12, 'SV top-left saturation');
+  approx(point.v, 100, 1e-12, 'SV top-left value');
+}
+{
+  const point = wheelSquareToHsv(sqHalf, -sqHalf, sqHalf);
+  approx(point.s, 100, 1e-12, 'SV top-right saturation');
+  approx(point.v, 100, 1e-12, 'SV top-right value');
+}
+{
+  const point = wheelSquareToHsv(-sqHalf, sqHalf, sqHalf);
+  approx(point.s, 0, 1e-12, 'SV bottom-left saturation');
+  approx(point.v, 0, 1e-12, 'SV bottom-left value');
+}
+{
+  const point = wheelSquareToHsv(sqHalf, sqHalf, sqHalf);
+  approx(point.s, 100, 1e-12, 'SV bottom-right saturation');
+  approx(point.v, 0, 1e-12, 'SV bottom-right value');
+}
+// centre is 50% saturation, 50% value for any square half-width
+approx(wheelSquareToHsv(0, 0, sqHalf).s, 50, 1e-12, 'SV centre saturation');
+approx(wheelSquareToHsv(0, 0, sqHalf).v, 50, 1e-12, 'SV centre value');
+
+for (let s = 0; s <= 100; s += 10) {
+  for (let l = 10; l <= 90; l += 10) {
+    const point = hslToWheelPoint(s, l);
+    const back = wheelPointToHsl(point.x, point.y);
+    approx(back.s, s, 1e-9, `HSL wheel round trip s=${s} l=${l}`);
+    approx(back.l, l, 1e-9, `HSL wheel round trip s=${s} l=${l}`);
+  }
+}
+
+const triangleVertices = [
+  { name: 'white', vertex: COLOR_WHEEL_TRIANGLE.white, expected: { bW: 1, bK: 0, bC: 0 } },
+  { name: 'black', vertex: COLOR_WHEEL_TRIANGLE.black, expected: { bW: 0, bK: 1, bC: 0 } },
+  { name: 'pure hue', vertex: COLOR_WHEEL_TRIANGLE.pure, expected: { bW: 0, bK: 0, bC: 1 } },
+];
+for (const { name, vertex, expected } of triangleVertices) {
+  approxObject(
+    wheelTriangleBarycentric(vertex.x, vertex.y),
+    expected,
+    1e-12,
+    `HSL triangle ${name} vertex`
+  );
+}
+
+// The hue ring and its indicator dot share one angle convention: 0° points to
+// three o'clock and the angle grows counter-clockwise on screen.
+for (let hue = 0; hue < 360; hue += 15) {
+  const dot = hueToWheelPoint(hue);
+  approx(wheelPointToHue(dot.x, dot.y), hue % 360, 1e-9, `hue indicator ${hue}`);
+  approx(dot.x * dot.x + dot.y * dot.y, COLOR_WHEEL_GEOMETRY.hueDotRadius ** 2, 1e-12, 'hue dot radius');
+}
+approx(wheelPointToHue(1, 0), 0, 1e-12, 'hue at three o clock');
+approx(wheelPointToHue(0, -1), 90, 1e-12, 'hue at twelve o clock');
+assert.equal(wheelRadiusIsRing(COLOR_WHEEL_GEOMETRY.ringSplitRatio), true);
+assert.equal(wheelRadiusIsRing(COLOR_WHEEL_GEOMETRY.ringSplitRatio - 1e-9), false);
+
+// HEX entry must accept the formats people actually paste and reject the rest.
+assert.deepEqual(parseHexColor('#1A2B3C'), { r: 26, g: 43, b: 60 });
+assert.deepEqual(parseHexColor('1a2b3c'), { r: 26, g: 43, b: 60 });
+assert.deepEqual(parseHexColor('#ABC'), { r: 170, g: 187, b: 204 });
+assert.deepEqual(parseHexColor('  #000000  '), { r: 0, g: 0, b: 0 });
+for (const invalid of ['', '#', '12345', '1234567', '#GGGGGG', 'rgb(1,2,3)', null, undefined]) {
+  assert.equal(parseHexColor(invalid), null, `parseHexColor must reject ${JSON.stringify(invalid)}`);
+}
+assert.equal(parseHexColor('12#3456'), null, 'Embedded hash must not become a different valid color.');
+assert.equal(parseHexColor('##123'), null);
+
 // The desktop integration must remain discoverable, localizable, and wired
 // through the 2.1 lazy tool shell rather than an isolated iframe.
 const projectRoot = new URL('..', import.meta.url);
-const [html, main, styles, ui, zh, en] = await Promise.all([
-  readFile(new URL('index.html', projectRoot), 'utf8'),
-  readFile(new URL('src/main.js', projectRoot), 'utf8'),
-  readFile(new URL('src/color-space-compare.css', projectRoot), 'utf8'),
-  readFile(new URL('src/color-space-compare-ui.js', projectRoot), 'utf8'),
+const [html, lazyTools, styles, tool, controller, zh, en] = await Promise.all([
+  readAppMarkup(import.meta.url),
+  readFile(new URL('src/features/lazy-tools.js', projectRoot), 'utf8'),
+  readFile(new URL('src/features/color-space-compare/color-space-compare.css', projectRoot), 'utf8'),
+  readFile(new URL('src/features/color-space-compare/tool.js', projectRoot), 'utf8'),
+  readFile(new URL('src/features/color-space-compare/controller.js', projectRoot), 'utf8'),
   readFile(new URL('src/locales/zh.json', projectRoot), 'utf8').then(JSON.parse),
   readFile(new URL('src/locales/en.json', projectRoot), 'utf8').then(JSON.parse),
 ]);
@@ -400,17 +498,22 @@ assert.match(html, /data-tool="color-space-compare"/, 'Creative tools must list 
 assert.match(html, /id="colorSpaceCompareOverlay"[^>]*aria-hidden="true"/, 'The lazy overlay host is required.');
 assert.doesNotMatch(html, /id="colorSpaceCompareWorkspace"/, 'The content must not use the global Workspace modal convention.');
 assert.doesNotMatch(html, /<iframe[^>]+color-space-compare/i, 'The tool must not regress to an isolated iframe.');
-assert.match(main, /'color-space-compare':[\s\S]*?import\('\.\/color-space-compare-ui\.js'\)/, 'The tool must use the 2.1 lazy loader.');
-assert.match(main, /overlayId:\s*'colorSpaceCompareOverlay'/, 'The lazy tool must target its overlay host.');
-assert.match(ui, /toolTopbarMarkup/, 'The shared 2.1 top bar is required.');
-assert.match(ui, /mountToolPageBackground/, 'The shared custom-background bridge is required.');
-assert.match(ui, /lostpointercapture/, 'Pointer capture loss must clear slider drag state.');
-assert.match(ui, /applyValue\(next, null, false\)/, 'Exact out-of-range step values must bypass slider clamping.');
-assert.match(ui, /resizeObserver\?\.disconnect\(\)/, 'Closing the page must disconnect its ResizeObserver.');
-assert.match(ui, /removeEventListener\('scroll', handleResize\)/, 'Closing the page must release its scroll listener.');
-assert.match(ui, /canvas\.width = 1;[\s\S]*?canvas\.height = 1;/, 'Closing the page must release canvas buffers.');
+assert.match(lazyTools, /'color-space-compare':[\s\S]*?import\('\.\/color-space-compare\/tool\.js'\)/, 'The tool must use the V3 lazy registry.');
+assert.match(lazyTools, /'color-space-compare':[\s\S]*?overlayId:\s*'colorSpaceCompareOverlay'[\s\S]*?init:\s*'initColorSpaceCompareTool'/, 'The lazy tool must target its overlay host and initializer.');
+assert.match(tool, /toolTopbarMarkup/, 'The shared 2.1 top bar is required.');
+assert.match(tool, /mountToolPageBackground/, 'The shared custom-background bridge is required.');
+assert.match(controller, /lostpointercapture/, 'Pointer capture loss must clear slider drag state.');
+assert.match(controller, /applyValue\(next, null, false\)/, 'Exact out-of-range step values must bypass slider clamping.');
+assert.match(controller, /resizeObserver\?\.disconnect\(\)/, 'Closing the page must disconnect its ResizeObserver.');
+assert.match(controller, /removeEventListener\('scroll', handleResize\)/, 'Closing the page must release its scroll listener.');
+assert.match(controller, /canvas\.width = 1;[\s\S]*?canvas\.height = 1;/, 'Closing the page must release canvas buffers.');
 assert.match(styles, /\.color-space-compare-sliders\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2/, 'The desktop two-column controls layout is required.');
+for (const role of ['hex', 'hex-input', 'hex-row', 'wheels']) {
+  assert.ok(tool.includes(`data-role="${role}"`), `V3 template must expose ${role}.`);
+}
 for (const [locale, dictionary] of [['Chinese', zh], ['English', en]]) {
+  for (const key of ['hexLabel', 'hexInvalid']) assert.equal(typeof dictionary.home.colorSpaceCompare[key], 'string');
+  for (const key of ['hsv', 'hsl', 'label']) assert.equal(typeof dictionary.home.colorSpaceCompare.wheels[key], 'string');
   assert.equal(typeof dictionary.home?.colorSpaceCompare?.subtitle, 'string', `${locale} tool copy is missing.`);
   assert.equal(typeof dictionary.home?.colorSpaceCompare?.spaces?.rgb, 'string', `${locale} RGB guidance is missing.`);
   assert.equal(typeof dictionary.home?.colorSpaceCompare?.gamutOutside, 'string', `${locale} gamut guidance is missing.`);

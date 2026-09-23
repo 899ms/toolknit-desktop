@@ -1,4 +1,4 @@
-import JSZip from 'jszip';
+import { buildPptDraftPptx as buildPptDraftPptxExport } from './ppt-draft-export.js';
 import {
   PPT_OUTLINE_LIMITS,
   createPptOutlineMarkdown,
@@ -16,7 +16,20 @@ export const PPT_DRAFT_LIMITS = Object.freeze({
   maxSpeakerNoteChars: 220
 });
 
-export const PPT_DRAFT_THEMES = Object.freeze(['minimal-mono']);
+export const PPT_DRAFT_ASSET_LIMITS = Object.freeze({
+  maxAssets: 24,
+  maxBytesPerAsset: 24 * 1024 * 1024,
+  maxTotalBytes: 96 * 1024 * 1024,
+  supportedMimeTypes: Object.freeze(['image/png', 'image/jpeg', 'image/gif'])
+});
+
+export const PPT_DRAFT_THEMES = Object.freeze(['minimal-mono', 'minimal-dark', 'minimal-light', 'tech-blue']);
+
+const PPT_DRAFT_ASSET_EXTENSIONS = Object.freeze({
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/gif': 'gif'
+});
 
 const EMU_PER_INCH = 914400;
 const SLIDE_WIDTH = 13.333333;
@@ -57,11 +70,6 @@ function derivePosterMediaHeight(width, format) {
 }
 
 const THEME_TOKENS = Object.freeze({
-  // Single-template product decision: every deck is generated in a strict
-  // black/white minimal system. The palette is a grayscale ramp where pure
-  // white dominates the canvas and near-black is reserved for accents and
-  // primary text. Secondary accents are deliberately neutral grays rather
-  // than hue-based so the result stays cohesive regardless of subject.
   'minimal-mono': {
     id: 'minimal-mono',
     name: 'Minimal Monochrome',
@@ -79,7 +87,71 @@ const THEME_TOKENS = Object.freeze({
     line: 'D8D8D8',
     grid: 'ECECEC',
     surface: 'F5F5F5'
+  },
+  'minimal-dark': {
+    id: 'minimal-dark',
+    name: 'Minimal Dark',
+    background: '111827',
+    panel: '1F2937',
+    panelAlt: '273449',
+    text: 'F9FAFB',
+    muted: 'B7C0CD',
+    accent: 'F9FAFB',
+    accentSoft: 'D1D5DB',
+    warm: '94A3B8',
+    success: '86EFAC',
+    danger: 'FB7185',
+    violet: 'C4B5FD',
+    line: '475569',
+    grid: '334155',
+    surface: '172033'
+  },
+  'minimal-light': {
+    id: 'minimal-light',
+    name: 'Minimal Light',
+    background: 'FFFFFF',
+    panel: 'F7F8FA',
+    panelAlt: 'EDF0F4',
+    text: '16202A',
+    muted: '5D6875',
+    accent: '111827',
+    accentSoft: '3A4653',
+    warm: '7A8794',
+    success: '1F7A59',
+    danger: 'B42318',
+    violet: '3466D3',
+    line: 'D7DDE4',
+    grid: 'E8EDF2',
+    surface: 'F3F5F8'
+  },
+  'tech-blue': {
+    id: 'tech-blue',
+    name: 'Tech Blue',
+    background: 'F7FBFF',
+    panel: 'EAF3FF',
+    panelAlt: 'D9E9FF',
+    text: '10243E',
+    muted: '526A86',
+    accent: '1167D8',
+    accentSoft: '2F83E7',
+    warm: '00A3A3',
+    success: '167A5C',
+    danger: 'C53D3D',
+    violet: '1167D8',
+    line: 'C9DDF2',
+    grid: 'E3F1FF',
+    surface: 'F0F7FF'
   }
+});
+
+const THEME_ALIASES = Object.freeze({
+  minimal: 'minimal-mono',
+  mono: 'minimal-mono',
+  dark: 'minimal-dark',
+  light: 'minimal-light',
+  blue: 'tech-blue',
+  'clean-business': 'minimal-light',
+  'editorial-warm': 'minimal-light'
 });
 
 const INTERIOR_SPACE_KEYWORDS = Object.freeze([
@@ -124,14 +196,76 @@ function cleanInline(value, { maxChars = 240, fallback = '' } = {}) {
     .slice(0, maxChars) || fallback;
 }
 
-function cleanTheme() {
-  // Legacy and user-provided theme hints are intentionally ignored. The
-  // product exposes a single black/white minimal template, so any incoming
-  // theme value is normalized to that canonical token rather than rejected.
-  return 'minimal-mono';
+function assetExtension(mime, name = '') {
+  const normalizedMime = String(mime || '').toLowerCase().split(';')[0].trim();
+  if (PPT_DRAFT_ASSET_EXTENSIONS[normalizedMime]) return PPT_DRAFT_ASSET_EXTENSIONS[normalizedMime];
+  const extension = String(name || '').toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] || '';
+  return ['png', 'jpg', 'jpeg', 'gif'].includes(extension) ? (extension === 'jpeg' ? 'jpg' : extension) : '';
 }
 
-export function inferPptDraftTheme() {
+function binaryAssetBytes(value) {
+  if (value instanceof Uint8Array) return value;
+  if (value instanceof ArrayBuffer) return new Uint8Array(value);
+  if (ArrayBuffer.isView(value)) return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+  if (Array.isArray(value)) return Uint8Array.from(value);
+  return null;
+}
+
+function safeAssetId(value, fallback) {
+  const cleaned = String(value || '')
+    .trim()
+    .replace(/[^a-z0-9_-]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase()
+    .slice(0, 64);
+  return cleaned || fallback;
+}
+
+export function normalizePptDraftAssets(value = []) {
+  const source = Array.isArray(value) ? value : [];
+  const result = [];
+  const ids = new Set();
+  let totalBytes = 0;
+  for (const [index, item] of source.entries()) {
+    if (result.length >= PPT_DRAFT_ASSET_LIMITS.maxAssets) break;
+    const candidate = item && typeof item === 'object' ? item : {};
+    const name = cleanInline(candidate.name || candidate.fileName, { maxChars: 180, fallback: `asset-${index + 1}` });
+    const mime = String(candidate.mime || candidate.type || '').toLowerCase().split(';')[0].trim();
+    const extension = assetExtension(mime, name);
+    const bytes = binaryAssetBytes(candidate.bytes || candidate.data);
+    if (!extension || !PPT_DRAFT_ASSET_LIMITS.supportedMimeTypes.includes(mime) || !bytes?.byteLength) continue;
+    if (bytes.byteLength > PPT_DRAFT_ASSET_LIMITS.maxBytesPerAsset || totalBytes + bytes.byteLength > PPT_DRAFT_ASSET_LIMITS.maxTotalBytes) break;
+    let id = safeAssetId(candidate.id || name.replace(/\.[^.]+$/, ''), `asset-${index + 1}`);
+    while (ids.has(id)) id = `${id}-${index + 1}`;
+    ids.add(id);
+    totalBytes += bytes.byteLength;
+    result.push({
+      id,
+      name,
+      mime,
+      extension,
+      bytes,
+      size: bytes.byteLength,
+      width: Number.isFinite(Number(candidate.width)) ? Math.max(0, Math.round(Number(candidate.width))) : 0,
+      height: Number.isFinite(Number(candidate.height)) ? Math.max(0, Math.round(Number(candidate.height))) : 0,
+      preview_url: String(candidate.preview_url || candidate.previewUrl || '')
+    });
+  }
+  return result;
+}
+
+function cleanTheme(value = 'minimal-mono') {
+  const candidate = String(value || '').trim().toLowerCase();
+  return THEME_TOKENS[candidate] ? candidate : (THEME_ALIASES[candidate] || 'minimal-mono');
+}
+
+export function inferPptDraftTheme(args = {}) {
+  const explicit = String(args.theme || '').trim();
+  if (explicit) return cleanTheme(explicit);
+  const hint = `${args.style || ''} ${args.theme_hint || ''} ${args.prompt || ''}`.toLowerCase();
+  if (/科技蓝|tech\s*blue|blue|科技感|ai|software|developer/i.test(hint)) return 'tech-blue';
+  if (/深色|dark|黑底|夜间|暗色/i.test(hint)) return 'minimal-dark';
+  if (/浅色|白底|light|商务|培训|教育|简洁/i.test(hint)) return 'minimal-light';
   return 'minimal-mono';
 }
 
@@ -502,7 +636,8 @@ function applyPptDraftVisualStyle(theme) {
 }
 
 export function resolvePptDraftThemeTokens(themeValue = 'minimal-mono', outline = {}) {
-  return THEME_TOKENS[cleanTheme(themeValue || outline?.request?.theme)] || THEME_TOKENS['minimal-mono'];
+  const theme = cleanTheme(themeValue || outline?.request?.theme || inferPptDraftTheme(outline));
+  return THEME_TOKENS[theme] || THEME_TOKENS['minimal-mono'];
 }
 
 export function sanitizePptDraftBaseName(value) {
@@ -868,10 +1003,40 @@ export function placeholderSvg(theme, label = '替换为你的图片', format = 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" data-format="${mediaFormat.id}"><rect width="${width}" height="${height}" fill="#ECECEC"/>${labelXml}<text x="${Math.round(width / 2)}" y="${ratioY}" fill="#B6B6B6" font-family="Microsoft YaHei,Arial" font-size="${portrait ? 19 : 21}" letter-spacing="2" text-anchor="middle">${aspectRatioLabel}</text></svg>`;
 }
 
-function createSlideAssetContext(assetRegistry, slideIndex = 1) {
+function imageSourceCrop(asset, frameWidth, frameHeight, fit = 'cover') {
+  if (fit !== 'cover' || !asset?.width || !asset?.height || !frameWidth || !frameHeight) return '';
+  const sourceRatio = Number(asset.width) / Number(asset.height);
+  const frameRatio = Number(frameWidth) / Number(frameHeight);
+  if (!Number.isFinite(sourceRatio) || !Number.isFinite(frameRatio) || sourceRatio <= 0 || frameRatio <= 0) return '';
+  if (sourceRatio > frameRatio) {
+    const visible = frameRatio / sourceRatio;
+    const side = Math.max(0, (1 - visible) / 2 * 100000);
+    return ` l="${Math.round(side)}" r="${Math.round(side)}"`;
+  }
+  const visible = sourceRatio / frameRatio;
+  const side = Math.max(0, (1 - visible) / 2 * 100000);
+  return ` t="${Math.round(side)}" b="${Math.round(side)}"`;
+}
+
+function createSlideAssetContext(assetRegistry, slideIndex = 1, slide = {}, assets = [], assignmentState = {}) {
   const refs = [];
   const refMap = new Map();
   const placeholders = [];
+  const media = [];
+  const slideAssetSlots = Array.isArray(slide?.asset_slots) ? slide.asset_slots : [];
+  const usedAssetIds = assignmentState.usedAssetIds || (assignmentState.usedAssetIds = new Set());
+  const resolveImageAsset = placeholderIndex => {
+    const slot = slideAssetSlots.find(item => Number(item?.slot) === Number(placeholderIndex)) || slideAssetSlots[Number(placeholderIndex) - 1];
+    const requestedId = String(slot?.asset_id || '').trim();
+    if (requestedId) {
+      const explicit = assets.find(asset => asset.id === requestedId);
+      return explicit ? { asset: explicit, fit: slot?.fit || 'cover', source: 'outline' } : { asset: null, fit: slot?.fit || 'cover', source: 'missing' };
+    }
+    const next = assets.find(asset => !usedAssetIds.has(asset.id));
+    if (!next) return { asset: null, fit: slot?.fit || 'cover', source: 'missing' };
+    usedAssetIds.add(next.id);
+    return { asset: next, fit: slot?.fit || 'cover', source: 'automatic' };
+  };
   return {
     slideIndex,
     useSvg(key, data) {
@@ -880,11 +1045,33 @@ function createSlideAssetContext(assetRegistry, slideIndex = 1) {
       if (!refMap.has(safeKey)) refMap.set(safeKey, `rId${refs.length + 2}`), refs.push({ id: refMap.get(safeKey), target: `../media/${safeKey}.svg` });
       return refMap.get(safeKey);
     },
+    useImage(asset) {
+      const safeKey = `asset-${safeAssetId(asset?.id || asset?.name, 'image')}`;
+      if (!assetRegistry.has(safeKey)) assetRegistry.set(safeKey, {
+        path: `ppt/media/${safeKey}.${asset.extension}`,
+        data: asset.bytes,
+        extension: asset.extension,
+        assetId: asset.id
+      });
+      if (!refMap.has(safeKey)) {
+        refMap.set(safeKey, `rId${refs.length + 2}`);
+        refs.push({ id: refMap.get(safeKey), target: `../media/${safeKey}.${asset.extension}` });
+      }
+      return refMap.get(safeKey);
+    },
+    resolveImageAsset,
+    registerMedia(meta) {
+      media.push({ ...meta });
+      if (meta.asset_id) usedAssetIds.add(meta.asset_id);
+    },
     registerPlaceholder(meta) {
       placeholders.push({ ...meta });
     },
     placeholderManifest() {
       return placeholders.map(item => ({ ...item }));
+    },
+    mediaManifest() {
+      return media.map(item => ({ ...item }));
     },
     relationships() {
       const images = refs.map(ref => `<Relationship Id="${ref.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${ref.target}"/>`).join('');
@@ -912,6 +1099,12 @@ function svgPicture(ctx, id, name, x, y, w, h, key, svg, { placeholder = false, 
     });
   }
   return `<p:pic><p:nvPicPr><p:cNvPr id="${id}" name="${xmlEscape(name)}" descr="${xmlEscape(alt || name)}"/><p:cNvPicPr preferRelativeResize="0"><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr>${ph}</p:nvPr></p:nvPicPr><p:blipFill><a:blip r:embed="${relId}"/><a:srcRect/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="${pct(x)}" y="${pct(y)}"/><a:ext cx="${pct(w)}" cy="${pct(h)}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>`;
+}
+
+function imagePicture(ctx, id, name, x, y, w, h, asset, { fit = 'cover', alt = '' } = {}) {
+  const relId = ctx.useImage(asset);
+  const crop = imageSourceCrop(asset, w, h, fit);
+  return `<p:pic><p:nvPicPr><p:cNvPr id="${id}" name="${xmlEscape(name)}" descr="${xmlEscape(alt || asset.name || name)}"/><p:cNvPicPr preferRelativeResize="0"><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${relId}"/><a:srcRect${crop}/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="${pct(x)}" y="${pct(y)}"/><a:ext cx="${pct(w)}" cy="${pct(h)}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>`;
 }
 
 function imagePlaceholder(ctx, id, name, x, y, w, h, theme, label = '替换为你的图片', slideIndex = null, placeholderIndex = 1, format = 'landscape') {
@@ -1358,8 +1551,41 @@ function posterMediaSlot(ctx, id, {
     aspectRatio: mediaFormat.aspectRatio,
     aspectRatioLabel: mediaFormat.aspectRatioLabel
   };
+  const resolved = ctx.resolveImageAsset?.(placeholderIndex) || { asset: null, fit: 'cover', source: 'missing' };
+  if (resolved.asset) {
+    ctx.registerMedia?.({
+      slide: Math.max(1, Number(slideIndex) || 1),
+      placeholder_index: Math.max(1, Number(placeholderIndex) || 1),
+      asset_id: resolved.asset.id,
+      asset_name: resolved.asset.name,
+      status: 'embedded',
+      source: resolved.source,
+      fit: resolved.fit,
+      width: resolved.asset.width,
+      height: resolved.asset.height,
+      format: resolved.asset.extension,
+      aspect_ratio: mediaFormat.aspectRatioLabel
+    });
+  } else {
+    ctx.registerMedia?.({
+      slide: Math.max(1, Number(slideIndex) || 1),
+      placeholder_index: Math.max(1, Number(placeholderIndex) || 1),
+      asset_id: '',
+      asset_name: '',
+      status: 'placeholder',
+      source: resolved.source || 'missing',
+      fit: resolved.fit || 'cover',
+      width: 0,
+      height: 0,
+      format: '',
+      aspect_ratio: mediaFormat.aspectRatioLabel,
+      label: label
+    });
+  }
   const parts = [
-    imagePlaceholder(ctx, id++, 'Editable image placeholder', frame.x, frame.y, frame.w, frame.h, theme, label, slideIndex, placeholderIndex, mediaFormat.id),
+    resolved.asset
+      ? imagePicture(ctx, id++, 'Embedded image asset', frame.x, frame.y, frame.w, frame.h, resolved.asset, { fit: resolved.fit, alt: label })
+      : imagePlaceholder(ctx, id++, 'Editable image placeholder', frame.x, frame.y, frame.w, frame.h, theme, label, slideIndex, placeholderIndex, mediaFormat.id),
     lineShape(id++, 'Media top rule', frame.x + 0.18, frame.y + 0.18, frame.x + 1.15, frame.y + 0.18, accent, 1.7),
     lineShape(id++, 'Media corner rule', frame.x + frame.w - 0.78, frame.y + frame.h - 0.18, frame.x + frame.w - 0.18, frame.y + frame.h - 0.18, theme.warm, 1.2)
   ];
@@ -1923,210 +2149,39 @@ function buildPosterClosing(slide, outline, theme, index, total, text, ctx) {
   return parts.join('');
 }
 
-function posterSpeakerNote(note, theme) {
-  const source = cleanInline(note);
-  if (!source) return '';
-  const locale = /[a-z]/i.test(source) ? 'EN' : '';
-  const label = locale ? 'SPEAKER NOTE' : '讲述备注';
-  return `${textBox(9001, 'Speaker note label', 0.82, 6.36, 1.6, 0.2, [paragraph(label, { size: 7.6, bold: true, colorValue: theme.accentSoft })])}${textBox(9002, 'Speaker note text', 1.78, 6.35, 5.9, 0.26, fitTextParagraphs(source, { width: 5.9, height: 0.26, size: 9.2, minSize: 7.6, maxLines: 1, colorValue: theme.muted }))}`;
-}
-
-function buildPosterContentSlide(slide, outline, theme, index, total, ctx) {
-  const text = normalizeSlideText(slide);
-  const copy = posterCopy(outline);
-  let content;
-  if (text.role === 'agenda' || text.role === 'section') content = buildPosterSection(slide, outline, theme, index, total, text, ctx);
-  else if (text.role === 'closing') content = buildPosterClosing(slide, outline, theme, index, total, text, ctx);
-  else if (text.role === 'problem') content = buildPosterProblem(slide, outline, theme, index, total, text, ctx);
-  else if (text.role === 'recommendation') content = buildPosterLocalFirst(slide, outline, theme, index, total, text, ctx);
-  // An explicit layout contract always wins over semantic heuristics. Claims
-  // often mention AI Agent/MCP or open-source licensing as content, but that
-  // must not turn a matrix, process, or comparison slide into another visual.
-  else if (text.role === 'comparison' || text.layoutKind === 'comparison') content = buildPosterComparison(slide, outline, theme, index, total, text, ctx);
-  else if (['workflow', 'roadmap', 'process'].includes(text.role) || ['process', 'timeline'].includes(text.layoutKind)) content = buildPosterProcess(slide, outline, theme, index, total, text, ctx);
-  else if (text.layoutKind === 'matrix' || text.role === 'evidence' && /matrix|网格|工具/i.test(`${text.visual} ${text.layoutFocus}`)) content = buildPosterMatrix(slide, outline, theme, index, total, text, ctx);
-  else if (['toolknit', 'tech-product'].includes(copy.profile) && /(?:^|\s)(?:MIT)(?:\s|$)|开源|open\s*source/i.test(`${text.title} ${text.claim}`)) content = buildPosterOpenSource(slide, outline, theme, index, total, text, ctx);
-  else if (['toolknit', 'tech-product'].includes(copy.profile) && /三端|桌面.*CLI|Agent\s*\/\s*MCP/i.test(`${text.title} ${text.claim}`)) content = buildPosterTriad(slide, outline, theme, index, total, text, ctx);
-  else content = buildPosterStatement(slide, outline, theme, index, total, text, ctx);
-  return content + posterSpeakerNote(text.note, theme);
-}
-
-function buildSlideXml(content, theme) {
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
-  <p:cSld>
-    <p:bg><p:bgPr><a:solidFill><a:srgbClr val="${color(theme.background)}"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>
-    <p:spTree>
-      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
-      <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
-      ${content}
-    </p:spTree>
-  </p:cSld>
-  <p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
-</p:sld>`;
-}
-
-function buildPresentationXml(slideCount) {
-  const slideIds = Array.from({ length: slideCount }, (_, index) => `<p:sldId id="${256 + index}" r:id="rId${index + 2}"/>`).join('');
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
-  <p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst>
-  <p:sldIdLst>${slideIds}</p:sldIdLst>
-  <p:sldSz cx="${SLIDE_CX}" cy="${SLIDE_CY}" type="wide"/>
-  <p:notesSz cx="6858000" cy="9144000"/>
-  <p:defaultTextStyle><a:defPPr><a:defRPr lang="zh-CN"/></a:defPPr></p:defaultTextStyle>
-</p:presentation>`;
-}
-
-function buildPresentationRels(slideCount) {
-  const slideRels = Array.from({ length: slideCount }, (_, index) => `<Relationship Id="rId${index + 2}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${index + 1}.xml"/>`).join('');
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>
-  ${slideRels}
-  <Relationship Id="rId${slideCount + 2}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>
-</Relationships>`;
-}
-
-function buildContentTypes(slideCount) {
-  const slides = Array.from({ length: slideCount }, (_, index) => `<Override PartName="/ppt/slides/slide${index + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join('');
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Default Extension="svg" ContentType="image/svg+xml"/>
-  <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
-  <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
-  <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
-  <Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>
-  <Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>
-  <Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>
-  ${slides}
-</Types>`;
-}
-
-function rootRels() {
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/>
-  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
-  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
-</Relationships>`;
-}
-
-function docPropsCore(title) {
-  const now = new Date().toISOString();
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <dc:title>${xmlEscape(title)}</dc:title>
-  <dc:creator>ToolKnit Desktop</dc:creator>
-  <cp:lastModifiedBy>ToolKnit Desktop</cp:lastModifiedBy>
-  <dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created>
-  <dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified>
-</cp:coreProperties>`;
-}
-
-function docPropsApp(slideCount) {
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
-  <Application>ToolKnit Desktop</Application>
-  <PresentationFormat>On-screen Show (16:9)</PresentationFormat>
-  <Slides>${slideCount}</Slides>
-  <Notes>0</Notes>
-  <HiddenSlides>0</HiddenSlides>
-  <MMClips>0</MMClips>
-  <ScaleCrop>false</ScaleCrop>
-  <Company>ToolKnit</Company>
-  <AppVersion>2.0</AppVersion>
-</Properties>`;
-}
-
-function slideMasterXml(theme) {
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
-  <p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr></p:spTree></p:cSld>
-  <p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/>
-  <p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst>
-  <p:txStyles><p:titleStyle/><p:bodyStyle/><p:otherStyle/></p:txStyles>
-</p:sldMaster>`;
-}
-
-function slideLayoutXml() {
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="blank" preserve="1">
-  <p:cSld name="Blank"><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr></p:spTree></p:cSld>
-  <p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
-</p:sldLayout>`;
-}
-
-// PowerPoint requires shape IDs to be unique within a slide. The poster
-// builders intentionally compose several small fragments and some fragments
-// advance their local counter independently, so normalize the final shape
-// tree once at the XML boundary. Relationship IDs are separate and remain
-// untouched.
-function normalizeSlideShapeIds(content) {
-  let nextId = 2;
-  return String(content || '').replace(/(<p:cNvPr\s+id=")\d+("\s+name=)/g, (_match, prefix, suffix) => `${prefix}${nextId++}${suffix}`);
-}
-
-function simpleThemeXml(theme) {
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="${xmlEscape(theme.name)}">
-  <a:themeElements>
-    <a:clrScheme name="${xmlEscape(theme.name)}"><a:dk1><a:srgbClr val="${color(theme.text)}"/></a:dk1><a:lt1><a:srgbClr val="${color(theme.background)}"/></a:lt1><a:dk2><a:srgbClr val="${color(theme.panel)}"/></a:dk2><a:lt2><a:srgbClr val="${color(theme.panelAlt)}"/></a:lt2><a:accent1><a:srgbClr val="${color(theme.accent)}"/></a:accent1><a:accent2><a:srgbClr val="${color(theme.accentSoft)}"/></a:accent2><a:accent3><a:srgbClr val="${color(theme.line)}"/></a:accent3><a:accent4><a:srgbClr val="888888"/></a:accent4><a:accent5><a:srgbClr val="666666"/></a:accent5><a:accent6><a:srgbClr val="444444"/></a:accent6><a:hlink><a:srgbClr val="${color(theme.accent)}"/></a:hlink><a:folHlink><a:srgbClr val="${color(theme.muted)}"/></a:folHlink></a:clrScheme>
-    <a:fontScheme name="ToolKnit"><a:majorFont><a:latin typeface="Microsoft YaHei"/><a:ea typeface="Microsoft YaHei"/><a:cs typeface="Microsoft YaHei"/></a:majorFont><a:minorFont><a:latin typeface="Microsoft YaHei"/><a:ea typeface="Microsoft YaHei"/><a:cs typeface="Microsoft YaHei"/></a:minorFont></a:fontScheme>
-    <a:fmtScheme name="ToolKnit"><a:fillStyleLst><a:solidFill><a:srgbClr val="${color(theme.background)}"/></a:solidFill></a:fillStyleLst><a:lnStyleLst><a:ln w="9525"><a:solidFill><a:srgbClr val="${color(theme.line)}"/></a:solidFill></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:srgbClr val="${color(theme.background)}"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme>
-  </a:themeElements>
-</a:theme>`;
-}
-
 export async function buildPptDraftPptx(outlineValue, options = {}) {
-  const outline = normalizePptDraftOutline(outlineValue, options.request || {});
-  const theme = resolvePptDraftThemeTokens(options.theme || outline.request?.theme, outline);
-  const slides = outline.slides || [];
-  if (slides.length < PPT_DRAFT_LIMITS.minSlides || slides.length > PPT_DRAFT_LIMITS.maxSlides) {
-    fail('invalid_outline', `outline must contain ${PPT_DRAFT_LIMITS.minSlides}-${PPT_DRAFT_LIMITS.maxSlides} slides.`);
-  }
-  const zip = new JSZip();
-  const assetRegistry = new Map();
-  zip.file('[Content_Types].xml', buildContentTypes(slides.length));
-  zip.file('_rels/.rels', rootRels());
-  zip.file('docProps/core.xml', docPropsCore(outline.title));
-  zip.file('docProps/app.xml', docPropsApp(slides.length));
-  zip.file('ppt/presentation.xml', buildPresentationXml(slides.length));
-  zip.file('ppt/_rels/presentation.xml.rels', buildPresentationRels(slides.length));
-  zip.file('ppt/slideMasters/slideMaster1.xml', slideMasterXml(theme));
-  zip.file('ppt/slideMasters/_rels/slideMaster1.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/></Relationships>`);
-  zip.file('ppt/slideLayouts/slideLayout1.xml', slideLayoutXml());
-  zip.file('ppt/slideLayouts/_rels/slideLayout1.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/></Relationships>`);
-  zip.file('ppt/theme/theme1.xml', simpleThemeXml(theme));
-  const placeholderManifest = [];
-  slides.forEach((slide, index) => {
-    const ctx = createSlideAssetContext(assetRegistry, index + 1);
-    const content = index === 0
-      ? buildPosterCover(outline, theme, ctx)
-      : buildPosterContentSlide(slide, outline, theme, index, slides.length, ctx);
-    zip.file(`ppt/slides/slide${index + 1}.xml`, buildSlideXml(normalizeSlideShapeIds(content), theme));
-    zip.file(`ppt/slides/_rels/slide${index + 1}.xml.rels`, ctx.relationships());
-    placeholderManifest.push(...ctx.placeholderManifest());
+  return buildPptDraftPptxExport(outlineValue, options, {
+    PPT_DRAFT_LIMITS,
+    normalizePptDraftAssets,
+    normalizePptDraftOutline,
+    resolvePptDraftThemeTokens,
+    createSlideAssetContext,
+    buildPosterCover,
+    normalizeSlideText,
+    posterCopy,
+    buildPosterSection,
+    buildPosterClosing,
+    buildPosterProblem,
+    buildPosterLocalFirst,
+    buildPosterComparison,
+    buildPosterProcess,
+    buildPosterMatrix,
+    buildPosterOpenSource,
+    buildPosterTriad,
+    buildPosterStatement,
+    cleanInline,
+    textBox,
+    paragraph,
+    fitTextParagraphs,
+    fail
   });
-  for (const asset of assetRegistry.values()) zip.file(asset.path, asset.data);
-  const bytes = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE', compressionOptions: { level: 6 } });
-  return {
-    bytes,
-    outline: { ...outline, image_placeholders: placeholderManifest },
-    theme: theme.id,
-    slide_count: slides.length,
-    image_placeholders: placeholderManifest,
-    size_bytes: bytes.byteLength
-  };
 }
 
 export function createPptDraftMarkdown(outline) {
   return createPptOutlineMarkdown(outline).replace(/^# /, '# PPTX 草稿大纲 / ');
 }
 
-export function createPptDraftManifest({ outline, theme, outputFile, outputBytes, outputs = [] }) {
+export function createPptDraftManifest({ outline, theme, outputFile, outputBytes, outputs = [], assets = [], assetManifest = [] }) {
   return {
     schema: 'toolknit.ppt-draft',
     version: 1,
@@ -2137,6 +2192,16 @@ export function createPptDraftManifest({ outline, theme, outputFile, outputBytes
     output_file: outputFile || 'draft.pptx',
     output_bytes: outputBytes || 0,
     image_placeholders: outline.image_placeholders || [],
+    assets: Array.isArray(assets) ? assets.map(asset => ({
+      id: asset.id,
+      name: asset.name,
+      mime: asset.mime,
+      extension: asset.extension,
+      size: asset.size,
+      width: asset.width,
+      height: asset.height
+    })) : [],
+    asset_manifest: Array.isArray(assetManifest) ? assetManifest.map(item => ({ ...item })) : (outline.asset_manifest || []),
     outputs,
     request: {
       slide_count: outline.request?.slide_count,

@@ -1,4 +1,5 @@
 import { Renderer, Program, Mesh, Triangle } from 'ogl';
+import { createBackgroundFrameLimiter } from './shared/animation-policy.js';
 
 const BACKGROUND_DPR_MAX = 1.25;
 
@@ -167,6 +168,7 @@ export function initPlasma(containerEl, options = {}) {
   let isVisible = true;
   let pageVisible = typeof document === 'undefined' || !document.hidden;
   const t0 = performance.now();
+  const frameLimiter = createBackgroundFrameLimiter();
 
   const stopLoop = () => {
     if (raf) {
@@ -184,6 +186,10 @@ export function initPlasma(containerEl, options = {}) {
   const loop = t => {
     raf = 0;
     if (contextLost || !isVisible || !pageVisible) return;
+    if (!frameLimiter.shouldRender(t)) {
+      startLoop();
+      return;
+    }
     let timeValue = (t - t0) * 0.001;
     if (direction === 'pingpong') {
       const pingpongDuration = 10;

@@ -20,6 +20,26 @@ dev-error.log
 .env.*
 !.env.example
 
+# Signing credentials and local certificate exports (never source artifacts)
+*.pfx
+*.p12
+*.pem
+*.key
+*.keystore
+*.jks
+*.csr
+*.cer
+*.crt
+/.signpath/
+/signing-private/
+
+# Local browser sessions and network captures
+*.har
+auth-state*.json
+storage-state*.json
+cookies*.json
+cookies*.txt
+
 # 系统文件
 .DS_Store
 Thumbs.db
@@ -67,6 +87,10 @@ toolknit-desktop/tmp/
 toolknit-desktop/src-tauri/target/
 toolknit-output/
 
+# Loose runtime copies from local tests; packaged resources keep their own rules
+/toolknit-desktop/*.exe
+/toolknit-desktop/*.dll
+
 # FFmpeg 体积大，桌面端设置页按需下载，GitHub Release/npm 均不内置
 toolknit-desktop/src-tauri/resources/ffmpeg/
 
@@ -85,3 +109,6 @@ toolknit-desktop/.codex-*.png
 
 # 本地文章草稿，不属于桌面端发布源码
 docs/articles/devto/
+
+# Superseded local development checklist
+/toolknit-desktop/progress.txt

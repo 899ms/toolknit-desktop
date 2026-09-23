@@ -1,0 +1,154 @@
+<div class="pdf-merge-overlay pdf-merge-v2 ai-table-v2" id="aiTableOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="aiTableBg"></div>
+      <header class="pdf-merge-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="aiTableBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">AI TABLE · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span data-i18n="home.webVersion">网页版</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span data-i18n="home.supportAuthor">支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="aiTableV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="pdf-merge-v2-body ai-table-v2-body" id="aiTableBody">
+        <aside class="pdf-merge-v2-poster ai-table-v2-poster" aria-label="AI 表格生成说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.aiTable.heroLabel">AI Table</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.aiTable.title">AI 表格生成</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.aiTable.subtitle">对话式描述需求，AI 自动生成数据表与可视化图表，一键导出 Excel、PDF、PNG、CSV。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>DATA WORKBENCH</span>
+            <strong>适合快速生成销售、排期、对比、预算、运营等结构化表格，并保留可编辑数据。</strong>
+          </div>
+          <div class="ai-table-v2-feature-grid" aria-label="AI 表格能力">
+            <div><strong>CSV</strong><span>轻量数据</span></div>
+            <div><strong>XLSX</strong><span>Excel 表格</span></div>
+            <div><strong>PNG</strong><span>图像分享</span></div>
+            <div><strong>PDF</strong><span>正式归档</span></div>
+          </div>
+        </aside>
+
+        <main class="ai-table-v2-workspace" id="aiTableMain">
+          <section class="ai-table-v2-chat-card" id="aiTableChatPanel" aria-label="AI 表格需求输入">
+            <div class="ai-table-v2-card-head">
+              <div>
+                <span class="pdf-merge-v2-step-kicker">PROMPT</span>
+                <h2>描述表格</h2>
+              </div>
+              <p>说清主题、字段、数量、图表需求，生成后还能继续编辑。</p>
+            </div>
+            <div class="ai-doc-chat-messages" id="aiTableChatMessages">
+              <div class="ai-doc-chat-msg ai-doc-chat-msg-ai">
+                <div class="ai-doc-chat-avatar"><img src="/assets/toolknit-icon.png" alt="AI" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"></div>
+                <div class="ai-doc-chat-bubble" data-i18n="home.aiTable.welcome">你好！请描述你需要生成什么表格，例如：季度销售数据、产品对比表、项目排期表等，我会自动生成数据表和图表。</div>
+              </div>
+            </div>
+            <div class="ai-table-v2-input-helper">
+              <span>Enter 发送 · Shift + Enter 换行</span>
+              <span>AI TABLE REQUEST</span>
+            </div>
+            <div class="ai-doc-chat-input-area">
+              <textarea class="ai-doc-chat-input" id="aiTableChatInput" data-i18n-placeholder="home.aiTable.inputPlaceholder" placeholder="描述你的表格需求..." rows="2"></textarea>
+              <button class="ai-doc-chat-send" id="aiTableChatSend" data-i18n-aria-label="home.aiTable.send" aria-label="发送">
+                <i data-lucide="send"></i>
+                <span data-i18n="home.aiTable.send">发送</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="ai-table-v2-preview-card" id="aiTableCanvasPanel" aria-label="AI 表格预览与导出">
+            <div class="ai-table-v2-card-head ai-table-v2-preview-head">
+              <div>
+                <span class="pdf-merge-v2-step-kicker">PREVIEW</span>
+                <h2>表格与图表</h2>
+              </div>
+              <p>点击单元格编辑，点击列头排序，导出前可继续微调数据。</p>
+            </div>
+            <div class="ai-doc-canvas-empty" id="aiTableCanvasEmpty">
+              <div class="ai-table-v2-empty-mark">
+                <i data-lucide="table-2"></i>
+              </div>
+              <p data-i18n="home.aiTable.canvasEmptyHint">AI 生成表格后预览将显示在此处</p>
+              <div class="ai-table-empty-guide">
+                <div class="ai-table-empty-guide-item">
+                  <i data-lucide="mouse-pointer-click"></i>
+                  <span data-i18n="home.aiTable.emptyGuideEdit">生成后可直接编辑标题与单元格</span>
+                </div>
+                <div class="ai-table-empty-guide-item">
+                  <i data-lucide="arrow-up-down"></i>
+                  <span data-i18n="home.aiTable.emptyGuideSort">点击列头可快速排序</span>
+                </div>
+                <div class="ai-table-empty-guide-item">
+                  <i data-lucide="download"></i>
+                  <span data-i18n="home.aiTable.emptyGuideExport">支持 CSV / Excel / PNG / PDF 导出</span>
+                </div>
+              </div>
+            </div>
+            <div class="ai-table-preview-scroll" id="aiTablePreviewScroll" style="display:none;">
+              <!-- Table + charts rendered here -->
+            </div>
+            <div class="ai-doc-canvas-toolbar" id="aiTableCanvasToolbar" style="display:none;">
+              <div class="ai-table-edit-actions">
+                <button class="ai-doc-pill-btn ai-table-undo-btn" id="aiTableUndoBtn" disabled>
+                  <i data-lucide="undo-2"></i>
+                  <span data-i18n="home.aiTable.undo">撤销上一步</span>
+                </button>
+                <button class="ai-doc-pill-btn ai-doc-secondary-btn" id="aiTableResetBtn">
+                  <i data-lucide="rotate-ccw"></i>
+                  <span data-i18n="home.aiTable.reset">重新开始</span>
+                </button>
+              </div>
+              <div class="ai-table-export-group">
+                <button class="ai-doc-pill-btn ai-table-export-btn" data-fmt="csv"><i data-lucide="file-text"></i><span>CSV</span></button>
+                <button class="ai-doc-pill-btn ai-table-export-btn" data-fmt="xlsx"><i data-lucide="sheet"></i><span>Excel</span></button>
+                <button class="ai-doc-pill-btn ai-table-export-btn" data-fmt="png"><i data-lucide="image"></i><span>PNG</span></button>
+                <button class="ai-doc-pill-btn ai-table-export-btn" data-fmt="pdf"><i data-lucide="file-down"></i><span>PDF</span></button>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+<div class="audio-clip-success-overlay" id="aiTableSuccessOverlay">
+      <div class="audio-clip-success-dialog">
+        <div class="audio-clip-success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <div class="audio-clip-success-title" data-i18n="home.aiTable.exportSuccess">导出成功</div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.aiTable.successPath">保存路径</span>
+            <span class="audio-convert-success-value" id="aiTableSuccessPath"></span>
+          </div>
+        </div>
+        <div class="audio-clip-success-actions">
+          <button class="audio-clip-success-btn audio-clip-success-btn-secondary" id="aiTableSuccessOpenFolder" data-i18n="home.aiTable.openFolder">打开文件夹</button>
+          <button class="audio-clip-success-btn audio-clip-success-btn-primary" id="aiTableSuccessOk" data-i18n="home.aiTable.ok">确定</button>
+        </div>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask" id="aiTableMask">
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="audio-convert-process-text" id="aiTableMaskText" data-i18n="home.aiTable.thinking">AI 正在思考...</div>
+    </div>

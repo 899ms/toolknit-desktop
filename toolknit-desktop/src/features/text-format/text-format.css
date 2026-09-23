@@ -1,0 +1,534 @@
+
+      /* ===== Text Format ===== */
+      .text-format-main {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .text-format-textarea {
+        width: 100%;
+        min-height: 200px;
+        padding: 20px 24px;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 16px;
+        background: rgba(0,0,0,0.25);
+        color: #fff;
+        font-size: 15px;
+        line-height: 1.8;
+        font-family: inherit;
+        resize: vertical;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      .text-format-textarea:focus {
+        border-color: rgba(255,255,255,0.3);
+      }
+
+      .text-format-textarea::placeholder {
+        color: rgba(255,255,255,0.3);
+      }
+
+      .text-format-output {
+        min-height: 200px;
+        background: rgba(0,0,0,0.35);
+      }
+
+      .text-format-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .text-format-btn {
+        padding: 8px 18px;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 10px;
+        background: rgba(255,255,255,0.04);
+        color: rgba(255,255,255,0.85);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+
+      .text-format-btn:hover {
+        background: rgba(255,255,255,0.12);
+        border-color: rgba(255,255,255,0.25);
+        color: #fff;
+      }
+
+      .text-format-btn:active {
+        transform: scale(0.96);
+      }
+
+      .text-format-toolbar {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+
+      .text-format-copy-btn:hover {
+        background: rgba(255,255,255,0.15);
+        border-color: rgba(255,255,255,0.3);
+      }
+
+      .text-format-clear-btn:hover {
+        background: rgba(255,80,80,0.15);
+        border-color: rgba(255,80,80,0.4);
+      }
+
+      .text-format-use-as-input-btn:hover {
+        background: rgba(255,255,255,0.15);
+        border-color: rgba(255,255,255,0.3);
+      }
+
+      @media (max-width: 600px) {
+        .text-format-btn {
+          padding: 7px 14px;
+          font-size: 12px;
+        }
+      }
+
+      /* ===== Text Format · Tool Page 2.0 ===== */
+      .text-format-v2 .pdf-merge-v2-bg {
+        opacity: 0.34;
+        filter: grayscale(1) contrast(1.18) brightness(0.72);
+      }
+
+      .text-format-v2 .pdf-merge-v2-poster::after {
+        content: 'FMT';
+        right: 18px;
+        font-size: 104px;
+      }
+
+      .text-format-v2 .text-format-v2-body {
+        grid-template-columns: minmax(286px, 356px) minmax(0, 1fr);
+      }
+
+      .text-format-v2 .text-format-v2-poster {
+        padding: 34px 30px 28px;
+      }
+
+      .text-format-v2 .text-format-v2-upload-btn {
+        width: 100%;
+        margin: 28px 0 0;
+      }
+
+      .text-format-v2 .text-format-v2-workspace {
+        display: grid;
+        grid-template-columns: minmax(382px, 0.98fr) minmax(410px, 1.02fr);
+        grid-template-rows: minmax(300px, 1fr) minmax(188px, 0.56fr);
+        grid-template-areas:
+          "input output"
+          "actions output";
+        align-items: stretch;
+        gap: 16px;
+        padding: 24px;
+        overflow: hidden;
+      }
+
+      .text-format-v2-input-card,
+      .text-format-v2-actions-card,
+      .text-format-v2-output-card {
+        min-width: 0;
+        min-height: 0;
+        display: grid;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.026);
+        overflow: hidden;
+      }
+
+      .text-format-v2-input-card {
+        grid-area: input;
+        grid-template-rows: auto auto minmax(180px, 1fr);
+        gap: 14px;
+        padding: 18px;
+      }
+
+      .text-format-v2-actions-card {
+        grid-area: actions;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 18px;
+      }
+
+      .text-format-v2-output-card {
+        grid-area: output;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        gap: 14px;
+        padding: 18px;
+      }
+
+      .text-format-v2-card-head {
+        min-width: 0;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .text-format-v2-card-head h2 {
+        margin: 6px 0 0;
+        color: var(--ink);
+        font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: clamp(24px, 2.15vw, 31px);
+        font-weight: 900;
+        letter-spacing: -0.06em;
+        line-height: 1.05;
+        white-space: nowrap;
+      }
+
+      .text-format-v2-card-head p {
+        max-width: 250px;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.46);
+        font-size: 12px;
+        line-height: 1.55;
+        text-align: right;
+      }
+
+      .text-format-v2-source {
+        min-width: 0;
+        width: min(350px, 55%);
+        max-width: 350px;
+        display: grid;
+        grid-template-columns: 38px minmax(0, 1fr) 32px;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.034);
+      }
+
+      .text-format-v2-source > svg,
+      .text-format-v2-source > i {
+        width: 38px;
+        height: 38px;
+        padding: 9px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.72);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .text-format-v2-source strong,
+      .text-format-v2-source span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .text-format-v2-source strong {
+        color: rgba(255, 255, 255, 0.84);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .text-format-v2-source span {
+        margin-top: 3px;
+        color: rgba(255, 255, 255, 0.42);
+        font-size: 11px;
+      }
+
+      .text-format-v2-source-mark {
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.58);
+      }
+
+      .text-format-v2-source-mark svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .text-format-v2-drop-card {
+        min-height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 15px 16px;
+        border: 1px dashed rgba(255, 255, 255, 0.16);
+        border-radius: 16px;
+        background:
+          radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.08), transparent 26%),
+          rgba(255, 255, 255, 0.028);
+        transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+      }
+
+      .text-format-v2-drop-card > div {
+        min-width: 0;
+      }
+
+      .text-format-v2-drop-card.is-dragging,
+      .text-format-v2.drag-over .text-format-v2-drop-card {
+        transform: translateY(-1px);
+        border-color: rgba(255, 255, 255, 0.62);
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .text-format-v2-drop-card span {
+        color: var(--muted);
+        font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+      }
+
+      .text-format-v2-drop-card p {
+        margin: 5px 0 0;
+        color: rgba(255, 255, 255, 0.46);
+        font-size: 12px;
+        line-height: 1.55;
+        overflow-wrap: anywhere;
+      }
+
+      .text-format-v2-select-btn {
+        flex: 0 0 auto;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 16px;
+        border-radius: 10px;
+        color: #050506;
+        background: var(--white);
+        border-color: var(--white);
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .text-format-v2-select-btn,
+      .text-format-v2-select-btn span,
+      .text-format-v2-select-btn svg {
+        color: #050506;
+      }
+
+      .text-format-v2-select-btn:hover {
+        background: #ffffff;
+        border-color: #ffffff;
+        color: #050506;
+        transform: translateY(-1px);
+        box-shadow: none;
+      }
+
+      .text-format-v2-select-btn:hover span,
+      .text-format-v2-select-btn:hover svg {
+        color: #050506;
+      }
+
+      .text-format-v2-select-btn:active {
+        transform: translateY(0) scale(0.97);
+      }
+
+      .text-format-v2-textarea,
+      .text-format-v2-output {
+        min-height: 0;
+        height: 100%;
+        resize: none;
+        border-radius: 16px;
+        border-color: rgba(255, 255, 255, 0.1);
+        background:
+          linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px) 0 0 / 38px 100%,
+          rgba(0, 0, 0, 0.24);
+        scrollbar-color: rgba(255, 255, 255, 0.68) transparent;
+      }
+
+      .text-format-v2-output {
+        background:
+          linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px) 0 0 / 38px 100%,
+          rgba(0, 0, 0, 0.32);
+      }
+
+      .text-format-v2-textarea::-webkit-scrollbar,
+      .text-format-v2-output::-webkit-scrollbar,
+      .text-format-v2-actions::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .text-format-v2-textarea::-webkit-scrollbar-thumb,
+      .text-format-v2-output::-webkit-scrollbar-thumb,
+      .text-format-v2-actions::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.68);
+      }
+
+      .text-format-v2-actions {
+        min-height: 0;
+        justify-content: flex-start;
+        align-content: start;
+        gap: 10px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .text-format-v2-actions .text-format-btn {
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.046);
+      }
+
+      .text-format-v2-actions .text-format-btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .text-format-v2-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 42px;
+      }
+
+      .text-format-v2-toolbar .text-format-btn {
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+      }
+
+      .text-format-v2-toolbar .text-format-use-as-input-btn,
+      .text-format-v2-toolbar .text-format-copy-btn {
+        color: var(--black);
+        background: var(--white);
+        border-color: var(--white);
+        font-weight: 800;
+      }
+
+      .text-format-v2-toolbar .text-format-use-as-input-btn {
+        margin-left: auto;
+      }
+
+      .text-format-v2.is-reading-file .text-format-v2-workspace {
+        pointer-events: none;
+        opacity: 0.72;
+      }
+
+      .text-format-v2.is-reading-file::before {
+        background:
+          radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12), transparent 32%),
+          rgba(0, 0, 0, 0.28);
+      }
+
+      @media (max-width: 1360px) {
+        .text-format-v2 .text-format-v2-body {
+          grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+          gap: 18px;
+          padding: 20px 22px 24px;
+        }
+
+        .text-format-v2 .text-format-v2-workspace {
+          grid-template-columns: minmax(330px, 0.96fr) minmax(0, 1.04fr);
+          grid-template-rows: minmax(286px, 1fr) minmax(176px, 0.54fr);
+          padding: 20px;
+        }
+
+        .text-format-v2 .text-format-v2-poster {
+          padding: 30px 26px 26px;
+        }
+
+        .text-format-v2-card-head {
+          gap: 12px;
+        }
+
+        .text-format-v2-source {
+          width: min(318px, 52%);
+        }
+      }
+
+      @media (max-width: 1080px) {
+        .text-format-v2 .text-format-v2-body {
+          grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+        }
+
+        .text-format-v2 .text-format-v2-workspace {
+          grid-template-columns: 1fr;
+          grid-template-rows: minmax(300px, 0.95fr) minmax(170px, auto) minmax(280px, 1fr);
+          grid-template-areas:
+            "input"
+            "actions"
+            "output";
+          padding: 20px;
+        }
+
+        .text-format-v2-card-head {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .text-format-v2-drop-card {
+          align-items: center;
+        }
+
+        .text-format-v2-source {
+          width: 100%;
+          max-width: none;
+        }
+      }
+
+      @media (max-height: 760px) {
+        .text-format-v2 .text-format-v2-poster {
+          padding: 24px;
+        }
+
+        .text-format-v2 .pdf-merge-v2-title {
+          font-size: clamp(36px, 4vw, 52px);
+        }
+
+        .text-format-v2 .text-format-v2-workspace {
+          grid-template-rows: minmax(242px, 1fr) minmax(154px, 0.48fr);
+          gap: 14px;
+          padding: 18px;
+        }
+
+        .text-format-v2-input-card,
+        .text-format-v2-actions-card,
+        .text-format-v2-output-card {
+          padding: 15px;
+          gap: 12px;
+        }
+
+        .text-format-v2-drop-card {
+          padding: 12px 14px;
+          min-height: 64px;
+        }
+
+        .text-format-v2-drop-card p {
+          display: none;
+        }
+
+        .text-format-v2-card-head h2 {
+          font-size: clamp(22px, 2vw, 28px);
+        }
+
+        .text-format-v2-actions .text-format-btn {
+          min-height: 34px;
+          padding: 7px 15px;
+        }
+      }
+
+      @media (max-width: 1080px) and (max-height: 760px) {
+        .text-format-v2 .text-format-v2-workspace {
+          grid-template-rows: minmax(430px, auto) minmax(220px, auto) minmax(380px, auto);
+          overflow-y: auto;
+          scrollbar-color: rgba(255, 255, 255, 0.58) transparent;
+        }
+      }
+
+      /* ===== End Text Format ===== */

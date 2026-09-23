@@ -8,12 +8,15 @@ import {
   readColorExtractorImageDimensions
 } from '../src/color-extractor-core.js';
 
+assert.equal(COLOR_EXTRACTOR_LIMITS.maxBytes, 100 * 1024 * 1024);
+assert.equal(COLOR_EXTRACTOR_LIMITS.maxPixels, 160_000_000);
+
 assert.equal(isSupportedColorExtractorFile({ name: 'sample.webp', type: '' }), true);
 assert.equal(isSupportedColorExtractorFile({ name: 'sample.svg', type: 'image/svg+xml' }), false);
 assert.doesNotThrow(() => assertColorExtractorFile({ name: 'sample.png', type: 'image/png', size: 1024 }));
 assert.throws(() => assertColorExtractorFile({ name: 'large.jpg', type: 'image/jpeg', size: COLOR_EXTRACTOR_LIMITS.maxBytes + 1 }), RangeError);
 assert.doesNotThrow(() => assertColorExtractorDimensions(6000, 6000));
-assert.throws(() => assertColorExtractorDimensions(10000, 10000), RangeError);
+assert.throws(() => assertColorExtractorDimensions(13000, 13000), RangeError);
 
 const png = new Uint8Array(24);
 png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);

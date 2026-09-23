@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="180 60 840 680" class="home-weaving-svg" aria-hidden="true" focusable="false">
+  <!-- Adapted from the supplied spider-weaving.svg; no external resources. -->
+  <defs>
+    <radialGradient id="homeWeavingTypeFade">
+      <stop offset="72%" stop-color="#000"/>
+      <stop offset="100%" stop-color="#fff"/>
+    </radialGradient>
+    <!-- Clear the web behind the lettering without painting over the wallpaper. -->
+    <mask id="homeWeavingTypeClearance" maskUnits="userSpaceOnUse" x="180" y="60" width="840" height="680">
+      <rect x="180" y="60" width="840" height="680" fill="#fff"/>
+      <ellipse cx="600" cy="420" rx="260" ry="92" fill="url(#homeWeavingTypeFade)"/>
+    </mask>
+  </defs>
+  <g class="home-weaving-web" fill="none" stroke-linecap="round" stroke-linejoin="round" mask="url(#homeWeavingTypeClearance)">
+    <path class="home-weaving-spokes" d="M600 400 L760 115 M600 400 L887 219 M600 400 L980 365 M600 400 L952 524 M600 400 L811 650 M600 400 L626 718 M600 400 L440 664 M600 400 L302 552 M600 400 L222 406 M600 400 L281 244 M600 400 L420 136" stroke="var(--weaving-web)" stroke-width="1.6" opacity=".4"/>
+    <g class="home-weaving-capture-threads" stroke="var(--weaving-web)" stroke-width="1.25" opacity=".32">
+      <path d="M600 340 Q613.4 349.8 630.4 345.9 Q637.4 361.1 654.5 365.6 Q655.7 382 672.2 393.4 Q661.2 407.5 666.9 423.6 Q647.1 431.3 640.1 447.5 Q619.8 447.5 604.9 460.4 Q588.8 448.7 569.6 450.2 Q561.7 434.8 543.4 428.9 Q543.5 413.2 528.2 401.1 Q541.7 387.5 539.4 370.4 Q558.3 364.9 565.8 349.8 Q585 351.5 600 340 Z"/>
+      <path d="M600 298.9 Q622.5 315.4 651.2 308.8 Q662.9 334.4 691.8 342.1 Q693.9 369.6 721.6 388.8 Q703 412.5 712.6 439.7 Q679.2 452.7 667.5 480 Q633.4 480 608.3 501.8 Q581.1 482 548.8 484.5 Q535.5 458.6 504.6 448.6 Q504.8 422.2 479 401.9 Q501.8 378.9 497.9 350.1 Q529.7 340.9 542.4 315.5 Q574.7 318.3 600 298.9 Z"/>
+      <path d="M600 254.6 Q632.4 278.3 673.6 268.9 Q690.5 305.7 732 316.7 Q735 356.3 774.8 383.9 Q748.1 418 761.9 457 Q714 475.7 697.1 515 Q648 515 612 546.3 Q572.9 517.8 526.4 521.4 Q507.3 484.2 462.9 469.9 Q463.2 432 426.1 402.8 Q458.9 369.6 453.3 328.2 Q499 315 517.2 278.6 Q563.6 282.6 600 254.6 Z"/>
+      <path d="M600 210.4 Q642.2 241.3 696 229 Q718 277 772.2 291.4 Q776.1 343 828 379 Q793.2 423.5 811.2 474.4 Q748.6 498.7 726.6 550 Q662.6 550 615.6 590.8 Q564.6 553.6 504 558.4 Q479.1 509.8 421.2 491.2 Q421.5 441.7 373.2 403.6 Q416 360.4 408.6 306.4 Q468.3 289.1 492 241.6 Q552.5 246.9 600 210.4 Z"/>
+      <path d="M600 163 Q652.8 201.7 720 186.3 Q747.5 246.3 815.3 264.3 Q820.1 328.8 885 373.8 Q841.6 429.4 864 493 Q785.8 523.4 758.3 587.5 Q678.2 587.4 619.5 638.5 Q555.8 592.1 480 598 Q448.9 537.3 376.5 514 Q376.9 452.1 316.5 404.5 Q370 350.5 360.8 283 Q435.4 261.4 465 202 Q540.6 208.6 600 163 Z"/>
+      <path d="M600 115.6 Q663.4 162 744 143.5 Q777 215.5 858.3 237.1 Q864.1 314.5 942 368.5 Q889.9 435.2 916.8 511.6 Q822.9 548.1 789.9 625 Q693.9 624.9 623.4 686.2 Q546.9 630.5 456 637.6 Q418.6 564.7 331.8 536.8 Q332.3 462.6 259.8 405.4 Q324 340.6 312.9 259.6 Q402.4 233.7 438 162.4 Q528.7 170.3 600 115.6 Z"/>
+    </g>
+    <g stroke="var(--weaving-thread)" stroke-width="1.65" opacity=".5">
+      <path class="home-weaving-thread" pathLength="1" d="M600 254.6 Q632.4 278.3 673.6 268.9 Q690.5 305.7 732 316.7 Q735 356.3 774.8 383.9 Q748.1 418 761.9 457 Q714 475.7 697.1 515 Q648 515 612 546.3 Q572.9 517.8 526.4 521.4 Q507.3 484.2 462.9 469.9 Q463.2 432 426.1 402.8 Q458.9 369.6 453.3 328.2 Q499 315 517.2 278.6 Q563.6 282.6 600 254.6 Z"/>
+      <path class="home-weaving-thread" pathLength="1" d="M600 210.4 Q642.2 241.3 696 229 Q718 277 772.2 291.4 Q776.1 343 828 379 Q793.2 423.5 811.2 474.4 Q748.6 498.7 726.6 550 Q662.6 550 615.6 590.8 Q564.6 553.6 504 558.4 Q479.1 509.8 421.2 491.2 Q421.5 441.7 373.2 403.6 Q416 360.4 408.6 306.4 Q468.3 289.1 492 241.6 Q552.5 246.9 600 210.4 Z"/>
+      <path class="home-weaving-thread" pathLength="1" d="M600 163 Q652.8 201.7 720 186.3 Q747.5 246.3 815.3 264.3 Q820.1 328.8 885 373.8 Q841.6 429.4 864 493 Q785.8 523.4 758.3 587.5 Q678.2 587.4 619.5 638.5 Q555.8 592.1 480 598 Q448.9 537.3 376.5 514 Q376.9 452.1 316.5 404.5 Q370 350.5 360.8 283 Q435.4 261.4 465 202 Q540.6 208.6 600 163 Z"/>
+    </g>
+  </g>
+  <path class="home-weaving-suspension" d="M600 84 L600 252" fill="none" stroke="var(--weaving-thread)" stroke-width="1.4" opacity=".55"/>
+  <g transform="translate(600 292)">
+    <g class="home-weaving-spider">
+      <g fill="none" stroke="var(--weaving-leg)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+        <g class="home-weaving-legs home-weaving-legs-left">
+          <path d="M-10 -4 C-27 -16 -39 -34 -48 -47 Q-52 -53 -59 -54 L-91 -60"/>
+          <path d="M-13 0 C-33 -6 -52 -20 -67 -24 Q-73 -25 -78 -23 L-110 -10"/>
+          <path d="M-14 5 C-33 11 -52 10 -67 15 Q-73 18 -75 24 L-90 50"/>
+          <path d="M-10 10 C-24 24 -37 28 -43 43 Q-46 48 -46 54 L-44 76"/>
+        </g>
+        <g class="home-weaving-legs home-weaving-legs-right">
+          <path d="M10 -4 C27 -16 39 -34 48 -47 Q52 -53 59 -54 L91 -60"/>
+          <path d="M13 0 C33 -6 52 -20 67 -24 Q73 -25 78 -23 L110 -10"/>
+          <path d="M14 5 C33 11 52 10 67 15 Q73 18 75 24 L90 50"/>
+          <path d="M10 10 C24 24 37 28 43 43 Q46 48 46 54 L44 76"/>
+        </g>
+      </g>
+      <path class="home-weaving-abdomen" d="M0 -43 C-15 -43 -24 -30 -23 -17 C-22 -5 -12 3 0 7 C12 3 22 -5 23 -17 C24 -30 15 -43 0 -43Z" fill="var(--weaving-body)" stroke="var(--weaving-body-edge)" stroke-width="1.8"/>
+      <path d="M-14 -27 C-12 -35 -4 -39 3 -37 C-5 -33 -10 -26 -10 -16 C-14 -19 -15 -23 -14 -27Z" fill="var(--weaving-body-highlight)" opacity=".7"/>
+      <path d="M0 -8 C-10 -8 -15 -1 -14 7 C-13 15 -8 20 0 23 C8 20 13 15 14 7 C15 -1 10 -8 0 -8Z" fill="var(--weaving-head)" stroke="var(--weaving-body-edge)" stroke-width="1.6"/>
+      <path d="M-6 -2 Q0 -5 6 -2" fill="none" stroke="var(--weaving-body-highlight)" stroke-width="1.5" stroke-linecap="round"/>
+      <g fill="var(--weaving-eye)">
+        <circle cx="-4" cy="12" r="1.3"/><circle cx="4" cy="12" r="1.3"/>
+      </g>
+      <path d="M-5 21 L-7 27 M5 21 L7 27" fill="none" stroke="var(--weaving-leg)" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+  </g>
+  <g class="home-weaving-type" text-anchor="middle">
+    <text class="home-weaving-wordmark" x="600" y="438" fill="var(--weaving-ink)">ToolKnit</text>
+    <text class="home-weaving-address" x="600" y="475" fill="var(--weaving-muted)">WEB / TOOLKNIT.COM</text>
+  </g>
+</svg>

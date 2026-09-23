@@ -1,0 +1,1356 @@
+/* ===== PDF Editor · Tool Page 2.0 ===== */
+.pdf-editor-v2 .pdf-editor-v2-body {
+  grid-template-columns: minmax(190px, 228px) minmax(0, 1fr) minmax(276px, 320px);
+  gap: 16px;
+  padding: 18px 24px 24px;
+}
+
+.pdf-editor-v2 .pdf-editor-v2-bg {
+  opacity: 0.34;
+  filter: grayscale(1) contrast(1.12) brightness(0.7);
+}
+
+.pdf-editor-sidebar {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+    rgba(9, 9, 10, 0.86);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.pdf-editor-page-sidebar {
+  gap: 10px;
+  padding: 14px 12px 12px;
+}
+
+.pdf-editor-tool-panel {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+    rgba(9, 9, 10, 0.86);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.pdf-editor-tool-panel-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1px 3px 2px 1px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+.pdf-editor-tool-panel-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pdf-editor-tool-panel-scroll::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.pdf-editor-tool-panel .pdf-editor-preview-footer {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 10px;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.pdf-editor-tool-panel .pdf-editor-footer-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.pdf-editor-tool-panel .pdf-editor-footer-actions .pdf-merge-selection-btn {
+  min-width: 0;
+  min-height: 38px;
+  padding-inline: 8px;
+}
+
+.pdf-editor-filecard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.pdf-editor-filecard-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  color: var(--muted);
+}
+
+.pdf-editor-filecard-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pdf-editor-filecard-meta {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.pdf-editor-filecard-name {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdf-editor-filecard-stats {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.pdf-editor-tools {
+  display: grid;
+  gap: 8px;
+}
+
+.pdf-editor-tool-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.pdf-editor-tool-row-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.pdf-editor-tool-row-3 .pdf-editor-tool {
+  padding: 0 8px;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.pdf-editor-tool-section-label {
+  padding: 6px 2px 0;
+  color: rgba(255, 255, 255, 0.42);
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pdf-editor-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  color: rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.03);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+.pdf-editor-tool > svg,
+.pdf-editor-tool > i {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.pdf-editor-tool-edit.is-active {
+  color: #0b0b0c;
+  border-color: #ffffff;
+  background: #ffffff;
+}
+
+.pdf-editor-tool svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pdf-editor-tool:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.26);
+}
+
+.pdf-editor-tool:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.pdf-editor-tool:disabled {
+  opacity: 0.36;
+  cursor: not-allowed;
+}
+
+.pdf-editor-tool-danger {
+  color: #ff8580;
+}
+
+.pdf-editor-tool-danger:hover:not(:disabled) {
+  background: rgba(255, 92, 84, 0.12);
+  border-color: rgba(255, 92, 84, 0.42);
+}
+
+.pdf-editor-tool-accent {
+  color: var(--ink);
+  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pdf-editor-pages-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 2px 0;
+  color: var(--muted);
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pdf-editor-pages-count {
+  color: rgba(255, 255, 255, 0.66);
+  font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.pdf-editor-pages-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.pdf-editor-pages-action {
+  width: 26px;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 26px;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+}
+
+.pdf-editor-pages-action:hover:not(:disabled) {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.pdf-editor-pages-action:disabled {
+  opacity: 0.34;
+  cursor: not-allowed;
+}
+
+.pdf-editor-pages-action > svg,
+.pdf-editor-pages-action > i {
+  width: 14px;
+  height: 14px;
+}
+
+.pdf-editor-page-strip {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  align-content: start;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 2px 5px 4px 2px;
+}
+
+.pdf-editor-page-strip::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pdf-editor-page-strip::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.pdf-editor-tile {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(10, 10, 11, 0.5);
+  cursor: grab;
+  transition: border-color 150ms ease, background 150ms ease, opacity 150ms ease;
+}
+
+.pdf-editor-tile:hover {
+  border-color: var(--line-strong);
+}
+
+.pdf-editor-tile.is-selected {
+  border-color: var(--white);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.pdf-editor-tile.is-dragging {
+  opacity: 0.6;
+  cursor: grabbing;
+}
+
+.pdf-editor-tile.is-drag-ghost {
+  opacity: 0.3;
+}
+
+.pdf-editor-tile-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 128px;
+  padding: 10px;
+  overflow: hidden;
+}
+
+.pdf-editor-tile-canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 128px;
+  border-radius: 3px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.38);
+}
+
+.pdf-editor-tile-skeleton {
+  display: block;
+  width: 72px;
+  height: 98px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  animation: pdfEditorSkeletonPulse 1.5s ease-in-out infinite;
+}
+
+.pdf-editor-tile-skeleton span {
+  display: none;
+}
+
+.pdf-editor-tile-frame.is-ready .pdf-editor-tile-skeleton {
+  display: none;
+}
+
+.pdf-editor-tile-index,
+.pdf-editor-tile-select,
+.pdf-editor-tile-drag {
+  z-index: 1;
+}
+
+.pdf-editor-tile-error {
+  display: none;
+  padding: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  text-align: center;
+}
+
+.pdf-editor-tile.has-error .pdf-editor-tile-skeleton {
+  display: none;
+}
+
+.pdf-editor-tile.has-error .pdf-editor-tile-error {
+  display: block;
+}
+
+.pdf-editor-tile-index {
+  position: absolute;
+  left: 8px;
+  bottom: 7px;
+  min-width: 24px;
+  height: 18px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.58);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 10px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.pdf-editor-tile-select {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  color: transparent;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.pdf-editor-tile-select svg {
+  width: 12px;
+  height: 12px;
+}
+
+.pdf-editor-tile-select svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pdf-editor-tile.is-selected .pdf-editor-tile-select {
+  border-color: var(--white);
+  background: var(--white);
+  color: var(--black);
+}
+
+.pdf-editor-tile-drag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+
+.pdf-editor-tile:hover .pdf-editor-tile-drag {
+  opacity: 1;
+}
+
+.pdf-editor-preview {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+    rgba(9, 9, 10, 0.88);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.pdf-editor-preview-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.pdf-editor-page-indicator {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdf-editor-preview-mode {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.34);
+  font-family: var(--tk-font-display-en), var(--tk-font-display-cn), "Segoe UI Symbol", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pdf-editor-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pdf-editor-zoom-btn,
+.pdf-editor-zoom-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.03);
+  font: inherit;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.pdf-editor-zoom-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.pdf-editor-zoom-value {
+  min-width: 54px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pdf-editor-zoom-btn:hover,
+.pdf-editor-zoom-value:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.pdf-editor-canvas-scroll {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overflow-anchor: none;
+  overscroll-behavior: contain;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.pdf-editor-canvas-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.pdf-editor-canvas-scroll::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.pdf-editor-canvas-stage {
+  position: relative;
+  min-width: 100%;
+  min-height: 100%;
+  display: flex;
+  align-items: flex-start;
+  /* Keep a predictable fallback for WebView2 builds that do not parse the
+     `safe` alignment keyword. */
+  justify-content: center;
+  justify-content: safe center;
+  padding: 28px;
+}
+
+.pdf-editor-main-canvas {
+  display: block;
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  border-radius: 6px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.52);
+}
+
+.pdf-editor-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.pdf-editor-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  color: var(--muted);
+}
+
+.pdf-editor-empty-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.pdf-editor-empty h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.pdf-editor-empty p {
+  max-width: 440px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.pdf-editor-empty .pdf-merge-v2-cta {
+  margin-top: 6px;
+}
+
+.pdf-editor-preview-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+}
+
+.pdf-editor-footer-hint {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdf-editor-footer-actions {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-editor-footer-actions .pdf-merge-selection-btn,
+.pdf-editor-edit-modal-foot .pdf-merge-selection-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+.pdf-editor-footer-actions .pdf-merge-selection-btn > svg,
+.pdf-editor-edit-modal-foot .pdf-merge-selection-btn > svg {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.pdf-editor-process-status {
+  display: flex;
+  width: 280px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.pdf-editor-process-status .audio-convert-process-text {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.68);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdf-editor-process-status strong {
+  flex-shrink: 0;
+  color: #ffffff;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pdf-editor-cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-editor-cancel-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pdf-editor-toolbar-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pdf-editor-edit-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.03);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.pdf-editor-edit-toggle svg {
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.pdf-editor-edit-toggle:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.pdf-editor-edit-toggle.is-active {
+  color: #0b0b0c;
+  background: #ffffff;
+  border-color: #ffffff;
+}
+
+.pdf-editor-edit-toggle:disabled {
+  opacity: 0.36;
+  cursor: not-allowed;
+}
+
+.pdf-editor-canvas-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.pdf-editor-text-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 6px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.pdf-editor-text-layer.is-edit-mode {
+  pointer-events: auto;
+}
+
+.pdf-editor-text-layer.is-object-mode {
+  pointer-events: auto;
+}
+
+.pdf-editor-text-line {
+  position: absolute;
+  box-sizing: border-box;
+  white-space: nowrap;
+  /* Source text is already painted by the PDF canvas. Only edited segments
+     get an opaque replacement; the line wrapper remains a hit area. */
+  color: transparent;
+  background: transparent;
+  border-radius: 2px;
+  font-family: var(--tk-font-pdf), "PingFang SC", "Microsoft YaHei", Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.pdf-editor-text-layer.is-edit-mode .pdf-editor-text-line {
+  cursor: text;
+}
+
+.pdf-editor-text-layer.is-edit-mode .pdf-editor-text-segment {
+  cursor: text;
+}
+
+.pdf-editor-text-layer.is-edit-mode .pdf-editor-text-segment:hover {
+  background: rgba(92, 148, 255, 0.14);
+  outline: 1.5px solid rgba(92, 148, 255, 0.9);
+  outline-offset: 1px;
+}
+
+.pdf-editor-text-layer.is-object-mode .pdf-editor-text-segment:hover,
+.pdf-editor-text-layer.is-object-mode .pdf-editor-inserted-text:hover,
+.pdf-editor-text-layer.is-object-mode .pdf-editor-inserted-image-wrap:hover {
+  outline: 1.5px solid rgba(255, 255, 255, 0.68);
+  outline-offset: 2px;
+}
+
+.pdf-editor-text-segment {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  white-space: nowrap;
+  color: transparent;
+  background: transparent;
+  border-radius: 2px;
+  font-family: var(--tk-font-pdf), "PingFang SC", "Microsoft YaHei", Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  pointer-events: none;
+  user-select: none;
+}
+
+.pdf-editor-text-mask {
+  position: absolute;
+  z-index: 1;
+  box-sizing: border-box;
+  background: #ffffff;
+  pointer-events: none;
+}
+
+.pdf-editor-text-layer.is-edit-mode .pdf-editor-text-segment,
+.pdf-editor-text-layer.is-object-mode .pdf-editor-text-segment {
+  pointer-events: auto;
+}
+
+.pdf-editor-text-segment.is-edited {
+  z-index: 2;
+  display: block;
+  color: #111111;
+  padding: 0 4px;
+  background: #ffffff;
+  overflow: visible;
+  line-height: 1.04 !important;
+}
+
+.pdf-editor-text-segment.is-edited:empty {
+  padding: 0;
+}
+
+.pdf-editor-inserted-text,
+.pdf-editor-inserted-image-wrap,
+.pdf-editor-inserted-shape {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  cursor: pointer;
+}
+
+.pdf-editor-text-layer.is-object-mode .pdf-editor-inserted-text,
+.pdf-editor-text-layer.is-object-mode .pdf-editor-inserted-image-wrap,
+.pdf-editor-text-layer.is-object-mode .pdf-editor-inserted-shape,
+.pdf-editor-text-layer.is-insert-mode .pdf-editor-inserted-text,
+.pdf-editor-text-layer.is-insert-mode .pdf-editor-inserted-image-wrap,
+.pdf-editor-text-layer.is-insert-mode .pdf-editor-inserted-shape {
+  pointer-events: auto;
+}
+
+.pdf-editor-inserted-text {
+  box-sizing: border-box;
+  overflow: visible;
+  padding: 0 2px;
+  color: #111111;
+  background: transparent;
+  white-space: nowrap;
+  font-family: var(--tk-font-pdf), "PingFang SC", "Microsoft YaHei", Helvetica, Arial, sans-serif;
+}
+
+.pdf-editor-inserted-image-wrap {
+  overflow: visible;
+}
+
+.pdf-editor-inserted-shape {
+  overflow: visible;
+}
+
+.pdf-editor-inserted-shape--line::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  pointer-events: auto;
+}
+
+.pdf-editor-inserted-image {
+  box-sizing: border-box;
+  display: block;
+  position: relative;
+  object-fit: contain;
+  background: transparent;
+}
+
+.pdf-editor-text-segment.is-selected,
+.pdf-editor-inserted-text.is-selected,
+.pdf-editor-inserted-image-wrap.is-selected,
+.pdf-editor-inserted-shape.is-selected {
+  outline: 1.5px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 0 2px rgba(92, 148, 255, 0.34);
+  border-radius: 4px;
+}
+
+.pdf-editor-component-menu {
+  position: absolute;
+  z-index: 12;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 11px;
+  background: rgba(16, 16, 18, 0.96);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(14px);
+  transform-origin: center bottom;
+  animation: pdfEditorComponentMenuIn 140ms ease-out both;
+}
+
+.pdf-editor-component-menu[hidden] {
+  display: none;
+}
+
+.pdf-editor-component-menu button {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.82);
+  background: transparent;
+  cursor: pointer;
+  transition: color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+
+.pdf-editor-component-menu button:hover {
+  color: #0b0b0c;
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+.pdf-editor-component-menu button:last-child {
+  color: #ff9b95;
+}
+
+.pdf-editor-component-menu button:last-child:hover {
+  color: #ffffff;
+  background: #c84c49;
+}
+
+.pdf-editor-component-menu button svg {
+  width: 15px;
+  height: 15px;
+}
+
+@keyframes pdfEditorComponentMenuIn {
+  from { opacity: 0; transform: translateY(4px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.pdf-editor-component-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  z-index: 3;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 3px;
+  background: #111111;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
+  cursor: se-resize;
+  pointer-events: auto;
+}
+
+.pdf-editor-component-handle:hover {
+  background: #4a4a4f;
+}
+
+.pdf-editor-component-handle[data-handle="nw"] { left: -6px; top: -6px; cursor: nwse-resize; }
+.pdf-editor-component-handle[data-handle="n"] { left: 50%; top: -6px; transform: translateX(-50%); cursor: ns-resize; }
+.pdf-editor-component-handle[data-handle="ne"] { right: -6px; top: -6px; cursor: nesw-resize; }
+.pdf-editor-component-handle[data-handle="e"] { right: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+.pdf-editor-component-handle[data-handle="se"] { right: -6px; bottom: -6px; cursor: nwse-resize; }
+.pdf-editor-component-handle[data-handle="s"] { left: 50%; bottom: -6px; transform: translateX(-50%); cursor: ns-resize; }
+.pdf-editor-component-handle[data-handle="sw"] { left: -6px; bottom: -6px; cursor: nesw-resize; }
+.pdf-editor-component-handle[data-handle="w"] { left: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+
+.pdf-editor-shape-panel {
+  position: absolute;
+  z-index: 12;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 11px;
+  background: rgba(16, 16, 18, 0.96);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(14px);
+}
+
+.pdf-editor-shape-panel[hidden] {
+  display: none;
+}
+
+.pdf-editor-shape-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.pdf-editor-shape-field[hidden] {
+  display: none;
+}
+
+.pdf-editor-shape-field input[type="color"] {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pdf-editor-shape-field input[type="range"] {
+  width: 76px;
+  accent-color: #ffffff;
+}
+
+.pdf-editor-edit-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.42);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.pdf-editor-edit-modal.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pdf-editor-edit-modal-card {
+  width: min(420px, 100%);
+  border: 1px solid var(--line-strong);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
+    #101012;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.pdf-editor-edit-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.pdf-editor-edit-modal-title {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pdf-editor-edit-modal-close {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.pdf-editor-edit-modal-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pdf-editor-edit-modal-close svg {
+  width: 15px;
+  height: 15px;
+}
+
+.pdf-editor-edit-modal-body {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.pdf-editor-edit-modal-label {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.pdf-editor-edit-modal-original {
+  min-height: 34px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.62);
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.pdf-editor-edit-modal-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.24);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.pdf-editor-edit-modal-input:focus {
+  border-color: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+.pdf-editor-edit-security-note {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 10px 11px;
+  color: #ffd0cd;
+  border: 1px solid rgba(255, 112, 104, 0.28);
+  border-radius: 6px;
+  background: rgba(255, 82, 74, 0.08);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.pdf-editor-edit-security-note[hidden] {
+  display: none;
+}
+
+.pdf-editor-edit-security-note > svg,
+.pdf-editor-edit-security-note > i {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+
+.pdf-editor-edit-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 1180px) {
+  .pdf-editor-v2 .pdf-editor-v2-body {
+    grid-template-columns: minmax(176px, 208px) minmax(0, 1fr) minmax(246px, 280px);
+    gap: 12px;
+    padding-inline: 16px;
+  }
+
+  .pdf-editor-tool-panel {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 980px) {
+  .pdf-editor-v2 .pdf-editor-v2-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(190px, 250px) minmax(420px, 1fr) auto;
+    overflow-y: auto;
+  }
+
+  .pdf-editor-page-sidebar {
+    min-height: 0;
+  }
+
+  .pdf-editor-page-strip {
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    overflow-y: hidden;
+    overflow-x: auto;
+  }
+
+  .pdf-editor-tool-panel {
+    min-height: 360px;
+  }
+}
+
+@keyframes pdfEditorSkeletonPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .pdf-editor-v2 .pdf-editor-v2-body {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .pdf-editor-sidebar {
+    max-height: 340px;
+  }
+
+  .pdf-editor-page-strip {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    overflow-x: hidden;
+  }
+
+  .pdf-editor-preview {
+    min-height: 520px;
+  }
+}
+
+/* Keep dynamic result values inside dialogs on narrow windows. The full
+   value remains available through the title set by main.js. */
+.audio-convert-success-dialog,
+.audio-clip-success-dialog,
+.pdf-editor-edit-modal-card {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.audio-convert-success-detail,
+.audio-convert-success-row,
+.audio-clip-success-dialog .audio-convert-success-detail {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* DependencyGate uses the same class for a descriptive paragraph. Keep that
+   paragraph readable and only clamp actual completion summaries. */
+.audio-convert-success-overlay:not(.dependency-gate-overlay) .audio-convert-success-meta,
+.audio-clip-success-overlay .audio-clip-success-meta {
+  display: -webkit-box;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.audio-convert-success-key {
+  min-width: 0;
+  max-width: 44%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audio-convert-success-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.audio-convert-success-path,
+.audio-clip-success-path {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.dependency-gate-error,
+.cleanup-large-files-success-failures {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/*
+ * Modal stack for settings.
+ *
+ * The settings surface intentionally sits above the normal application
+ * overlays. A dialog launched from settings must therefore opt into a higher
+ * layer; otherwise it is mounted and marked visible but remains completely
+ * covered by the settings surface until settings is closed. Keep this rule
+ * scoped to the sibling relationship so normal home/tool overlay ordering is
+ * unchanged.
+ */
+.settings-overlay.visible ~ .transcription-model-overlay.visible,
+.settings-overlay.visible ~ .transcription-gate-overlay.visible,
+.settings-overlay.visible ~ .dependency-gate-overlay.visible,
+.settings-overlay.visible ~ .ffmpeg-overlay.visible,
+.settings-overlay.visible ~ .help-overlay.visible,
+.settings-overlay.visible ~ .feedback-overlay.visible,
+.settings-overlay.visible ~ .api-key-overlay.visible,
+.settings-overlay.visible ~ .donation-overlay.visible,
+.settings-overlay.visible ~ .audio-convert-success-overlay.visible {
+  z-index: 60000;
+}
+

@@ -357,7 +357,9 @@ export async function generatePptDraft(args, options = {}) {
           theme: draft.theme,
           outputFile: pptxFile,
           outputBytes: draft.bytes.byteLength,
-          outputs: result.outputs
+          outputs: result.outputs,
+          assets: draft.assets,
+          assetManifest: draft.asset_manifest
         }),
         tool: result.tool,
         dry_run: false,

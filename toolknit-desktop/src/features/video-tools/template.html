@@ -1,0 +1,395 @@
+<div class="pdf-merge-overlay pdf-merge-v2 video-convert-v2 audio-convert-overlay" id="videoConvertOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="videoConvertPlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="videoConvertDropZone"><span class="drop-hint" data-i18n="home.videoConvert.dropHint">松手即可上传</span></div>
+      <header class="pdf-merge-v2-topbar video-convert-v2-topbar">
+        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="videoConvertBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">VIDEO CONVERTER · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="videoConvertV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="audio-convert-body pdf-merge-v2-body video-convert-v2-body" id="videoConvertBody">
+        <aside class="pdf-merge-v2-poster video-convert-v2-poster" aria-label="视频格式转换说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.videoConvert.heroLabel">Video Format Converter</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.videoConvert.title">视频格式转换</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.videoConvert.subtitle">支持 MP4、AVI、MKV、MOV、WebM、FLV、WMV、TS 八种主流视频格式互转，批量处理一键完成。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>视频在本机转码，适合素材整理、平台投稿、兼容播放和批量格式统一。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="视频转换流程">
+            <div class="pdf-merge-v2-step is-active">
+              <span>01</span>
+              <div><strong>添加视频</strong><p>拖入或选择多个视频文件，自动进入队列。</p></div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>02</span>
+              <div><strong>选择格式</strong><p>目标格式覆盖 MP4、MKV、MOV、WebM、AVI、FLV、WMV、TS。</p></div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>03</span>
+              <div><strong>批量转码</strong><p>保留原始分辨率与音轨，输出到视频目录。</p></div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>04</span>
+              <div><strong>打开结果</strong><p>完成后可直接打开输出文件夹检查文件。</p></div>
+            </div>
+          </div>
+        </aside>
+        <main class="pdf-merge-v2-workspace video-convert-v2-workspace">
+          <section class="pdf-merge-v2-upload video-convert-v2-upload" aria-label="上传视频文件">
+            <div class="pdf-merge-v2-upload-copy">
+              <span class="pdf-merge-v2-upload-eyebrow">DROP OR SELECT</span>
+              <h2>把需要转换的视频放到这里</h2>
+              <p>支持拖拽或点击上传，上传后进入队列，再选择目标格式统一处理。</p>
+            </div>
+            <button class="audio-convert-cta pdf-merge-v2-cta" id="videoConvertCta" type="button">
+              <i data-lucide="upload"></i>
+              <span data-i18n="home.videoConvert.cta">上传视频文件</span>
+            </button>
+          </section>
+          <section class="pdf-merge-v2-options video-convert-v2-options" aria-label="转换参数">
+            <div class="audio-convert-format-selector">
+              <span class="audio-convert-format-label" data-i18n="home.videoConvert.targetFormat">目标格式</span>
+              <select class="video-convert-format-select" id="videoConvertFormatOptions" aria-label="目标格式">
+                <option value="MP4">MP4</option>
+                <option value="MKV">MKV</option>
+                <option value="MOV">MOV</option>
+                <option value="WEBM">WebM</option>
+                <option value="AVI">AVI</option>
+                <option value="FLV">FLV</option>
+                <option value="WMV">WMV</option>
+                <option value="TS">TS</option>
+              </select>
+            </div>
+            <div class="pdf-merge-v2-options-hint">MP4 兼容性最好；WebM 适合网页；MKV 适合多轨素材归档。</div>
+          </section>
+          <section class="pdf-merge-v2-queue video-convert-v2-queue" aria-label="待转换视频">
+            <div class="pdf-merge-v2-section-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">CONVERT QUEUE</span>
+                <h2>待转换视频</h2>
+              </div>
+              <p>支持拖拽调整顺序，批量任务会按队列顺序处理。</p>
+            </div>
+            <div class="audio-convert-files pdf-merge-v2-files video-convert-v2-files" id="videoConvertFiles"></div>
+          </section>
+          <section class="audio-convert-formats pdf-merge-v2-info video-convert-v2-info" aria-label="支持格式">
+            <h3 class="audio-convert-formats-title" data-i18n="home.videoConvert.formatsTitle">支持格式</h3>
+            <div class="pdf-merge-info-grid">
+              <div class="pdf-merge-info-item"><i data-lucide="film"></i><span>MP4 / MOV 适合通用播放、投稿和移动设备。</span></div>
+              <div class="pdf-merge-info-item"><i data-lucide="layers"></i><span>MKV / TS 适合多轨素材、高清片源和归档。</span></div>
+              <div class="pdf-merge-info-item"><i data-lucide="globe-2"></i><span>WebM / FLV 适合网页与旧平台兼容场景。</span></div>
+              <div class="pdf-merge-info-item"><i data-lucide="shield"></i><span data-i18n="home.videoConvert.mapText">八种格式可互相转换，保留原始分辨率和音轨</span></div>
+            </div>
+          </section>
+          <footer class="pdf-merge-v2-actions video-convert-v2-actions">
+            <span>确认文件和目标格式后开始处理，完成后会自动弹出结果提示。</span>
+            <button class="audio-convert-process-btn pdf-merge-v2-process" id="videoConvertProcessBtn" data-i18n="home.videoConvert.processBtn" style="display:none;">开始处理</button>
+          </footer>
+        </main>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask" id="videoConvertProcessMask">
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="audio-convert-process-bar">
+        <div class="audio-convert-process-bar-fill" id="videoConvertProcessBarFill"></div>
+      </div>
+      <div class="audio-convert-process-text" id="videoConvertProcessText" data-i18n="home.videoConvert.processing">正在转换...</div>
+      <button class="audio-convert-cancel-btn" id="videoConvertCancelBtn" data-i18n="home.videoConvert.cancel">取消</button>
+    </div>
+
+<div class="audio-convert-success-overlay" id="videoConvertSuccessOverlay">
+      <div class="audio-convert-success-dialog">
+        <div class="audio-convert-success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+        <h3 class="audio-convert-success-title" data-i18n="home.videoConvert.successTitle">处理成功</h3>
+        <div class="audio-convert-success-meta" id="videoConvertSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.videoConvert.successTarget">目标格式</span>
+            <span class="audio-convert-success-value" id="videoConvertSuccessFormat"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.videoConvert.successCount">处理文件</span>
+            <span class="audio-convert-success-value" id="videoConvertSuccessCount"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.videoConvert.successPath">保存路径</span>
+            <span class="audio-convert-success-value" id="videoConvertSuccessPath"></span>
+          </div>
+        </div>
+        <div class="audio-convert-success-actions">
+          <button class="audio-convert-success-btn audio-convert-success-btn-secondary" id="videoConvertOpenFolder" data-i18n="home.videoConvert.openFolder">打开文件夹</button>
+          <button class="audio-convert-success-btn audio-convert-success-btn-primary" id="videoConvertSuccessOk" data-i18n="home.videoConvert.ok">确定</button>
+        </div>
+      </div>
+    </div>
+
+<div class="pdf-merge-overlay pdf-merge-v2 video-frame-v2 audio-convert-overlay" id="videoFrameOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="videoFramePlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="videoFrameDropZone"><span class="drop-hint">松手即可上传视频</span></div>
+      <header class="pdf-merge-v2-topbar video-frame-v2-topbar">
+        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="videoFrameBack" type="button" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">FRAME CAPTURE · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="videoFrameV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main class="video-frame-body video-media-v2-body">
+        <aside class="pdf-merge-v2-poster video-media-v2-sidebar" aria-label="单帧图说明">
+          <div class="pdf-merge-v2-poster-kicker">Frame Capture</div>
+          <h1 class="pdf-merge-v2-title">视频高清单帧图</h1>
+          <p class="pdf-merge-v2-subtitle">定位到任意时间点，逐帧微调并按原始分辨率导出 PNG 或 JPG。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>视频只在本机解码取帧，适合封面、教程截图、素材抽帧和高质量预览图。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="单帧导出流程">
+            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong>上传视频</strong><p>支持 MP4 / MOV / MKV / WebM / AVI 等常见格式。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>02</span><div><strong>定位时间</strong><p>拖动时间轴或用上一帧/下一帧微调。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>03</span><div><strong>选择格式</strong><p>PNG 无损，JPG 更适合快速分享。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>04</span><div><strong>导出图片</strong><p>按当前预览帧导出高清单帧图。</p></div></div>
+          </div>
+        </aside>
+
+        <section class="pdf-merge-v2-workspace video-media-v2-workspace" aria-label="视频单帧工作台">
+          <div class="video-frame-empty video-media-v2-empty tk-empty-hero" id="videoFrameEmpty">
+            <span class="tk-empty-hero-icon"><i data-lucide="scan-line"></i></span>
+            <span class="tk-empty-hero-kicker">LOCAL VIDEO WORKSPACE</span>
+            <strong>选择视频开始</strong>
+            <p class="tk-empty-hero-description">支持 MP4、MOV、MKV、WebM、AVI，可逐帧定位并导出高清图片。</p>
+            <button class="tk-empty-hero-action" data-video-pick="frame" type="button"><i data-lucide="upload"></i><span>选择视频</span></button>
+          </div>
+          <div class="video-frame-editor video-media-v2-editor" id="videoFrameEditor" hidden>
+            <section class="video-media-v2-preview-card">
+              <div class="video-frame-preview video-media-v2-preview">
+                <video id="videoFramePreviewVideo" class="video-frame-video-preview" muted playsinline preload="metadata" hidden></video>
+                <img id="videoFramePreviewImage" alt="视频预览帧" hidden>
+                <button class="video-gif-preview-toggle video-frame-preview-toggle" id="videoFramePreviewToggle" type="button" disabled aria-label="播放视频" aria-pressed="false" title="播放视频">
+                  <svg class="video-gif-preview-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
+                  <svg class="video-gif-preview-pause-icon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M7 5h4v14H7zM13 5h4v14h-4z"></path></svg>
+                </button>
+                <button class="video-frame-expand-toggle" id="videoFrameExpandToggle" type="button" aria-label="展开视频预览" aria-pressed="false" title="展开视频预览">
+                  <i data-lucide="maximize-2" data-expand-icon="expand"></i>
+                  <i data-lucide="minimize-2" data-expand-icon="collapse" hidden></i>
+                </button>
+                <div class="video-frame-time" id="videoFrameTime">00:00.000</div>
+              </div>
+              <div class="video-frame-file video-media-v2-file"><span id="videoFrameName"></span><button id="videoFrameChange" type="button">更换文件</button></div>
+            </section>
+            <section class="video-media-v2-control-card video-frame-control-card">
+              <div class="video-media-v2-control-head">
+                <span class="pdf-merge-v2-section-kicker">CAPTURE CONTROLS</span>
+                <h2>取帧控制</h2>
+              </div>
+              <div class="video-frame-source-stats">
+                <div><span>画面规格</span><strong id="videoFrameResolution">--</strong></div>
+                <div><span>帧率</span><strong id="videoFrameRate">--</strong></div>
+                <div><span>文件大小</span><strong id="videoFrameFileSize">--</strong></div>
+              </div>
+              <div class="video-frame-timeline-block">
+                <div class="video-frame-timeline-meta"><span>当前时间</span><output id="videoFrameCurrentTime">00:00.000</output><span class="video-frame-duration-separator">/</span><output id="videoFrameDuration">00:00.000</output></div>
+                <input id="videoFrameTimeline" class="video-frame-timeline" type="range" min="0" max="0" step="1" value="0" aria-label="视频时间轴">
+              </div>
+              <div class="video-frame-quick-seek" aria-label="快速定位">
+                <button id="videoFrameStart" type="button" title="跳到开头"><i data-lucide="skip-back"></i><span>开头</span></button>
+                <button id="videoFrameBackFive" type="button" title="后退 5 秒"><i data-lucide="rewind"></i><span>-5 秒</span></button>
+                <button id="videoFrameForwardFive" type="button" title="前进 5 秒"><span>+5 秒</span><i data-lucide="fast-forward"></i></button>
+                <button id="videoFrameEnd" type="button" title="跳到结尾"><span>结尾</span><i data-lucide="skip-forward"></i></button>
+              </div>
+              <div class="video-frame-nudge-row">
+                <button id="videoFramePrev" type="button" title="上一帧"><i data-lucide="chevron-left"></i><span>上一帧</span></button>
+                <label class="video-frame-timestamp-field"><span>时间点</span><input id="videoFrameTimestamp" type="number" min="0" step="1"><em>毫秒</em></label>
+                <button id="videoFrameNext" type="button" title="下一帧"><span>下一帧</span><i data-lucide="chevron-right"></i></button>
+              </div>
+              <div class="video-frame-format-block"><span>输出格式</span><div class="audio-convert-format-options" id="videoFrameFormat">
+                  <button class="audio-convert-format-option active" data-format="png">PNG 无损</button>
+                  <button class="audio-convert-format-option" data-format="jpg">JPG 高清</button>
+                </div></div>
+              <button class="audio-convert-process-btn pdf-merge-v2-process visible" id="videoFrameExport" type="button"><i data-lucide="download"></i><span>导出当前帧</span></button>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+<div class="audio-convert-process-mask" id="videoFrameProcessMask">
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="audio-convert-process-bar"><div class="audio-convert-process-bar-fill" id="videoFrameProcessBarFill"></div></div>
+      <div class="audio-convert-process-text" id="videoFrameProcessText">正在导出单帧图...</div>
+      <button class="audio-convert-cancel-btn" id="videoFrameCancelBtn" type="button">取消</button>
+    </div>
+
+<div class="audio-convert-success-overlay" id="videoFrameSuccessOverlay">
+      <div class="audio-convert-success-dialog">
+        <div class="audio-convert-success-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
+        <h3 class="audio-convert-success-title">单帧图已导出</h3>
+        <div class="audio-convert-success-meta" id="videoFrameSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row"><span class="audio-convert-success-key">格式</span><span class="audio-convert-success-value" id="videoFrameSuccessFormat"></span></div>
+          <div class="audio-convert-success-row"><span class="audio-convert-success-key">时间点</span><span class="audio-convert-success-value" id="videoFrameSuccessTime"></span></div>
+          <div class="audio-convert-success-row"><span class="audio-convert-success-key">保存路径</span><span class="audio-convert-success-value" id="videoFrameSuccessPath"></span></div>
+        </div>
+        <div class="audio-convert-success-actions"><button class="audio-convert-success-btn audio-convert-success-btn-secondary" id="videoFrameOpenFolder" type="button">打开文件夹</button><button class="audio-convert-success-btn audio-convert-success-btn-primary" id="videoFrameSuccessOk" type="button">确定</button></div>
+      </div>
+    </div>
+
+<div class="pdf-merge-overlay pdf-merge-v2 video-gif-v2 audio-convert-overlay" id="videoGifOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="videoGifPlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="videoGifDropZone"><span class="drop-hint">松手即可上传视频</span></div>
+      <header class="pdf-merge-v2-topbar video-gif-v2-topbar">
+        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="videoGifBack" type="button" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">GIF STUDIO · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="videoGifV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main class="video-frame-body video-media-v2-body">
+        <aside class="pdf-merge-v2-poster video-media-v2-sidebar" aria-label="GIF 截取说明">
+          <div class="pdf-merge-v2-poster-kicker">GIF Studio</div>
+          <h1 class="pdf-merge-v2-title">视频截取 GIF</h1>
+          <p class="pdf-merge-v2-subtitle">用起始帧和结束帧截取片段，最长 30 秒，逐帧微调后导出循环 GIF。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>本地生成调色板与 GIF，适合表情包、教程动图、产品演示和短片段传播。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="GIF 导出流程">
+            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong>上传视频</strong><p>支持 MP4 / MOV / MKV / WebM / AVI 等常见格式。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>02</span><div><strong>选择片段</strong><p>设置起始帧和结束帧，最长 30 秒。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>03</span><div><strong>控制体积</strong><p>通过帧率、宽度和质量控制清晰度与大小。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>04</span><div><strong>导出 GIF</strong><p>生成循环 GIF 并保存到视频目录。</p></div></div>
+          </div>
+        </aside>
+
+        <section class="pdf-merge-v2-workspace video-media-v2-workspace" aria-label="GIF 截取工作台">
+          <div class="video-frame-empty video-media-v2-empty tk-empty-hero" id="videoGifEmpty">
+            <span class="tk-empty-hero-icon"><i data-lucide="clapperboard"></i></span>
+            <span class="tk-empty-hero-kicker">LOCAL VIDEO WORKSPACE</span>
+            <strong>选择视频开始</strong>
+            <p class="tk-empty-hero-description">支持 MP4、MOV、MKV、WebM、AVI，可截取片段并生成 GIF。</p>
+            <button class="tk-empty-hero-action" data-video-pick="gif" type="button"><i data-lucide="upload"></i><span>选择视频</span></button>
+          </div>
+          <div class="video-frame-editor video-media-v2-editor video-gif-v2-editor" id="videoGifEditor" hidden>
+            <section class="video-media-v2-preview-card">
+              <div class="video-frame-preview video-gif-preview video-media-v2-preview">
+                <img id="videoGifPreviewImage" alt="GIF 选帧预览">
+                <video id="videoGifRangePreview" class="video-gif-range-preview" muted playsinline preload="metadata" hidden></video>
+                 <button class="video-gif-preview-toggle" id="videoGifPreviewToggle" type="button" disabled aria-label="播放所选片段" aria-pressed="false" title="播放所选片段">
+                   <svg class="video-gif-preview-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
+                   <svg class="video-gif-preview-pause-icon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M7 5h4v14H7zM13 5h4v14h-4z"></path></svg>
+                 </button>
+                 <button class="video-frame-expand-toggle" id="videoGifExpandToggle" type="button" aria-label="展开视频预览" aria-pressed="false" title="展开视频预览">
+                   <i data-lucide="maximize-2" data-expand-icon="expand"></i>
+                   <i data-lucide="minimize-2" data-expand-icon="collapse" hidden></i>
+                 </button>
+                <div class="video-frame-time" id="videoGifPreviewTime">00:00.000</div>
+              </div>
+              <div class="video-frame-file video-media-v2-file"><span id="videoGifName"></span><button id="videoGifChange" type="button">更换文件</button></div>
+            </section>
+            <section class="video-media-v2-control-card video-gif-v2-control-card">
+              <div class="video-media-v2-control-head">
+                <span class="pdf-merge-v2-section-kicker">GIF CONTROLS</span>
+                <h2>片段与规格</h2>
+              </div>
+              <div class="video-gif-timeline-wrap" id="videoGifTimelineWrap" style="--gif-start:0%;--gif-end:0%;">
+                <div class="video-gif-timeline-visual" aria-hidden="true">
+                  <span class="video-gif-timeline-track"></span>
+                  <span class="video-gif-timeline-selected"></span>
+                </div>
+                <input id="videoGifTimeline" class="video-frame-timeline video-gif-timeline-input" type="range" min="0" max="0" step="1" value="0" aria-label="调整当前片段端点">
+              </div>
+              <div class="video-gif-selection">
+                <button class="video-gif-point active" id="videoGifSelectStart" type="button"><span>起始帧</span><strong id="videoGifStartLabel">00:00.000</strong></button>
+                <button class="video-gif-point" id="videoGifSelectEnd" type="button"><span>结束帧</span><strong id="videoGifEndLabel">00:30.000</strong></button>
+                <span class="video-gif-duration" id="videoGifDurationLabel">30.000 秒 / 最多 30 秒</span>
+              </div>
+              <div class="video-frame-controls video-gif-controls video-media-v2-controls">
+                <button id="videoGifPrev" type="button" title="上一帧"><i data-lucide="chevron-left"></i></button>
+                <span id="videoGifAdjustHint">正在调整起始帧</span>
+                <button id="videoGifNext" type="button" title="下一帧"><i data-lucide="chevron-right"></i></button>
+              </div>
+              <div class="video-gif-output-options video-gif-v2-output-options">
+                <div class="video-gif-output-group"><span>帧率</span><div class="audio-convert-format-options" id="videoGifFrameRate"><button class="audio-convert-format-option" data-fps="6" type="button">6 FPS</button><button class="audio-convert-format-option" data-fps="8" type="button">8 FPS</button><button class="audio-convert-format-option active" data-fps="12" type="button">12 FPS</button><button class="audio-convert-format-option" data-fps="16" type="button">16 FPS</button><button class="audio-convert-format-option" data-fps="20" type="button">20 FPS</button></div></div>
+                <div class="video-gif-output-group"><span>宽度</span><div class="audio-convert-format-options" id="videoGifResolution"><button class="audio-convert-format-option" data-width="360" type="button">360 px</button><button class="audio-convert-format-option" data-width="480" type="button">480 px</button><button class="audio-convert-format-option active" data-width="640" type="button">640 px</button><button class="audio-convert-format-option" data-width="960" type="button">960 px</button><button class="audio-convert-format-option" data-width="1280" type="button">1280 px</button></div></div>
+                <div class="video-gif-output-group"><span>质量</span><div class="audio-convert-format-options" id="videoGifQuality"><button class="audio-convert-format-option" data-quality="high" type="button">清晰</button><button class="audio-convert-format-option active" data-quality="balanced" type="button">均衡</button><button class="audio-convert-format-option" data-quality="small" type="button">小体积</button><button class="audio-convert-format-option" data-quality="tiny" type="button">极小</button></div></div>
+              </div>
+              <div class="video-gif-estimate" id="videoGifEstimate">预计体积：选择视频后自动估算</div>
+              <button class="audio-convert-process-btn pdf-merge-v2-process visible" id="videoGifExport" type="button">导出 GIF</button>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+<div class="audio-convert-process-mask" id="videoGifProcessMask"><div class="tk-mascot-lg" aria-hidden="true"></div><div class="audio-convert-process-bar"><div class="audio-convert-process-bar-fill" id="videoGifProcessBarFill"></div></div><div class="audio-convert-process-text" id="videoGifProcessText">正在生成 GIF...</div><button class="audio-convert-cancel-btn" id="videoGifCancelBtn" type="button">取消</button></div>
+
+<div class="audio-convert-success-overlay" id="videoGifSuccessOverlay"><div class="audio-convert-success-dialog"><div class="audio-convert-success-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div><h3 class="audio-convert-success-title">GIF 已导出</h3><div class="audio-convert-success-meta" id="videoGifSuccessMeta"></div><div class="audio-convert-success-detail"><div class="audio-convert-success-row"><span class="audio-convert-success-key">截取时长</span><span class="audio-convert-success-value" id="videoGifSuccessDuration"></span></div><div class="audio-convert-success-row"><span class="audio-convert-success-key">输出规格</span><span class="audio-convert-success-value" id="videoGifSuccessSpec"></span></div><div class="audio-convert-success-row"><span class="audio-convert-success-key">文件大小</span><span class="audio-convert-success-value" id="videoGifSuccessSize"></span></div><div class="audio-convert-success-row"><span class="audio-convert-success-key">保存路径</span><span class="audio-convert-success-value" id="videoGifSuccessPath"></span></div></div><div class="audio-convert-success-actions"><button class="audio-convert-success-btn audio-convert-success-btn-secondary" id="videoGifOpenFolder" type="button">打开文件夹</button><button class="audio-convert-success-btn audio-convert-success-btn-primary" id="videoGifSuccessOk" type="button">确定</button></div></div></div>

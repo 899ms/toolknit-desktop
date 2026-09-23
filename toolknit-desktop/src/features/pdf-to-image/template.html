@@ -1,0 +1,250 @@
+<div class="pdf-merge-overlay pdf-merge-v2 pdf-to-image-v2" id="pdfToImageOverlay" role="dialog" aria-modal="true" aria-labelledby="pdfToImageTitle" aria-hidden="true" inert>
+      <div class="plasma-bg pdf-merge-v2-bg" id="pdfToImagePlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="pdfToImageDropZone">
+        <span class="drop-hint" data-i18n="home.pdfToImageTool.dropHint">松手即可上传</span>
+      </div>
+      <input id="pdfToImageFileInput" type="file" accept="application/pdf,.pdf" hidden>
+      <header class="pdf-merge-v2-topbar pdf-to-image-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left pdf-to-image-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="pdfToImageBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag pdf-to-image-v2-top-tag">PDF TO IMAGE · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="pdfToImageV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="pdf-merge-v2-body pdf-to-image-v2-body" id="pdfToImageBody">
+        <aside class="pdf-merge-v2-poster pdf-to-image-v2-poster" aria-label="PDF 转图像说明">
+          <div class="pdf-merge-v2-poster-kicker">PDF To Image</div>
+          <h1 class="pdf-merge-v2-title" id="pdfToImageTitle" data-i18n="home.pdfToImageTool.title">PDF 转图像</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.pdfToImageTool.subtitle">选择需要转换的 PDF 页面，逐页导出清晰图像，或按顺序生成便于阅读的长图。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>文件只在本机处理，不上传服务器。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="转换流程">
+            <div class="pdf-merge-v2-step is-active">
+              <span>01</span>
+              <div>
+                <strong>上传文件</strong>
+                <p>添加一个 PDF 文件后，进入页面预览和选择。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>02</span>
+              <div>
+                <strong>选择页面</strong>
+                <p>在页面选择区勾选需要导出的 PDF 页码。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>03</span>
+              <div>
+                <strong>选择格式</strong>
+                <p>可导出 PNG、JPG、WebP，或生成长图。</p>
+              </div>
+            </div>
+            <div class="pdf-merge-v2-step">
+              <span>04</span>
+              <div>
+                <strong>导出结果</strong>
+                <p>按选中页生成图像文件并保存到本机。</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace pdf-to-image-v2-workspace">
+          <section class="pdf-merge-v2-upload pdf-to-image-v2-upload" aria-label="上传 PDF 文件">
+            <div class="pdf-merge-v2-upload-copy">
+              <span class="pdf-merge-v2-upload-eyebrow">DROP OR SELECT</span>
+              <h2>把要转换的 PDF 放到这里</h2>
+              <p>文件载入后会进入页面选择区，你可以按页导出图像，或把选中的页面拼成长图。</p>
+            </div>
+            <button class="audio-convert-cta pdf-merge-v2-cta" id="pdfToImageCta" type="button">
+              <i data-lucide="upload"></i>
+              <span data-i18n="home.pdfToImageTool.cta">上传 PDF 文件</span>
+            </button>
+          </section>
+
+          <section class="pdf-merge-v2-queue pdf-to-image-v2-queue" aria-label="待转换文件">
+            <div class="pdf-merge-v2-section-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">IMAGE QUEUE</span>
+                <h2>待转换文件</h2>
+              </div>
+              <p>仅支持单个 PDF；文件载入后会在下方显示。</p>
+            </div>
+            <div class="audio-convert-files pdf-merge-v2-files pdf-to-image-v2-files" id="pdfToImageFiles" aria-live="polite"></div>
+          </section>
+
+          <section class="audio-convert-formats pdf-merge-v2-info pdf-to-image-v2-info" aria-label="转换说明">
+            <h3 class="audio-convert-formats-title" data-i18n="home.pdfToImageTool.infoTitle">转换说明</h3>
+            <div class="pdf-merge-info-grid">
+              <div class="pdf-merge-info-item">
+                <i data-lucide="file-image"></i>
+                <span data-i18n="home.pdfToImageTool.info1">可视化选择需要转换的 PDF 页面</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="image"></i>
+                <span data-i18n="home.pdfToImageTool.info2">支持 PNG、JPG、WebP 逐页导出</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="layers-3"></i>
+                <span data-i18n="home.pdfToImageTool.info3">所选页面可按顺序分组拼接为长图</span>
+              </div>
+              <div class="pdf-merge-info-item">
+                <i data-lucide="lock"></i>
+                <span data-i18n="home.pdfToImageTool.info4">纯本地处理，文件不上传服务器</span>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+<section class="pdf-workbench pdf-editor-v2 pdf-to-image-workspace" id="pdfToImageWorkspace" role="dialog" aria-modal="true" aria-labelledby="pdfToImageWorkspaceTitle" aria-hidden="true" inert>
+      <header class="pdf-page-workspace-header">
+        <div>
+          <p class="pdf-merge-selection-eyebrow" id="pdfToImageWorkspaceStatus"></p>
+          <h2 class="pdf-page-workspace-title" id="pdfToImageWorkspaceTitle" data-i18n="home.pdfToImageTool.workspaceTitle">选择转换页面</h2>
+          <p class="pdf-page-workspace-file" id="pdfToImageWorkspaceHint"></p>
+        </div>
+        <div class="pdf-page-workspace-header-actions">
+          <span class="pdf-page-workspace-count" id="pdfToImageSelectedCount"></span>
+          <button class="pdf-page-workspace-close" id="pdfToImageWorkspaceClose" type="button" data-i18n-aria-label="home.pdfToImageTool.closeWorkspace" aria-label="关闭选页">
+            <i data-lucide="x" aria-hidden="true"></i>
+          </button>
+        </div>
+      </header>
+      <div class="pdf-merge-page-stage" id="pdfToImagePageStage">
+        <div class="pdf-merge-page-strip" id="pdfToImagePageStrip" aria-live="polite"></div>
+      </div>
+      <footer class="pdf-page-workspace-footer pdf-to-image-workspace-footer" data-to-image-actions>
+        <div class="pdf-to-image-section-heading">
+          <strong data-i18n="home.pdfToImageTool.exportSettings">导出设置</strong>
+          <span data-i18n="home.pdfToImageTool.exportSettingsHint">选择格式和清晰度后导出当前选中的页面</span>
+        </div>
+        <div class="pdf-to-image-footer-options">
+          <div class="pdf-to-image-option-group">
+            <span class="pdf-to-image-option-label" data-i18n="home.pdfToImageTool.outputFormat">图像格式</span>
+            <div class="pdf-to-image-segmented" id="pdfToImageFormatOptions" role="group" data-i18n-aria-label="home.pdfToImageTool.outputFormat">
+              <button class="active" type="button" data-value="png" aria-pressed="true">PNG</button>
+              <button type="button" data-value="jpg" aria-pressed="false">JPG</button>
+              <button type="button" data-value="webp" aria-pressed="false">WebP</button>
+            </div>
+          </div>
+          <div class="pdf-to-image-option-group">
+            <span class="pdf-to-image-option-label" data-i18n="home.pdfToImageTool.clarity">清晰度</span>
+            <div class="pdf-to-image-segmented" id="pdfToImageClarityOptions" role="group" data-i18n-aria-label="home.pdfToImageTool.clarity">
+              <button type="button" data-value="standard" aria-pressed="false" data-i18n="home.pdfToImageTool.clarityStandard" data-i18n-title="home.pdfToImageTool.clarityStandardHint">标准</button>
+              <button class="active" type="button" data-value="high" aria-pressed="true" data-i18n="home.pdfToImageTool.clarityHigh" data-i18n-title="home.pdfToImageTool.clarityHighHint">高清</button>
+              <button type="button" data-value="print" aria-pressed="false" data-i18n="home.pdfToImageTool.clarityPrint" data-i18n-title="home.pdfToImageTool.clarityPrintHint">印刷</button>
+            </div>
+          </div>
+          <div class="pdf-to-image-limit-note">
+            <i data-lucide="layers-3" aria-hidden="true"></i>
+            <span data-i18n="home.pdfToImageTool.longImageLimit">长图和横向长图需选择 2～5 页；田型拼图仅支持 4 页或 9 页</span>
+          </div>
+        </div>
+        <div class="pdf-to-image-footer-actions-row">
+          <div class="pdf-to-image-selection-actions">
+            <div class="pdf-to-image-actions-heading">
+              <strong data-i18n="home.pdfToImageTool.selectionActions">选择操作</strong>
+              <span data-i18n="home.pdfToImageTool.selectionActionsHint">统一选择或取消选择页面</span>
+            </div>
+            <button class="pdf-merge-selection-btn pdf-to-image-selection-button" id="pdfToImageSelectAllBtn" type="button">
+              <i data-lucide="check-check" aria-hidden="true"></i>
+              <span data-i18n="home.pdfToImageTool.clearSelection">取消全选</span>
+            </button>
+          </div>
+          <div class="pdf-to-image-export-actions">
+            <div class="pdf-to-image-actions-heading">
+              <strong data-i18n="home.pdfToImageTool.exportActions">导出操作</strong>
+              <span class="pdf-page-workspace-status" id="pdfToImageSelectionMeta"></span>
+            </div>
+            <div class="pdf-page-workspace-footer-actions">
+            <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary pdf-to-image-export-button" id="pdfToImageExportImagesBtn">
+              <i data-lucide="images" aria-hidden="true"></i>
+              <span data-i18n="home.pdfToImageTool.exportImages">导出图像</span>
+            </button>
+            <button class="pdf-merge-selection-btn pdf-merge-selection-btn-primary pdf-to-image-export-button" id="pdfToImageExportLongBtn">
+              <i data-lucide="panels-top-left" aria-hidden="true"></i>
+              <span data-i18n="home.pdfToImageTool.exportLongImage">导出长图</span>
+            </button>
+            <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary pdf-to-image-export-button pdf-to-image-conditional-export" id="pdfToImageExportHorizontalBtn" aria-hidden="false" aria-disabled="true" disabled>
+              <i data-lucide="arrow-right-to-line" aria-hidden="true"></i>
+              <span data-i18n="home.pdfToImageTool.exportHorizontalImage">导出横向长图</span>
+            </button>
+            <button class="pdf-merge-selection-btn pdf-merge-selection-btn-secondary pdf-to-image-export-button pdf-to-image-conditional-export" id="pdfToImageExportGridBtn" aria-hidden="false" aria-disabled="true" disabled>
+              <i data-lucide="grid-2x2" aria-hidden="true"></i>
+              <span data-i18n="home.pdfToImageTool.exportGridImage">导出田型拼图</span>
+            </button>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </section>
+
+<div class="audio-convert-process-mask pdf-to-image-process-mask" id="pdfToImageProcessMask" role="dialog" aria-modal="true" aria-labelledby="pdfToImageProcessText" aria-hidden="true" inert>
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="pdf-to-image-process-status" aria-live="polite">
+        <span class="audio-convert-process-text" id="pdfToImageProcessText" data-i18n="home.pdfToImageTool.preparing">正在准备导出...</span>
+        <strong id="pdfToImageProcessValue">0%</strong>
+      </div>
+      <div class="audio-convert-process-bar" id="pdfToImageProcessBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-i18n-aria-label="home.pdfToImageTool.progressLabel">
+        <div class="audio-convert-process-bar-fill" id="pdfToImageProcessBarFill"></div>
+      </div>
+      <button class="audio-convert-cancel-btn pdf-to-image-cancel-btn" id="pdfToImageCancel" type="button">
+        <i data-lucide="x" aria-hidden="true"></i>
+        <span data-i18n="home.pdfToImageTool.cancel">取消</span>
+      </button>
+    </div>
+
+<div class="audio-clip-success-overlay" id="pdfToImageSuccessOverlay" aria-hidden="true" inert>
+      <div class="audio-clip-success-dialog" role="dialog" aria-modal="true" aria-labelledby="pdfToImageSuccessTitle">
+        <div class="audio-clip-success-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <h3 class="audio-clip-success-title" id="pdfToImageSuccessTitle" data-i18n="home.pdfToImageTool.successTitle">导出完成</h3>
+        <div class="audio-clip-success-meta" id="pdfToImageSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfToImageTool.successType">输出类型</span>
+            <span class="audio-convert-success-value" id="pdfToImageSuccessType"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfToImageTool.successCount">导出文件数</span>
+            <span class="audio-convert-success-value" id="pdfToImageSuccessCount"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfToImageTool.successPath">保存路径</span>
+            <span class="audio-convert-success-value" id="pdfToImageSuccessPath"></span>
+          </div>
+        </div>
+        <div class="audio-clip-success-actions">
+          <button class="audio-clip-success-btn audio-clip-success-btn-secondary" id="pdfToImageSuccessOpenFolder" type="button" data-i18n="home.pdfToImageTool.openFolder">打开文件夹</button>
+          <button class="audio-clip-success-btn audio-clip-success-btn-primary" id="pdfToImageSuccessOk" type="button" data-i18n="home.pdfToImageTool.ok">确定</button>
+        </div>
+      </div>
+    </div>

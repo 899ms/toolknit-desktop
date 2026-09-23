@@ -1,0 +1,275 @@
+/* Legacy class names retained for PPT tools that share these primitives. */
+/* File-driven PPT tools share one upload strip and a filling preview row. */
+.pdf-merge-v2 .ppt-file-workspace {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 16px;
+}
+
+.pdf-merge-v2 .ppt-file-upload {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 22px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.ppt-file-upload .pdf-merge-v2-upload-copy { flex: 1 1 260px; min-width: 0; }
+.ppt-file-upload h2 {
+  margin: 8px 0 0;
+  color: var(--ink);
+  font-family: var(--tk-font-display-cn), "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+.ppt-file-upload p {
+  max-width: 520px;
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.pdf-merge-v2 .ppt-file-cta {
+  flex: 0 0 auto;
+  min-height: 44px;
+  max-width: 100%;
+  color: #000;
+}
+.pdf-merge-v2 .ppt-file-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: min-content;
+  width: 100%;
+  margin: 0;
+  padding-bottom: 12px;
+}
+.pdf-merge-v2 .ppt-file-panel .ppt-images-results {
+  min-width: 0;
+}
+.pdf-merge-v2 .ppt-file-panel .ppt-images-toolbar {
+  min-width: 0;
+}
+.ppt-file-panel > .ppt-images-empty {
+  flex: 1 0 auto;
+  padding: 28px;
+}
+
+@media (max-width: 980px) {
+  .pdf-merge-v2 .ppt-file-panel .ppt-images-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pdf-merge-v2 .ppt-file-panel .ppt-images-toolbar-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+/* Keep this shared control out of every PPT page's grid on its first open. */
+.ppt-images-scroll-top {
+  position: absolute;
+  right: 24px;
+  bottom: 22px;
+  z-index: 4;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #050509;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px) scale(0.9);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  -webkit-app-region: no-drag;
+}
+.ppt-images-scroll-top.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+.ppt-images-scroll-top:hover { transform: translateY(-2px) scale(1.04); }
+.ppt-images-scroll-top-icon {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ppt-workbench-portal,
+[data-ppt-images-portal],
+[data-ppt-text-portal],
+[data-ppt-compress-portal],
+[data-ppt-outline-portal],
+[data-ppt-render-portal],
+.ppt-draft-portal {
+  position: relative;
+  z-index: 40000;
+  pointer-events: none;
+}
+
+/* Lazy PPT portals live under body while their page overlay owns a higher
+   stacking context. Keep progress and success layers above the page content,
+   but below the global settings/dependency surfaces. */
+[data-ppt-images-portal] .audio-convert-process-mask,
+[data-ppt-text-portal] .audio-convert-process-mask,
+[data-ppt-compress-portal] .audio-convert-process-mask,
+[data-ppt-outline-portal] .audio-convert-process-mask,
+[data-ppt-render-portal] .audio-convert-process-mask,
+.ppt-draft-portal .audio-convert-process-mask {
+  z-index: 40000;
+  /* Keep the tool chrome available while a long-running task is active so
+     Back/window actions can cancel the current lifecycle-owned operation. */
+  inset: 68px 0 0;
+}
+
+[data-ppt-images-portal] .audio-clip-success-overlay,
+[data-ppt-text-portal] .audio-clip-success-overlay,
+[data-ppt-compress-portal] .audio-clip-success-overlay,
+[data-ppt-outline-portal] .audio-clip-success-overlay,
+[data-ppt-render-portal] .audio-clip-success-overlay,
+.ppt-draft-portal .audio-clip-success-overlay {
+  z-index: 40010;
+}
+
+.pdf-merge-v2 .ppt-images-empty[hidden],
+.pdf-merge-v2 .ppt-images-results[hidden] { display: none; }
+.ppt-images-empty {
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+}
+.ppt-images-empty svg { width: 38px; height: 38px; color: rgba(255, 255, 255, 0.82); }
+.ppt-images-empty strong { color: rgba(255, 255, 255, 0.9); font-size: 17px; }
+.ppt-images-empty span { max-width: 460px; line-height: 1.6; }
+
+/* AI preview hints occupy a footer row, separate from the centered message. */
+.pdf-merge-v2:is(.ppt-outline-v2, .ppt-draft-v2) .ppt-outline-empty {
+  grid-template-rows: minmax(24px, 1fr) repeat(3, auto) minmax(max-content, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  align-content: stretch;
+  min-height: 360px;
+  padding: 24px 16px;
+}
+.pdf-merge-v2:is(.ppt-outline-v2, .ppt-draft-v2) .ppt-outline-empty > svg { grid-row: 2; }
+.pdf-merge-v2:is(.ppt-outline-v2, .ppt-draft-v2) .ppt-outline-empty > strong { grid-row: 3; }
+.pdf-merge-v2:is(.ppt-outline-v2, .ppt-draft-v2) .ppt-outline-empty > span { grid-row: 4; }
+.pdf-merge-v2:is(.ppt-outline-v2, .ppt-draft-v2) .ppt-outline-empty > :is(.ppt-outline-v2-empty-hints, .ppt-draft-v2-empty-hints) {
+  grid-row: -2;
+  align-self: end;
+  max-width: 100%;
+  margin: 0;
+}
+
+.ppt-images-results { display: flex; flex-direction: column; gap: 14px; }
+.ppt-images-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 13px;
+}
+.ppt-images-summary strong { color: rgba(255, 255, 255, 0.92); font-weight: 700; white-space: nowrap; }
+.ppt-images-toolbar {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(180px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+.ppt-images-filter,
+.ppt-images-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 12px;
+}
+.ppt-images-filter input {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+}
+.ppt-images-filter input:focus {
+  border-color: rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.09);
+}
+.ppt-images-filter input.is-invalid {
+  border-color: rgba(255, 96, 96, 0.72);
+  background: rgba(255, 78, 78, 0.08);
+}
+.ppt-images-toggle {
+  flex-direction: row;
+  align-items: center;
+  min-height: 34px;
+  gap: 9px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+}
+.ppt-images-toggle input { accent-color: #ffffff; }
+.ppt-images-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.ppt-images-small-btn {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.ppt-images-small-btn:hover {
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+}
+.ppt-images-export {
+  display: inline-flex;
+  width: auto;
+  min-width: 150px;
+  height: 36px;
+  margin: 0;
+  padding: 0 16px;
+  align-self: auto;
+  opacity: 1;
+  transform: none;
+  box-shadow: none;
+  transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+.pdf-merge-v2 .ppt-images-export[hidden] { display: none; }
+.ppt-images-export:disabled { cursor: not-allowed; opacity: 0.45; }
+.ppt-images-export:hover,
+.ppt-images-export:active { transform: none; }

@@ -1,0 +1,100 @@
+<div class="pdf-merge-overlay pdf-merge-v2 color-extractor-v2" id="colorExtractorOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="colorExtractorBg"></div>
+      <header class="pdf-merge-v2-topbar color-extractor-v2-topbar">
+        <div class="pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="colorExtractorBack" type="button" data-tool-close data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">COLOR LAB · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website"><i data-lucide="globe-2"></i><span data-i18n="home.webVersion">网页版本</span></button>
+          <button class="home-v2-support-top" type="button" data-open-support><i data-lucide="heart"></i><span data-i18n="home.supportAuthor">支持作者</span></button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="colorExtractorV2Settings" type="button" data-tool-settings data-i18n-title="nav.settings" title="设置" aria-label="设置"><i data-lucide="settings"></i></button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+            <button class="home-v2-window-button ctrl-btn" type="button" data-tool-window="minimize" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+            <button class="home-v2-window-button ctrl-btn" type="button" data-tool-window="maximize" data-i18n-title="common.maximize" title="放大" data-action="maximize"><i data-lucide="square"></i></button>
+            <button class="home-v2-window-button ctrl-btn" type="button" data-tool-window="close" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="pdf-merge-v2-body color-extractor-v2-body">
+        <aside class="pdf-merge-v2-poster color-extractor-v2-poster" aria-label="配色提取器说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.colorExtractor.heroLabel">Design Studio</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.colorExtractor.title">配色提取器</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.colorExtractor.subtitle">从图片或屏幕中捕捉颜色，快速得到可复制的设计色值。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>COLOR WORKFLOW</span>
+            <strong data-i18n="home.colorExtractor.workflowNote">上传图片提取主色，也可以打开屏幕放大镜精确取色。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps">
+            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong data-i18n="home.colorExtractor.step1Title">选择来源</strong><p data-i18n="home.colorExtractor.step1Desc">图片提取或屏幕取色。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>02</span><div><strong data-i18n="home.colorExtractor.step2Title">定位颜色</strong><p data-i18n="home.colorExtractor.step2Desc">移动准星查看像素级颜色。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>03</span><div><strong data-i18n="home.colorExtractor.step3Title">复制结果</strong><p data-i18n="home.colorExtractor.step3Desc">HEX、RGB、HSL 一键复制。</p></div></div>
+          </div>
+        </aside>
+        <main class="pdf-merge-v2-workspace color-extractor-v2-workspace">
+          <section class="color-extractor-v2-panel" aria-label="颜色工作区">
+            <div class="color-extractor-v2-panel-head">
+              <div><span class="pdf-merge-v2-section-kicker">COLOR SOURCE</span><h2 data-i18n="home.colorExtractor.sourceTitle">选择取色方式</h2></div>
+              <span class="color-extractor-v2-status" id="colorExtractorStatus" data-i18n="home.colorExtractor.waiting">等待输入</span>
+            </div>
+            <div class="color-extractor-v2-mode-switch" role="tablist" aria-label="取色方式">
+              <button type="button" class="color-extractor-v2-mode is-active" id="colorExtractorImageModeBtn" data-mode="image" role="tab" aria-selected="true"><i data-lucide="image"></i><span data-i18n="home.colorExtractor.imageMode">图片取色</span><small data-i18n="home.colorExtractor.imageModeHint">提取主色与色卡</small></button>
+              <button type="button" class="color-extractor-v2-mode" id="colorExtractorScreenModeBtn" data-mode="screen" role="tab" aria-selected="false"><i data-lucide="scan-search"></i><span data-i18n="home.colorExtractor.screenMode">屏幕取色</span><small data-i18n="home.colorExtractor.screenModeHint">放大镜定位像素</small></button>
+            </div>
+            <div class="color-extractor-v2-mode-content">
+              <div class="color-extractor-v2-image-mode" id="colorExtractorImageMode">
+                <div class="color-extractor-upload tk-empty-hero" id="colorExtractorUploadZone" role="button" tabindex="0" aria-label="上传图片">
+                  <div class="color-extractor-upload-icon tk-empty-hero-icon"><i data-lucide="image-plus"></i></div>
+                  <p class="color-extractor-upload-text" data-i18n="home.colorExtractor.uploadHint">拖拽图片到此处或点击上传</p>
+                  <p class="color-extractor-upload-formats tk-empty-hero-description">JPG / PNG / WEBP</p>
+                </div>
+                <input type="file" id="colorExtractorFileInput" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" hidden>
+                <div class="color-extractor-image-preview" id="colorExtractorImagePreview" hidden>
+                  <img id="colorExtractorImage" alt="preview">
+                  <div class="color-extractor-image-preview-meta">
+                    <div class="color-extractor-image-preview-copy">
+                      <strong id="colorExtractorImageName"></strong>
+                      <span id="colorExtractorImageMeta"></span>
+                    </div>
+                    <button type="button" class="color-extractor-replace-btn" id="colorExtractorReplaceBtn"><i data-lucide="refresh-cw"></i><span data-i18n="home.colorExtractor.reupload">重新上传</span></button>
+                  </div>
+                </div>
+              </div>
+              <div class="color-extractor-v2-screen-mode" id="colorExtractorScreenMode" hidden>
+                <div class="color-extractor-screen-intro"><i data-lucide="crosshair"></i><div><strong data-i18n="home.colorExtractor.screenIntroTitle">屏幕像素放大镜</strong><p data-i18n="home.colorExtractor.screenIntroBody">点击启动后移动鼠标，准星中心会实时显示桌面任意位置的颜色。</p></div></div>
+                <button type="button" class="color-extractor-screen-start" id="colorExtractorScreenStartBtn"><i data-lucide="scan-search"></i><span data-i18n="home.colorExtractor.screenStart">启动屏幕取色</span></button>
+                <div class="color-extractor-screen-result" id="colorExtractorScreenResult" hidden>
+                  <span class="color-extractor-screen-swatch" id="colorExtractorScreenSwatch"></span>
+                  <div class="color-extractor-screen-result-copy"><strong id="colorExtractorScreenHex">#000000</strong><span id="colorExtractorScreenRgb">rgb(0, 0, 0)</span></div>
+                  <button type="button" id="colorExtractorScreenCopyBtn"><i data-lucide="copy"></i><span data-i18n="home.colorExtractor.screenCopy">复制颜色</span></button>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="color-extractor-v2-palette-panel" aria-label="提取结果">
+            <div class="color-extractor-v2-panel-head">
+              <div><span class="pdf-merge-v2-section-kicker">PALETTE OUTPUT</span><h2 data-i18n="home.colorExtractor.paletteTitle">提取结果</h2></div>
+              <span class="color-extractor-v2-result-caption" data-i18n="home.colorExtractor.paletteHint">点击色卡查看详情，点击色值即可复制</span>
+            </div>
+            <div class="color-extractor-v2-detail" id="colorExtractorDetail" aria-live="polite">
+              <span class="color-extractor-v2-detail-swatch" id="colorExtractorDetailSwatch" aria-hidden="true"></span>
+              <div class="color-extractor-v2-detail-codes" id="colorExtractorDetailCodes">
+                <button type="button" class="color-extractor-v2-detail-code" data-code="hex"><small>HEX</small><strong id="colorExtractorDetailHex">—</strong></button>
+                <button type="button" class="color-extractor-v2-detail-code" data-code="rgb"><small>RGB</small><strong id="colorExtractorDetailRgb">—</strong></button>
+                <button type="button" class="color-extractor-v2-detail-code" data-code="hsl"><small>HSL</small><strong id="colorExtractorDetailHsl">—</strong></button>
+              </div>
+              <span class="color-extractor-v2-detail-hint" id="colorExtractorDetailHint" data-i18n="home.colorExtractor.paletteHint">点击色卡查看详情</span>
+            </div>
+            <div class="color-extractor-v2-palette-content">
+              <div class="color-extractor-v2-palette-empty tk-empty-hero" id="colorExtractorPaletteEmpty"><div class="tk-empty-hero-icon"><i data-lucide="droplets"></i></div><strong data-i18n="home.colorExtractor.paletteWaitingTitle">等待颜色结果</strong><span class="tk-empty-hero-description" data-i18n="home.colorExtractor.paletteWaitingBody">上传图片或启动屏幕取色后，结果会显示在这里。</span></div>
+              <div class="color-extractor-v2-palette-grid" id="colorExtractorPaletteGrid" hidden></div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>

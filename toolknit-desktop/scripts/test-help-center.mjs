@@ -1,3 +1,4 @@
+import { readAppMarkup } from './lib/app-markup.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
@@ -17,7 +18,13 @@ globalThis.window = {};
 const { HELP_CONTENT, HELP_CONTENT_EN } = await import('../src/help-data.js');
 
 const root = new URL('..', import.meta.url);
-const indexHtml = await readFile(new URL('index.html', root), 'utf8');
+const themeIndex = await readFile(new URL('src/styles/themes/index.css', root), 'utf8');
+const helpLight = await readFile(new URL('src/styles/themes/help-light.css', root), 'utf8');
+assert.match(themeIndex, /@import url\('\.\/help-light\.css'\)/, 'Shared document theme is loaded by the theme entry.');
+assert.match(helpLight, /html\[data-theme="light"\] \.help-overlay/, 'Help and legal colors stay scoped to light document pages.');
+assert.doesNotMatch(helpLight, /!important|z-index\s*:/, 'Document theme must not compete with modal ownership.');
+assert.match(helpLight, /border-color: #000000/, 'Light back hover keeps the requested black outline.');
+const indexHtml = await readAppMarkup(import.meta.url);
 const zh = JSON.parse(await readFile(new URL('src/locales/zh.json', root), 'utf8'));
 const en = JSON.parse(await readFile(new URL('src/locales/en.json', root), 'utf8'));
 const builtinI18nKeys = new Set([
@@ -81,6 +88,8 @@ const toolToHelp = new Map([
   ['pdf-page-number', 'pdf-page-number'],
   ['pdf-crop', 'pdf-crop'],
   ['pdf-to-image', 'pdf-to-image'],
+  ['pdf-text-markdown', 'pdf-text-markdown'],
+  ['pdf-ai-markdown', 'pdf-ai-markdown'],
   ['pdf-rotate', 'pdf-rotate'],
   ['pdf-encrypt', 'pdf-encrypt'],
   ['pdf-decrypt', 'pdf-decrypt'],
@@ -123,6 +132,7 @@ const toolToHelp = new Map([
   ['large-file-cleanup', 'large-file-cleanup'],
   ['c-drive-cleanup', 'c-drive-cleanup'],
   ['hardware-overview', 'hardware-tools'],
+  ['clipboard-history', 'clipboard-history'],
   ['hardware-cpu-memory', 'hardware-tools'],
   ['hardware-gpu-display', 'hardware-tools'],
   ['hardware-mainboard', 'hardware-tools'],
@@ -144,7 +154,7 @@ const toolToHelp = new Map([
 ]);
 
 const desktopTools = unique(valuesForAttribute(indexHtml, 'data-tool'));
-assert.equal(desktopTools.length, 65, 'V2.3 desktop catalog must contain exactly 65 unique tools.');
+assert.equal(desktopTools.length, 68, 'V3 desktop catalog must contain exactly 68 unique tools.');
 for (const tool of desktopTools) {
   const section = toolToHelp.get(tool);
   assert.ok(section, `Desktop tool has no help mapping: ${tool}`);

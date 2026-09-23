@@ -1,0 +1,196 @@
+<div class="pdf-merge-overlay pdf-merge-v2 pdf-page-number-v2" id="pdfPageNumberOverlay" role="dialog" aria-modal="true" aria-labelledby="pdfPageNumberTitle" aria-hidden="true" inert>
+      <div class="plasma-bg pdf-merge-v2-bg" id="pdfPageNumberPlasmaBg"></div>
+      <div class="audio-convert-drop-zone pdf-merge-v2-drop-zone" id="pdfPageNumberDropZone">
+        <span class="drop-hint" data-i18n="home.pdfPageNumber.dropHint">松手即可添加 PDF</span>
+      </div>
+      <input id="pdfPageNumberFileInput" type="file" accept="application/pdf,.pdf" multiple hidden>
+      <header class="pdf-merge-v2-topbar pdf-page-number-topbar">
+        <div class="pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="pdfPageNumberBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">PDF PAGE NUMBER · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span data-i18n="home.webVersion">网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span data-i18n="home.supportAuthor">支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="pdfPageNumberV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置"><i data-lucide="settings"></i></button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-action="minimize" data-i18n-title="common.minimize" title="最小化"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-action="maximize" data-i18n-title="common.maximize" title="最大化"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-action="close" data-i18n-title="common.close" title="关闭"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="pdf-page-number-layout">
+        <aside class="pdf-page-number-pages" aria-labelledby="pdfPageNumberPagesTitle">
+          <div class="pdf-page-number-panel-head">
+            <div>
+              <span class="pdf-page-number-kicker">PAGE QUEUE</span>
+              <h2 id="pdfPageNumberPagesTitle" data-i18n="home.pdfPageNumber.pagesTitle">页面管理</h2>
+            </div>
+            <span class="pdf-page-number-count" id="pdfPageNumberPageCount">0 页</span>
+          </div>
+          <div class="pdf-page-number-page-tools">
+            <button id="pdfPageNumberAdd" type="button" data-i18n-title="home.pdfPageNumber.addFiles" title="添加 PDF"><i data-lucide="file-plus-2"></i></button>
+            <button id="pdfPageNumberSelectAll" type="button" data-i18n-title="home.pdfPageNumber.selectAll" title="全选"><i data-lucide="list-checks"></i></button>
+            <button id="pdfPageNumberDeleteSelected" class="is-danger" type="button" data-i18n-title="home.pdfPageNumber.deleteSelected" title="删除已选"><i data-lucide="trash-2"></i></button>
+            <button id="pdfPageNumberUndoDelete" type="button" data-i18n-title="home.pdfPageNumber.undoDelete" title="撤销删除"><i data-lucide="undo-2"></i></button>
+          </div>
+          <div class="pdf-page-number-selection-meta">
+            <span id="pdfPageNumberSelectedCount">已选 0 页</span>
+            <span data-i18n="home.pdfPageNumber.sortHint">拖动手柄调整顺序</span>
+          </div>
+          <div class="pdf-page-number-page-list is-empty" id="pdfPageNumberPageList" aria-live="polite"></div>
+        </aside>
+
+        <main class="pdf-page-number-preview" aria-labelledby="pdfPageNumberTitle">
+          <div class="pdf-page-number-preview-toolbar">
+            <div class="pdf-page-number-preview-title">
+              <span class="pdf-page-number-kicker">LIVE PREVIEW</span>
+              <h1 id="pdfPageNumberTitle" data-i18n="home.pdfPageNumber.title">PDF 加页码</h1>
+            </div>
+            <div class="pdf-page-number-preview-nav">
+              <button id="pdfPageNumberPrev" type="button" data-i18n-title="home.pdfPageNumber.previousPage" title="上一页"><i data-lucide="chevron-left"></i></button>
+              <span id="pdfPageNumberIndicator">未载入文档</span>
+              <button id="pdfPageNumberNext" type="button" data-i18n-title="home.pdfPageNumber.nextPage" title="下一页"><i data-lucide="chevron-right"></i></button>
+            </div>
+            <div class="pdf-page-number-zoom">
+              <button id="pdfPageNumberZoomOut" type="button" data-i18n-title="home.pdfPageNumber.zoomOut" title="缩小"><i data-lucide="minus"></i></button>
+              <span id="pdfPageNumberZoomValue">100%</span>
+              <button id="pdfPageNumberZoomIn" type="button" data-i18n-title="home.pdfPageNumber.zoomIn" title="放大"><i data-lucide="plus"></i></button>
+              <button id="pdfPageNumberFit" type="button" data-i18n-title="home.pdfPageNumber.fit" title="适应窗口"><i data-lucide="scan"></i></button>
+            </div>
+          </div>
+          <div class="pdf-page-number-canvas-scroll" id="pdfPageNumberCanvasScroll">
+            <div class="pdf-page-number-canvas-stage" id="pdfPageNumberCanvasStage">
+              <div class="pdf-page-number-empty" id="pdfPageNumberEmpty">
+                <span class="pdf-page-number-empty-icon"><i data-lucide="file-stack"></i></span>
+                <span class="pdf-page-number-kicker">LOCAL PDF WORKSPACE</span>
+                <h2 data-i18n="home.pdfPageNumber.emptyTitle">添加 PDF，直接看见页码效果</h2>
+                <p data-i18n="home.pdfPageNumber.emptyDesc">支持一个多页文件或多个 PDF，导入后可以排序、删除和批量设置页码。</p>
+                <button class="pdf-page-number-primary" id="pdfPageNumberEmptyAdd" type="button"><i data-lucide="upload"></i><span data-i18n="home.pdfPageNumber.addFiles">添加 PDF</span></button>
+              </div>
+              <div class="pdf-page-number-canvas-wrap" id="pdfPageNumberCanvasWrap" hidden>
+                <canvas id="pdfPageNumberPreviewCanvas" class="pdf-page-number-main-canvas"></canvas>
+                <div class="pdf-page-number-live-layer" id="pdfPageNumberLiveLayer" aria-hidden="true" hidden>
+                  <span class="pdf-page-number-live-background" id="pdfPageNumberLiveBackground"></span>
+                  <span class="pdf-page-number-live-text" id="pdfPageNumberLiveText"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <footer class="pdf-page-number-preview-footer">
+            <span class="pdf-page-number-preview-dot"></span>
+            <span id="pdfPageNumberPreviewStatus" data-i18n="home.pdfPageNumber.previewEmpty">文件只在本机处理，页码预览会与导出结果保持一致。</span>
+          </footer>
+        </main>
+
+        <aside class="pdf-page-number-settings" aria-label="页码设置">
+          <div class="pdf-page-number-settings-scroll">
+            <section class="pdf-page-number-setting-section">
+              <div class="pdf-page-number-section-title"><span>01</span><div><strong data-i18n="home.pdfPageNumber.rangeTitle">编号范围</strong><small>NUMBERING RANGE</small></div></div>
+              <label class="pdf-page-number-field"><span data-i18n="home.pdfPageNumber.applyTo">应用到</span><select id="pdfPageNumberScope"><option value="all" data-i18n="home.pdfPageNumber.scopeAll">全部页面</option><option value="odd" data-i18n="home.pdfPageNumber.scopeOdd">奇数页</option><option value="even" data-i18n="home.pdfPageNumber.scopeEven">偶数页</option><option value="custom" data-i18n="home.pdfPageNumber.scopeCustom">自定义范围</option><option value="selected" data-i18n="home.pdfPageNumber.scopeSelected">左侧已选页面</option></select></label>
+              <label class="pdf-page-number-field" id="pdfPageNumberRangeField" hidden><span data-i18n="home.pdfPageNumber.customRange">页面范围</span><input id="pdfPageNumberCustomRange" type="text" placeholder="1-3, 6, 9-12" autocomplete="off"></label>
+              <div class="pdf-page-number-field-grid">
+                <label class="pdf-page-number-field"><span data-i18n="home.pdfPageNumber.numberingMode">编号方式</span><select id="pdfPageNumberMode"><option value="continuous" data-i18n="home.pdfPageNumber.modeContinuous">连续编号</option><option value="source" data-i18n="home.pdfPageNumber.modeSource">每个文件重新编号</option></select></label>
+                <label class="pdf-page-number-field"><span data-i18n="home.pdfPageNumber.numberFormat">数字格式</span><select id="pdfPageNumberFormat"><option value="decimal">1, 2, 3</option><option value="padded-2">01, 02, 03</option><option value="padded-3">001, 002</option><option value="roman-upper">I, II, III</option><option value="roman-lower">i, ii, iii</option><option value="alpha-upper">A, B, C</option><option value="alpha-lower">a, b, c</option></select></label>
+              </div>
+              <div class="pdf-page-number-field-grid pdf-page-number-field-grid-3">
+                <label class="pdf-page-number-field"><span data-i18n="home.pdfPageNumber.startAt">起始值</span><input id="pdfPageNumberStart" type="number" value="1" min="-999999" max="999999"></label>
+                <label class="pdf-page-number-field"><span data-i18n="home.pdfPageNumber.step">步长</span><input id="pdfPageNumberStep" type="number" value="1" min="1" max="9999"></label>
+                <label class="pdf-page-number-field"><span data-i18n="home.pdfPageNumber.skipFirst">跳过前 N 页</span><input id="pdfPageNumberSkip" type="number" value="0" min="0" max="999999"></label>
+              </div>
+              <label class="pdf-page-number-field"><span data-i18n="home.pdfPageNumber.templatePreset">文本模板</span><select id="pdfPageNumberTemplatePreset"><option value="page" data-i18n="home.pdfPageNumber.templatePage">仅页码</option><option value="total" data-i18n="home.pdfPageNumber.templateTotal">页码 / 总页数</option><option value="chinese" data-i18n="home.pdfPageNumber.templateChinese">第 N 页</option><option value="dash" data-i18n="home.pdfPageNumber.templateDash">装饰短线</option><option value="custom" data-i18n="home.pdfPageNumber.templateCustom">自定义模板</option></select></label>
+              <label class="pdf-page-number-field" id="pdfPageNumberTemplateField" hidden><span data-i18n="home.pdfPageNumber.customTemplate">模板内容</span><input id="pdfPageNumberTemplate" type="text" value="{page}" maxlength="120"><small data-i18n="home.pdfPageNumber.templateHint">可用 {page}、{total}、{sourcePage}</small></label>
+            </section>
+
+            <section class="pdf-page-number-setting-section">
+              <div class="pdf-page-number-section-title"><span>02</span><div><strong data-i18n="home.pdfPageNumber.positionTitle">位置与边距</strong><small>PLACEMENT</small></div></div>
+              <div class="pdf-page-number-position-grid" role="group" data-i18n-aria-label="home.pdfPageNumber.positionTitle">
+                <button class="pdf-page-number-position" data-position="top-left" type="button"><span></span></button><button class="pdf-page-number-position" data-position="top-center" type="button"><span></span></button><button class="pdf-page-number-position" data-position="top-right" type="button"><span></span></button>
+                <button class="pdf-page-number-position" data-position="middle-left" type="button"><span></span></button><button class="pdf-page-number-position" data-position="middle-center" type="button"><span></span></button><button class="pdf-page-number-position" data-position="middle-right" type="button"><span></span></button>
+                <button class="pdf-page-number-position" data-position="bottom-left" type="button"><span></span></button><button class="pdf-page-number-position is-active" data-position="bottom-center" type="button"><span></span></button><button class="pdf-page-number-position" data-position="bottom-right" type="button"><span></span></button>
+              </div>
+              <label class="pdf-page-number-range-field"><span><b data-i18n="home.pdfPageNumber.margin">页面边距</b><output id="pdfPageNumberMarginValue">24 pt</output></span><input id="pdfPageNumberMargin" type="range" min="0" max="120" value="24" data-output="pdfPageNumberMarginValue" data-suffix=" pt"></label>
+              <div class="pdf-page-number-field-grid">
+                <label class="pdf-page-number-range-field"><span><b data-i18n="home.pdfPageNumber.offsetX">水平偏移</b><output id="pdfPageNumberOffsetXValue">0 pt</output></span><input id="pdfPageNumberOffsetX" type="range" min="-120" max="120" value="0" data-output="pdfPageNumberOffsetXValue" data-suffix=" pt"></label>
+                <label class="pdf-page-number-range-field"><span><b data-i18n="home.pdfPageNumber.offsetY">垂直偏移</b><output id="pdfPageNumberOffsetYValue">0 pt</output></span><input id="pdfPageNumberOffsetY" type="range" min="-120" max="120" value="0" data-output="pdfPageNumberOffsetYValue" data-suffix=" pt"></label>
+              </div>
+            </section>
+
+            <section class="pdf-page-number-setting-section">
+              <div class="pdf-page-number-section-title"><span>03</span><div><strong data-i18n="home.pdfPageNumber.styleTitle">文字与样式</strong><small>APPEARANCE</small></div></div>
+              <div class="pdf-page-number-style-grid" role="group" data-i18n-aria-label="home.pdfPageNumber.backgroundStyle">
+                <button class="pdf-page-number-style is-active" data-style="none" type="button"><span class="style-none">12</span><b data-i18n="home.pdfPageNumber.styleNone">纯文字</b></button>
+                <button class="pdf-page-number-style" data-style="circle" type="button"><span class="style-circle">12</span><b data-i18n="home.pdfPageNumber.styleCircle">圆形</b></button>
+                <button class="pdf-page-number-style" data-style="pill" type="button"><span class="style-pill">12</span><b data-i18n="home.pdfPageNumber.stylePill">胶囊</b></button>
+                <button class="pdf-page-number-style" data-style="label" type="button"><span class="style-label">12</span><b data-i18n="home.pdfPageNumber.styleLabel">标签</b></button>
+                <button class="pdf-page-number-style" data-style="bar" type="button"><span class="style-bar">12</span><b data-i18n="home.pdfPageNumber.styleBar">横条</b></button>
+              </div>
+              <label class="pdf-page-number-range-field"><span><b data-i18n="home.pdfPageNumber.fontSize">字号</b><output id="pdfPageNumberFontSizeValue">11 pt</output></span><input id="pdfPageNumberFontSize" type="range" min="6" max="48" value="11" data-output="pdfPageNumberFontSizeValue" data-suffix=" pt"></label>
+              <div class="pdf-page-number-field-grid">
+                <label class="pdf-page-number-color-field"><span data-i18n="home.pdfPageNumber.textColor">文字颜色</span><span><i data-lucide="type"></i><input id="pdfPageNumberTextColor" type="color" value="#111111"></span></label>
+                <label class="pdf-page-number-range-field"><span><b data-i18n="home.pdfPageNumber.textOpacity">文字透明度</b><output id="pdfPageNumberTextOpacityValue">92%</output></span><input id="pdfPageNumberTextOpacity" type="range" min="0.05" max="1" step="0.05" value="0.92" data-output="pdfPageNumberTextOpacityValue" data-percent="true"></label>
+              </div>
+              <div class="pdf-page-number-field-grid">
+                <label class="pdf-page-number-color-field"><span data-i18n="home.pdfPageNumber.backgroundColor">背景颜色</span><span><i data-lucide="paint-bucket"></i><input id="pdfPageNumberBackgroundColor" type="color" value="#ffffff"></span></label>
+                <label class="pdf-page-number-range-field"><span><b data-i18n="home.pdfPageNumber.backgroundOpacity">背景透明度</b><output id="pdfPageNumberBackgroundOpacityValue">86%</output></span><input id="pdfPageNumberBackgroundOpacity" type="range" min="0.05" max="1" step="0.05" value="0.86" data-output="pdfPageNumberBackgroundOpacityValue" data-percent="true"></label>
+              </div>
+              <div class="pdf-page-number-field-grid pdf-page-number-border-grid">
+                <label class="pdf-page-number-range-field"><span><b data-i18n="home.pdfPageNumber.padding">内边距</b><output id="pdfPageNumberPaddingValue">7 pt</output></span><input id="pdfPageNumberPadding" type="range" min="2" max="24" value="7" data-output="pdfPageNumberPaddingValue" data-suffix=" pt"></label>
+                <label class="pdf-page-number-color-field"><span data-i18n="home.pdfPageNumber.borderColor">边框颜色</span><span><i data-lucide="square"></i><input id="pdfPageNumberBorderColor" type="color" value="#111111"></span></label>
+                <label class="pdf-page-number-range-field"><span><b data-i18n="home.pdfPageNumber.borderWidth">边框</b><output id="pdfPageNumberBorderWidthValue">0 pt</output></span><input id="pdfPageNumberBorderWidth" type="range" min="0" max="4" step="0.5" value="0" data-output="pdfPageNumberBorderWidthValue" data-suffix=" pt"></label>
+              </div>
+              <p class="pdf-page-number-setting-status" id="pdfPageNumberSettingStatus">请先添加 PDF</p>
+            </section>
+
+            <section class="pdf-page-number-setting-section pdf-page-number-export-section">
+              <div class="pdf-page-number-section-title"><span>04</span><div><strong data-i18n="home.pdfPageNumber.exportTitle">导出设置</strong><small>OUTPUT</small></div></div>
+              <div class="pdf-page-number-output-modes">
+                <label><input type="radio" name="pdfPageNumberOutputMode" value="single" checked><span><i data-lucide="file-check-2"></i><b data-i18n="home.pdfPageNumber.outputSingle">合并为单个 PDF</b><small data-i18n="home.pdfPageNumber.outputSingleHint">按照左侧顺序输出一个文件</small></span></label>
+                <label><input type="radio" name="pdfPageNumberOutputMode" value="zip"><span><i data-lucide="archive"></i><b data-i18n="home.pdfPageNumber.outputZip">逐页 PDF + ZIP</b><small data-i18n="home.pdfPageNumber.outputZipHint">每页一个 PDF，统一打包</small></span></label>
+              </div>
+              <label class="pdf-page-number-field"><span data-i18n="home.pdfPageNumber.outputName">输出名称</span><input id="pdfPageNumberOutputName" type="text" maxlength="96" placeholder="document"></label>
+            </section>
+          </div>
+          <div class="pdf-page-number-export-bar">
+            <span><i data-lucide="shield-check"></i><span data-i18n="home.pdfPageNumber.localOnly">矢量写入 · 本地导出 · 不修改源文件</span></span>
+            <button class="pdf-page-number-export" id="pdfPageNumberExport" type="button"><i data-lucide="download"></i><span data-i18n="home.pdfPageNumber.exportButton">导出带页码文件</span></button>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask pdf-page-number-process-mask" id="pdfPageNumberProcessMask" role="dialog" aria-modal="true" aria-labelledby="pdfPageNumberProcessText" aria-hidden="true" inert>
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="pdf-page-number-process-copy"><span id="pdfPageNumberProcessText">正在准备...</span><strong id="pdfPageNumberProcessValue">0%</strong></div>
+      <div class="audio-convert-process-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="audio-convert-process-bar-fill" id="pdfPageNumberProcessFill"></div></div>
+      <button class="audio-convert-cancel-btn" id="pdfPageNumberProcessCancel" type="button"><i data-lucide="x"></i><span data-i18n="common.cancel">取消</span></button>
+    </div>
+
+<div class="audio-clip-success-overlay" id="pdfPageNumberSuccessOverlay" aria-hidden="true" inert>
+      <div class="audio-clip-success-dialog" role="dialog" aria-modal="true" aria-labelledby="pdfPageNumberSuccessTitle">
+        <div class="audio-clip-success-icon"><i data-lucide="check"></i></div>
+        <h3 class="audio-clip-success-title" id="pdfPageNumberSuccessTitle" data-i18n="home.pdfPageNumber.successTitle">页码添加完成</h3>
+        <div class="audio-clip-success-meta" id="pdfPageNumberSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row"><span class="audio-convert-success-key" data-i18n="home.pdfPageNumber.outputCount">输出文件</span><span class="audio-convert-success-value" id="pdfPageNumberSuccessCount"></span></div>
+          <div class="audio-convert-success-row"><span class="audio-convert-success-key" data-i18n="home.pdfPageNumber.successPath">保存路径</span><span class="audio-convert-success-value" id="pdfPageNumberSuccessPath"></span></div>
+        </div>
+        <div class="audio-clip-success-actions">
+          <button class="audio-clip-success-btn audio-clip-success-btn-secondary" id="pdfPageNumberSuccessOpenFolder" type="button" data-i18n="home.pdfPageNumber.openFolder">打开文件夹</button>
+          <button class="audio-clip-success-btn audio-clip-success-btn-primary" id="pdfPageNumberSuccessOk" type="button" data-i18n="common.ok">确定</button>
+        </div>
+      </div>
+    </div>

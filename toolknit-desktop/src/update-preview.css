@@ -114,6 +114,9 @@ body.window-is-maximized .update-preview-overlay {
   justify-content: center;
   margin: 0 auto;
   padding: 20px 0 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   text-align: center;
 }
 
@@ -179,7 +182,7 @@ body.window-is-maximized .update-preview-overlay {
 .update-preview-mission {
   max-width: 456px;
   margin: 12px 0 0;
-  color: #767980;
+  color: #686b72;
   font-size: 13px;
   line-height: 1.75;
   text-align: center;
@@ -208,7 +211,7 @@ body.window-is-maximized .update-preview-overlay {
 }
 
 .update-preview-version-label {
-  color: #8a8c92;
+  color: #666970;
   font-size: 11px;
 }
 
@@ -507,9 +510,13 @@ body.window-is-maximized .update-preview-overlay {
 .update-preview-release {
   width: min(100%, 650px);
   min-width: 0;
+  max-height: 100%;
   align-self: center;
   justify-self: center;
   padding: 20px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .update-preview-release-kicker {
@@ -785,6 +792,135 @@ body.window-is-maximized .update-preview-overlay {
 
   .update-preview-stage-footer {
     padding-top: 14px;
+  }
+}
+
+@media (max-width: 900px) {
+  .update-preview-overlay {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .update-preview-shell {
+    height: auto;
+    min-height: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+  }
+
+  .update-preview-left {
+    min-height: max(620px, 100dvh);
+    padding: 20px 28px 0;
+    overflow: visible;
+  }
+
+  .update-preview-left-main {
+    padding: 28px 0 24px;
+    overflow: visible;
+    overscroll-behavior: auto;
+    scrollbar-gutter: auto;
+  }
+
+  .update-preview-marquee {
+    width: calc(100% + 56px);
+    margin-left: -28px;
+  }
+
+  .update-preview-right {
+    min-height: max(700px, 100dvh);
+    display: flex;
+  }
+
+  .update-preview-stage {
+    height: auto;
+    min-height: 680px;
+    flex: 1;
+  }
+
+  .update-preview-stage-content {
+    height: auto;
+    min-height: 680px;
+  }
+
+  .update-preview-stage-topbar {
+    padding-right: 112px;
+  }
+
+  .update-preview-window-controls {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 4;
+    border-color: rgba(255, 255, 255, 0.18);
+    background: #17181c;
+  }
+
+  .update-preview-release {
+    max-height: none;
+    padding-right: 0;
+    overflow: visible;
+    overscroll-behavior: auto;
+    scrollbar-gutter: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .update-preview-left {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .update-preview-brand {
+    padding-right: 104px;
+  }
+
+  .update-preview-title {
+    font-size: 36px;
+  }
+
+  .update-preview-intro {
+    font-size: 14px;
+  }
+
+  .update-preview-actions {
+    flex-direction: column;
+  }
+
+  .update-preview-action {
+    width: 100%;
+  }
+
+  .update-preview-marquee {
+    width: calc(100% + 40px);
+    margin-left: -20px;
+  }
+
+  .update-preview-right {
+    padding: 8px;
+  }
+
+  .update-preview-stage,
+  .update-preview-stage-content {
+    min-height: 700px;
+  }
+
+  .update-preview-stage-content {
+    padding: 18px;
+  }
+
+  .update-preview-release h2 {
+    font-size: 32px;
+  }
+
+  .update-preview-stage-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .update-preview-links {
+    justify-content: flex-start;
   }
 }
 

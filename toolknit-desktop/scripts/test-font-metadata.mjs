@@ -2,18 +2,18 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { parseFontMetadata } from '../src/font-metadata.js';
 
-const fontBytes = await readFile(new URL('../public/assets/fonts/Fonarto-Regular.otf', import.meta.url));
+const fontBytes = await readFile(new URL('../public/assets/fonts/Montserrat-Regular.otf', import.meta.url));
 
 const parsed = await parseFontMetadata(fontBytes);
-assert.equal(parsed.familyName, 'Fonarto');
-assert.equal(parsed.fullName, 'Fonarto-Regular');
-assert.equal(parsed.displayName, 'Fonarto-Regular');
+assert.equal(parsed.familyName, 'Montserrat');
+assert.equal(parsed.fullName, 'Montserrat Regular');
+assert.equal(parsed.displayName, 'Montserrat Regular');
 
-const woff2Bytes = await readFile(new URL('../public/assets/fonts/inter-variable.woff2', import.meta.url));
-const parsedWoff2 = await parseFontMetadata(woff2Bytes);
-assert.equal(parsedWoff2.familyName, 'Inter Variable');
-assert.equal(parsedWoff2.fullName, 'Inter Variable');
-assert.equal(parsedWoff2.displayName, 'Inter Variable');
+const boldBytes = await readFile(new URL('../public/assets/fonts/Montserrat-Bold.otf', import.meta.url));
+const parsedBold = await parseFontMetadata(boldBytes);
+assert.equal(parsedBold.familyName, 'Montserrat');
+assert.equal(parsedBold.fullName, 'Montserrat Bold');
+assert.equal(parsedBold.displayName, 'Montserrat Bold');
 
 // A view with a non-zero offset must only expose the font bytes, not its
 // surrounding sentinel bytes.

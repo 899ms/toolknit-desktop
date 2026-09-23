@@ -5,7 +5,7 @@ const LEGAL_CONTENT_ZH = {
     title: '程序声明',
     html: `<div class="help-doc">
       <h2>程序声明</h2>
-      <p>本声明适用于 ToolKnit Desktop 2.3.1 及本仓库发布的 CLI / MCP 组件，用于说明软件性质、数据边界、第三方依赖与责任范围。使用前请结合实际任务阅读；继续使用即表示你理解本声明所述边界。</p>
+      <p>本声明适用于 ToolKnit Desktop 3.0.0 及本仓库发布的 CLI / MCP 组件，用于说明软件性质、数据边界、第三方依赖与责任范围。使用前请结合实际任务阅读；继续使用即表示你理解本声明所述边界。</p>
 
       <h3>一、软件性质与开源许可</h3>
       <p>ToolKnit Desktop 是面向 Windows 10 / 11（64 位）的免费、本地优先文件工作台。桌面端与 CLI / MCP 的已发布源代码采用 <strong>Apache License 2.0</strong>，你可以在遵守该许可证及仓库 <code>NOTICE</code> 的前提下使用、修改和分发代码。</p>
@@ -40,7 +40,7 @@ const LEGAL_CONTENT_ZH = {
 
       <h3>六、第三方组件与按需依赖</h3>
       <p>本软件使用 Tauri、Rust、PDF.js、pdf-lib、FFmpeg、Whisper、LibreOffice、JSZip、ExcelJS、Chart.js、Lucide 等开源组件或运行时。相关权利归各自权利人所有，具体版本、源码与许可应以仓库依赖清单、锁文件和第三方声明为准。</p>
-      <p>界面默认使用阿里巴巴普惠体 Medium / Bold（Copyright © 2019 Alibaba（中国）有限公司，字体设计：Alibaba Design、汉仪字库）及 Fonarto 2.0 Regular / Bold（Copyright © 2014 Arwan Sutanto / Locomotype，Fonarto 为 Locomotype 商标）。字体权利归各自权利人所有，完整声明见安装包内 <code>assets/fonts/THIRD_PARTY_FONTS.md</code>。用户自行上传替换的字体由用户确认其使用和分发授权。</p>
+      <p>界面默认使用阿里巴巴普惠体 Medium / Bold（Copyright © 2019 Alibaba（中国）有限公司，字体设计：Alibaba Design、汉仪字库）及 Montserrat Regular / Bold（Montserrat Project Authors，依据 SIL Open Font License 1.1 发布）。字体权利归各自权利人所有，完整声明见安装包内 <code>assets/fonts/THIRD_PARTY_FONTS.md</code>。用户自行上传替换的字体由用户确认其使用和分发授权。</p>
       <p>FFmpeg、Whisper 模型和 LibreOffice 不随基础安装包全部内置。下载源、网络速度、磁盘空间、系统策略及第三方发布变化都可能影响安装和运行。</p>
 
       <h3>七、输出、AI 内容与责任限制</h3>
@@ -56,7 +56,7 @@ const LEGAL_CONTENT_ZH = {
 
       <h3>十、更新与联系</h3>
       <p>本声明会随功能和数据边界变化而更新。正式版本、源代码和问题反馈请以官方 GitHub 仓库为准；提交问题前请移除文件内容、密钥、密码、完整私人路径等敏感信息。</p>
-      <div class="help-note"><p>适用版本：ToolKnit Desktop 2.3.1<br/>最后更新：2026 年 8 月 31 日<br/>开发者：董子航（Zihang Dong）</p></div>
+      <div class="help-note"><p>适用版本：ToolKnit Desktop 3.0.0<br/>最后更新：2026 年 9 月 8 日<br/>开发者：董子航（Zihang Dong）</p></div>
     </div>`
   },
 
@@ -122,7 +122,7 @@ const LEGAL_CONTENT_ZH = {
 
       <h3>十、责任与规范变更</h3>
       <div class="help-note"><p>用户应对输入内容、操作授权、结果复核和最终用途负责。本规范会随当前功能边界更新；继续使用后续版本表示你理解当时版本中展示的最新说明。</p></div>
-      <div class="help-note"><p>适用版本：ToolKnit Desktop 2.3.1<br/>最后更新：2026 年 8 月 31 日<br/>开发者：董子航（Zihang Dong）</p></div>
+      <div class="help-note"><p>适用版本：ToolKnit Desktop 3.0.0<br/>最后更新：2026 年 9 月 8 日<br/>开发者：董子航（Zihang Dong）</p></div>
     </div>`
   }
 };
@@ -132,7 +132,7 @@ const LEGAL_CONTENT_EN = {
     title: 'Program Declaration',
     html: `<div class="help-doc">
       <h2>Program Declaration</h2>
-      <p>This declaration applies to ToolKnit Desktop 2.3.1 and the CLI / MCP components published in this repository. It explains the software's nature, data boundaries, third-party dependencies, and limits of responsibility. Please read it in the context of your intended task before use.</p>
+      <p>This declaration applies to ToolKnit Desktop 3.0.0 and the CLI / MCP components published in this repository. It explains the software's nature, data boundaries, third-party dependencies, and limits of responsibility. Please read it in the context of your intended task before use.</p>
 
       <h3>1. Software and Open-Source License</h3>
       <p>ToolKnit Desktop is a free, local-first file workspace for 64-bit Windows 10 / 11. Published source code for the desktop app and CLI / MCP components is licensed under the <strong>Apache License 2.0</strong>. You may use, modify, and distribute that code subject to the license and the repository <code>NOTICE</code>.</p>
@@ -167,7 +167,7 @@ const LEGAL_CONTENT_EN = {
 
       <h3>6. Third-Party Components and Optional Runtimes</h3>
       <p>The software uses open-source components or runtimes including Tauri, Rust, PDF.js, pdf-lib, FFmpeg, Whisper, LibreOffice, JSZip, ExcelJS, Chart.js, and Lucide. Rights remain with their respective owners. Refer to dependency manifests, lockfiles, and third-party notices for authoritative versions and licenses.</p>
-      <p>The default interface uses Alibaba PuHuiTi Medium / Bold (Copyright © 2019 Alibaba (China) Co., Ltd.; font design by Alibaba Design and Hanyi Fonts) and Fonarto 2.0 Regular / Bold (Copyright © 2014 Arwan Sutanto / Locomotype; Fonarto is a Locomotype trademark). Rights remain with their respective owners. See <code>assets/fonts/THIRD_PARTY_FONTS.md</code> in the installation for full notices. Users are responsible for confirming rights to any font they upload as a replacement.</p>
+      <p>The default interface uses Alibaba PuHuiTi Medium / Bold (Copyright © 2019 Alibaba (China) Co., Ltd.; font design by Alibaba Design and Hanyi Fonts) and Montserrat Regular / Bold (Montserrat Project Authors, released under the SIL Open Font License 1.1). Rights remain with their respective owners. See <code>assets/fonts/THIRD_PARTY_FONTS.md</code> in the installation for full notices. Users are responsible for confirming rights to any font they upload as a replacement.</p>
       <p>FFmpeg, Whisper models, and LibreOffice are not all bundled with the base installer. Installation can be affected by the selected source, network speed, disk space, system policy, and upstream releases.</p>
 
       <h3>7. Outputs, AI Content, and Liability</h3>
@@ -183,7 +183,7 @@ const LEGAL_CONTENT_EN = {
 
       <h3>10. Updates and Contact</h3>
       <p>This declaration may be updated when features or data boundaries change. Use the official GitHub repository for releases, source code, and issue reports. Remove file contents, keys, passwords, and private full paths from reports before submitting them.</p>
-      <div class="help-note"><p>Applies to: ToolKnit Desktop 2.3.1<br/>Last updated: August 31, 2026<br/>Developer: Zihang Dong</p></div>
+      <div class="help-note"><p>Applies to: ToolKnit Desktop 3.0.0<br/>Last updated: September 8, 2026<br/>Developer: Zihang Dong</p></div>
     </div>`
   },
 
@@ -249,7 +249,7 @@ const LEGAL_CONTENT_EN = {
 
       <h3>10. Responsibility and Policy Changes</h3>
       <div class="help-note"><p>Users are responsible for input content, authorization, result review, and final use. This policy may be updated with the current feature boundary; continued use of a later release means you understand the latest policy shown for that release.</p></div>
-      <div class="help-note"><p>Applies to: ToolKnit Desktop 2.3.1<br/>Last updated: August 31, 2026<br/>Developer: Zihang Dong</p></div>
+      <div class="help-note"><p>Applies to: ToolKnit Desktop 3.0.0<br/>Last updated: September 8, 2026<br/>Developer: Zihang Dong</p></div>
     </div>`
   }
 };

@@ -53,6 +53,7 @@ toolknit pdf merge --input .\part-a.pdf --input .\part-b.pdf --output .\merged.p
 toolknit pdf split --input .\report.pdf --pages 1,3-5 --output-dir .\pages --json
 toolknit pdf rotate --input .\report.pdf --output .\rotated.pdf --rotation 90 --json
 toolknit pdf compress --input .\report.pdf --output .\report-smaller.pdf --level high --json
+toolknit pdf compress --input .\report.pdf --output .\image-only.pdf --mode raster --target-kb 500 --clarity readable --json
 toolknit pdf enhance --input .\scan.pdf --output .\scan-enhanced.pdf --strength medium --json
 toolknit pdf to-image --input .\report.pdf --output-dir .\toolknit-output --mode images --pages 1,3-5 --format png --clarity high --json
 toolknit pdf to-image --input .\report.pdf --output-dir .\toolknit-output --mode long --pages 1-5 --format webp --clarity print --output-name report-walkthrough --json
@@ -64,6 +65,8 @@ toolknit video convert --input .\\recording.mov --output-dir .\\toolknit-output 
 ```
 
 The command result is JSON when `--json` is supplied. Success has exit code `0`; usage errors use `2`; invalid or missing inputs use `3`; unsafe output paths and overwrite refusals use `4`; missing engines use `5`; and processing failures use `6`.
+
+PDF compression defaults to `mode: "structure"`. Explicit `mode: "raster"` creates an image-only PDF and loses searchable text, links, forms, bookmarks and accessibility tags. Optional `target_bytes` is a strict 51,200–52,428,800 byte cap (CLI: `--target-kb` or `--target-mb`, using 1024-byte units). Inspect `status` and `outputs`: `already-within-target`, `target-not-reached` and `no-reduction` are handled results with no output file, not processing exceptions. Only `compressed` publishes a newly compressed file. Raster target search ignores `level` and searches up to six candidates; `clarity: "readable"` has a 72 DPI floor, `compact` 36 DPI. Neither guarantees readability. Each attempt reports the complete PDF byte count. Originals are never modified.
 
 Interactive CLI output includes ToolKnit's supplied ASCII artwork when the terminal is wide enough. Use `--banner=auto` (default), `--banner=always`, or `--banner=never` to control it. Artwork is permanently disabled for `--json`, redirected/piped output, and `toolknit mcp serve`; therefore it cannot corrupt scripts or the MCP JSON-RPC stream.
 

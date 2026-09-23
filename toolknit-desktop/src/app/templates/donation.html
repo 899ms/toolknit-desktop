@@ -1,0 +1,73 @@
+<div class="donation-overlay" id="donationOverlay" role="main" aria-labelledby="donationTitle" aria-hidden="true">
+  <section class="donation-dialog" tabindex="-1">
+    <header class="home-v2-topbar donation-page-topbar">
+      <button class="home-v2-brand" type="button" data-donation-close aria-label="ToolKnit 首页">
+        <img src="/logo.png" alt="" />
+        <span class="home-v2-brand-name">ToolKnit</span>
+        <span class="home-v2-brand-version">3.0</span>
+      </button>
+      <div class="home-v2-top-actions">
+        <button class="home-v2-nav-link" type="button" data-home-link="website"><i data-lucide="globe-2"></i><span>网页版本</span></button>
+        <button class="home-v2-support-top is-current" type="button" aria-current="page"><i data-lucide="heart"></i><span data-i18n="home.supportAuthor">支持作者</span></button>
+        <div class="home-v2-window-cluster" aria-label="窗口与设置">
+          <button class="home-v2-icon-button" id="donationV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置"><i data-lucide="settings"></i></button>
+          <div class="home-v2-window-controls" aria-label="窗口控制">
+            <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+            <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+            <button class="home-v2-window-button ctrl-btn close" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+          </div>
+        </div>
+      </div>
+    </header>
+    <button class="donation-close" type="button" data-donation-close data-i18n-aria-label="home.supportPage.close" aria-label="关闭支持作者页面"><i data-lucide="x" aria-hidden="true"></i></button>
+    <div class="donation-scroll">
+      <div class="donation-hero">
+        <div class="donation-story-intro">
+          <h2 id="donationTitle" data-i18n="home.supportPage.title">一个人做起来的 ToolKnit，想继续把免费工具认真做下去。</h2>
+          <p class="donation-lead" data-i18n="home.supportPage.lead">2026 年 3 月 18 日，一份让人头疼的 PDF 成了 ToolKnit 的起点。没有团队，也没有融资；白天工作，晚上把一个个真实需求写成工具。从网页端到 Windows 桌面端，再到 CLI 与 MCP，这个项目一直由一名开发者持续维护。</p>
+          <p class="donation-author" data-i18n="home.supportPage.authorName">— 董子航 · Zihang Dong</p>
+          <dl class="donation-stats" aria-label="ToolKnit 项目数据">
+            <div><dt id="donationGithubStars">435+</dt><dd data-i18n="home.supportPage.statStars">GitHub Stars</dd></div>
+            <div><dt>65</dt><dd data-i18n="home.supportPage.statTools">桌面工具</dd></div>
+            <div><dt data-i18n="home.supportPage.statViewsValue">200 万</dt><dd data-i18n="home.supportPage.statViews">累计内容播放</dd></div>
+            <div><dt id="donationJournalCount">81</dt><dd data-i18n="home.supportPage.statLogs">公开更新日志</dd></div>
+          </dl>
+        </div>
+        <div class="donation-support-panel">
+          <p class="donation-support-copy" data-i18n="home.supportPage.scanLead">为了持续给大家免费更新 ToolKnit，作者仅 AI 开发与测试每月就要自掏腰包 500 多元，长期独自承担已越来越吃力。你的每一份支持都会直接用于继续维护、验证和发布 ToolKnit。</p>
+          <figure class="donation-qr-figure"><img src="assets/donate/donation-support.webp" alt="ToolKnit 支付宝与微信双收款码 / Alipay and WeChat QR codes"></figure>
+          <p class="donation-support-benefit"><i data-lucide="users" aria-hidden="true"></i><span data-i18n="home.supportPage.supporterBenefit">赞助后可加入 ToolKnit 灰度体验群，提前体验新版本，并直接提交希望加入的功能。</span></p>
+          <p class="donation-voluntary" data-i18n="home.supportPage.voluntary">灰度群用于版本交流、测试和需求收集；赞助不等于购买功能，建议会统一评估，不承诺实现或优先排期。</p>
+        </div>
+      </div>
+      <div class="donation-detail-grid">
+        <section class="donation-story-section" aria-labelledby="donationStoryTitle">
+          <span class="donation-section-index">01 / STORY</span>
+          <h3 id="donationStoryTitle" data-i18n="home.supportPage.storyTitle">从一份 PDF，到一个公开维护的工具箱</h3>
+          <p data-i18n="home.supportPage.storyBody1">最开始只是想解决手边的文件问题。后来，网页端逐步扩展到 90 多项工具，Windows 桌面端也用 Rust 与 Tauri 从头搭建。功能迁移、兼容测试、文档、安装包和用户反馈，都在工作之外一项项完成。</p>
+          <p data-i18n="home.supportPage.storyBody2">ToolKnit 2.0 完成了 49 个桌面工具的逐页重构，CLI、MCP 和 Agent 能力也一起补齐；到 V2.3，桌面工具已扩展到 65 项。每一次使用、分享和反馈，都在证明认真做小工具也有价值。</p>
+          <div class="donation-actions">
+            <button class="donation-action donation-action-primary" type="button" data-donation-link="changelog"><i data-lucide="history" aria-hidden="true"></i><span data-i18n="home.supportPage.readLogs">查看完整开发日志</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></button>
+            <button class="donation-action" type="button" data-donation-link="github"><i data-lucide="github" aria-hidden="true"></i><span data-i18n="home.supportPage.visitGithub">在 GitHub 关注项目</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></button>
+          </div>
+        </section>
+        <section class="donation-milestones" aria-labelledby="donationMilestonesTitle">
+          <span class="donation-section-index">02 / MILESTONES</span>
+          <h3 id="donationMilestonesTitle" data-i18n="home.supportPage.milestonesTitle">一个人走过的几个节点</h3>
+          <ol>
+            <li><time>2026.03</time><span data-i18n="home.supportPage.milestone1">从 PDF 工具起步，网页端开始公开更新。</span></li>
+            <li><time>2026.07</time><span data-i18n="home.supportPage.milestone2">Rust + Tauri 桌面端开源，工具开始真正进入本地工作流。</span></li>
+            <li><time>2026.08</time><span data-i18n="home.supportPage.milestone3">ToolKnit V2.3 扩展到 65 个桌面工具，并完成更新、依赖与兼容性加固。</span></li>
+          </ol>
+        </section>
+      </div>
+      <section class="donation-journal-section" aria-labelledby="donationJournalTitle">
+        <div class="donation-journal-heading"><div><span class="donation-section-index">03 / DEVELOPMENT JOURNAL</span><h3 id="donationJournalTitle" data-i18n="home.supportPage.journalTitle">81 天的开发手记</h3></div><p data-i18n="home.supportPage.journalLead">每一次发布都记录在案：功能、取舍、修复，以及一个人把工具做下去的真实过程。</p></div>
+        <article class="donation-journal-reader" id="donationJournalReader" role="button" tabindex="0" aria-pressed="false" aria-live="polite" aria-label="开发者手记，点击暂停或继续"><div class="donation-journal-reader-meta"><span class="donation-journal-reader-date" id="donationJournalDate"></span><span class="donation-journal-reader-count" id="donationJournalReaderCount"></span></div><h4 id="donationJournalReaderTitle"></h4><div class="donation-journal-reader-body" id="donationJournalReaderBody"></div><div class="donation-journal-reader-hint" id="donationJournalReaderHint">点击文字暂停 · 再次点击继续播放</div><div class="donation-journal-progress" aria-hidden="true"><span id="donationJournalProgressBar"></span></div></article>
+        <p class="donation-journal-status" id="donationJournalStatus">44 篇开发者手记 · 随机循环播放</p>
+      </section>
+      <section class="donation-use-section" aria-labelledby="donationUseTitle"><div><span class="donation-section-index">04 / KEEP IT GOING</span><h3 id="donationUseTitle" data-i18n="home.supportPage.useTitle">支持会花在哪里</h3><p data-i18n="home.supportPage.useBody">AI 开发与测试、兼容性设备、依赖镜像、文档、安装包和持续开源维护都在产生实际成本。金额无论大小，都会回到下一次更稳的发布。</p></div><ul class="donation-purpose"><li><i data-lucide="sparkles" aria-hidden="true"></i><span data-i18n="home.supportPage.useAi">AI 开发与测试成本</span></li><li><i data-lucide="monitor-check" aria-hidden="true"></i><span data-i18n="home.supportPage.useCompatibility">兼容性测试</span></li><li><i data-lucide="package-check" aria-hidden="true"></i><span data-i18n="home.supportPage.useRelease">安装与发布维护</span></li><li><i data-lucide="file-check-2" aria-hidden="true"></i><span data-i18n="home.supportPage.useDocs">文档与教程</span></li><li><i data-lucide="code-2" aria-hidden="true"></i><span data-i18n="home.supportPage.useOpenSource">持续开源开发</span></li><li><i data-lucide="users" aria-hidden="true"></i><span data-i18n="home.supportPage.useCommunity">灰度体验与需求交流</span></li></ul></section>
+      <footer class="donation-footer"><p data-i18n="home.supportPage.otherSupport">不方便捐赠也没关系。给仓库一颗 Star、提交可复现的问题，或把 ToolKnit 分享给真正需要的人，同样是很大的帮助。</p><button class="donation-back-top" type="button" data-donation-top><i data-lucide="arrow-up" aria-hidden="true"></i><span data-i18n="home.supportPage.backTop">回到二维码</span></button></footer>
+    </div>
+  </section>
+</div>

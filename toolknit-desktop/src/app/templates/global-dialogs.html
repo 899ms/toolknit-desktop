@@ -1,0 +1,119 @@
+<div class="audio-convert-success-overlay dependency-gate-overlay" id="dependencyGateOverlay" aria-hidden="true">
+      <div class="audio-convert-success-dialog dependency-gate-dialog" role="dialog" aria-modal="true" aria-labelledby="dependencyGateTitle">
+        <div class="dependency-gate-icon"><i data-lucide="download"></i></div>
+        <h3 class="audio-convert-success-title" id="dependencyGateTitle" data-i18n="home.dependencies.title">需要补齐本地依赖</h3>
+        <p class="audio-convert-success-meta" id="dependencyGateDesc" data-i18n="home.dependencies.desc">安装完成后即可进入当前功能，依赖也可以随时在设置中管理。</p>
+        <div class="audio-convert-success-detail dependency-gate-list" id="dependencyGateList"></div>
+        <div class="dependency-gate-progress" id="dependencyGateProgress" hidden>
+          <div class="dependency-gate-progress-track"><span id="dependencyGateProgressFill"></span></div>
+          <span id="dependencyGateProgressText"></span>
+        </div>
+        <p class="dependency-gate-error" id="dependencyGateError" role="alert" hidden></p>
+        <div class="audio-convert-success-actions">
+          <button class="audio-convert-success-btn audio-convert-success-btn-secondary" id="dependencyGateCancel" type="button" data-i18n="home.dependencies.cancel">取消</button>
+          <button class="audio-convert-success-btn audio-convert-success-btn-primary" id="dependencyGateInstall" type="button" data-i18n="home.dependencies.installAll">开始下载全部依赖</button>
+        </div>
+      </div>
+    </div>
+
+<div class="pdf-merge-overlay" id="pdfToolTemplateOverlay">
+      <div class="plasma-bg" id="pdfToolTemplatePlasmaBg"></div>
+      <div class="audio-convert-drop-zone" id="pdfToolTemplateDropZone"><span class="drop-hint" data-i18n="home.pdfMerge.dropHint">松手即可上传</span></div>
+      <div class="audio-convert-header">
+        <button class="settings-back" id="pdfToolTemplateBack" data-i18n-title="settings.back">
+          <div class="svg-wrapper-1">
+            <div class="svg-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="icon">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </div>
+          </div>
+          <span data-i18n="settings.back">返回</span>
+        </button>
+      </div>
+      <div class="audio-convert-body" id="pdfToolTemplateBody">
+        <div class="audio-convert-hero">
+          <div class="audio-convert-hero-top">
+            <div class="audio-convert-hero-label" data-i18n="home.pdfMerge.heroLabel">PDF Tool</div>
+            <h1 class="audio-convert-hero-title" data-i18n="home.pdfMerge.title">PDF 工具（模板）</h1>
+            <p class="audio-convert-hero-subtitle" data-i18n="home.pdfMerge.subtitle">复制此页面作为新 PDF 工具的起点，按需求修改标题、说明和功能。</p>
+            <button class="audio-convert-cta" id="pdfToolTemplateCta">
+              <i data-lucide="upload"></i>
+              <span data-i18n="home.pdfMerge.cta">上传文件</span>
+            </button>
+          </div>
+          <div class="audio-convert-files" id="pdfToolTemplateFiles"></div>
+        </div>
+        <button class="audio-convert-process-btn" id="pdfToolTemplateProcessBtn" data-i18n="home.pdfMerge.processBtn" style="display:none;">开始处理</button>
+        <div class="audio-convert-formats">
+          <h3 class="audio-convert-formats-title" data-i18n="home.pdfMerge.infoTitle">工具说明</h3>
+          <div class="pdf-merge-info-grid">
+            <div class="pdf-merge-info-item">
+              <i data-lucide="files"></i>
+              <span data-i18n="home.pdfMerge.info1">功能说明 1</span>
+            </div>
+            <div class="pdf-merge-info-item">
+              <i data-lucide="move"></i>
+              <span data-i18n="home.pdfMerge.info2">功能说明 2</span>
+            </div>
+            <div class="pdf-merge-info-item">
+              <i data-lucide="file-text"></i>
+              <span data-i18n="home.pdfMerge.info3">功能说明 3</span>
+            </div>
+            <div class="pdf-merge-info-item">
+              <i data-lucide="lock"></i>
+              <span data-i18n="home.pdfMerge.info4">纯本地处理，文件不上传服务器</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<div class="audio-convert-process-mask" id="pdfToolTemplateProcessMask">
+      <div class="tk-mascot-lg" aria-hidden="true"></div>
+      <div class="audio-convert-process-bar">
+        <div class="audio-convert-process-bar-fill" id="pdfToolTemplateProcessBarFill"></div>
+      </div>
+      <div class="audio-convert-process-text" id="pdfToolTemplateProcessText" data-i18n="home.pdfMerge.processing">正在处理...</div>
+    </div>
+
+<div class="audio-clip-success-overlay" id="pdfToolTemplateSuccessOverlay">
+      <div class="audio-clip-success-dialog">
+        <div class="audio-clip-success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <h3 class="audio-clip-success-title" data-i18n="home.pdfMerge.successTitle">处理完成</h3>
+        <div class="audio-clip-success-meta" id="pdfToolTemplateSuccessMeta"></div>
+        <div class="audio-convert-success-detail">
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfMerge.successCount">处理文件数</span>
+            <span class="audio-convert-success-value" id="pdfToolTemplateSuccessCount"></span>
+          </div>
+          <div class="audio-convert-success-row">
+            <span class="audio-convert-success-key" data-i18n="home.pdfMerge.successPath">保存路径</span>
+            <span class="audio-convert-success-value" id="pdfToolTemplateSuccessPath"></span>
+          </div>
+        </div>
+        <div class="audio-clip-success-actions">
+          <button class="audio-clip-success-btn audio-clip-success-btn-secondary" id="pdfToolTemplateSuccessOpenFolder" data-i18n="home.pdfMerge.openFolder">打开文件夹</button>
+          <button class="audio-clip-success-btn audio-clip-success-btn-primary" id="pdfToolTemplateSuccessOk" data-i18n="home.pdfMerge.ok">确定</button>
+        </div>
+      </div>
+    </div>
+
+<div class="pdf-preview-drawer" id="pdfToolTemplatePreviewDrawer">
+      <div class="pdf-preview-drawer-backdrop" id="pdfToolTemplatePreviewBackdrop"></div>
+      <div class="pdf-preview-drawer-panel">
+        <div class="pdf-preview-drawer-header">
+          <span class="pdf-preview-drawer-title" data-i18n="home.pdfMerge.previewTitle">预览</span>
+          <button class="pdf-preview-drawer-close" id="pdfToolTemplatePreviewClose">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="pdf-preview-drawer-body" id="pdfToolTemplatePreviewBody"></div>
+        <div class="pdf-preview-drawer-footer">
+          <button class="pdf-preview-merge-btn" id="pdfToolTemplatePreviewConfirmBtn" data-i18n="home.pdfMerge.startMerge">开始处理</button>
+        </div>
+      </div>
+    </div>

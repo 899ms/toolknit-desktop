@@ -1,0 +1,404 @@
+      .app {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+        background: rgba(230, 248, 242, 0.46);
+        backdrop-filter: blur(34px) saturate(118%);
+        -webkit-backdrop-filter: blur(34px) saturate(118%);
+      }
+
+      .sidebar {
+        width: 250px;
+        min-width: 250px;
+        max-width: 250px;
+        height: 100%;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        background: rgba(247, 255, 252, 0.68);
+        border: 1px solid rgba(255, 255, 255, 0.62);
+        border-radius: 0;
+        box-shadow: 12px 0 38px rgba(3, 35, 31, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(22px) saturate(122%);
+        -webkit-backdrop-filter: blur(22px) saturate(122%);
+        overflow: hidden;
+        position: relative;
+        z-index: 1;
+      }
+
+      .sidebar-header {
+        position: relative;
+        padding: 30px 22px 20px;
+      }
+
+      .sidebar-brand-logo {
+        position: absolute;
+        left: 22px;
+        top: 22px;
+        width: 36px;
+        height: 36px;
+        display: block;
+        object-fit: cover;
+        border-radius: 50%;
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.18), 0 0 0 1px rgba(37, 99, 235, 0.14);
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .tk-mascot {
+        position: absolute;
+        left: 24px;
+        top: 1px;
+        width: 38.25px;
+        height: 60px;
+        background: url('/assets/spider.png') 0 0 / 153px 60px no-repeat;
+        image-rendering: pixelated;
+        pointer-events: none;
+        animation: tkSpiderFrames 0.7s steps(3, end) infinite alternate;
+      }
+
+      .tk-mascot::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: -1px;
+        width: 1px;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.32);
+        transform: translateX(-50%);
+        opacity: 0.72;
+      }
+
+      @keyframes tkSpiderFrames {
+        from { background-position: 0 0; }
+        to { background-position: -114.75px 0; }
+      }
+
+      .sidebar-title {
+        padding-left: 48px;
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: 0;
+        color: #111827;
+        line-height: 1;
+      }
+
+      .sidebar-nav {
+        flex: 1;
+        padding: 8px 14px 12px;
+        overflow-y: auto;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 44px;
+        padding: 6px 10px 6px 8px;
+        margin-bottom: 10px;
+        border-radius: 16px;
+        color: rgba(17, 24, 39, 0.62);
+        font-size: 14px;
+        font-weight: 650;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+      }
+
+      .nav-item span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .nav-item:hover {
+        background: rgba(37, 99, 235, 0.08);
+        color: #1d4ed8;
+      }
+
+      .nav-item.active {
+        background: linear-gradient(135deg, #2f7df6 0%, #155ee9 100%);
+        color: #ffffff;
+        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
+      }
+
+      .nav-item.active .nav-icon {
+        color: #155ee9;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 6px 14px rgba(13, 40, 92, 0.16);
+      }
+
+      .nav-icon {
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 7px;
+        color: rgba(17, 24, 39, 0.66);
+        background: rgba(15, 23, 42, 0.06);
+        border-radius: 11px;
+        transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        flex-shrink: 0;
+      }
+
+      .nav-item:hover .nav-icon {
+        color: #1d4ed8;
+        background: rgba(255, 255, 255, 0.82);
+        transform: translateY(-1px);
+      }
+
+      .nav-item.active .nav-icon,
+      .nav-item.active:hover .nav-icon {
+        color: #155ee9;
+      }
+
+      .sidebar-footer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 14px 20px 18px;
+      }
+
+      .footer-btns {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .footer-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(15, 23, 42, 0.06);
+        border: 1px solid rgba(15, 23, 42, 0.06);
+        color: rgba(17, 24, 39, 0.58);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+      }
+
+      .footer-btn:hover {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #ffffff;
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.26);
+        transform: translateY(-1px);
+      }
+
+      .footer-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .version-text {
+        font-size: 11px;
+        font-weight: 500;
+        color: rgba(17, 24, 39, 0.38);
+        letter-spacing: 0.05em;
+      }
+
+      .divider {
+        display: none;
+      }
+
+      .main {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        z-index: 1;
+        background: transparent;
+      }
+
+      .main-header {
+        position: relative;
+        height: 50px;
+        width: 100%;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+        padding: 0 12px;
+        -webkit-app-region: drag;
+      }
+
+      .main-header-drag-region {
+        position: absolute;
+        inset: 0 128px 0 0;
+      }
+
+      .main-header .ctrl-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        -webkit-app-region: no-drag;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+      }
+
+      .main-header .ctrl-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .main-header .ctrl-btn.close:hover {
+        background: #ff5f57;
+        color: #ffffff;
+      }
+
+      .main-header .ctrl-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .main-header > .ctrl-btn {
+        display: none;
+      }
+
+      .global-window-controls {
+        position: fixed;
+        top: 8px;
+        right: 10px;
+        z-index: 6000;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        -webkit-app-region: no-drag;
+      }
+
+      .global-window-controls .ctrl-btn {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border: 0;
+        border-radius: 7px;
+        background: rgba(0, 0, 0, 0.18);
+        color: rgba(255, 255, 255, 0.62);
+        cursor: pointer;
+        transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+
+      .global-window-controls .ctrl-btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+      }
+
+      .global-window-controls .ctrl-btn:disabled,
+      .global-window-controls .ctrl-btn.is-disabled {
+        opacity: 0.34;
+        cursor: not-allowed;
+      }
+
+      .global-window-controls .ctrl-btn:disabled:hover,
+      .global-window-controls .ctrl-btn.is-disabled:hover {
+        background: rgba(0, 0, 0, 0.18);
+        color: rgba(255, 255, 255, 0.62);
+      }
+
+      .global-window-controls .ctrl-btn:active {
+        transform: scale(0.94);
+      }
+
+      .global-window-controls .ctrl-btn.close:hover {
+        background: #ff5f57;
+        color: #ffffff;
+      }
+
+      .global-window-controls .ctrl-btn svg {
+        width: 17px;
+        height: 17px;
+      }
+
+      .main-content {
+        flex: 1;
+        overflow: auto;
+        position: relative;
+        padding: 24px;
+      }
+
+      .content-section {
+        display: none;
+        width: 100%;
+        height: 100%;
+        color: #ffffff;
+      }
+
+      .content-section.active {
+        display: block;
+      }
+
+      .content-section.active.section-entering {
+        animation: sectionMicroEnter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        will-change: opacity, transform;
+      }
+
+      @keyframes sectionMicroEnter {
+        from {
+          opacity: 0;
+          transform: translate3d(0, 8px, 0);
+        }
+        to {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+      }
+
+      .content-section h2 {
+        margin: 0 0 16px;
+        font-size: 22px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+
+      .content-section p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.55);
+        line-height: 1.6;
+      }
+
+      .transition-mask {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(8, 9, 11, 0.28);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        z-index: 1002;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .transition-mask.visible {
+        opacity: 1;
+        pointer-events: auto;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+      }

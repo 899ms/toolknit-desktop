@@ -4,6 +4,7 @@ import {
   createSystemSpeechTranscriptState,
   estimateTeleprompterDuration,
   findSpeechMatch,
+  findSpeechPosition,
   formatTeleprompterTime,
   normalizeSpeechText,
   segmentTeleprompterScript,
@@ -94,12 +95,61 @@ const stable = createSpeechFollower(chinese.sentences, 0);
 const first = stable.push('最后谢谢各位', { final: false });
 assert.equal(first?.pending, true, 'a large interim jump waits for confirmation');
 const second = stable.push('最后谢谢各位', { final: false });
-assert.equal(second?.moved, true);
+assert.equal(second?.pending, true, 'identical interim text is not new confirmation');
+assert.equal(stable.push('最后谢谢大家', { final: true })?.moved, true);
 assert.equal(stable.index, 2);
 
 stable.reset(1);
 assert.equal(stable.index, 1);
+
+const liveScript = segmentTeleprompterScript('欢迎使用本地语音跟随功能。我们使用模型识别语音。今天测试提词器，让文字跟随朗读。').sentences;
+const live = createSpeechFollower(liveScript);
+let audioEnd = 0;
+const pushLive = (text, extra = {}) => live.push(text, {
+  rolling: true, windowEnd: audioEnd += 8000, windowStart: Math.max(0, audioEnd - 51200), ...extra
+});
+assert.equal(pushLive('欢迎使')?.progress, 3 / 12, 'three correct characters update within a sentence');
+assert.ok(pushLive('歡迎使用本地語音跟色')?.progress >= 0.6, 'a short ASR substitution still locates nearby text');
+assert.equal(pushLive('欢迎使用本地语音跟随功能')?.index, 1);
+assert.equal(pushLive('欢迎使用本地语音跟随功能'), null, 'overlapping hypotheses do not advance twice');
+assert.equal(pushLive('本地语音跟随功能我们使用模型')?.progress, 0.6, 'locate the last spoken sentence, not the first');
+assert.equal(pushLive('今天的天气预报和明天的早餐'), null, 'off-script speech cannot move the cursor');
+assert.equal(pushLive('我们使用模型识别语音')?.index, 2);
+assert.equal(pushLive('今天测试提词器', { windowEnd: 100, recognitionSession: 1 })?.progress, 0.5,
+  'pause/resume starts a new audio clock without rejecting all new results');
+assert.equal(pushLive('今天测试提词器让文字跟随朗读', { windowEnd: 50, recognitionSession: 1 }), null,
+  'out-of-order inference cannot change position');
+assert.equal(pushLive('今天测试提词器让文字跟随朗读', { windowEnd: 16000, recognitionSession: 1 })?.progress, 1);
+
+const repeatedLive = createSpeechFollower(repeatedOnly);
+const rolling = { rolling: true, windowStart: 0, utterance: 1 };
+assert.equal(repeatedLive.push('我爱你', { ...rolling, windowEnd: 16000 })?.index, 1);
+assert.equal(repeatedLive.push('我爱你', { ...rolling, windowEnd: 24000 }), null);
+assert.equal(repeatedLive.push('我爱你我爱你', { ...rolling, windowEnd: 32000 })?.index, 2);
+repeatedLive.reset(0);
+assert.equal(repeatedLive.push('我爱你', { ...rolling, windowEnd: 16000 })?.index, 1);
+assert.equal(repeatedLive.push('我爱你', { ...rolling, utterance: 2, windowEnd: 40000 })?.index, 2,
+  'a genuine repeated phrase after a pause remains followable');
+assert.equal(findSpeechPosition(liveScript, '模型', 0), null, 'two ambiguous characters cannot skip sentences');
+assert.equal(createSpeechFollower(segmentTeleprompterScript('你好。开始测试。').sentences)
+  .push('你好', { final: true })?.index, 1, 'an exact two-character current sentence remains followable');
+const englishLive = createSpeechFollower(segmentTeleprompterScript('Welcome to the local voice follower. Today we test the microphone.').sentences);
+assert.ok(englishLive.push('Welcome to', { final: false })?.progress > 0);
+assert.equal(englishLive.push('Welcome to the local voice follower today we test', { final: false })?.index, 1);
+assert.equal(englishLive.push('please order pizza for lunch', { final: false }), null);
+
 assert.ok(estimateTeleprompterDuration('这是一段中文。This is English.') > 1);
 assert.equal(formatTeleprompterTime(65), '01:05');
 
 console.log('teleprompter core tests passed');
+
+const reportedScript = segmentTeleprompterScript('生活处处藏着温柔与美好，平凡的日常里，总有细碎的温暖治愈人心。').sentences;
+const reportedFollower = createSpeechFollower(reportedScript);
+for (const text of ['(無法接受)', '(視頻)', '終於釋懼了溫暖', '終於釋懼了溫暖暖自然而生']) {
+  assert.equal(reportedFollower.push(text, { final: false }), null, 'reported unrelated hallucinations must not fake progress');
+  assert.equal(reportedFollower.index, 0);
+}
+assert.ok(reportedFollower.push('生活處處藏著溫柔', { final: false })?.progress > 0, 'traditional equivalent can move the first sentence');
+reportedFollower.push('生活處處藏著溫柔與美好平凡的日常裡', { final: false });
+assert.ok(reportedFollower.push('平凡的日常裡總有細碎的溫暖治癒人心', { final: false })?.progress > 0);
+assert.equal(reportedFollower.index, reportedScript.length - 1);

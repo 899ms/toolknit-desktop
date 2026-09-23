@@ -1,0 +1,109 @@
+@import '../mortgage-calculator/mortgage-calculator.css';
+
+      /* ===== Interest Calculator ===== */
+      .interest-calc-v2 .pdf-merge-v2-bg {
+        opacity: 0.34;
+        filter: grayscale(1) contrast(1.12) brightness(0.7);
+      }
+
+      .interest-calc-v2 .pdf-merge-v2-poster::after {
+        content: 'RATE';
+      }
+
+      .interest-calc-v2-body {
+        grid-template-columns: minmax(286px, 356px) minmax(0, 1fr);
+      }
+
+      .interest-calc-v2-workspace {
+        grid-template-columns: minmax(330px, 0.72fr) minmax(0, 1.28fr);
+      }
+
+      .interest-calc-v2 .mortgage-calc-input-panel,
+      .interest-calc-v2 .mortgage-calc-result-panel {
+        min-width: 0;
+        min-height: 0;
+        flex: initial;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.044), rgba(255, 255, 255, 0.018)),
+          rgba(255, 255, 255, 0.018);
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        overflow: hidden;
+      }
+
+      .interest-calc-v2 .mortgage-calc-input-panel {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      .interest-calc-v2 .mortgage-calc-result-panel {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      .interest-calc-v2 .mortgage-calc-form {
+        min-height: 0;
+        overflow-y: auto;
+        padding: 18px;
+        display: grid;
+        align-content: start;
+        gap: 16px;
+        scrollbar-color: rgba(255, 255, 255, 0.68) transparent;
+      }
+
+      .interest-calc-v2 .mortgage-calc-calc-btn {
+        min-height: 46px;
+      }
+
+      .interest-calc-v2 #interestCalcFreqField {
+        grid-column: 1 / -1;
+      }
+
+      .interest-calc-v2 #interestCalcFreqTabs {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .interest-calc-v2 .mortgage-calc-result-empty {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+      }
+
+      .interest-calc-v2 .mortgage-calc-result-content {
+        min-height: 0;
+      }
+
+      .interest-calc-v2 .mortgage-calc-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .interest-calc-v2 .mortgage-calc-card {
+        min-height: 118px;
+      }
+
+      .interest-calc-v2 .mortgage-calc-schedule-table {
+        min-height: 0;
+      }
+
+      .interest-calc-v2 .mortgage-calc-schedule-body {
+        max-height: 100%;
+      }
+
+      .interest-calc-v2 .mortgage-calc-schedule-row {
+        grid-template-columns: 56px 1fr 1fr 1fr;
+      }
+
+      @media (max-width: 1260px) {
+        .interest-calc-v2-workspace {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto minmax(440px, 1fr);
+          overflow-y: auto;
+        }
+      }
+      /* ===== End Interest Calculator ===== */

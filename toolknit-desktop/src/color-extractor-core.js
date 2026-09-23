@@ -1,6 +1,6 @@
 export const COLOR_EXTRACTOR_LIMITS = Object.freeze({
-  maxBytes: 20 * 1024 * 1024,
-  maxPixels: 40_000_000
+  maxBytes: 100 * 1024 * 1024,
+  maxPixels: 160_000_000
 });
 
 const SUPPORTED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);

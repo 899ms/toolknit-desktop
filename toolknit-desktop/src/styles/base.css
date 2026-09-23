@@ -1,0 +1,22 @@
+/* Shared reset. Interactive controls opt back into text selection explicitly. */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+* { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+body { min-width: 0; min-height: 100%; }
+
+/* Global document and bundled font baseline. */
+button, input, textarea, select { font-family: inherit; }
+html, body { width: 100%; height: 100%; }
+html { background: transparent; overflow: hidden; }
+::-webkit-scrollbar { display: none; }
+body { -ms-overflow-style: none; scrollbar-width: none; }
+body { background: transparent; font-family: var(--tk-font-ui); font-synthesis: none; position: relative; overflow: hidden; }
+@font-face { font-family: 'ToolKnitNotoSansSC'; font-style: normal; font-weight: 400; font-display: swap; src: url('/assets/fonts/NotoSansSC-Regular.ttf') format('truetype'); }
+@font-face { font-family: 'ToolKnitNotoSansSC'; font-style: normal; font-weight: 600; font-display: swap; src: url('/assets/fonts/NotoSansSC-Semibold.ttf') format('truetype'); }
+@font-face { font-family: 'ToolKnitBuiltinCn'; font-style: normal; font-weight: 100 500; font-display: swap; src: url('/assets/fonts/Alibaba-PuHuiTi-Medium.ttf') format('truetype'); }
+@font-face { font-family: 'ToolKnitBuiltinCn'; font-style: normal; font-weight: 600 900; font-display: swap; src: url('/assets/fonts/Alibaba-PuHuiTi-Bold.ttf') format('truetype'); }
+@font-face { font-family: 'ToolKnitBuiltinEn'; font-style: normal; font-weight: 100 500; font-display: swap; src: url('/assets/fonts/Montserrat-Regular.otf') format('opentype'); }
+@font-face { font-family: 'ToolKnitBuiltinEn'; font-style: normal; font-weight: 600 900; font-display: swap; src: url('/assets/fonts/Montserrat-Bold.otf') format('opentype'); }
+@font-face { font-family: 'ToolKnitBuiltinCnHeading'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('/assets/fonts/Alibaba-PuHuiTi-Bold.ttf') format('truetype'); }
+@font-face { font-family: 'ToolKnitBuiltinEnHeading'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('/assets/fonts/Montserrat-Bold.otf') format('opentype'); }
+body.lang-zh { font-family: var(--tk-font-ui); }

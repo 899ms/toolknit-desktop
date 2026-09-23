@@ -1,0 +1,160 @@
+<div class="pdf-merge-overlay pdf-merge-v2 mortgage-calc-v2 interest-calc-v2" id="interestCalcOverlay">
+      <div class="plasma-bg pdf-merge-v2-bg" id="interestCalcBg"></div>
+      <header class="pdf-merge-v2-topbar">
+        <div class="settings-v2-topbar-left pdf-merge-v2-topbar-left">
+          <button class="settings-v2-back settings-back pdf-merge-v2-back" id="interestCalcBack" type="button" data-i18n-title="settings.back" title="返回首页">
+            <i data-lucide="arrow-left"></i>
+            <span data-i18n="settings.back">返回首页</span>
+          </button>
+          <span class="pdf-merge-v2-top-tag">INTEREST · TOOL PAGE 3.0</span>
+        </div>
+        <div class="home-v2-top-actions pdf-merge-v2-top-actions">
+          <button class="home-v2-nav-link" type="button" data-home-link="website">
+            <i data-lucide="globe-2"></i>
+            <span>网页版本</span>
+          </button>
+          <button class="home-v2-support-top" type="button" data-open-support>
+            <i data-lucide="heart"></i>
+            <span>支持作者</span>
+          </button>
+          <div class="home-v2-window-cluster" aria-label="窗口与设置">
+            <button class="home-v2-icon-button" id="interestCalcV2Settings" type="button" data-i18n-title="nav.settings" title="设置" aria-label="设置">
+              <i data-lucide="settings"></i>
+            </button>
+            <div class="home-v2-window-controls" aria-label="窗口控制">
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.minimize" title="最小化" data-action="minimize"><i data-lucide="minus"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.maximize" title="最大化" data-action="maximize"><i data-lucide="square"></i></button>
+              <button class="home-v2-window-button ctrl-btn" type="button" data-i18n-title="common.close" title="关闭" data-action="close"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="audio-convert-body pdf-merge-v2-body mortgage-calc-v2-body interest-calc-v2-body" id="interestCalcBody">
+        <aside class="pdf-merge-v2-poster interest-calc-v2-poster" aria-label="利息计算说明">
+          <div class="pdf-merge-v2-poster-kicker" data-i18n="home.interestCalc.heroLabel">Finance Tool</div>
+          <h1 class="pdf-merge-v2-title" data-i18n="home.interestCalc.title">利息计算器</h1>
+          <p class="pdf-merge-v2-subtitle" data-i18n="home.interestCalc.subtitle">支持单利、复利、定投三种模式，计算本利和、利息总额、收益明细。</p>
+          <div class="pdf-merge-v2-poster-note">
+            <span>LOCAL ONLY</span>
+            <strong>所有收益结果仅在本机计算，适合快速做理财预估和对比。</strong>
+          </div>
+          <div class="pdf-merge-v2-steps" aria-label="利息计算流程">
+            <div class="pdf-merge-v2-step is-active"><span>01</span><div><strong>选择模式</strong><p>单利、复利、定投三种路径分别计算。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>02</span><div><strong>输入参数</strong><p>填写本金、利率、期限或每期投入金额。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>03</span><div><strong>查看结果</strong><p>本利和、收益率和收益总额会实时汇总。</p></div></div>
+            <div class="pdf-merge-v2-step"><span>04</span><div><strong>展开明细</strong><p>按期查看投入、利息和余额变化。</p></div></div>
+          </div>
+        </aside>
+
+        <main class="pdf-merge-v2-workspace mortgage-calc-v2-workspace interest-calc-v2-workspace" id="interestCalcMain">
+          <section class="mortgage-calc-input-panel" aria-label="利息参数输入">
+            <div class="mortgage-calc-panel-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">RETURN MODE</span>
+                <h2>利息参数</h2>
+              </div>
+              <p>切换模式后会自动显示对应输入项。</p>
+            </div>
+            <div class="mortgage-calc-form">
+              <div class="mortgage-calc-field">
+                <label data-i18n="home.interestCalc.calcMode">计算模式</label>
+                <div class="mortgage-calc-method-tabs" id="interestCalcModeTabs">
+                  <button class="mortgage-calc-method-tab active" type="button" data-mode="simple" data-i18n="home.interestCalc.simpleInterest">单利</button>
+                  <button class="mortgage-calc-method-tab" type="button" data-mode="compound" data-i18n="home.interestCalc.compoundInterest">复利</button>
+                  <button class="mortgage-calc-method-tab" type="button" data-mode="recurring" data-i18n="home.interestCalc.regularInvest">定投</button>
+                </div>
+              </div>
+              <div class="mortgage-calc-field" id="interestCalcPrincipalField">
+                <label data-i18n="home.interestCalc.principal">本金</label>
+                <div class="mortgage-calc-input-row">
+                  <input type="number" id="interestCalcPrincipal" placeholder="10000" value="10000" min="1" step="100">
+                  <span class="mortgage-calc-unit" data-i18n="home.interestCalc.principalUnit">元</span>
+                </div>
+              </div>
+              <div class="mortgage-calc-field" id="interestCalcRegularField" style="display:none;">
+                <label data-i18n="home.interestCalc.regularAmount">每期投入</label>
+                <div class="mortgage-calc-input-row">
+                  <input type="number" id="interestCalcRegularAmount" placeholder="1000" value="1000" min="1" step="100">
+                  <span class="mortgage-calc-unit" data-i18n="home.interestCalc.principalUnit">元</span>
+                </div>
+              </div>
+              <div class="mortgage-calc-field">
+                <label data-i18n="home.interestCalc.annualRate">年利率</label>
+                <div class="mortgage-calc-input-row">
+                  <input type="number" id="interestCalcRate" placeholder="5" value="5" min="0.01" max="100" step="0.01">
+                  <span class="mortgage-calc-unit" data-i18n="home.interestCalc.annualRateUnit">%</span>
+                </div>
+              </div>
+              <div class="mortgage-calc-field">
+                <label data-i18n="home.interestCalc.term">投资期限</label>
+                <div class="mortgage-calc-input-row">
+                  <input type="number" id="interestCalcTerm" placeholder="10" value="10" min="1" max="100" step="1">
+                  <span class="mortgage-calc-unit" data-i18n="home.interestCalc.termUnit">年</span>
+                </div>
+              </div>
+              <div class="mortgage-calc-field" id="interestCalcFreqField" style="display:none;">
+                <label data-i18n="home.interestCalc.compoundFreq">复利频次</label>
+                <div class="mortgage-calc-method-tabs" id="interestCalcFreqTabs">
+                  <button class="mortgage-calc-method-tab active" type="button" data-freq="yearly" data-i18n="home.interestCalc.freqYearly">按年</button>
+                  <button class="mortgage-calc-method-tab" type="button" data-freq="monthly" data-i18n="home.interestCalc.freqMonthly">按月</button>
+                  <button class="mortgage-calc-method-tab" type="button" data-freq="daily" data-i18n="home.interestCalc.freqDaily">按日</button>
+                </div>
+              </div>
+              <button class="mortgage-calc-calc-btn" id="interestCalcBtn" type="button" data-i18n="home.interestCalc.calculate">计算</button>
+            </div>
+          </section>
+
+          <section class="mortgage-calc-result-panel" aria-label="利息计算结果">
+            <div class="mortgage-calc-panel-head">
+              <div>
+                <span class="pdf-merge-v2-section-kicker">RESULT VIEW</span>
+                <h2 data-i18n="home.interestCalc.result">计算结果</h2>
+              </div>
+              <p>本利和、总利息、累计投入和收益率。</p>
+            </div>
+            <div class="mortgage-calc-result-empty" id="interestCalcResultEmpty">
+              <div class="mortgage-calc-empty-icon-wrap">
+                <i data-lucide="trending-up"></i>
+              </div>
+              <p data-i18n="home.interestCalc.result">计算结果</p>
+            </div>
+            <div class="mortgage-calc-result-content" id="interestCalcResultContent" style="display:none;">
+              <div class="mortgage-calc-cards">
+                <div class="mortgage-calc-card">
+                  <div class="mortgage-calc-card-label" data-i18n="home.interestCalc.totalAmount">本利和</div>
+                  <div class="mortgage-calc-card-value" id="interestCalcTotalValue">--</div>
+                  <div class="mortgage-calc-card-tag" id="interestCalcTotalTag">--</div>
+                </div>
+                <div class="mortgage-calc-card">
+                  <div class="mortgage-calc-card-label" data-i18n="home.interestCalc.totalInterest">利息总额</div>
+                  <div class="mortgage-calc-card-value" id="interestCalcInterestValue">--</div>
+                  <div class="mortgage-calc-card-tag" id="interestCalcInterestTag">--</div>
+                </div>
+                <div class="mortgage-calc-card">
+                  <div class="mortgage-calc-card-label" data-i18n="home.interestCalc.totalInvested">累计投入</div>
+                  <div class="mortgage-calc-card-value" id="interestCalcInvestedValue">--</div>
+                  <div class="mortgage-calc-card-tag" id="interestCalcInvestedTag">--</div>
+                </div>
+                <div class="mortgage-calc-card">
+                  <div class="mortgage-calc-card-label" data-i18n="home.interestCalc.returnRate">收益率</div>
+                  <div class="mortgage-calc-card-value" id="interestCalcReturnRateValue">--</div>
+                  <div class="mortgage-calc-card-tag" id="interestCalcReturnTag">--</div>
+                </div>
+              </div>
+              <div class="mortgage-calc-schedule-section">
+                <div class="mortgage-calc-schedule-title" data-i18n="home.interestCalc.growthDetail">收益明细</div>
+                <div class="mortgage-calc-schedule-table">
+                  <div class="mortgage-calc-schedule-header">
+                    <span data-i18n="home.interestCalc.period">期</span>
+                    <span data-i18n="home.interestCalc.investAmount">投入</span>
+                    <span data-i18n="home.interestCalc.interestEarned">利息</span>
+                    <span data-i18n="home.interestCalc.balance">余额</span>
+                  </div>
+                  <div class="mortgage-calc-schedule-body" id="interestCalcScheduleBody"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>

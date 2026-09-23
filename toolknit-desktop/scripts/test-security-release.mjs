@@ -76,6 +76,11 @@ check(testSigningWorkflow.includes('./scripts/test-signpath-verifier.ps1') && te
 check(testSigningWorkflow.includes("SIGNPATH_TEST_CERTIFICATE_THUMBPRINT: '6831FA4A3067EDCE07AD33005E16AD0997662B05'") && testSigningWorkflow.includes('-ExpectedThumbprint $env:SIGNPATH_TEST_CERTIFICATE_THUMBPRINT'), 'Test signing must pin the independently checked SignPath test certificate');
 check(!releaseWorkflow.includes('$tag = "${{ github.ref_name }}"'), 'Release tags must not be interpolated directly into PowerShell');
 check(releaseWorkflow.includes('RELEASE_TAG: ${{ github.ref_name }}') && releaseWorkflow.includes('$tag = $env:RELEASE_TAG'), 'Release tags must enter PowerShell through an environment variable');
+check(releaseWorkflow.includes("github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'"), 'Manual releases must execute the reviewed main workflow');
+check(releaseWorkflow.includes('DISPATCH_RELEASE_TAG: ${{ inputs.tag }}') && !releaseWorkflow.includes('$tag = "${{ inputs.tag }}"'), 'Manual release tags must not be interpolated into PowerShell');
+check(releaseWorkflow.includes('refs/tags/${tag}^{commit}') && releaseWorkflow.includes('$tagCommit -ne $releaseCommit'), 'Release checkout must match an existing tag');
+check(releaseWorkflow.includes('git merge-base --is-ancestor $releaseCommit origin/main'), 'The checked-out release commit must belong to main');
+check(releaseWorkflow.includes('Get-Content src/app/templates/settings.html -Raw'), 'Release version validation must read the extracted settings template');
 
 const installerTemplate = read('toolknit-desktop/src-tauri/windows/installer.nsi');
 check(installerTemplate.includes('!include WinVer.nsh'), 'NSIS installer must load Windows version checks');

@@ -109,3 +109,6 @@ toolknit-desktop/.codex-*.png
 
 # 本地文章草稿，不属于桌面端发布源码
 docs/articles/devto/
+
+# Superseded local development checklist
+/toolknit-desktop/progress.txt

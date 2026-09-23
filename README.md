@@ -4,8 +4,6 @@
 
 <h1>ToolKnit Desktop 3.0</h1>
 
-<p><strong>V3.0 源码已就绪</strong> · 当前分支提供 3.0 完整源码；Windows 安装包与 npm 包将单独发布。</p>
-
 <p><strong>本地文件工作台 · 桌面端、网页端与 AI Agent 工作流</strong></p>
 
 <p>
@@ -20,7 +18,7 @@
 
 <p>
   <a href="README_EN.md"><img src="https://img.shields.io/badge/Language-English-475569?style=for-the-badge&labelColor=334155" alt="English README" /></a>
-  <img src="https://img.shields.io/badge/V3.0-源码已就绪-0f766e?style=for-the-badge&labelColor=115e59" alt="ToolKnit Desktop 3.0 source ready" />
+  <img src="https://img.shields.io/badge/Version-3.0.0-0f766e?style=for-the-badge&labelColor=115e59" alt="ToolKnit Desktop 3.0.0" />
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10/11" />
   <img src="https://img.shields.io/badge/Local--first-文件留在本机-0f766e?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/Tauri-2.x-475569?style=for-the-badge" alt="Tauri 2.x" />
@@ -56,7 +54,7 @@
       <p><img src="https://img.shields.io/badge/DESKTOP-Windows-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Windows desktop" /> <strong>再用桌面端</strong></p>
       <p>Windows 本地优先版本，适合长期文件工作、离线处理和可视化编辑。</p>
       <p><a href="https://github.com/ZihangDong/toolknit-desktop/releases"><strong>查看桌面端下载</strong></a></p>
-      <sub>V3.0 安装包、SHA-256 校验文件和版本说明将单独通过 GitHub Releases 发布；源码分支更新不代表安装包已上线。</sub>
+      <sub>通过 GitHub Releases 获取 Windows 安装包、SHA-256 校验文件和完整版本说明。</sub>
     </td>
   </tr>
 </table>
@@ -98,7 +96,7 @@ ToolKnit Desktop 3.0 是一套面向 Windows 的本地文件工作台。它把�
 - `颜色空间对比`：增加 HSV / HSL 双色轮与 HEX 输入，保留多空间联动、色域检测和双主题体验。
 - `应用稳定性`：工具懒加载，重复打开、返回、Escape、窗口关闭和失败路径统一释放 Worker、Canvas、监听器、任务和临时资源，过期异步结果不会写入新会话。
 
-V3.0 的桌面端、Tauri、Rust 原生运行时和 `@toolknit/cli` 源码版本统一为 `3.0.0`。安装包与 npm 包分别发布，实际可下载版本以 [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases) 和 [npm](https://www.npmjs.com/package/@toolknit/cli) 为准。签名范围与状态见[代码签名政策](CODE_SIGNING_POLICY.md)。
+V3.0 的桌面端、Tauri、Rust 原生运行时和 `@toolknit/cli` 版本统一为 `3.0.0`。桌面安装包见 [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases)，命令行工具见 [npm](https://www.npmjs.com/package/@toolknit/cli)。
 
 ### 持续保留的基础能力
 
@@ -400,9 +398,9 @@ ToolKnit 3.0 采用轻量桌面容器与本地文件引擎组合，网页端、�
 
 ### 安装 Windows 桌面端
 
-从 [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases) 获取已发布安装包、版本说明和对应的 `.sha256` 文件。本分支提供 V3.0 源码，3.0 安装包将单独发布；请只从本仓库 Release 页面下载，并在运行前核对 SHA-256 校验值。
+从 [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases) 获取 Windows 安装包、版本说明和对应的 `.sha256` 文件。请只从本仓库 Release 页面下载，并在运行前核对 SHA-256 校验值。
 
-**代码签名状态：** 测试签名链路已接入，测试证书不等于 Windows 公开信任的正式证书。安装包的实际签名状态与覆盖范围以对应 Release 说明为准，详见[代码签名政策](CODE_SIGNING_POLICY.md)。
+**代码签名：** 安装包的实际签名状态与覆盖范围以对应 Release 说明为准，详见[代码签名政策](CODE_SIGNING_POLICY.md)。
 
 **系统要求：** 桌面端需要 Windows 10 1803（内部版本 17134）或更高版本，或 Windows 11，并依赖 Microsoft Edge WebView2 Runtime。安装包内置 WebView2 引导程序，首次安装仍需要联网下载运行时；WPS、Office 或浏览器本身不能替代 WebView2。Windows 7、8 和 8.1，以及 1803 之前的 Windows 10 不受支持，安装器会在复制文件前直接提示原因。
 
@@ -424,8 +422,6 @@ npm run tauri dev
 ToolKnit 将适合自动化的本地文件能力提供给命令行、脚本和支持 MCP 的 IDE Agent。桌面端负责可视化预览和交互，CLI 负责批处理，Agent 负责自然语言编排。
 
 ### 安装 CLI
-
-以下命令安装 npm 上当前已发布的版本。此分支内 CLI 源码为 `3.0.0`，npm 发布独立进行，不随源码推送自动更新。
 
 ```powershell
 npm install --global @toolknit/cli

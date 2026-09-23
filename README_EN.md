@@ -4,8 +4,6 @@
 
 <h1>ToolKnit Desktop 3.0</h1>
 
-<p><strong>V3.0 source ready</strong> · This branch contains the complete 3.0 source. Windows installers and the npm package will be published separately.</p>
-
 <p><strong>Local file workbench · Desktop, web, and AI Agent workflows</strong></p>
 
 <p>
@@ -20,7 +18,7 @@
 
 <p>
   <a href="README.md"><img src="https://img.shields.io/badge/Language-Simplified%20Chinese-475569?style=for-the-badge&labelColor=334155" alt="Simplified Chinese README" /></a>
-  <img src="https://img.shields.io/badge/V3.0-Source%20ready-0f766e?style=for-the-badge&labelColor=115e59" alt="ToolKnit 3.0 source ready" />
+  <img src="https://img.shields.io/badge/Version-3.0.0-0f766e?style=for-the-badge&labelColor=115e59" alt="ToolKnit Desktop 3.0.0" />
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10/11" />
   <img src="https://img.shields.io/badge/Local--first-Files%20stay%20local-0f766e?style=for-the-badge" alt="Local-first" />
   <img src="https://img.shields.io/badge/Tauri-2.x-475569?style=for-the-badge" alt="Tauri 2.x" />
@@ -56,7 +54,7 @@
       <p><img src="https://img.shields.io/badge/DESKTOP-Windows-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Windows desktop" /> <strong>Use the desktop app</strong></p>
       <p>A local-first Windows app for long-running file work, offline processing, and visual editing.</p>
       <p><a href="https://github.com/ZihangDong/toolknit-desktop/releases"><strong>View desktop downloads</strong></a></p>
-      <sub>The V3.0 installer, SHA-256 checksum, and release notes will be published separately through GitHub Releases. A source update does not publish an installer.</sub>
+      <sub>Get Windows installers, SHA-256 checksums, and full release notes from GitHub Releases.</sub>
     </td>
   </tr>
 </table>
@@ -98,7 +96,7 @@ Compared with v2.3.1, V3.0 expands the desktop catalog from 65 to 68 tools, reta
 - `Color-space comparison`: HSV/HSL color wheels and HEX input, alongside linked color-space controls, gamut checks, and both themes.
 - `Application stability`: closing or switching tools releases workers, canvases, listeners, tasks, and temporary resources; stale asynchronous results cannot update a new session.
 
-The desktop app, Tauri bundle, Rust crate, and `@toolknit/cli` source share version `3.0.0`. Installers and npm packages are published separately; check [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases) and [npm](https://www.npmjs.com/package/@toolknit/cli) for available versions. See the [code-signing policy](CODE_SIGNING_POLICY.md) for signing status and scope.
+The desktop app, Tauri bundle, Rust crate, and `@toolknit/cli` share version `3.0.0`. Desktop installers are available through [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases), and the command-line tool through [npm](https://www.npmjs.com/package/@toolknit/cli).
 
 ### Existing capabilities
 
@@ -404,9 +402,9 @@ Open [ToolKnit.com](https://toolknit.com) to start using the web tools without i
 
 ### Install the Windows desktop app
 
-Get published installers, release notes, and matching `.sha256` files from [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases). This branch provides V3.0 source; the 3.0 installer will be released separately. Download only from this repository's Release page and verify the SHA-256 checksum before running the installer.
+Get Windows installers, release notes, and matching `.sha256` files from [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases). Download only from this repository's Release page and verify the SHA-256 checksum before running the installer.
 
-**Code-signing status:** The test-signing integration is in place. A test certificate is not a publicly trusted Windows production certificate. The applicable Release notes and [code-signing policy](CODE_SIGNING_POLICY.md) describe the actual signing status and scope.
+**Code signing:** The applicable Release notes and [code-signing policy](CODE_SIGNING_POLICY.md) describe each installer's actual signing status and scope.
 
 **System requirements:** Windows 10 1803 (build 17134) or later, or Windows 11, with Microsoft Edge WebView2 Runtime. The installer includes a WebView2 bootstrapper, which needs a network connection to download a missing runtime. Windows 7, 8, 8.1, and older Windows 10 builds are not supported.
 
@@ -428,8 +426,6 @@ The repository includes source, required resources, tests, and third-party licen
 ToolKnit exposes automation-ready local file capabilities to command-line users, scripts, and MCP-capable IDE Agents. The desktop app handles visual preview and interaction, the CLI handles batch processing, and Agents orchestrate workflows in natural language.
 
 ### Install the CLI
-
-These commands install the version currently published on npm. CLI source in this branch is `3.0.0`; publishing to npm is a separate step and does not happen when source is pushed.
 
 ```powershell
 npm install --global @toolknit/cli
@@ -527,7 +523,7 @@ After confirmation, supporters may join the ToolKnit preview group to test upcom
 - Submit a [feature request](https://github.com/ZihangDong/toolknit-desktop/issues/new?template=feature_request.yml).
 - Read the [contribution guide](CONTRIBUTING.md) for development, testing, and pull request workflows.
 - Use the [build guide](BUILD.md) to run the desktop app locally.
-- Review the [code-signing policy](CODE_SIGNING_POLICY.md) for future signed release requirements and current signing status.
+- Review the [code-signing policy](CODE_SIGNING_POLICY.md) for signing requirements and scope.
 
 ## Web product and brand boundary
 

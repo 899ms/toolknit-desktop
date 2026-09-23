@@ -4,13 +4,20 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing vMAJOR.MINOR.PATCH tag to build from main
+        required: true
+        type: string
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
   build-windows:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: windows-latest
     timeout-minutes: 45
     permissions:
@@ -23,20 +30,31 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Validate release tag and versions
         shell: pwsh
         env:
           RELEASE_TAG: ${{ github.ref_name }}
+          DISPATCH_RELEASE_TAG: ${{ inputs.tag }}
         run: |
           $tag = $env:RELEASE_TAG
+          if ($env:DISPATCH_RELEASE_TAG) {
+            $tag = $env:DISPATCH_RELEASE_TAG
+          }
           if ($tag -notmatch '^v(?<version>\d+\.\d+\.\d+)$') {
             throw "Release tag must use vMAJOR.MINOR.PATCH: $tag"
           }
           $releaseVersion = $Matches.version
 
           git fetch origin main --no-tags
-          git merge-base --is-ancestor $env:GITHUB_SHA origin/main
+          if ($LASTEXITCODE -ne 0) { throw "Unable to fetch main for release validation" }
+          $releaseCommit = git rev-parse HEAD
+          $tagCommit = git rev-parse --verify "refs/tags/${tag}^{commit}"
+          if ($LASTEXITCODE -ne 0 -or $tagCommit -ne $releaseCommit) {
+            throw "Release checkout must match the existing tag $tag"
+          }
+          git merge-base --is-ancestor $releaseCommit origin/main
           if ($LASTEXITCODE -ne 0) {
             throw "Release tag must point to a commit contained in origin/main"
           }
@@ -71,10 +89,11 @@ jobs:
             }
           }
 
-          $ui = Get-Content index.html -Raw
-          $settingsPattern = 'settings-version">v{0}<' -f [regex]::Escape($releaseVersion)
-          $sidebarPattern = 'sidebarVersion">v{0}<' -f [regex]::Escape($releaseVersion)
-          if ($ui -notmatch $settingsPattern -or $ui -notmatch $sidebarPattern) {
+          $settingsUi = Get-Content src/app/templates/settings.html -Raw
+          $homeUi = Get-Content index.html -Raw
+          $settingsPattern = 'id="settings-version"[^>]*>\s*v{0}\s*<' -f [regex]::Escape($releaseVersion)
+          $sidebarPattern = 'id="sidebarVersion"[^>]*>\s*v{0}\s*<' -f [regex]::Escape($releaseVersion)
+          if ($settingsUi -notmatch $settingsPattern -or $homeUi -notmatch $sidebarPattern) {
             throw "The desktop UI version labels do not match tag $tag"
           }
 
@@ -176,7 +195,8 @@ jobs:
       - name: Upload to Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          name: ToolKnit Desktop ${{ github.ref_name }}
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          name: ToolKnit Desktop ${{ inputs.tag || github.ref_name }}
           body_path: docs/desktop-update.md
           files: |
             toolknit-desktop/src-tauri/target/release/bundle/nsis/*.exe

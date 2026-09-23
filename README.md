@@ -4,7 +4,7 @@
 
 <h1>ToolKnit Desktop 3.0</h1>
 
-<p><strong>V3.0 正式版准备中</strong> · 当前分支提供 3.0 完整源码，代码签名接入与验证完成后再发布正式安装包。</p>
+<p><strong>V3.0 源码已就绪</strong> · 当前分支提供 3.0 完整源码；Windows 安装包与 npm 包将单独发布。</p>
 
 <p><strong>本地文件工作台 · 桌面端、网页端与 AI Agent 工作流</strong></p>
 
@@ -20,7 +20,7 @@
 
 <p>
   <a href="README_EN.md"><img src="https://img.shields.io/badge/Language-English-475569?style=for-the-badge&labelColor=334155" alt="English README" /></a>
-  <img src="https://img.shields.io/badge/V3.0-正式发布准备中-f59e0b?style=for-the-badge&labelColor=b45309" alt="ToolKnit Desktop 3.0 release preparation" />
+  <img src="https://img.shields.io/badge/V3.0-源码已就绪-0f766e?style=for-the-badge&labelColor=115e59" alt="ToolKnit Desktop 3.0 source ready" />
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10/11" />
   <img src="https://img.shields.io/badge/Local--first-文件留在本机-0f766e?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/Tauri-2.x-475569?style=for-the-badge" alt="Tauri 2.x" />
@@ -36,6 +36,14 @@
 
 </div>
 
+<p align="center">
+  <a href="#v30-核心更新">3.0 更新</a> ·
+  <a href="#完整功能目录">68 项工具</a> ·
+  <a href="#本地优先与隐私边界">隐私边界</a> ·
+  <a href="#从源码运行">源码运行</a> ·
+  <a href="#cli--mcp--agent">CLI / MCP</a>
+</p>
+
 <table cellpadding="18" cellspacing="0">
   <tr>
     <td width="50%" valign="top">
@@ -48,7 +56,7 @@
       <p><img src="https://img.shields.io/badge/DESKTOP-Windows-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Windows desktop" /> <strong>再用桌面端</strong></p>
       <p>Windows 本地优先版本，适合长期文件工作、离线处理和可视化编辑。</p>
       <p><a href="https://github.com/ZihangDong/toolknit-desktop/releases"><strong>查看桌面端下载</strong></a></p>
-      <sub>V3.0 安装包、SHA-256 校验文件和版本说明将在代码签名接入与验证完成后通过 GitHub Release 发布。</sub>
+      <sub>V3.0 安装包、SHA-256 校验文件和版本说明将单独通过 GitHub Releases 发布；源码分支更新不代表安装包已上线。</sub>
     </td>
   </tr>
 </table>
@@ -57,7 +65,7 @@
 
 ToolKnit Desktop 3.0 是一套面向 Windows 的本地文件工作台。它把常用文件处理、图像与 Markdown 创作、开发者工具、AI 内容生产、专业文档工作流和 IDE Agent 自动化放在同一个产品体系里。
 
-同一份本地文件可以被桌面端预览、被 CLI 批处理、被 MCP Agent 调用，并且拥有明确的输入、输出、进度、错误和安全边界。
+桌面端提供可视化工作台，其中适合自动化的能力还可以通过 CLI 批处理、MCP Agent 调用。网页端提供免安装入口，各端功能范围以对应目录为准。
 
 <table width="100%" cellpadding="14" cellspacing="0">
   <tr>
@@ -72,24 +80,25 @@ ToolKnit Desktop 3.0 是一套面向 Windows 的本地文件工作台。它把�
 
 ## V3.0 核心更新
 
-V3.0 是一次面向长期使用的完整升级：工具数量从 65 项扩展到 68 项，旧工具统一迁移到按需加载的模块边界，新工具、原生运行时和共享界面使用同一套输入、输出、进度、错误和清理契约。
+相比 v2.3.1，V3.0 的桌面工具从 65 项扩展到 68 项，保留 12 个分类与 46 项 CLI / MCP 能力。此次升级同时完善双主题、PDF / PPT 工作流、清理安全和应用启动体验。
 
 ### 新增能力
 
-- `PDF 文本转 Markdown`：解析有文本层的 PDF，按页重建阅读顺序、标题、段落、列表和基础表格，并直接导入 Markdown 编辑器继续修改。
-- `AI PDF 转 Markdown`：逐页生成视觉分析结果，再汇总为结构化 Markdown；保留页码来源、完整文档摘要、重试和取消能力。
-- `Windows 剪贴板历史`：开启监控后记录后续复制的文字、PNG 图片和文件路径，按时间线保存，支持搜索、筛选、收藏、图片预览和本地加密。
+- `PDF 文本提取 / Markdown`：无需 AI Key，在本机提取电子 PDF 的文本层，重建基础排版并保留页码来源；转换后直接进入现有 Markdown 编辑器。扫描件会提示使用 AI 视觉版。
+- `AI PDF 转 Markdown`：适合扫描件与复杂排版，先逐页渲染并交给用户配置的视觉模型分析，再汇总为结构化 Markdown，支持页码来源、文档摘要、重试、取消和继续编辑。
+- `Windows 剪贴板历史`：开启监控后记录后续复制的文字、PNG 图片和文件路径，按时间线保存，支持搜索、筛选、收藏、图片预览和本地加密；不会导入既有 Win+V 历史，退出程序后停止监控。
 
 ### 全面升级
 
-- `白天 / 深色模式`：PDF、PPT、AI、音视频、图像、文本、计算器、硬件、开发者和清理页面统一适配两套主题，补齐空状态、上传、处理中、成功、错误、焦点和禁用状态。
+- `白天 / 深色模式`：工具页、设置与帮助中心统一适配两套主题，覆盖上传、处理、结果、错误、焦点和禁用状态；启动加载遮罩与主题切换过渡减少字体和背景加载时的闪变。
 - `PDF / PPT 工作台`：统一上传、预览、进度、导出和结果弹层；PDF 编辑支持页面操作、文字与图像插入、撤销重做和安全导出；PPT 工具共享转换、预览和素材工作流。
-- `AI 工作流`：AI 润色、翻译、文档、表格、PPT 大纲和 PPTX 草稿统一密钥门禁、失败恢复、重试和输出校验。
-- `媒体与离线能力`：FFmpeg、LibreOffice、Whisper 和本地视觉模型按需检测、下载和释放，转换过程保留取消、进度和依赖错误反馈。
-- `清理安全边界`：AI 大文件清理支持目录与 C 盘大文件扫描；C 盘清理按风险档位处理系统缓存，受保护目录、链接、系统属性和文件变化校验由原生层兜底。
+- `AI 工作流`：完善 PPT 大纲解读、本地图片素材与可编辑 PPTX 草稿；润色、翻译、文档、表格和 PPT 工具复用密钥校验、错误恢复及输出校验。
+- `媒体与离线能力`：修复视频预览首次播放与连续播放问题，视频转 GIF 上传后自动展开预览；FFmpeg、LibreOffice、Whisper 和本地视觉模型按需检测和下载。
+- `清理安全边界`：AI 大文件清理支持目录与 C 盘整盘扫描，排除受保护系统目录、链接和系统属性文件，并在删除前重新校验；C 盘清理按风险档位展示系统缓存。扫描结果仍需用户检查，保护规则不能代替个人判断。
+- `颜色空间对比`：增加 HSV / HSL 双色轮与 HEX 输入，保留多空间联动、色域检测和双主题体验。
 - `应用稳定性`：工具懒加载，重复打开、返回、Escape、窗口关闭和失败路径统一释放 Worker、Canvas、监听器、任务和临时资源，过期异步结果不会写入新会话。
 
-V3.0 的桌面端、Tauri、Rust 原生运行时和 `@toolknit/cli` 源码版本统一为 `3.0.0`。当前处于正式发布准备阶段，SignPath 接入与签名验证尚待完成；源码更新不代表安装包或 npm 包已经发布。
+V3.0 的桌面端、Tauri、Rust 原生运行时和 `@toolknit/cli` 源码版本统一为 `3.0.0`。安装包与 npm 包分别发布，实际可下载版本以 [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases) 和 [npm](https://www.npmjs.com/package/@toolknit/cli) 为准。签名范围与状态见[代码签名政策](CODE_SIGNING_POLICY.md)。
 
 ### 持续保留的基础能力
 
@@ -146,7 +155,7 @@ ToolKnit 继续遵循本地优先原则：重型编辑器和算法模块按需�
   </tr>
 </table>
 
-<p align="center"><sub>颜色空间换算核心基于 <a href="https://github.com/ZihangDong/toolknit-desktop/pull/23">Joshua-Zion 的 PR #23</a> 受控移植与扩展，对应提交保留共同作者署名。</sub></p>
+<p align="center"><sub>感谢 <a href="https://github.com/Joshua-Zion">Joshua-Zion</a>：颜色空间换算核心基于 <a href="https://github.com/ZihangDong/toolknit-desktop/pull/23">PR #23</a> 移植与扩展，3.0 参考 <a href="https://github.com/ZihangDong/toolknit-desktop/pull/67">PR #67</a> 融合双色轮与输入交互增强。</sub></p>
 
 ## 三种工作方式
 
@@ -178,10 +187,10 @@ ToolKnit 继续遵循本地优先原则：重型编辑器和算法模块按需�
 下面按桌面端的 12 个分类列出全部 68 项工具。名称对应应用内入口，支持的 CLI / MCP 能力会在相应工具成熟后提供同一套输入输出契约。
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/PDF-Document%20Studio-ed1c24?style=for-the-badge&logo=adobeacrobatreader&logoColor=white" alt="PDF Document Studio" /></td><td align="right" style="border:0;"><h3 align="right">PDF 文档工具 · 14 项</h3></td></tr>
+  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/PDF-Document%20Studio-ed1c24?style=for-the-badge&logo=adobeacrobatreader&logoColor=white" alt="PDF Document Studio" /></td><td align="right" style="border:0;"><h3 align="right">PDF 文档工具 · 13 项</h3></td></tr>
 </table>
 
-`PDF 合并` · `PDF 拆分` · `PDF 加页码` · `PDF 裁剪` · `PDF 转图像` · `PDF 文本转 Markdown` · `AI PDF 转 Markdown` · `PDF 编辑器` · `PDF 页面旋转` · `PDF 文件加密` · `PDF 文件解密` · `PDF 文件压缩` · `PDF 文字增强` · `Excel 转 PDF`
+`PDF 文件合并` · `PDF 文件拆分` · `PDF 加页码` · `PDF 裁剪` · `PDF 转图像` · `PDF 文本提取 / Markdown` · `PDF 编辑器` · `PDF 页面旋转` · `PDF 文件加密` · `PDF 文件解密` · `PDF 文件压缩` · `PDF 文字增强` · `Excel 转 PDF`
 
 支持拖拽排序、逐页预览、选页导出、页码写入、无损裁剪、页面旋转、文字替换、文本与图像插入、追加合并、密码保护、扫描件增强、多等级压缩和工作簿本地渲染。PDF、工作簿、密码和导出结果默认只在本机处理。
 
@@ -189,7 +198,7 @@ ToolKnit 继续遵循本地优先原则：重型编辑器和算法模块按需�
   <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/PPT-Presentation%20Studio-d24726?style=for-the-badge&logo=microsoftpowerpoint&logoColor=white" alt="PPT Presentation Studio" /></td><td align="right" style="border:0;"><h3 align="right">PPT 演示文稿工具 · 7 项</h3></td></tr>
 </table>
 
-`PPT 转 PDF` · `PPT 转图片` · `PPT 图片提取` · `PPT 文本提取` · `PPT 压缩` · `AI 生成 PPT 大纲` · `AI 生成 PPT 草稿 / PPTX`
+`PPT 转 PDF` · `PPT 转图片` · `PPT 图片提取` · `PPT AI 文本提取` · `PPT 压缩` · `AI 生成 PPT 大纲` · `AI 生成 PPT 草稿 / PPTX`
 
 支持逐页渲染、页码选择、PNG/JPG/WebP 输出、素材去重、标题正文备注提取、Markdown/TXT/JSON 导出、媒体清理，以及从主题和资料生成结构化大纲与可编辑 PPTX 草稿。PPT 渲染运行时按需下载。
 
@@ -197,7 +206,7 @@ ToolKnit 继续遵循本地优先原则：重型编辑器和算法模块按需�
   <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/IMAGE-Image%20Lab-1473e6?style=for-the-badge&logo=imagemagick&logoColor=white" alt="Image Lab" /></td><td align="right" style="border:0;"><h3 align="right">图像工具 · 7 项</h3></td></tr>
 </table>
 
-`图像裁剪` · `智能颜色替换` · `背景移除` · `图片格式转换` · `图片压缩` · `长图拼接` · `图标生成器`
+`图片裁剪` · `智能颜色替换` · `背景移除` · `图片格式转换` · `图片压缩` · `长图拼接` · `图标生成器`
 
 支持常用比例与构图辅助线裁剪、区域保护颜色替换、本地模型背景移除、JPG / PNG / WebP / BMP / GIF / SVG 互转、批量压缩、横向 / 纵向 / 无缝拼接图片或 PDF 页面，以及生成多尺寸 PNG、ICO、SVG 图标并打包 ZIP。
 
@@ -205,7 +214,7 @@ ToolKnit 继续遵循本地优先原则：重型编辑器和算法模块按需�
   <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/AUDIO-Sound%20Studio-007808?style=for-the-badge&logo=ffmpeg&logoColor=white" alt="Sound Studio" /></td><td align="right" style="border:0;"><h3 align="right">音频工具 · 4 项</h3></td></tr>
 </table>
 
-`音频格式转换` · `BPM 节拍测速` · `音频剪辑` · `音频提取`
+`音频文件格式转换` · `BPM 节拍测速器` · `音频剪辑` · `音频提取`
 
 支持 MP3、AAC、WAV、FLAC、ALAC、OGG、WMA 等格式互转，离线 BPM 分析，波形可视化剪辑和从视频中提取音轨。FFmpeg 按需安装，源文件不会被覆盖。
 
@@ -250,18 +259,18 @@ Markdown 编辑器提供 GFM、Mermaid、数学公式、标题大纲、草稿恢
 大文件清理先在本机扫描，可选择目录或扫描 C 盘中的大文件候选，再由本地规则和可选 AI 只分析文件名、大小、修改时间和目录线索；C 盘清理按低、中、高风险检查固定系统缓存空间。受保护目录、链接和系统属性会跳过，删除前逐项确认；大文件清理移入回收站，系统级 C 盘清理明确提示永久删除范围。
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/AI-AI%20Workbench-10a37f?style=for-the-badge&logo=openai&logoColor=white" alt="AI Workbench" /></td><td align="right" style="border:0;"><h3 align="right">AI 工作台 · 4 项</h3></td></tr>
+  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/AI-AI%20Workbench-10a37f?style=for-the-badge&logo=openai&logoColor=white" alt="AI Workbench" /></td><td align="right" style="border:0;"><h3 align="right">AI 工作台 · 5 项</h3></td></tr>
 </table>
 
-`AI 文字润色` · `AI 智能翻译` · `AI 文档生成` · `AI 表格生成`
+`AI PDF 转 Markdown` · `AI 文字润色` · `AI 智能翻译` · `AI 文档生成` · `AI 表格生成`
 
-AI 文档支持多页 PDF、可编辑工程文件、编号图、预览、检查、编辑、撤销和重新渲染；AI 表格支持 CSV、XLSX、PDF、PNG、可编辑项目、行列与图表编号、公式修改和重新渲染。只有明确调用 AI 时，相关文字才会发送到你配置的模型服务。
+AI PDF 逐页分析页面图像并汇总为 Markdown；AI 文档支持多页 PDF、可编辑工程文件、预览、编辑与撤销；AI 表格支持 CSV、XLSX、PDF、PNG、可编辑项目、公式和图表修改。主动调用 AI 时，相关文字或页面图像会发送到你配置的模型服务。
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/HARDWARE-System%20Inspector-0078d4?style=for-the-badge&logo=windows11&logoColor=white" alt="System Inspector" /></td><td align="right" style="border:0;"><h3 align="right">硬件与系统工具 · 8 项</h3></td></tr>
 </table>
 
-`整机概览` · `CPU 与内存` · `GPU 与显示器` · `主板与固件` · `存储健康` · `网络设备` · `电源传感器` · `Windows 剪贴板历史`
+`整机概览` · `CPU 与内存` · `显卡与显示器` · `主板与固件` · `磁盘与健康` · `网络与设备` · `电源与传感器` · `剪贴板历史`
 
 只读查看 Windows、设备型号、CPU、内存、显卡、显示器、主板、BIOS、安全启动、TPM、虚拟化、磁盘、网络和电源传感器信息；CPU 与内存页面提供实时状态刷新，剪贴板历史按用户主动开启的监控记录后续复制内容。
 
@@ -280,6 +289,8 @@ AI 文档支持多页 PDF、可编辑工程文件、编号图、预览、检查�
 <img src="https://img.shields.io/badge/AI-明确授权-d97706?style=for-the-badge&logo=openai&logoColor=white" alt="AI requires explicit authorization" /> **明确授权**：只有主动使用 AI 润色、翻译、AI 文档、AI 表格、AI PDF 转 Markdown、PPT 文本 AI 整理、AI PPT 大纲、AI PPTX 草稿、AI 大文件复核或转写后的 `refine` 时，符合该功能说明的数据才会发送到你配置的模型服务；大文件清理只发送文件元数据，不发送文件内容。
 
 <img src="https://img.shields.io/badge/RUNTIME-按需依赖-2563eb?style=for-the-badge&logo=ffmpeg&logoColor=white" alt="Runtime dependencies on demand" /> **按需依赖**：优先复用本机已有的 FFmpeg 与 LibreOffice；Whisper 模型和缺失运行时按需下载，支持依赖检测、校验和镜像源选择。
+
+桌面端 AI Key 使用 Windows DPAPI 加密保存，剪贴板历史保存在本机。更新检查、公开版本信息和依赖下载仍需要网络；“本地优先”不表示程序完全不联网。
 
 CLI 和 MCP 默认要求明确输入与输出路径，不覆盖已有文件；密码等敏感输入不会写入日志、输出 JSON、文件名或 Agent 回复。
 
@@ -389,28 +400,32 @@ ToolKnit 3.0 采用轻量桌面容器与本地文件引擎组合，网页端、�
 
 ### 安装 Windows 桌面端
 
-从 [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases) 获取当前稳定版安装包、版本说明和对应的 `.sha256` 文件。V3.0 当前处于正式发布准备阶段，正式安装包会在签名接入与验证完成后单独发布；请只从本仓库 Release 页面下载，并在运行前核对 SHA-256 校验值。
+从 [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases) 获取已发布安装包、版本说明和对应的 `.sha256` 文件。本分支提供 V3.0 源码，3.0 安装包将单独发布；请只从本仓库 Release 页面下载，并在运行前核对 SHA-256 校验值。
 
-**代码签名状态：** 当前公开安装包是否签名以对应 Release 说明为准。未签名版本可能显示“未知发布者”或 SmartScreen 提示；确认下载地址和 SHA-256 后再继续安装，后续签名版本遵循[代码签名政策](CODE_SIGNING_POLICY.md)。
+**代码签名状态：** 测试签名链路已接入，测试证书不等于 Windows 公开信任的正式证书。安装包的实际签名状态与覆盖范围以对应 Release 说明为准，详见[代码签名政策](CODE_SIGNING_POLICY.md)。
 
 **系统要求：** 桌面端需要 Windows 10 1803（内部版本 17134）或更高版本，或 Windows 11，并依赖 Microsoft Edge WebView2 Runtime。安装包内置 WebView2 引导程序，首次安装仍需要联网下载运行时；WPS、Office 或浏览器本身不能替代 WebView2。Windows 7、8 和 8.1，以及 1803 之前的 Windows 10 不受支持，安装器会在复制文件前直接提示原因。
 
 ### 从源码运行
 
 ```powershell
-git clone https://github.com/ZihangDong/toolknit-desktop.git
+git clone --branch "ToolKnit-Desktop-V3.0-正式版" --single-branch https://github.com/ZihangDong/toolknit-desktop.git
 Set-Location toolknit-desktop\toolknit-desktop
 npm ci
 npm run tauri dev
 ```
 
-要求：Windows 10/11、Node.js `20.12.0` 或更高版本；构建原生桌面端还需要 Rust stable 工具链。
+建议使用 Node.js 24，与 GitHub Actions 一致；Vite 8 要求 Node.js `20.19+` 或 `22.12+`。构建 Windows 桌面端还需要 Rust stable、Visual Studio C++ Build Tools、Windows SDK 和 WebView2。详细步骤见 [Windows 构建指南](BUILD.md)。
+
+仓库保留构建所需的源码、资源、测试与第三方许可。本地密钥、签名凭据、浏览器会话、测试输出和安装包不应提交；签名工作流通过 GitHub Actions Secrets 读取凭据。
 
 ## CLI / MCP / Agent
 
 ToolKnit 将适合自动化的本地文件能力提供给命令行、脚本和支持 MCP 的 IDE Agent。桌面端负责可视化预览和交互，CLI 负责批处理，Agent 负责自然语言编排。
 
 ### 安装 CLI
+
+以下命令安装 npm 上当前已发布的版本。此分支内 CLI 源码为 `3.0.0`，npm 发布独立进行，不随源码推送自动更新。
 
 ```powershell
 npm install --global @toolknit/cli

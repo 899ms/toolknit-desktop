@@ -4,7 +4,7 @@
 
 <h1>ToolKnit Desktop 3.0</h1>
 
-<p><strong>V3.0 release preparation</strong> · This branch contains the complete 3.0 source. The production installer will follow code-signing integration and verification; published downloads still refer to V2.3.1.</p>
+<p><strong>V3.0 source ready</strong> · This branch contains the complete 3.0 source. Windows installers and the npm package will be published separately.</p>
 
 <p><strong>Local file workbench · Desktop, web, and AI Agent workflows</strong></p>
 
@@ -20,7 +20,7 @@
 
 <p>
   <a href="README.md"><img src="https://img.shields.io/badge/Language-Simplified%20Chinese-475569?style=for-the-badge&labelColor=334155" alt="Simplified Chinese README" /></a>
-  <img src="https://img.shields.io/badge/V3.0-Release%20preparation-f59e0b?style=for-the-badge&labelColor=b45309" alt="ToolKnit 3.0 release preparation" />
+  <img src="https://img.shields.io/badge/V3.0-Source%20ready-0f766e?style=for-the-badge&labelColor=115e59" alt="ToolKnit 3.0 source ready" />
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10/11" />
   <img src="https://img.shields.io/badge/Local--first-Files%20stay%20local-0f766e?style=for-the-badge" alt="Local-first" />
   <img src="https://img.shields.io/badge/Tauri-2.x-475569?style=for-the-badge" alt="Tauri 2.x" />
@@ -36,6 +36,14 @@
 
 </div>
 
+<p align="center">
+  <a href="#whats-new-in-30">What's new</a> ·
+  <a href="#complete-tool-catalog">68 tools</a> ·
+  <a href="#local-first-privacy-boundaries">Privacy</a> ·
+  <a href="#run-from-source">Run from source</a> ·
+  <a href="#cli--mcp--agent">CLI / MCP</a>
+</p>
+
 <table cellpadding="18" cellspacing="0">
   <tr>
     <td width="50%" valign="top">
@@ -48,7 +56,7 @@
       <p><img src="https://img.shields.io/badge/DESKTOP-Windows-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Windows desktop" /> <strong>Use the desktop app</strong></p>
       <p>A local-first Windows app for long-running file work, offline processing, and visual editing.</p>
       <p><a href="https://github.com/ZihangDong/toolknit-desktop/releases"><strong>View desktop downloads</strong></a></p>
-      <sub>The 2.3.1 installer, SHA-256 checksum, and release notes are published through GitHub Releases.</sub>
+      <sub>The V3.0 installer, SHA-256 checksum, and release notes will be published separately through GitHub Releases. A source update does not publish an installer.</sub>
     </td>
   </tr>
 </table>
@@ -57,7 +65,7 @@
 
 ToolKnit Desktop 3.0 is a local file workbench for Windows. It brings everyday file processing, image and Markdown creation, developer tools, AI content production, professional document workflows, and IDE Agent automation into one product system.
 
-The same local file can be previewed in the desktop app, batch-processed by the CLI, or called by an MCP Agent, with explicit input, output, progress, error, and safety boundaries.
+The desktop app provides a visual workbench. Automation-ready capabilities are also available through the CLI and MCP Agents, while the web app offers access without installation. Each interface has its own documented feature catalog.
 
 <table width="100%" cellpadding="14" cellspacing="0">
   <tr>
@@ -72,26 +80,27 @@ The same local file can be previewed in the desktop app, batch-processed by the 
 
 ## What's new in 3.0
 
-V3.0 expands the desktop catalog from 65 to 68 tools and brings existing tools into modules that load on demand, with shared navigation, progress, output, error handling, and resource cleanup.
+Compared with v2.3.1, V3.0 expands the desktop catalog from 65 to 68 tools, retaining 12 categories and 46 CLI/MCP capabilities. It also improves both themes, PDF/PPT workflows, cleanup safety, and startup behavior.
 
 ### New tools
 
-- `PDF Text to Markdown`: locally extract selectable PDF text, reconstruct reading order and basic structure, and continue editing in the existing Markdown editor.
+- `PDF Text to Markdown`: extract selectable PDF text locally without an AI key, reconstruct basic structure, retain page references, and continue editing in the existing Markdown editor. Scanned documents are directed to the AI vision tool.
 - `AI PDF to Markdown`: analyze pages with a vision model, assemble structured Markdown, and retain source-page references, a document summary, retry, and cancellation.
-- `Windows Clipboard History`: explicitly enable monitoring to record subsequent text, PNG images, and file paths in a timeline with search, filters, favorites, image previews, and local encryption.
+- `Windows Clipboard History`: explicitly enable monitoring to record subsequent text, PNG images, and file paths in a timeline with search, filters, favorites, image previews, and local encryption. Existing Win+V history is not imported, and monitoring stops when the app exits.
 
 ### Improvements across the app
 
 - `Light and dark themes`: consistent empty, upload, processing, result, error, focus, and disabled states across tools, settings, and help. Startup and theme transitions reduce visible font and layout changes.
 - `PDF and PPT workbenches`: shared previews, page selection, export controls, and result dialogs; PDF page editing and undo/redo; richer PPT outlines, editable drafts, and local image assets.
-- `AI workflows`: shared key validation, request cancellation, retries, recovery, and output validation for writing, translation, documents, tables, outlines, and PPTX drafts.
-- `Media and offline tools`: on-demand FFmpeg, LibreOffice, Whisper, and local vision runtimes, with clearer dependency errors and improved video preview playback.
-- `Cleanup safety`: AI large-file cleanup supports C-drive scanning with protected-directory exclusions, native path and file checks, and explicit user review before cleanup.
+- `AI workflows`: clearer outline explanations, local image assets, and editable PPTX drafts, with shared key validation, error recovery, and output checks across writing, translation, documents, tables, and PPT tools.
+- `Media and offline tools`: fixes for initial and continuous video preview playback, automatic preview expansion after uploading a video for GIF conversion, and on-demand FFmpeg, LibreOffice, Whisper, and local vision runtimes.
+- `Cleanup safety`: AI large-file cleanup supports full C-drive scanning while excluding protected system directories, links, and system files, with fresh checks before deletion. C Drive Cleanup explains risk levels. Users still need to inspect results before choosing what to remove.
+- `Color-space comparison`: HSV/HSL color wheels and HEX input, alongside linked color-space controls, gamut checks, and both themes.
 - `Application stability`: closing or switching tools releases workers, canvases, listeners, tasks, and temporary resources; stale asynchronous results cannot update a new session.
 
-The desktop app, Tauri bundle, Rust crate, and `@toolknit/cli` source share version `3.0.0`. Release checks cover 68 desktop tools and 46 CLI/MCP capabilities. SignPath integration and signing verification are pending; updating source does not publish an installer or npm package.
+The desktop app, Tauri bundle, Rust crate, and `@toolknit/cli` source share version `3.0.0`. Installers and npm packages are published separately; check [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases) and [npm](https://www.npmjs.com/package/@toolknit/cli) for available versions. See the [code-signing policy](CODE_SIGNING_POLICY.md) for signing status and scope.
 
-### Foundation from the 2.1 series
+### Existing capabilities
 
 The 2.1 series adds 11 desktop tools and delivers a broader upgrade across custom backgrounds, glass interactions, local dependency reuse, task lifecycle management, and failure recovery. Heavy editors and algorithm modules load on demand, while Workers, canvases, listeners, and temporary resources are released when a tool closes.
 
@@ -146,7 +155,7 @@ The 2.1 series adds 11 desktop tools and delivers a broader upgrade across custo
   </tr>
 </table>
 
-<p align="center"><sub>The color-space conversion core is a controlled port and extension of <a href="https://github.com/ZihangDong/toolknit-desktop/pull/23">Joshua-Zion's PR #23</a>; the corresponding commit retains co-author attribution.</sub></p>
+<p align="center"><sub>Thanks to <a href="https://github.com/Joshua-Zion">Joshua-Zion</a>: the color-space core builds on <a href="https://github.com/ZihangDong/toolknit-desktop/pull/23">PR #23</a>, and V3.0 adapts color-wheel and input improvements from <a href="https://github.com/ZihangDong/toolknit-desktop/pull/67">PR #67</a>.</sub></p>
 
 ## Three ways to work
 
@@ -178,10 +187,10 @@ The 2.1 series adds 11 desktop tools and delivers a broader upgrade across custo
 The 12 desktop categories below contain all 68 tools. Names correspond to in-app entries; CLI and MCP capabilities use the same input/output contracts as each tool becomes ready.
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/PDF-Document%20Studio-ed1c24?style=for-the-badge&logo=adobeacrobatreader&logoColor=white" alt="PDF Document Studio" /></td><td align="right" style="border:0;"><h3 align="right">PDF tools · 14</h3></td></tr>
+  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/PDF-Document%20Studio-ed1c24?style=for-the-badge&logo=adobeacrobatreader&logoColor=white" alt="PDF Document Studio" /></td><td align="right" style="border:0;"><h3 align="right">PDF tools · 13</h3></td></tr>
 </table>
 
-`PDF Merge` · `PDF Split` · `Add PDF Page Numbers` · `Crop PDF` · `PDF to Image` · `PDF Text to Markdown` · `AI PDF to Markdown` · `PDF Editor` · `PDF Page Rotate` · `PDF Encrypt` · `PDF Decrypt` · `PDF Compress` · `PDF Enhance` · `Excel to PDF`
+`PDF Merge` · `PDF Split` · `Add PDF Page Numbers` · `Crop PDF` · `PDF to Image` · `PDF Text to Markdown` · `PDF Editor` · `PDF Page Rotate` · `PDF Encrypt` · `PDF Decrypt` · `PDF Compress` · `PDF Enhance` · `Excel to PDF`
 
 Supports drag sorting, page-by-page preview, selected-page export, page numbering, lossless cropping, rotation, text replacement, text and image insertion, append merge, password protection, scanned-document enhancement, multiple compression levels, and local workbook rendering. PDFs, workbooks, passwords, and exported results are processed locally by default.
 
@@ -249,15 +258,15 @@ Extract dominant image colors and palette shares, compare eight linked color spa
 
 `AI Large File Cleanup` · `C Drive Cleanup`
 
-Large File Cleanup scans locally, then lets local rules and optional AI analyze only filenames, sizes, modification times, and directory clues. C Drive Cleanup checks reclaimable system space by risk level. Every deletion is confirmed item by item and sent to the Recycle Bin; file contents are not read or uploaded.
+Large File Cleanup scans a selected directory or the C drive locally, then lets local rules and optional AI analyze only filenames, sizes, modification times, and directory clues. Protected paths, links, and system files are excluded. Confirmed large-file cleanup uses the Recycle Bin; C Drive Cleanup separately explains permanent removal of selected system caches and space items by risk level. File contents are not uploaded for AI review.
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/AI-AI%20Workbench-10a37f?style=for-the-badge&logo=openai&logoColor=white" alt="AI Workbench" /></td><td align="right" style="border:0;"><h3 align="right">AI Workbench · 4</h3></td></tr>
+  <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/AI-AI%20Workbench-10a37f?style=for-the-badge&logo=openai&logoColor=white" alt="AI Workbench" /></td><td align="right" style="border:0;"><h3 align="right">AI Workbench · 5</h3></td></tr>
 </table>
 
-`AI Polish` · `AI Translate` · `AI Document Generation` · `AI Table Generation`
+`AI PDF to Markdown` · `AI Polish` · `AI Translate` · `AI Document Generation` · `AI Table Generation`
 
-AI Documents support multi-page PDFs, editable project files, numbered maps, preview, inspection, editing, undo, and re-rendering. AI Tables support CSV, XLSX, PDF, PNG, editable projects, numbered rows/columns/charts, formula edits, and re-rendering. Text is sent to your configured model service only when you explicitly invoke AI.
+AI PDF analyzes rendered pages and assembles Markdown. AI Documents support multi-page PDFs, editable projects, preview, editing, and undo. AI Tables support CSV, XLSX, PDF, PNG, editable projects, formulas, and charts. Relevant text or page images are sent to your configured model service when you explicitly invoke AI.
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td align="left" style="border:0;"><img src="https://img.shields.io/badge/HARDWARE-System%20Inspector-0078d4?style=for-the-badge&logo=windows11&logoColor=white" alt="System Inspector" /></td><td align="right" style="border:0;"><h3 align="right">Hardware and system tools · 8</h3></td></tr>
@@ -281,9 +290,11 @@ Validate, format, and minify JSON; process UTF-8 Base64; encode URL parameters; 
 
 <img src="https://img.shields.io/badge/LOCAL-Local%20by%20default-0f766e?style=for-the-badge" alt="Local by default" /> **Local by default**: Desktop PDF, PPT, image, audio, video, text, calculator, hardware, and cleanup tools run on the device. Source files are not uploaded to ToolKnit servers.
 
-<img src="https://img.shields.io/badge/AI-Explicit%20authorization-d97706?style=for-the-badge&logo=openai&logoColor=white" alt="AI requires explicit authorization" /> **Explicit authorization**: Related text is sent to your configured model service only when you actively use AI Polish, AI Translate, AI Documents, AI Tables, PPT text AI organization, AI PPT Outline, AI PPTX Draft, or transcription `refine`.
+<img src="https://img.shields.io/badge/AI-Explicit%20authorization-d97706?style=for-the-badge&logo=openai&logoColor=white" alt="AI requires explicit authorization" /> **Explicit authorization**: Relevant data is sent to your configured model service only when you actively use AI Polish, AI Translate, AI Documents, AI Tables, AI PDF to Markdown, PPT text AI organization, AI PPT Outline, AI PPTX Draft, AI large-file review, or transcription `refine`. AI PDF analysis sends page images; AI large-file review sends file metadata, not file contents.
 
 <img src="https://img.shields.io/badge/RUNTIME-On--demand%20dependencies-2563eb?style=for-the-badge&logo=ffmpeg&logoColor=white" alt="Runtime dependencies on demand" /> **On-demand dependencies**: Existing FFmpeg and LibreOffice installations are reused when possible. Missing runtimes and Whisper models are downloaded as needed, with dependency detection, verification, and mirror selection.
+
+Desktop AI keys are encrypted with Windows DPAPI, and clipboard history stays on the device. Update checks, public version metadata, and dependency downloads still use the network; local-first does not mean the app never connects to the internet.
 
 CLI and MCP require explicit input and output paths by default and do not overwrite existing files. Sensitive inputs such as passwords are not written to logs, JSON output, filenames, or Agent replies.
 
@@ -393,26 +404,32 @@ Open [ToolKnit.com](https://toolknit.com) to start using the web tools without i
 
 ### Install the Windows desktop app
 
-Get the 2.3.1 installer, release notes, and matching `.sha256` file from [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases). Download only from this repository's Release page and verify the SHA-256 checksum before running the installer.
+Get published installers, release notes, and matching `.sha256` files from [GitHub Releases](https://github.com/ZihangDong/toolknit-desktop/releases). This branch provides V3.0 source; the 3.0 installer will be released separately. Download only from this repository's Release page and verify the SHA-256 checksum before running the installer.
 
-**Code-signing status:** Version 2.3.1 is not yet Authenticode-signed, so Windows may display an “Unknown publisher” or SmartScreen prompt. Confirm the download source and SHA-256 checksum before continuing. Future signed releases will follow the [code-signing policy](CODE_SIGNING_POLICY.md).
+**Code-signing status:** The test-signing integration is in place. A test certificate is not a publicly trusted Windows production certificate. The applicable Release notes and [code-signing policy](CODE_SIGNING_POLICY.md) describe the actual signing status and scope.
+
+**System requirements:** Windows 10 1803 (build 17134) or later, or Windows 11, with Microsoft Edge WebView2 Runtime. The installer includes a WebView2 bootstrapper, which needs a network connection to download a missing runtime. Windows 7, 8, 8.1, and older Windows 10 builds are not supported.
 
 ### Run from source
 
 ```powershell
-git clone https://github.com/ZihangDong/toolknit-desktop.git
+git clone --branch "ToolKnit-Desktop-V3.0-正式版" --single-branch https://github.com/ZihangDong/toolknit-desktop.git
 Set-Location toolknit-desktop\toolknit-desktop
 npm ci
 npm run tauri dev
 ```
 
-Requirements: Windows 10/11, Node.js `20.12.0` or newer, and the Rust stable toolchain for native desktop builds.
+Node.js 24 is recommended to match GitHub Actions; Vite 8 requires Node.js `20.19+` or `22.12+`. Native Windows builds also need Rust stable, Visual Studio C++ Build Tools, the Windows SDK, and WebView2. See the [Windows build guide](BUILD.md).
+
+The repository includes source, required resources, tests, and third-party licenses. Local keys, signing credentials, browser sessions, test outputs, and installers must stay out of commits. Signing workflows obtain credentials through GitHub Actions Secrets.
 
 ## CLI / MCP / Agent
 
 ToolKnit exposes automation-ready local file capabilities to command-line users, scripts, and MCP-capable IDE Agents. The desktop app handles visual preview and interaction, the CLI handles batch processing, and Agents orchestrate workflows in natural language.
 
 ### Install the CLI
+
+These commands install the version currently published on npm. CLI source in this branch is `3.0.0`; publishing to npm is a separate step and does not happen when source is pushed.
 
 ```powershell
 npm install --global @toolknit/cli
